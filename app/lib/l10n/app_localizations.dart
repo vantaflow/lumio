@@ -1442,6 +1442,30 @@ abstract class AppLocalizations {
   /// **'Illimité'**
   String get unlimited;
 
+  /// No description provided for @uploadOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactivé (pas d\'ensemencement)'**
+  String get uploadOff;
+
+  /// No description provided for @settingsClearCacheOnExit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vider le cache à la fermeture'**
+  String get settingsClearCacheOnExit;
+
+  /// No description provided for @optionYes.
+  ///
+  /// In fr, this message translates to:
+  /// **'Oui'**
+  String get optionYes;
+
+  /// No description provided for @optionNo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non'**
+  String get optionNo;
+
   /// No description provided for @cacheGb.
   ///
   /// In fr, this message translates to:
@@ -1873,6 +1897,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Masquer'**
   String get sourcesReminderDismiss;
+
+  /// No description provided for @torrentInsufficientStorage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Espace insuffisant sur l\'appareil pour lire ce torrent. Libérez de la place puis réessayez.'**
+  String get torrentInsufficientStorage;
 
   /// No description provided for @torrentNoPeers.
   ///

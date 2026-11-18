@@ -7,6 +7,9 @@ import 'package:lumio_core/lumio_core.dart';
 /// français reste réservé aux journaux.
 String l10nForError(AppLocalizations l, Object error) {
   if (error is ProfileLimitException) return l.maxProfilesReached;
+  if (error is InsufficientStorageException) {
+    return l.torrentInsufficientStorage;
+  }
   if (error is PairingException) {
     return switch (error.code) {
       PairingErrorCode.insecureUrl => l.errPairInsecure,

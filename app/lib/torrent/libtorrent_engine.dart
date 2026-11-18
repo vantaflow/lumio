@@ -4,6 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:libtorrent_flutter/libtorrent_flutter.dart' as lt;
 import 'package:lumio/torrent/torrent_engine.dart';
 
+/// Limite montante envoyée à libtorrent (octets/s). libtorrent_flutter 1.7.5
+/// n'expose aucun interrupteur d'ensemencement et traite 0 comme « illimité » :
+/// quand l'ensemencement est désactivé (`seed` faux) on applique donc le
+/// minimum, 1 octet/s, ce qui coupe l'envoi en pratique.
+int engineUploadLimit(TorrentSettings s) =>
+    !s.seed ? 1 : (s.uploadLimit < 0 ? 0 : s.uploadLimit);
+
 /// Adaptateur de `libtorrent_flutter` (libtorrent 2.x via FFI).
 /// Aucun type libtorrent ne sort de cette classe.
 class LibtorrentEngine implements TorrentEngine {
@@ -25,7 +32,7 @@ class LibtorrentEngine implements TorrentEngine {
     _settings = s;
     await lt.LibtorrentFlutter.init(
       downloadLimit: s.downloadLimit,
-      uploadLimit: s.uploadLimit,
+      uploadLimit: engineUploadLimit(s),
       defaultSavePath: s.savePath,
     );
     _ready = true;

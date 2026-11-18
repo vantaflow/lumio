@@ -770,6 +770,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get unlimited => 'Illimité';
 
   @override
+  String get uploadOff => 'Désactivé (pas d\'ensemencement)';
+
+  @override
+  String get settingsClearCacheOnExit => 'Vider le cache à la fermeture';
+
+  @override
+  String get optionYes => 'Oui';
+
+  @override
+  String get optionNo => 'Non';
+
+  @override
   String cacheGb(int n) {
     return '$n Go';
   }
@@ -1020,6 +1032,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sourcesReminderDismiss => 'Masquer';
+
+  @override
+  String get torrentInsufficientStorage =>
+      'Espace insuffisant sur l\'appareil pour lire ce torrent. Libérez de la place puis réessayez.';
 
   @override
   String get torrentNoPeers =>

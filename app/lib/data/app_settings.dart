@@ -11,6 +11,7 @@ class AppSettingsStore {
   static const localeKey = 'ui_locale';
   static const torrentCacheKey = 'torrent_cache_gb';
   static const uploadKey = 'upload_kbps';
+  static const clearCacheOnExitKey = 'clear_cache_on_exit';
   static const onboardingDoneKey = 'onboarding_done';
   static const onboardingSkippedKey = 'onboarding_skipped';
   static const sourcesReminderDismissedKey = 'sources_reminder_dismissed';
@@ -33,21 +34,33 @@ class AppSettingsStore {
   Future<int?> readInt(String key) async => int.tryParse(await read(key) ?? '');
 }
 
-/// Réglages des torrents, consommés par le moteur (tâche 25).
+/// Réglages des torrents, consommés par `CacheManager` et le moteur.
 class TorrentSettings {
-  const TorrentSettings({this.cacheGb = 2, this.uploadKbps = 0});
+  const TorrentSettings({
+    this.cacheGb = 2,
+    this.uploadKbps = 0,
+    this.clearCacheOnExit = false,
+  });
 
   /// Taille maximale du cache de lecture, en Go.
   final int cacheGb;
 
-  /// Débit montant maximal en Ko/s ; 0 = illimité.
+  /// Débit montant maximal en Ko/s ; 0 = ensemencement désactivé.
   final int uploadKbps;
+
+  /// Vider le cache à la fermeture (activé par défaut sur TV).
+  final bool clearCacheOnExit;
 
   static const cacheChoicesGb = [1, 2, 3, 5];
   static const uploadChoicesKbps = [0, 256, 512, 1024, 2048];
 
-  TorrentSettings copyWith({int? cacheGb, int? uploadKbps}) => TorrentSettings(
+  TorrentSettings copyWith({
+    int? cacheGb,
+    int? uploadKbps,
+    bool? clearCacheOnExit,
+  }) => TorrentSettings(
     cacheGb: cacheGb ?? this.cacheGb,
     uploadKbps: uploadKbps ?? this.uploadKbps,
+    clearCacheOnExit: clearCacheOnExit ?? this.clearCacheOnExit,
   );
 }

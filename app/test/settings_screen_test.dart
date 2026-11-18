@@ -212,6 +212,24 @@ void main() {
     await h.dispose();
   });
 
+  testWidgets('vider le cache à la fermeture et ensemencement coupé', (
+    tester,
+  ) async {
+    final h = _H(tester)..start();
+    await h.pump(const SettingsScreen());
+
+    // Débit montant 0 = ensemencement désactivé, valeur par défaut.
+    expect(find.text('Désactivé (pas d\'ensemencement)'), findsOneWidget);
+    expect(h.container.read(torrentSettingsProvider).clearCacheOnExit, isFalse);
+
+    await h.tapTile('clearCache');
+    await h.tapText('Oui');
+
+    expect(h.container.read(torrentSettingsProvider).clearCacheOnExit, isTrue);
+    expect(await h.stored(AppSettingsStore.clearCacheOnExitKey), '1');
+    await h.dispose();
+  });
+
   testWidgets('version : menu debug caché, débloqué après 7 appuis', (
     tester,
   ) async {

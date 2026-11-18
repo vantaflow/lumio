@@ -255,6 +255,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     } on NoPeersException {
       _failTorrent(token, (l) => l.torrentNoPeers);
       return;
+    } on InsufficientStorageException {
+      _failTorrent(token, (l) => l.torrentInsufficientStorage);
+      return;
     } on NoStreamableFileException {
       _failTorrent(token, (l) => l.torrentNoFile);
       return;

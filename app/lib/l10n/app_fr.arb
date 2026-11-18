@@ -406,6 +406,10 @@
   "settingsTorrentCache": "Cache torrents",
   "settingsUpload": "Débit montant",
   "unlimited": "Illimité",
+  "uploadOff": "Désactivé (pas d'ensemencement)",
+  "settingsClearCacheOnExit": "Vider le cache à la fermeture",
+  "optionYes": "Oui",
+  "optionNo": "Non",
   "cacheGb": "{n} Go",
   "@cacheGb": {
     "placeholders": {
@@ -549,6 +553,7 @@
   "sourcesReminderTitle": "Ajoutez vos sources",
   "sourcesReminderBody": "Votre accueil est vide tant qu'aucune source n'est ajoutée.",
   "sourcesReminderDismiss": "Masquer",
+  "torrentInsufficientStorage": "Espace insuffisant sur l'appareil pour lire ce torrent. Libérez de la place puis réessayez.",
   "torrentNoPeers": "Aucune source disponible pour ce torrent. Essayez un autre flux.",
   "torrentNoFile": "Ce torrent ne contient aucun fichier lisible. Essayez un autre flux.",
   "torrentFailed": "Le torrent n'a pas pu démarrer. Essayez un autre flux.",

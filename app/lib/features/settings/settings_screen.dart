@@ -256,14 +256,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         icon: Icons.upload_outlined,
         title: l.settingsUpload,
         subtitle: torrents.uploadKbps == 0
-            ? l.unlimited
+            ? l.uploadOff
             : l.uploadKbps(torrents.uploadKbps),
         onTap: () async {
           final picked = await _choose<int>(
             title: l.settingsUpload,
             options: [
               for (final k in TorrentSettings.uploadChoicesKbps)
-                (k, k == 0 ? l.unlimited : l.uploadKbps(k)),
+                (k, k == 0 ? l.uploadOff : l.uploadKbps(k)),
             ],
             current: torrents.uploadKbps,
           );
@@ -272,6 +272,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               () => ref
                   .read(torrentSettingsProvider.notifier)
                   .setUploadKbps(picked),
+            );
+          }
+        },
+      ),
+      _Tile(
+        id: 'clearCache',
+        icon: Icons.cleaning_services_outlined,
+        title: l.settingsClearCacheOnExit,
+        subtitle: torrents.clearCacheOnExit ? l.optionYes : l.optionNo,
+        onTap: () async {
+          final picked = await _choose<bool>(
+            title: l.settingsClearCacheOnExit,
+            options: [(true, l.optionYes), (false, l.optionNo)],
+            current: torrents.clearCacheOnExit,
+          );
+          if (picked != null) {
+            await _save(
+              () => ref
+                  .read(torrentSettingsProvider.notifier)
+                  .setClearCacheOnExit(picked),
             );
           }
         },

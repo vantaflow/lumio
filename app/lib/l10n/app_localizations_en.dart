@@ -761,6 +761,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unlimited => 'Unlimited';
 
   @override
+  String get uploadOff => 'Off (no seeding)';
+
+  @override
+  String get settingsClearCacheOnExit => 'Clear cache on exit';
+
+  @override
+  String get optionYes => 'Yes';
+
+  @override
+  String get optionNo => 'No';
+
+  @override
   String cacheGb(int n) {
     return '$n GB';
   }
@@ -1007,6 +1019,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sourcesReminderDismiss => 'Hide';
+
+  @override
+  String get torrentInsufficientStorage =>
+      'Not enough storage space to play this torrent. Free up some space and try again.';
 
   @override
   String get torrentNoPeers =>

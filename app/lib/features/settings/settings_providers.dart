@@ -7,6 +7,7 @@ import 'package:lumio/features/detail/playback_service.dart'
     show streamPrefsProvider, streamPrefsStoreProvider;
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/focus/tv_detection.dart';
 import 'package:lumio_core/lumio_core.dart' show Quality;
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -53,7 +54,7 @@ class LocaleController extends Notifier<Locale> {
   }
 }
 
-/// Cache et débit des torrents (stockés ici, consommés par la tâche 25).
+/// Cache et débit des torrents (consommés par `CacheManager`).
 final torrentSettingsProvider =
     NotifierProvider<TorrentSettingsController, TorrentSettings>(
       TorrentSettingsController.new,
@@ -65,7 +66,8 @@ class TorrentSettingsController extends Notifier<TorrentSettings> {
   @override
   TorrentSettings build() {
     _load();
-    return const TorrentSettings();
+    // Sur TV le stockage est petit : cache vidé à la fermeture par défaut.
+    return TorrentSettings(clearCacheOnExit: ref.read(androidTvProvider));
   }
 
   Future<void> _load() async {
@@ -73,10 +75,12 @@ class TorrentSettingsController extends Notifier<TorrentSettings> {
       final store = ref.read(appSettingsStoreProvider);
       final cache = await store.readInt(AppSettingsStore.torrentCacheKey);
       final up = await store.readInt(AppSettingsStore.uploadKey);
+      final clear = await store.read(AppSettingsStore.clearCacheOnExitKey);
       if (_touched) return;
       state = TorrentSettings(
         cacheGb: cache != null && cache > 0 ? cache : state.cacheGb,
         uploadKbps: up != null && up >= 0 ? up : state.uploadKbps,
+        clearCacheOnExit: clear == null ? state.clearCacheOnExit : clear == '1',
       );
     } on Object {
       // Valeurs par défaut.
@@ -97,6 +101,14 @@ class TorrentSettingsController extends Notifier<TorrentSettings> {
     await ref
         .read(appSettingsStoreProvider)
         .write(AppSettingsStore.uploadKey, '$kbps');
+  }
+
+  Future<void> setClearCacheOnExit(bool value) async {
+    _touched = true;
+    state = state.copyWith(clearCacheOnExit: value);
+    await ref
+        .read(appSettingsStoreProvider)
+        .write(AppSettingsStore.clearCacheOnExitKey, value ? '1' : '0');
   }
 }
 
