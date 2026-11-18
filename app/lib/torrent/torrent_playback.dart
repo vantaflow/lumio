@@ -62,7 +62,16 @@ class TorrentPlayback {
     this.ready,
     this.peerTimeout = const Duration(seconds: 45),
     this.pollInterval = const Duration(milliseconds: 500),
+    this.enforceCache,
+    this.evictInterval = const Duration(seconds: 30),
   });
+
+  /// Éviction du cache (plus anciens d'abord) ; reçoit le nom de l'entrée du
+  /// torrent en lecture, qui n'est jamais supprimée.
+  final Future<void> Function(String playingId)? enforceCache;
+
+  /// Intervalle minimal entre deux évictions pendant la lecture.
+  final Duration evictInterval;
 
   final TorrentEngine engine;
 
@@ -79,6 +88,37 @@ class TorrentPlayback {
   StreamSubscription<TorrentStatus>? _sub;
   int _generation = 0;
   Completer<void>? _waiting;
+  String? _playing;
+  final Stopwatch _sinceEvict = Stopwatch();
+  bool _evicting = false;
+
+  /// Nom de l'entrée du torrent dans le dossier de cache : premier segment du
+  /// chemin du fichier (dossier du torrent), ou le fichier lui-même.
+  static String cacheEntryName(String fileName) =>
+      fileName.split(RegExp(r'[/\\]')).firstWhere((s) => s.isNotEmpty);
+
+  Future<void> _evict() async {
+    final playing = _playing;
+    final enforce = enforceCache;
+    if (playing == null || enforce == null || _evicting) return;
+    _evicting = true;
+    try {
+      await enforce(playing);
+    } on Object {
+      // Éviction au mieux : une erreur disque ne coupe pas la lecture.
+    } finally {
+      _evicting = false;
+      _sinceEvict
+        ..reset()
+        ..start();
+    }
+  }
+
+  void _maybeEvict() {
+    if (_playing == null || _evicting) return;
+    if (_sinceEvict.isRunning && _sinceEvict.elapsed < evictInterval) return;
+    unawaited(_evict());
+  }
 
   Future<void> _check(int gen, String? id) async {
     if (gen == _generation) return;
@@ -118,6 +158,7 @@ class TorrentPlayback {
           .listen(
             (st) {
               emit(st);
+              if (gen == _generation) _maybeEvict();
               if ((st.peers > 0 || st.seeders > 0) && !hasPeer.isCompleted) {
                 hasPeer.complete();
               }
@@ -147,6 +188,9 @@ class TorrentPlayback {
       }
       final file = chooseTorrentFile(files, s.fileIdx);
       if (file == null) throw const NoStreamableFileException();
+      _playing = cacheEntryName(file.name);
+      await _evict();
+      await _check(gen, id);
       final url = await engine.stream(id, fileIndex: file.index);
       await _check(gen, id);
       if (!isLoopbackEngineUrl(url)) throw UntrustedEngineUrlException(url);
@@ -181,6 +225,7 @@ class TorrentPlayback {
     _generation++;
     final id = _id;
     _id = null;
+    _playing = null;
     final sub = _sub;
     _sub = null;
     final waiting = _waiting;

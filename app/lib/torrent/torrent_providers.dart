@@ -78,6 +78,10 @@ final torrentPlaybackFactoryProvider = Provider<TorrentPlayback Function()>((
     init = null; // nouvelle tentative au prochain torrent
     throw e;
   });
-  return () =>
-      TorrentPlayback(engine: ref.read(torrentEngineProvider), ready: ready);
+  return () => TorrentPlayback(
+    engine: ref.read(torrentEngineProvider),
+    ready: ready,
+    enforceCache: (playing) =>
+        ref.read(cacheManagerProvider).enforce(playingId: playing),
+  );
 });

@@ -74,6 +74,16 @@ class CacheManager {
   final int fallbackFreeBytes;
 
   Future<void>? _startClean;
+  bool _loggedUnknownFree = false;
+  int? _limit;
+
+  /// Applique la limite de la dernière [resolve] pendant une session ;
+  /// [playingId] (nom de l'entrée du torrent en lecture) n'est jamais touché.
+  Future<void> enforce({String? playingId}) async {
+    final limit = _limit;
+    if (limit == null) return;
+    await enforceLimit(limit, playingId: playingId);
+  }
 
   /// Réglages du moteur : taille du cache bornée par l'espace libre, débit
   /// montant (0 = ensemencement désactivé). Lève
@@ -84,12 +94,22 @@ class CacheManager {
     String? playingId,
   }) async {
     final dir = await savePath();
-    final free = await storage.freeBytes(dir) ?? fallbackFreeBytes;
+    var free = await storage.freeBytes(dir);
+    if (free == null) {
+      if (!_loggedUnknownFree) {
+        _loggedUnknownFree = true;
+        debugPrint(
+          'CacheManager : espace libre inconnu, repli sur $fallbackFreeBytes octets',
+        );
+      }
+      free = fallbackFreeBytes;
+    }
     final cache = effectiveCacheBytes(
       requestedBytes: requestedCacheBytes,
       freeBytes: free,
       isTv: isTv,
     );
+    _limit = cache;
     await enforceLimit(cache, playingId: playingId);
     return TorrentSettings(
       savePath: dir,
@@ -142,7 +162,9 @@ class CacheManager {
 
   void _deletePath(String path) {
     try {
-      if (FileSystemEntity.isDirectorySync(path)) {
+      if (FileSystemEntity.isLinkSync(path)) {
+        Link(path).deleteSync(); // le lien seulement, jamais sa cible
+      } else if (FileSystemEntity.isDirectorySync(path)) {
         Directory(path).deleteSync(recursive: true);
       } else {
         File(path).deleteSync();

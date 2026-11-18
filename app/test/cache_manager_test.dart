@@ -3,8 +3,12 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/torrent/cache_manager.dart';
 import 'package:lumio/torrent/libtorrent_engine.dart' show engineUploadLimit;
-import 'package:lumio/torrent/torrent_engine.dart' show TorrentSettings;
+import 'package:lumio/torrent/torrent_engine.dart'
+    show TorrentFile, TorrentSettings;
+import 'package:lumio/torrent/torrent_playback.dart' show TorrentPlayback;
 import 'package:lumio_core/lumio_core.dart';
+
+import 'support/fake_torrent_engine.dart';
 
 const _mb = 1024 * 1024;
 const _gb = 1024 * _mb;
@@ -177,6 +181,87 @@ void main() {
         ),
         524288,
       );
+    });
+  });
+
+  group('éviction en cours de session', () {
+    test(
+      'anciens évincés, torrent en lecture conservé, après l\'init',
+      () async {
+        final m = manager(storage: _FakeStorage(100 * _gb));
+        await m.resolve(
+          requestedCacheBytes: 2 * _gb,
+        ); // limite posée, dossier vide
+        torrentDir('old1', 2 * _mb, ageDays: 9);
+        torrentDir('old2', 2 * _mb, ageDays: 8);
+        torrentDir('playing', 2 * _mb, ageDays: 20);
+        // Limite de session abaissée par resolve : on la fixe à 3 Mo.
+        await m.resolve(requestedCacheBytes: minCacheBytes);
+        await m.enforceLimit(3 * _mb, playingId: 'playing');
+        expect(Directory('${root.path}/old1').existsSync(), isFalse);
+        expect(Directory('${root.path}/old2').existsSync(), isFalse);
+        expect(Directory('${root.path}/playing').existsSync(), isTrue);
+      },
+    );
+
+    test('enforce sans resolve préalable : sans effet', () async {
+      torrentDir('a', 2 * _mb);
+      await manager(storage: _FakeStorage(1 * _gb)).enforce(playingId: 'x');
+      expect(root.listSync(), hasLength(1));
+    });
+
+    test('TorrentPlayback évince pendant la session', () async {
+      final m = manager(storage: _FakeStorage(100 * _gb));
+      final engine = FakeTorrentEngine(
+        fileList: const [
+          TorrentFile(
+            index: 0,
+            name: 'Movie/video.mkv',
+            size: 1,
+            streamable: true,
+          ),
+        ],
+      );
+      // Limite effective 300 Mo (minimum) ; les fichiers pèsent 200 Mo chacun.
+      await m.resolve(requestedCacheBytes: minCacheBytes);
+      torrentDir('old1', 200 * _mb, ageDays: 9);
+      torrentDir('old2', 200 * _mb, ageDays: 8);
+      torrentDir('Movie', 200 * _mb, ageDays: 20);
+      final playback = TorrentPlayback(
+        engine: engine,
+        pollInterval: const Duration(milliseconds: 10),
+        enforceCache: (p) => m.enforce(playingId: p),
+        evictInterval: Duration.zero,
+      );
+      await playback.prepare(
+        const StreamItem(
+          addonId: 'a',
+          title: 't',
+          infoHash: '0123456789abcdef0123456789abcdef01234567',
+        ),
+      );
+      expect(Directory('${root.path}/old1').existsSync(), isFalse);
+      expect(Directory('${root.path}/old2').existsSync(), isFalse);
+      expect(Directory('${root.path}/Movie').existsSync(), isTrue);
+      await playback.release();
+    });
+  });
+
+  group('liens symboliques', () {
+    test('éviction et nettoyage ne suivent pas les liens', () async {
+      final outside = Directory.systemTemp.createTempSync('lumio_outside');
+      addTearDown(() => outside.deleteSync(recursive: true));
+      File('${outside.path}/keep.txt').writeAsStringSync('x');
+      Link('${root.path}/lnk').createSync(outside.path);
+      final m = manager(storage: _FakeStorage(100 * _gb), clearOnExit: true);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      torrentDir('big', 10); // plus récent que le lien : le lien passe d'abord
+      await m.enforceLimit(0);
+      expect(File('${outside.path}/keep.txt').existsSync(), isTrue);
+      expect(Link('${root.path}/lnk').existsSync(), isFalse);
+      Link('${root.path}/lnk2').createSync(outside.path);
+      await m.cleanOnExit();
+      expect(File('${outside.path}/keep.txt').existsSync(), isTrue);
     });
   });
 }
