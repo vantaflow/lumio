@@ -70,6 +70,10 @@ class _Origin {
         res.write('#EXTM3U\n#EXTINF:4,\n$otherSegment\n');
       case '/mp4-playlist':
         res.headers.contentType = ContentType('video', 'mp4');
+        if (req.headers.value('range') != null) {
+          res.statusCode = 206;
+          res.headers.set('content-range', 'bytes 0-29/30');
+        }
         res.add([0xEF, 0xBB, 0xBF]);
         res.write('#EXTM3U\n#EXTINF:4,\nseg1.ts\n');
       case '/text-playlist':
@@ -276,6 +280,11 @@ void main() {
       expect(body, contains('/p/'), reason: path);
       expect(body, isNot(contains('\nseg1.ts')), reason: path);
     }
+  });
+
+  test('206 débutant à 0 : playlist réécrite aussi', () async {
+    final r = await _get(wrap('/mp4-playlist'), headers: {'Range': 'bytes=0-'});
+    expect(utf8.decode(r.body), contains('/p/'));
   });
 
   test('nom public résolvant vers une adresse privée refusé', () async {

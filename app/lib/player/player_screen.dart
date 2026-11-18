@@ -631,7 +631,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     }
     if (!mounted) return;
     final l10n = context.l10n;
-    final fetcher = IoHttpFetcher();
+    final fetcher = IoHttpFetcher(
+      connectionFactory: guardedConnectionFactory(),
+    );
     final c = TracksController(
       backend:
           widget.tracksBackend?.call(_ctl) ??

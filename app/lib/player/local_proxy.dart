@@ -253,7 +253,9 @@ class LocalProxy {
       if (!isPlaylist &&
           req.method == 'GET' &&
           up.statusCode < 400 &&
-          up.statusCode != HttpStatus.partialContent) {
+          (up.statusCode != HttpStatus.partialContent ||
+              (up.headers.value(HttpHeaders.contentRangeHeader) ?? '')
+                  .startsWith('bytes 0-'))) {
         // Une playlist servie avec un autre type (video/mp4, text/plain)
         // doit être réécrite aussi : sinon le lecteur irait chercher les
         // segments directement, hors garde.
