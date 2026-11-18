@@ -112,15 +112,24 @@ last_state() {
   echo "$line" | sed -n 's/.*"state":"\([a-z]*\)".*/\1/p'
 }
 
-# Logcat : `-v epoch` d'abord ; sinon repli sans epoch (péremption ignorée,
-# signalé une fois). Rend 1 si logcat est illisible dans les deux cas.
+# Logcat : `-v epoch` d'abord. Repli sans epoch (péremption ignorée) seulement
+# après 3 échecs d'epoch consécutifs alors que l'appel simple réussit : l'option
+# est alors vraiment refusée. Un appel epoch réussi remet le compteur à zéro.
+# Rend 1 si logcat est illisible.
 EPOCH=1
+epoch_fail=0
 fetch_logcat() {
   if [ "$EPOCH" = 1 ]; then
-    if LOGS="$(box logcat -d -v epoch -t 4000 2>/dev/null)"; then return 0; fi
+    if LOGS="$(box logcat -d -v epoch -t 4000 2>/dev/null)"; then
+      epoch_fail=0
+      return 0
+    fi
+    epoch_fail=$((epoch_fail + 1))
     if LOGS="$(box logcat -d -t 4000 2>/dev/null)"; then
-      EPOCH=0
-      echo "endurance : logcat -v epoch refusé, repli sans péremption des battements." >&2
+      if [ "$epoch_fail" -ge 3 ]; then
+        EPOCH=0
+        echo "endurance : logcat -v epoch refusé 3 fois, repli sans péremption des battements." >&2
+      fi
       return 0
     fi
     return 1
@@ -168,6 +177,10 @@ while [ "$i" -le "$SAMPLES" ]; do
       logcat_fail=$((logcat_fail + 1))
       if [ "$logcat_fail" -ge 3 ]; then
         echo "$ts,$elapsed,${pss:-},1,$pid,logcat_error,$stuck" >> "$OUT"
+        if [ "$stuck_seen" = 1 ]; then
+          echo "endurance : ÉCHEC, lecture figée puis logcat illisible." >&2
+          exit 1
+        fi
         echo "endurance : logcat illisible $logcat_fail relevés de suite (pas un échec du lecteur)." >&2
         exit 2
       fi
