@@ -50,6 +50,7 @@ class AddonClient {
       json = await _getJson(
         url,
         (m, {cause}) => ManifestException(m, cause: cause),
+        isManifest: true,
       );
     } on _NotFound {
       throw const ManifestException('Addon introuvable (HTTP 404)');
@@ -156,8 +157,9 @@ class AddonClient {
 
   Future<Object?> _getJson(
     Uri url,
-    AddonException Function(String, {Object? cause}) fail,
-  ) async {
+    AddonException Function(String, {Object? cause}) fail, {
+    bool isManifest = false,
+  }) async {
     try {
       UrlGuard.check(url, allowPrivate: allowPrivate);
     } on UnsafeUrlException catch (e) {
@@ -172,13 +174,14 @@ class AddonClient {
           headers: const {'accept': 'application/json'},
           maxBytes: maxBytes,
           timeout: timeout,
+          guard: (u) => UrlGuard.check(u, allowPrivate: allowPrivate),
         );
       } on TimeoutException catch (e) {
         if (attempt < retries) {
           await _pause();
           continue;
         }
-        throw _timeout(fail, e);
+        throw _timeout(fail, e, isManifest);
       } on ResponseTooLargeException catch (e) {
         throw fail(
           'Réponse trop volumineuse (plus de ${maxBytes ~/ (1024 * 1024)} Mo)',
@@ -223,7 +226,7 @@ class AddonClient {
     }
     try {
       return await _decode(res.body);
-    } catch (e) {
+    } on FormatException catch (e) {
       throw fail('Réponse invalide : ce n\'est pas du JSON valide', cause: e);
     }
   }
@@ -231,13 +234,11 @@ class AddonClient {
   AddonException _timeout(
     AddonException Function(String, {Object? cause}) fail,
     TimeoutException e,
+    bool isManifest,
   ) {
     final ex = AddonTimeoutException(duration: timeout);
     // fetchManifest doit lever une ManifestException : on garde le message FR.
-    final probe = fail('x');
-    return probe is ManifestException
-        ? ManifestException(ex.message, cause: ex)
-        : ex;
+    return isManifest ? ManifestException(ex.message, cause: ex) : ex;
   }
 
   Future<void> _pause() => retryDelay > Duration.zero

@@ -53,12 +53,16 @@ class InvalidRedirectException implements Exception {
 }
 
 /// Accès HTTP GET borné (taille, délai, redirections), abstrait pour les tests.
+///
+/// [guard], s'il est fourni, est appelé sur l'URL initiale puis sur la cible de
+/// chaque redirection ; il lève pour refuser la requête.
 abstract class HttpFetcher {
   Future<FetchResponse> get(
     Uri url, {
     Map<String, String> headers = const {},
     int maxBytes = 5 * 1024 * 1024,
     Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
   });
 }
 
@@ -83,16 +87,27 @@ class IoHttpFetcher implements HttpFetcher {
     Map<String, String> headers = const {},
     int maxBytes = 5 * 1024 * 1024,
     Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
   }) async {
     final client = HttpClient()..connectionTimeout = timeout;
     try {
-      return await _run(client, url, headers, maxBytes).timeout(
+      guard?.call(url);
+      redirectGuard?.call(url);
+      return await _run(client, url, headers, maxBytes, guard).timeout(
         timeout,
         onTimeout: () => throw TimeoutException(
           'Délai dépassé (${timeout.inMilliseconds} ms)',
           timeout,
         ),
       );
+    } on SocketException catch (e) {
+      if (_isConnectTimeout(e)) {
+        throw TimeoutException(
+          'Délai dépassé (${timeout.inMilliseconds} ms)',
+          timeout,
+        );
+      }
+      rethrow;
     } finally {
       client.close(force: true);
     }
@@ -103,6 +118,7 @@ class IoHttpFetcher implements HttpFetcher {
     Uri url,
     Map<String, String> headers,
     int maxBytes,
+    void Function(Uri target)? guard,
   ) async {
     var current = url;
     var sent = headers;
@@ -120,6 +136,7 @@ class IoHttpFetcher implements HttpFetcher {
           throw TooManyRedirectsException(maxRedirects);
         }
         final next = validateRedirect(current, location);
+        guard?.call(next);
         redirectGuard?.call(next);
         if (!_sameOrigin(current, next)) sent = _withoutCredentials(sent);
         current = next;
@@ -138,6 +155,16 @@ class IoHttpFetcher implements HttpFetcher {
       return FetchResponse(status: res.statusCode, body: out, headers: h);
     }
   }
+}
+
+// Le délai de connexion de HttpClient remonte en SocketException (errno 110
+// Linux/Android, 60 macOS, 10060 Windows).
+bool _isConnectTimeout(SocketException e) {
+  final code = e.osError?.errorCode;
+  return code == 110 ||
+      code == 60 ||
+      code == 10060 ||
+      e.message.toLowerCase().contains('timed out');
 }
 
 bool _sameOrigin(Uri a, Uri b) =>

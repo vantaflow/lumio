@@ -15,6 +15,7 @@ class _StubFetcher implements HttpFetcher {
     Map<String, String> headers = const {},
     int maxBytes = 5 * 1024 * 1024,
     Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
   }) => respond();
 }
 

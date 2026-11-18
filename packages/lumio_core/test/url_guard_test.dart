@@ -24,6 +24,17 @@ void main() {
       'http://[::ffff:10.0.0.1]/x',
       'http://[::ffff:7f00:1]/x',
       'http://2130706433/x',
+      'http://127.0.0.1./x',
+      'http://localhost./x',
+      'http://foo.localhost./x',
+      'http://0177.0.0.1/x',
+      'http://127.1/x',
+      'http://0x7f.1/x',
+      'http://010.0.0.1/x',
+      'http://[64:ff9b::a00:1]/x',
+      'http://198.18.0.1/x',
+      'http://198.19.255.1/x',
+      'http://192.0.0.5/x',
       'http://0x7f.0.0.1/x',
     ]) {
       test('refuse $u', () {
@@ -39,6 +50,9 @@ void main() {
       'http://addon.example:7000/manifest.json',
       'https://8.8.8.8/x',
       'http://172.32.0.1/x',
+      'http://198.20.0.1/x',
+      'http://192.0.2.1/x',
+      'http://[64:ff9b::808:808]/x',
       'https://[2606:4700::1111]/x',
     ]) {
       test('accepte $u', () {

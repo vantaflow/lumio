@@ -27,6 +27,7 @@ class _Scripted implements HttpFetcher {
     Map<String, String> headers = const {},
     int maxBytes = 5 * 1024 * 1024,
     Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
   }) async {
     urls.add(url);
     final next = script.removeAt(0);
@@ -311,6 +312,99 @@ void main() {
             startsWith('Adresse refusée'),
           ),
         ),
+      );
+    });
+  });
+
+  group('garde par construction', () {
+    test(
+      'AddonClient(IoHttpFetcher()) refuse une redirection vers le privé',
+      () async {
+        server.route(
+          '/manifest.json',
+          FakeResponse.raw(
+            const [],
+            status: 302,
+            headers: {'location': 'http://10.0.0.5/manifest.json'},
+          ),
+        );
+        await expectLater(
+          AddonClient(
+            IoHttpFetcher(),
+            allowPrivate: false,
+          ).fetchManifest(server.baseUrl.replace(path: '/manifest.json')),
+          throwsA(isA<ManifestException>()),
+        );
+        // Avec allowPrivate, la première URL (127.0.0.1) passe, la cible 10.x
+        // aussi ; le garde par défaut est donc bien celui d'allowPrivate.
+        final res = AddonClient(IoHttpFetcher(), allowPrivate: false);
+        await expectLater(
+          res.catalog(manifest, 'movie', 'top'),
+          throwsA(isA<AddonException>()),
+        );
+      },
+    );
+
+    test(
+      'redirection multi-sauts : le dernier saut privé est refusé',
+      () async {
+        server
+          ..route(
+            '/a',
+            FakeResponse.raw(
+              const [],
+              status: 302,
+              headers: {'location': '/b'},
+            ),
+          )
+          ..route(
+            '/b',
+            FakeResponse.raw(
+              const [],
+              status: 302,
+              headers: {'location': 'http://169.254.169.254/'},
+            ),
+          );
+        await expectLater(
+          IoHttpFetcher().get(
+            server.baseUrl.replace(path: '/a'),
+            guard: (u) =>
+                UrlGuard.check(u, allowPrivate: u.host == '127.0.0.1'),
+          ),
+          throwsA(isA<UnsafeUrlException>()),
+        );
+      },
+    );
+
+    test(
+      '5xx puis erreur socket : « Addon injoignable », pas de 3e appel',
+      () async {
+        final f = _Scripted([_ok({}, 502), const SocketException('x')]);
+        final c = AddonClient(f, allowPrivate: true, retryDelay: Duration.zero);
+        await expectLater(
+          c.catalog(manifest, 'movie', 'top'),
+          throwsA(
+            isA<AddonException>().having(
+              (e) => e.message,
+              'message',
+              'Addon injoignable',
+            ),
+          ),
+        );
+        expect(f.urls, hasLength(2));
+      },
+    );
+
+    test('JSON invalide de plus de 256 Ko : erreur lisible', () async {
+      final f = _Scripted([
+        FetchResponse(
+          status: 200,
+          body: utf8.encode('{"metas": [${'1,' * 200000}'),
+        ),
+      ]);
+      await expectLater(
+        AddonClient(f, allowPrivate: true).catalog(manifest, 'movie', 'top'),
+        throwsA(isA<AddonException>()),
       );
     });
   });
