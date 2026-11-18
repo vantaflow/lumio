@@ -17,6 +17,20 @@ abstract class NetworkProbe {
   Future<List<NetInterface>> upInterfaces();
 }
 
+/// Interfaces actives à partir de (nom, adresses). Sur macOS, les `utun*`
+/// existent en permanence (iCloud, partage…) sans VPN : un `utun*` ne compte
+/// que s'il porte une adresse IPv4 non locale au lien (hors 169.254/16).
+List<NetInterface> filterInterfaces(
+  List<(String, List<InternetAddress>)> raw, {
+  required bool macos,
+}) => [
+  for (final (name, addrs) in raw)
+    if (!macos ||
+        !name.toLowerCase().startsWith('utun') ||
+        addrs.any((a) => a.type == InternetAddressType.IPv4 && !a.isLinkLocal))
+      NetInterface(name),
+];
+
 /// `NetworkInterface.list()` + sur Android la requête `TRANSPORT_VPN` du
 /// ConnectivityManager (les interfaces VPN n'y sont pas toujours visibles) :
 /// un VPN détecté ainsi n'a pas de nom connu ([NetInterface.anonymousVpn]).
@@ -28,7 +42,9 @@ class PlatformNetworkProbe implements NetworkProbe {
   @override
   Future<List<NetInterface>> upInterfaces() async {
     final list = await NetworkInterface.list();
-    final out = [for (final i in list) NetInterface(i.name)];
+    final out = filterInterfaces([
+      for (final i in list) (i.name, [for (final a in i.addresses) a]),
+    ], macos: Platform.isMacOS);
     if (Platform.isAndroid) {
       try {
         if (await _channel.invokeMethod<bool>('vpnActive') ?? false) {
@@ -81,7 +97,7 @@ class TorrentPrivacy {
       store.write(AppSettingsStore.ipWarningAcceptedKey, '1');
 }
 
-/// Pendant un torrent, interroge les interfaces toutes les 3 s et appelle
+/// Pendant un torrent (VPN exigé), interroge les interfaces toutes les 3 s et appelle
 /// [onStop] (une seule fois) dès que le coupe-circuit décide l'arrêt.
 class NetworkWatcher {
   NetworkWatcher({
@@ -115,7 +131,12 @@ class NetworkWatcher {
         onStop(d.reason);
       }
     } on Object {
-      // Lecture impossible ce tour-ci : nouvel essai au suivant.
+      // Échec fermé : le watcher n'existe que si le VPN est exigé ; ne plus
+      // pouvoir vérifier (réglages illisibles) vaut un arrêt.
+      if (_timer != null) {
+        stop();
+        onStop('vérification impossible');
+      }
     } finally {
       _busy = false;
     }

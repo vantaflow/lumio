@@ -1982,6 +1982,12 @@ abstract class AppLocalizations {
   /// **'N\'importe quel VPN'**
   String get vpnAny;
 
+  /// No description provided for @vpnInterfaceRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name} : exigée, torrents arrêtés si elle tombe'**
+  String vpnInterfaceRequired(String name);
+
   /// No description provided for @vpnNone.
   ///
   /// In fr, this message translates to:

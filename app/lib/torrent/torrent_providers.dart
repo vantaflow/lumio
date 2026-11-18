@@ -99,6 +99,10 @@ final torrentPlaybackFactoryProvider = Provider<TorrentPlayback Function()>((
     final d = await ref.read(torrentPrivacyProvider).evaluate();
     if (d is GuardStop) throw const VpnRequiredException();
     await initOnce();
+    // L'initialisation peut être longue (premier démarrage) : le VPN a pu
+    // tomber entre-temps. Nouvelle évaluation juste avant `engine.add`.
+    final again = await ref.read(torrentPrivacyProvider).evaluate();
+    if (again is GuardStop) throw const VpnRequiredException();
   }
 
   return () => TorrentPlayback(

@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lumio/data/app_settings.dart';
+import 'package:lumio/data/app_settings.dart' hide TorrentSettings;
 import 'package:lumio/data/db.dart';
 import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/l10n/error_messages.dart';
@@ -14,6 +16,7 @@ import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/torrent/cache_manager.dart';
 import 'package:lumio/torrent/network_watcher.dart';
+import 'package:lumio/torrent/torrent_engine.dart' show TorrentSettings;
 import 'package:lumio/torrent/torrent_playback.dart';
 import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/theme.dart';
@@ -38,6 +41,26 @@ class _MemStore extends AppSettingsStore {
   Future<String?> read(String key) async => data[key];
   @override
   Future<void> write(String key, String value) async => data[key] = value;
+}
+
+/// Lecture des réglages qui échoue une fois [failing] activé.
+class _FailingStore extends _MemStore {
+  _FailingStore([super.init]);
+  bool failing = false;
+  @override
+  Future<String?> read(String key) async =>
+      failing ? throw StateError('base fermée') : super.read(key);
+}
+
+/// Moteur dont l'initialisation coupe le VPN (fenêtre d'init longue).
+class _DropVpnOnInit extends FakeTorrentEngine {
+  _DropVpnOnInit(this.probe);
+  final FakeNetworkProbe probe;
+  @override
+  Future<void> init(TorrentSettings s) async {
+    await super.init(s);
+    probe.up = [_wlan];
+  }
 }
 
 class _Storage implements StorageInfo {
@@ -81,53 +104,98 @@ void main() {
   });
 
   group('NetworkWatcher', () {
-    test('appelle onStop une seule fois quand le VPN tombe', () async {
-      final store = _MemStore({AppSettingsStore.requireVpnKey: '1'});
-      final probe = FakeNetworkProbe([_wlan, _tun]);
-      final stops = <String>[];
-      final w = NetworkWatcher(
-        privacy: TorrentPrivacy(probe: probe, store: store),
-        interval: const Duration(milliseconds: 20),
-        onStop: stops.add,
-      )..start();
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      expect(stops, isEmpty);
-      expect(probe.calls, greaterThan(1));
-      probe.up = [_wlan];
-      await Future<void>.delayed(const Duration(milliseconds: 150));
-      expect(stops, hasLength(1));
-      expect(w.running, isFalse);
-      w.stop();
+    const tick = Duration(seconds: 3);
+
+    test('appelle onStop une seule fois quand le VPN tombe', () {
+      fakeAsync((fa) {
+        final store = _MemStore({AppSettingsStore.requireVpnKey: '1'});
+        final probe = FakeNetworkProbe([_wlan, _tun]);
+        final stops = <String>[];
+        final w = NetworkWatcher(
+          privacy: TorrentPrivacy(probe: probe, store: store),
+          onStop: stops.add,
+        )..start();
+        fa.elapse(tick * 3);
+        expect(stops, isEmpty);
+        expect(probe.calls, 3);
+        probe.up = [_wlan];
+        fa.elapse(tick * 3);
+        expect(stops, hasLength(1));
+        expect(w.running, isFalse);
+      });
     });
 
-    test('erreur de lecture : on réessaie, aucun arrêt', () async {
-      final store = _MemStore({AppSettingsStore.requireVpnKey: '1'});
-      final probe = FakeNetworkProbe([_tun]);
-      final stops = <String>[];
-      final w = NetworkWatcher(
-        privacy: TorrentPrivacy(probe: probe, store: store),
-        interval: const Duration(milliseconds: 20),
-        onStop: stops.add,
-      )..start();
-      // Une erreur de lecture avec VPN exigé vaut « interfaces illisibles ».
-      probe.error = const SocketException('x');
-      await Future<void>.delayed(const Duration(milliseconds: 80));
-      expect(stops, hasLength(1));
-      w.stop();
+    test('interfaces illisibles avec VPN exigé : arrêt', () {
+      fakeAsync((fa) {
+        final store = _MemStore({AppSettingsStore.requireVpnKey: '1'});
+        final probe = FakeNetworkProbe([_tun]);
+        final stops = <String>[];
+        NetworkWatcher(
+          privacy: TorrentPrivacy(probe: probe, store: store),
+          onStop: stops.add,
+        ).start();
+        probe.error = const SocketException('x');
+        fa.elapse(tick);
+        expect(stops, hasLength(1));
+      });
     });
 
-    test('arrêté : plus d\'interrogation', () async {
-      final probe = FakeNetworkProbe([_tun]);
-      final w = NetworkWatcher(
-        privacy: TorrentPrivacy(probe: probe, store: _MemStore()),
-        interval: const Duration(milliseconds: 20),
-        onStop: (_) {},
-      )..start();
-      await Future<void>.delayed(const Duration(milliseconds: 60));
-      w.stop();
-      final n = probe.calls;
-      await Future<void>.delayed(const Duration(milliseconds: 80));
-      expect(probe.calls, n);
+    test('réglages illisibles : échec fermé, torrent arrêté', () {
+      fakeAsync((fa) {
+        final store = _FailingStore({AppSettingsStore.requireVpnKey: '1'});
+        final stops = <String>[];
+        NetworkWatcher(
+          privacy: TorrentPrivacy(
+            probe: FakeNetworkProbe([_tun]),
+            store: store,
+          ),
+          onStop: stops.add,
+        ).start();
+        fa.elapse(tick);
+        expect(stops, isEmpty);
+        store.failing = true;
+        fa.elapse(tick);
+        expect(stops, hasLength(1));
+      });
+    });
+
+    test('arrêté : plus d\'interrogation', () {
+      fakeAsync((fa) {
+        final probe = FakeNetworkProbe([_tun]);
+        final w = NetworkWatcher(
+          privacy: TorrentPrivacy(probe: probe, store: _MemStore()),
+          onStop: (_) {},
+        )..start();
+        fa.elapse(tick * 2);
+        w.stop();
+        final n = probe.calls;
+        fa.elapse(tick * 5);
+        expect(probe.calls, n);
+      });
+    });
+  });
+
+  group('filterInterfaces', () {
+    final v4 = InternetAddress('10.8.0.2');
+    final linkLocal = InternetAddress('169.254.3.4');
+    final v6 = InternetAddress('fe80::1');
+
+    test('macOS : utun sans IPv4 routable ne compte pas comme VPN', () {
+      final up = filterInterfaces([
+        ('en0', [v4]),
+        ('utun0', [v6]),
+        ('utun1', [linkLocal]),
+        ('utun2', [v4]),
+      ], macos: true);
+      expect([for (final i in up) i.name], ['en0', 'utun2']);
+    });
+
+    test('hors macOS : toutes les interfaces gardées', () {
+      final up = filterInterfaces([
+        ('wlan0', [v4]),
+        ('tun0', [v6]),
+      ], macos: false);
+      expect(up, hasLength(2));
     });
   });
 
@@ -181,6 +249,23 @@ void main() {
         );
       },
     );
+
+    test('VPN coupé pendant l\'initialisation : aucun pair contacté', () async {
+      final probe = FakeNetworkProbe([_wlan, _tun]);
+      final engine = _DropVpnOnInit(probe);
+      final c = container(
+        _MemStore({AppSettingsStore.requireVpnKey: '1'}),
+        probe,
+        engine,
+      );
+      final playback = c.read(torrentPlaybackFactoryProvider)();
+      await expectLater(
+        playback.prepare(_item),
+        throwsA(isA<VpnRequiredException>()),
+      );
+      expect(engine.settings, isNotNull);
+      expect(engine.addedMagnets, isEmpty);
+    });
 
     test('VPN exigé et présent : le torrent démarre', () async {
       final engine = FakeTorrentEngine();
@@ -322,6 +407,107 @@ void main() {
         ctl.failures.single,
         'VPN coupé : torrent arrêté pour protéger votre adresse IP.',
       );
+      await t.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('fermeture du lecteur : le watcher s\'arrête', (t) async {
+      final probe = FakeNetworkProbe([_wlan, _tun]);
+      await pumpPlayer(
+        t,
+        probe,
+        settings: {
+          AppSettingsStore.ipWarningAcceptedKey: '1',
+          AppSettingsStore.requireVpnKey: '1',
+        },
+      );
+      await t.pump(const Duration(seconds: 3));
+      final n = probe.calls;
+      expect(n, greaterThan(0));
+      await t.pumpWidget(const SizedBox());
+      await t.pump(const Duration(seconds: 12));
+      expect(probe.calls, n);
+    });
+
+    testWidgets('Réessayer après VPN coupé : le watcher repart', (t) async {
+      final probe = FakeNetworkProbe([_wlan, _tun]);
+      final (ctl, e, _) = await pumpPlayer(
+        t,
+        probe,
+        settings: {
+          AppSettingsStore.ipWarningAcceptedKey: '1',
+          AppSettingsStore.requireVpnKey: '1',
+        },
+      );
+      probe.up = [_wlan];
+      await t.pump(const Duration(seconds: 3));
+      await _settle(t);
+      expect(ctl.failures, hasLength(1));
+      probe.up = [_wlan, _tun];
+      await t.tap(find.text('Réessayer'));
+      await _settle(t);
+      expect(ctl.opened, hasLength(2));
+      probe.up = [_wlan];
+      await t.pump(const Duration(seconds: 3));
+      await _settle(t);
+      expect(ctl.failures, hasLength(2));
+      expect(e.stopped, ['fake-1', 'fake-2']);
+      await t.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('réglages illisibles : échec fermé, rien ne démarre', (
+      t,
+    ) async {
+      final ctl = RecordingPlayerController();
+      final e = FakeTorrentEngine();
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await t.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appDatabaseProvider.overrideWithValue(db),
+            torrentPrivacyProvider.overrideWithValue(
+              TorrentPrivacy(
+                probe: FakeNetworkProbe([_tun]),
+                store: _FailingStore()..failing = true,
+              ),
+            ),
+            torrentPlaybackFactoryProvider.overrideWithValue(
+              () => TorrentPlayback(engine: e),
+            ),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(extensions: const [LumioColors.dark]),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('fr'),
+            home: PlayerScreen(
+              item: _item,
+              controller: ctl,
+              videoBuilder: (_) => const ColoredBox(color: Colors.black),
+              tracksBackend: (_) => NoTracksBackend(),
+            ),
+          ),
+        ),
+      );
+      await _settle(t);
+      expect(e.addedMagnets, isEmpty);
+      expect(ctl.failures.single, contains("n'a pas pu démarrer"));
+      await t.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('dialogue IP : gauche/droite changent de bouton', (t) async {
+      await pumpPlayer(t, FakeNetworkProbe([_wlan]));
+      Finder btn(String k) => find.byKey(ValueKey('ipWarning:$k'));
+      bool focused(String k) => Focus.of(t.element(btn(k))).hasFocus;
+      expect(focused('continue'), isTrue);
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await t.pump();
+      expect(focused('cancel'), isTrue);
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await t.pump();
+      expect(focused('continue'), isTrue);
+      await t.tap(btn('cancel'));
+      await _settle(t);
       await t.pumpWidget(const SizedBox());
     });
   });

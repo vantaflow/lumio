@@ -1083,6 +1083,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vpnAny => 'N\'importe quel VPN';
 
   @override
+  String vpnInterfaceRequired(String name) {
+    return '$name : exigée, torrents arrêtés si elle tombe';
+  }
+
+  @override
   String get vpnNone => 'Aucun VPN actif détecté';
 
   @override

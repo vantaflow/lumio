@@ -338,6 +338,14 @@
   "settingsRequireVpn": "Require a VPN for torrents",
   "settingsVpnInterface": "VPN interface",
   "vpnAny": "Any VPN",
+  "vpnInterfaceRequired": "{name}: required, torrents stop if it drops",
+  "@vpnInterfaceRequired": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "vpnNone": "No active VPN detected",
   "torrentNoFile": "This torrent has no playable file. Try another stream.",
   "torrentFailed": "The torrent could not start. Try another stream.",

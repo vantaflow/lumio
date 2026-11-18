@@ -362,7 +362,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         id: 'vpnInterface',
         icon: Icons.lan_outlined,
         title: l.settingsVpnInterface,
-        subtitle: torrents.vpnInterface ?? l.vpnAny,
+        subtitle: torrents.vpnInterface == null
+            ? l.vpnAny
+            : l.vpnInterfaceRequired(torrents.vpnInterface!),
         onTap: () async {
           List<NetInterface> up;
           try {

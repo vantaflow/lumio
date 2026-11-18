@@ -249,28 +249,34 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _ctl.showOpening();
     // Confidentialité : avertissement IP (une fois), VPN exigé ou rappel.
     final privacy = ref.read(torrentPrivacyProvider);
-    if (!await privacy.ipWarningAccepted()) {
-      if (_disposed || !mounted || token != _torrentToken) return;
-      final accepted = await showIpWarningDialog(context);
+    try {
+      if (!await privacy.ipWarningAccepted()) {
+        if (_disposed || !mounted || token != _torrentToken) return;
+        final accepted = await showIpWarningDialog(context);
+        if (_disposed || token != _torrentToken) return;
+        if (!accepted) {
+          _failTorrent(token, (l) => l.torrentIpWarningDeclined);
+          return;
+        }
+        try {
+          await privacy.acceptIpWarning();
+        } on Object {
+          // Non mémorisé : la question sera reposée au prochain torrent.
+        }
+        if (_disposed || token != _torrentToken) return;
+      }
+      final decision = await privacy.evaluate();
       if (_disposed || token != _torrentToken) return;
-      if (!accepted) {
-        _failTorrent(token, (l) => l.torrentIpWarningDeclined);
+      if (decision is GuardStop) {
+        _failTorrent(token, (l) => l.torrentVpnRequired);
         return;
       }
-      try {
-        await privacy.acceptIpWarning();
-      } on Object {
-        // Non mémorisé : la question sera reposée au prochain torrent.
-      }
-      if (_disposed || token != _torrentToken) return;
-    }
-    final decision = await privacy.evaluate();
-    if (_disposed || token != _torrentToken) return;
-    if (decision is GuardStop) {
-      _failTorrent(token, (l) => l.torrentVpnRequired);
+      if (decision is GuardWarnNoVpn) _tellL((l) => l.torrentNoVpnReminder);
+    } on Object {
+      // Réglages illisibles : on ne démarre pas (échec fermé).
+      _failTorrent(token, (l) => l.torrentFailed);
       return;
     }
-    if (decision is GuardWarnNoVpn) _tellL((l) => l.torrentNoVpnReminder);
     _watchNetwork(torrent, token, privacy);
     final Uri url;
     try {

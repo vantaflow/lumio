@@ -567,6 +567,14 @@
   "settingsRequireVpn": "Exiger un VPN pour les torrents",
   "settingsVpnInterface": "Interface VPN",
   "vpnAny": "N'importe quel VPN",
+  "vpnInterfaceRequired": "{name} : exigée, torrents arrêtés si elle tombe",
+  "@vpnInterfaceRequired": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "vpnNone": "Aucun VPN actif détecté",
   "torrentNoFile": "Ce torrent ne contient aucun fichier lisible. Essayez un autre flux.",
   "torrentFailed": "Le torrent n'a pas pu démarrer. Essayez un autre flux.",
