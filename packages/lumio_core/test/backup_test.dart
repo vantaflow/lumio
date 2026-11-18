@@ -248,10 +248,10 @@ void main() {
   );
 
   test(
-    'un blob d\'addons de la synchro ne s\'ouvre pas comme sauvegarde',
+    'un blob chiffré sous un autre usage ne s\'ouvre pas comme sauvegarde',
     () async {
       const pass = 'une phrase assez longue';
-      final blob = await SecretBox.seal('{"profiles":[]}', pass);
+      final blob = await SecretBox.seal('{"profiles":[]}', pass, aad: 'autre');
       final env = jsonEncode({
         'format': 'lumio-backup',
         'version': 1,

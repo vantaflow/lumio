@@ -72,7 +72,7 @@ class _Sample {
 
 /// Mesure locale de la fiabilité des addons : fenêtre glissante des
 /// [window] derniers appels par addon. Les mesures restent sur l'appareil
-/// (jamais envoyées, jamais synchronisées).
+/// (jamais envoyées).
 ///
 /// Les clés sont des identifiants de STOCKAGE d'addon (uniques), jamais
 /// l'identifiant déclaré par le manifeste.

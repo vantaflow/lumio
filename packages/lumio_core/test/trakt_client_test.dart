@@ -131,6 +131,53 @@ void main() {
     });
   });
 
+  group('application publique (sans secret)', () {
+    test('identifiant seul : configuré', () {
+      expect(client(secret: '').configured, isTrue);
+      expect(client(id: '', secret: _secret).configured, isFalse);
+    });
+
+    test(
+      'aucun champ client_secret : appareil, renouvellement, révocation',
+      () async {
+        server.route('/oauth/device/token', _tokenJson());
+        server.route('/oauth/token', _tokenJson(access: 'acc-2'));
+        server.route('/oauth/revoke', FakeResponse.json({}));
+        final c = client(
+          secret: '',
+          token: TrackerToken(
+            access: 'acc-0',
+            refresh: 'ref-0',
+            expiresAt: now.add(const Duration(minutes: 10)),
+          ),
+        );
+        server.route('/scrobble/start', FakeResponse.json({}, status: 201));
+        await c.pollToken(
+          DeviceCode(
+            deviceCode: 'dev-1',
+            userCode: 'u',
+            verificationUrl: Uri.parse('https://x'),
+            expiresIn: const Duration(minutes: 10),
+            interval: Duration.zero,
+          ),
+        );
+        await c.scrobble(_event()); // jeton proche de l'expiration : renouvelé
+        await c.revoke();
+        for (final path in [
+          '/oauth/device/token',
+          '/oauth/token',
+          '/oauth/revoke',
+        ]) {
+          final r = server.requests.where((r) => r.uri.path == path);
+          expect(r, hasLength(1), reason: path);
+          final body = jsonDecode(r.single.bodyText) as Map;
+          expect(body.containsKey('client_secret'), isFalse, reason: path);
+          expect(body['client_id'], 'cid');
+        }
+      },
+    );
+  });
+
   group('flux d\'appareil', () {
     setUp(() {
       server.route(

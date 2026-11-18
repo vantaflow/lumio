@@ -142,7 +142,7 @@ ScrobbleEvent? scrobbleEventFor({
 
 final _ids = RegExp(r'^(tt\d+)(?::(\d{1,4}):(\d{1,5}))?$');
 
-/// Service de suivi (Trakt, Simkl) : autorisation d'appareil et scrobbling.
+/// Service de suivi (Trakt) : autorisation d'appareil et scrobbling.
 abstract class Tracker {
   Future<DeviceCode> startDeviceAuth();
 

@@ -8,13 +8,14 @@ import 'tracker.dart';
 /// Client Trakt : autorisation d'appareil, renouvellement du jeton et
 /// scrobbling (`/scrobble/start|pause|stop`).
 ///
-/// Sans [clientId] ou [clientSecret] ([TrackerNotConfigured]) rien n'est
-/// envoyé. Le client ne journalise rien : ni jeton, ni code d'appareil.
+/// Sans [clientId] ([TrackerNotConfigured]) rien n'est envoyé. [clientSecret]
+/// est facultatif (application publique) : il n'est envoyé que s'il est non
+/// vide. Le client ne journalise rien : ni jeton, ni code d'appareil.
 class TraktClient implements Tracker {
   TraktClient(
     this._fetcher, {
     required this.clientId,
-    required this.clientSecret,
+    this.clientSecret = '',
     TrackerToken? token,
     this.onToken,
     Uri? baseUrl,
@@ -47,7 +48,7 @@ class TraktClient implements Tracker {
 
   TrackerToken? get token => _token;
 
-  bool get configured => clientId.isNotEmpty && clientSecret.isNotEmpty;
+  bool get configured => clientId.isNotEmpty;
 
   void _requireConfigured() {
     if (!configured) throw const TrackerNotConfigured();
@@ -125,7 +126,7 @@ class TraktClient implements Tracker {
     final r = await _post('/oauth/device/token', {
       'code': c.deviceCode,
       'client_id': clientId,
-      'client_secret': clientSecret,
+      if (clientSecret.isNotEmpty) 'client_secret': clientSecret,
     });
     switch (r.status) {
       case 200:
@@ -181,7 +182,7 @@ class TraktClient implements Tracker {
     final r = await _post('/oauth/token', {
       'refresh_token': old.refresh,
       'client_id': clientId,
-      'client_secret': clientSecret,
+      if (clientSecret.isNotEmpty) 'client_secret': clientSecret,
       'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob',
       'grant_type': 'refresh_token',
     });
@@ -241,7 +242,7 @@ class TraktClient implements Tracker {
       await _post('/oauth/revoke', {
         'token': t.access,
         'client_id': clientId,
-        'client_secret': clientSecret,
+        if (clientSecret.isNotEmpty) 'client_secret': clientSecret,
       });
     } on Object {
       // La déconnexion locale suffit.

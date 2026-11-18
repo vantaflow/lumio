@@ -14,15 +14,15 @@ class WrongPassphraseException implements Exception {
   String toString() => 'WrongPassphraseException';
 }
 
-/// Chiffrement côté client des secrets synchronisés (le serveur ne voit
-/// qu'un texte opaque).
+/// Chiffrement des secrets d'une sauvegarde (texte opaque, protégé par une
+/// phrase secrète).
 ///
 /// Format : `v1.<sel>.<nonce>.<texte chiffré + tag>`, chaque partie en
 /// base64url sans remplissage. Clé : PBKDF2-HMAC-SHA256, 210 000 itérations,
 /// sel aléatoire de 16 octets, 256 bits. Chiffrement : AES-256-GCM, nonce
 /// aléatoire de 12 octets, tag de 16 octets. Les données associées (AAD)
-/// sont le type de l'élément synchronisé (`addons`) : un blob ne peut pas
-/// être rejoué sous un autre type.
+/// identifient l'usage du blob (`backup`) : un blob ne peut pas être rejoué
+/// sous un autre usage.
 ///
 /// La dérivation coûte cher : elle s'exécute dans un isolat, jamais sur le
 /// fil d'interface.
@@ -34,8 +34,8 @@ abstract final class SecretBox {
   static const tagLength = 16;
   static const keyLength = 32;
 
-  /// Données associées par défaut : le type d'élément des addons.
-  static const defaultAad = 'addons';
+  /// Données associées par défaut.
+  static const defaultAad = 'backup';
 
   static Future<String> seal(
     String plaintext,

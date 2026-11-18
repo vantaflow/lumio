@@ -4,7 +4,6 @@ import '../addons/addon_url.dart';
 import '../crypto/secret_box.dart';
 import '../playback/title_settings.dart';
 import '../profiles/content_rating.dart';
-import '../sync/sync_models.dart';
 
 /// Pourquoi un fichier de sauvegarde est refusé.
 enum BackupFormatError {
@@ -134,7 +133,7 @@ class BackupData {
   final List<BackupLibraryItem> library;
   final List<BackupProgress> progress;
 
-  /// Réglages de la liste blanche de la synchronisation, seulement.
+  /// Réglages de la liste blanche de la sauvegarde, seulement.
   final Map<String, String> settings;
   final List<BackupTitleSettings> titleSettings;
   final List<BackupAddon> addons;
@@ -142,6 +141,16 @@ class BackupData {
   /// À l'import : entrées invalides ignorées.
   final int skipped;
 }
+
+final _settingsKeyRe = RegExp(
+  r'^(ui_locale|(home_layout|stream_prefs|subtitle_lang):[A-Za-z0-9_-]{1,64})$',
+);
+
+/// Réglages autorisés dans une sauvegarde : disposition de l'accueil,
+/// préférences de flux, langue de sous-titres et langue de l'interface. Tout le
+/// reste (PIN, verrou, code de récupération, profil actif…) reste sur
+/// l'appareil.
+bool isBackupSettingKey(String key) => _settingsKeyRe.hasMatch(key);
 
 /// Sauvegarde locale : JSON versionné `{"format":"lumio-backup","version":1}`.
 ///
@@ -155,7 +164,7 @@ abstract final class Backup {
   static const minPassphraseLength = 12;
 
   /// Données associées du chiffrement : une sauvegarde ne s'ouvre pas comme un
-  /// blob d'addons de la synchronisation, et réciproquement.
+  /// autre blob chiffré.
   static const aad = 'backup';
 
   static const maxProfiles = 6;
@@ -165,7 +174,7 @@ abstract final class Backup {
   static const maxSettings = 500;
   static const maxAddons = 200;
 
-  static const _maxJson = SyncLimits.maxPayloadBytes;
+  static const _maxJson = 16 * 1024;
   static const _maxNameLength = 40;
   static const _maxId = 200;
   static const _maxInt = 9007199254740991;
@@ -210,8 +219,7 @@ abstract final class Backup {
     ],
     'settings': {
       for (final e in d.settings.entries)
-        if (isSyncableSettingKey(e.key) && e.value.length <= 4096)
-          e.key: e.value,
+        if (isBackupSettingKey(e.key) && e.value.length <= 4096) e.key: e.value,
     },
     'titleSettings': [
       for (final t in d.titleSettings)
@@ -397,7 +405,7 @@ abstract final class Backup {
         final k = e.key;
         final v = e.value;
         if (k is String &&
-            isSyncableSettingKey(k) &&
+            isBackupSettingKey(k) &&
             v is String &&
             v.length <= 4096) {
           settings[k] = v;
