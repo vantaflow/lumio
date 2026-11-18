@@ -350,6 +350,9 @@ void main() {
         find.byKey(const ValueKey('backup:private:Maison')),
         findsOneWidget,
       );
+      expect(find.textContaining('192.168.1.20'), findsOneWidget);
+      expect(find.textContaining('lan-secret'), findsNothing);
+      expect(find.textContaining('7000'), findsNothing);
       await h.tapKey('backup:privateAllow');
       await h.settle(8);
       expect(

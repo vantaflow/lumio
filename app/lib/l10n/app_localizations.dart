@@ -2501,8 +2501,8 @@ abstract class AppLocalizations {
   /// No description provided for @backupPrivateBody.
   ///
   /// In fr, this message translates to:
-  /// **'« {name} » pointe vers votre réseau local. L\'installer quand même ?'**
-  String backupPrivateBody(String name);
+  /// **'« {name} » ({host}) pointe vers votre réseau local. L\'installer quand même ?'**
+  String backupPrivateBody(String name, String host);
 }
 
 class _AppLocalizationsDelegate

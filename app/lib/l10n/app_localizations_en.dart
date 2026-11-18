@@ -1382,7 +1382,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupPrivateTitle => 'Local address';
 
   @override
-  String backupPrivateBody(String name) {
-    return '\"$name\" points to your local network. Install it anyway?';
+  String backupPrivateBody(String name, String host) {
+    return '\"$name\" ($host) points to your local network. Install it anyway?';
   }
 }

@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/addon_repository.dart';
+import 'package:lumio/data/backup_files.dart' show backupFileName;
 import 'package:lumio/data/backup_service.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/profile_repository.dart';
@@ -381,4 +382,41 @@ void main() {
       await b.db.close();
     },
   );
+
+  test(
+    'nom de fichier avec secondes, hôte seul pour l\'adresse en attente',
+    () {
+      expect(
+        backupFileName(DateTime(2026, 11, 18, 9, 5, 7)),
+        'lumio-20261118-090507.lumio.json',
+      );
+      const a = PendingBackupAddon(name: 'M', url: _lan);
+      expect(a.host, '192.168.1.20');
+    },
+  );
+
+  test('export en clair : affiche absente de la bibliothèque', () async {
+    final a = _Dev();
+    await a.profiles.ensureDefault();
+    await a.db
+        .into(a.db.libraryItems)
+        .insert(
+          LibraryItemsCompanion.insert(
+            itemId: 'tt1',
+            type: 'movie',
+            metaJson: const Value(
+              '{"id":"tt1","name":"Élan","poster":"https://x/key123/p.jpg",'
+              '"sourceAddonId":"a"}',
+            ),
+          ),
+        );
+    final clear = await a.service.export();
+    expect(clear, isNot(contains('key123')));
+    expect(clear, contains('Élan'));
+    final enc = await a.service.export(includeSecrets: true, passphrase: _pass);
+    expect(enc, isNot(contains('key123')));
+    final data = await Backup.decode(utf8.encode(enc), passphrase: _pass);
+    expect(data.library.single.meta['poster'], 'https://x/key123/p.jpg');
+    await a.db.close();
+  });
 }

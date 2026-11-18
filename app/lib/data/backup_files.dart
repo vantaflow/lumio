@@ -90,8 +90,17 @@ class PlatformBackupFiles implements BackupFiles {
     }
     // Écriture complète puis renommage : jamais de fichier à moitié écrit.
     final tmp = File('$path.part');
-    await tmp.writeAsString(text, flush: true);
-    await tmp.rename(path);
+    try {
+      await tmp.writeAsString(text, flush: true);
+      await tmp.rename(path);
+    } on Object {
+      try {
+        if (await tmp.exists()) await tmp.delete();
+      } on Object {
+        // Nettoyage au mieux.
+      }
+      rethrow;
+    }
     return path;
   }
 
@@ -137,8 +146,8 @@ class PlatformBackupFiles implements BackupFiles {
   }
 }
 
-/// Nom proposé : `lumio-20261118-1030.lumio.json`.
+/// Nom proposé : `lumio-20261118-103042.lumio.json`.
 String backupFileName(DateTime t) {
   String two(int n) => n.toString().padLeft(2, '0');
-  return 'lumio-${t.year}${two(t.month)}${two(t.day)}-${two(t.hour)}${two(t.minute)}$backupExtension';
+  return 'lumio-${t.year}${two(t.month)}${two(t.day)}-${two(t.hour)}${two(t.minute)}${two(t.second)}$backupExtension';
 }

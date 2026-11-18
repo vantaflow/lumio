@@ -190,7 +190,7 @@ abstract final class Backup {
           'profileId': i.profileId,
           'itemId': i.itemId,
           'type': i.type,
-          'meta': i.meta,
+          'meta': cleanMeta(i.meta, withUrls: includeSecrets),
           'addedAt': i.addedAt,
           'certification': i.certification,
         },
@@ -273,7 +273,7 @@ abstract final class Backup {
     final Object? j;
     try {
       j = jsonDecode(utf8.decode(bytes));
-    } on FormatException {
+    } on Object {
       throw const BackupFormatException(BackupFormatError.malformed);
     }
     if (j is! Map) {
@@ -296,7 +296,7 @@ abstract final class Backup {
     final Object? inner;
     try {
       inner = jsonDecode(plain);
-    } on FormatException {
+    } on Object {
       throw const BackupFormatException(BackupFormatError.malformed);
     }
     if (inner is! Map) {
@@ -328,8 +328,14 @@ abstract final class Backup {
   static BackupData import(
     Map<String, dynamic> json, {
     bool allowAddonUrls = false,
+    DateTime? now,
   }) {
     _checkHeader(json);
+    // Une progression datée de plus d'un jour dans le futur l'emporterait pour
+    // toujours : elle est ramenée à maintenant.
+    final maxUpdated =
+        (now ?? DateTime.now()).millisecondsSinceEpoch + 86400000;
+    final clampTo = (now ?? DateTime.now()).millisecondsSinceEpoch;
     var skipped = 0;
 
     List<Map<String, dynamic>> list(String key, int cap) {
@@ -359,12 +365,12 @@ abstract final class Backup {
     }
     final library = <BackupLibraryItem>[];
     for (final m in list('library', maxLibrary)) {
-      final i = _library(m);
+      final i = _library(m, allowAddonUrls);
       i == null ? skipped++ : library.add(i);
     }
     final progress = <BackupProgress>[];
     for (final m in list('progress', maxProgress)) {
-      final p = _progress(m);
+      final p = _progress(m, maxUpdated, clampTo);
       p == null ? skipped++ : progress.add(p);
     }
     final titleSettings = <BackupTitleSettings>[];
@@ -416,6 +422,45 @@ abstract final class Backup {
     );
   }
 
+  /// Champs de `meta` écrits en clair.
+  static const metaPlainFields = {
+    'id',
+    'type',
+    'name',
+    'releaseInfo',
+    'certification',
+    'sourceKind',
+  };
+
+  /// Reconstruit `meta` à partir d'une liste blanche (valeurs texte bornées).
+  /// [withUrls] (contenu chiffré) ajoute l'affiche (http/https, avec hôte, sans
+  /// identifiants) et l'addon d'origine : une affiche embarque souvent une clé.
+  static Map<String, dynamic> cleanMeta(
+    Map<dynamic, dynamic> raw, {
+    required bool withUrls,
+  }) {
+    final out = <String, dynamic>{};
+    for (final k in metaPlainFields) {
+      final v = raw[k];
+      if (v is String && v.length <= 500) out[k] = v;
+    }
+    if (withUrls) {
+      final src = raw['sourceAddonId'];
+      if (src is String && src.length <= 200) out['sourceAddonId'] = src;
+      final poster = raw['poster'];
+      if (poster is String && poster.length <= 2048) {
+        final u = Uri.tryParse(poster);
+        if (u != null &&
+            (u.scheme == 'http' || u.scheme == 'https') &&
+            u.host.isNotEmpty &&
+            u.userInfo.isEmpty) {
+          out['poster'] = poster;
+        }
+      }
+    }
+    return out;
+  }
+
   // --- validation d'une entrée ---
 
   static String? _str(Object? v, int max, {bool allowEmpty = false}) {
@@ -452,7 +497,7 @@ abstract final class Backup {
     return BackupProfile(id: id, name: name, isKid: isKid, ageLimit: age);
   }
 
-  static BackupLibraryItem? _library(Map<String, dynamic> m) {
+  static BackupLibraryItem? _library(Map<String, dynamic> m, bool allowUrls) {
     final profileId = m['profileId'];
     final itemId = _str(m['itemId'], _maxId);
     final type = _str(m['type'], 64);
@@ -462,20 +507,26 @@ abstract final class Backup {
         type == null) {
       return null;
     }
-    final meta = m['meta'];
-    if (meta is! Map || !_jsonFits(meta)) return null;
+    final rawMeta = m['meta'];
+    if (rawMeta is! Map) return null;
+    // Reconstruit depuis une liste blanche : rien d'autre n'entre en base.
+    final meta = cleanMeta(rawMeta, withUrls: allowUrls);
     final cert = m['certification'];
     return BackupLibraryItem(
       profileId: profileId,
       itemId: itemId,
       type: type,
-      meta: Map<String, dynamic>.from(meta),
+      meta: meta,
       addedAt: _nat(m['addedAt']),
       certification: cert is String && cert.length <= 32 ? cert : null,
     );
   }
 
-  static BackupProgress? _progress(Map<String, dynamic> m) {
+  static BackupProgress? _progress(
+    Map<String, dynamic> m,
+    int maxUpdated,
+    int clampTo,
+  ) {
     final profileId = m['profileId'];
     final itemId = _str(m['itemId'], _maxId);
     final updatedAt = m['updatedAt'];
@@ -497,7 +548,7 @@ abstract final class Backup {
       positionMs: _nat(m['positionMs']),
       durationMs: _nat(m['durationMs']),
       watched: m['watched'] == true,
-      updatedAt: updatedAt.toInt(),
+      updatedAt: updatedAt > maxUpdated ? clampTo : updatedAt.toInt(),
       certification: cert is String && cert.length <= 32 ? cert : null,
     );
   }

@@ -1399,7 +1399,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get backupPrivateTitle => 'Adresse locale';
 
   @override
-  String backupPrivateBody(String name) {
-    return '« $name » pointe vers votre réseau local. L\'installer quand même ?';
+  String backupPrivateBody(String name, String host) {
+    return '« $name » ($host) pointe vers votre réseau local. L\'installer quand même ?';
   }
 }

@@ -264,4 +264,118 @@ void main() {
       );
     },
   );
+
+  group('meta de la bibliothèque', () {
+    BackupData withMeta(Map<String, dynamic> meta) => BackupData(
+      createdAt: DateTime.utc(2026),
+      library: [
+        BackupLibraryItem(
+          profileId: 'default',
+          itemId: 'tt1',
+          type: 'movie',
+          meta: meta,
+          addedAt: 1,
+        ),
+      ],
+    );
+    const meta = {
+      'id': 'tt1',
+      'type': 'movie',
+      'name': 'Élan',
+      'releaseInfo': '2020',
+      'certification': 'PG',
+      'sourceKind': 'addon',
+      'poster': 'https://x/key123/p.jpg',
+      'sourceAddonId': 'a',
+      'evil': 'x',
+    };
+
+    test(
+      'affiche et addon d\'origine absents du clair, présents chiffrés',
+      () async {
+        final clear = await Backup.encode(withMeta(meta));
+        expect(clear, isNot(contains('key123')));
+        expect(clear, isNot(contains('sourceAddonId')));
+        expect(clear, isNot(contains('evil')));
+        final back = await Backup.decode(utf8.encode(clear));
+        expect(back.library.single.meta.keys.toSet(), {
+          'id',
+          'type',
+          'name',
+          'releaseInfo',
+          'certification',
+          'sourceKind',
+        });
+        const pass = 'une phrase assez longue';
+        final enc = await Backup.encode(
+          withMeta(meta),
+          includeSecrets: true,
+          passphrase: pass,
+        );
+        expect(enc, isNot(contains('key123')));
+        final back2 = await Backup.decode(utf8.encode(enc), passphrase: pass);
+        expect(back2.library.single.meta['poster'], 'https://x/key123/p.jpg');
+        expect(back2.library.single.meta['sourceAddonId'], 'a');
+        expect(back2.library.single.meta.containsKey('evil'), isFalse);
+      },
+    );
+
+    test('import : clés inconnues écartées, affiche contrôlée', () {
+      Map<String, dynamic> imp(Map<String, dynamic> m) => Backup.import(
+        Backup.export(withMeta(m)),
+        allowAddonUrls: true,
+      ).library.single.meta;
+      // Export nettoie déjà : on forge le JSON directement.
+      Map<String, dynamic> forged(Map<String, dynamic> m) {
+        final j = Backup.export(withMeta({'id': 'a'}));
+        (j['library'] as List).single['meta'] = m;
+        return Backup.import(j, allowAddonUrls: true).library.single.meta;
+      }
+
+      expect(imp(meta).containsKey('evil'), isFalse);
+      expect(
+        forged({
+          'name': 'n',
+          'x': 'y',
+          'nested': {'a': 1},
+        }),
+        {'name': 'n'},
+      );
+      expect(forged({'poster': 'ftp://h/p.jpg'}), isEmpty);
+      expect(forged({'poster': 'https://u:p@h/p.jpg'}), isEmpty);
+      expect(forged({'poster': 'https:///p.jpg'}), isEmpty);
+      expect(
+        forged({'poster': 'https://h/p.jpg'})['poster'],
+        'https://h/p.jpg',
+      );
+      // Fichier en clair : l'affiche n'est jamais reprise.
+      final j = Backup.export(withMeta({'id': 'a'}));
+      (j['library'] as List).single['meta'] = {'poster': 'https://h/p.jpg'};
+      expect(Backup.import(j).library.single.meta, isEmpty);
+    });
+
+    test('méta profondément imbriquée : pas de plantage', () async {
+      final deep = '${'[' * 100000}${']' * 100000}';
+      final text =
+          '{"format":"lumio-backup","version":1,"library":[{"profileId":"default",'
+          '"itemId":"tt1","type":"movie","meta":{"name":"n","deep":$deep}}]}';
+      final back = await Backup.decode(utf8.encode(text));
+      expect(back.library.single.meta, {'name': 'n'});
+      final bad =
+          '{"format":"lumio-backup","version":1,"library":[{"meta":$deep}]}';
+      final r = await Backup.decode(utf8.encode(bad));
+      expect(r.library, isEmpty);
+      expect(r.skipped, 1);
+    });
+  });
+
+  test('progression datée du futur lointain : ramenée à maintenant', () {
+    final now = DateTime.utc(2026, 11, 18);
+    final j = Backup.export(_sample());
+    final ms = now.millisecondsSinceEpoch;
+    (j['progress'] as List).single['updatedAt'] = ms + 3 * 86400000;
+    expect(Backup.import(j, now: now).progress.single.updatedAt, ms);
+    (j['progress'] as List).single['updatedAt'] = ms + 3600000;
+    expect(Backup.import(j, now: now).progress.single.updatedAt, ms + 3600000);
+  });
 }

@@ -15,6 +15,9 @@ class PendingBackupAddon {
   final String name;
   final String url;
 
+  /// Hôte seul (ni chemin ni paramètres : l'adresse est secrète).
+  String get host => Uri.tryParse(url)?.host ?? '';
+
   @override
   String toString() => 'PendingBackupAddon($name, ${redactUrl(url)})';
 }

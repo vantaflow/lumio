@@ -318,7 +318,7 @@ class BackupFlows {
       builder: (ctx) => AlertDialog(
         key: ValueKey('backup:private:${a.name}'),
         title: Text(l.backupPrivateTitle),
-        content: Text(l.backupPrivateBody(a.name)),
+        content: Text(l.backupPrivateBody(a.name, a.host)),
         actions: [
           FocusRing(
             child: TextButton(

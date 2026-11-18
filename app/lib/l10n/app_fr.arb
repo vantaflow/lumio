@@ -760,10 +760,13 @@
   },
   "backupKidNeedsPin": "Un profil enfant a été ajouté : créez d'abord un PIN parent pour l'utiliser.",
   "backupPrivateTitle": "Adresse locale",
-  "backupPrivateBody": "« {name} » pointe vers votre réseau local. L'installer quand même ?",
+  "backupPrivateBody": "« {name} » ({host}) pointe vers votre réseau local. L'installer quand même ?",
   "@backupPrivateBody": {
     "placeholders": {
       "name": {
+        "type": "String"
+      },
+      "host": {
         "type": "String"
       }
     }

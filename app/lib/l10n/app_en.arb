@@ -531,10 +531,13 @@
   },
   "backupKidNeedsPin": "A kids profile was added: create a parent PIN first to use it.",
   "backupPrivateTitle": "Local address",
-  "backupPrivateBody": "\"{name}\" points to your local network. Install it anyway?",
+  "backupPrivateBody": "\"{name}\" ({host}) points to your local network. Install it anyway?",
   "@backupPrivateBody": {
     "placeholders": {
       "name": {
+        "type": "String"
+      },
+      "host": {
         "type": "String"
       }
     }
