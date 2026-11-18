@@ -26,11 +26,13 @@ allowed = {l.strip().lower() for l in open(allow_file)
 def classify(text):
     t = re.sub(r'\s+', ' ', text).lower()
     found = set()
-    if 'gnu affero general public license' in t:
+    # Le texte GPL-3.0 cite l'AGPL (article 13) : seul le titre fait foi.
+    is_agpl = t.lstrip().startswith('gnu affero general public license')
+    if is_agpl:
         found.add('AGPL')
     if 'gnu lesser general public license' in t or 'gnu library general public license' in t:
         found.add('LGPL')
-    if 'gnu general public license' in t and 'version 3' in t and 'affero' not in t:
+    if 'gnu general public license' in t and 'version 3' in t and not is_agpl:
         found.add('GPL-3.0')
     if 'apache license' in t and 'version 2.0' in t:
         found.add('Apache-2.0')

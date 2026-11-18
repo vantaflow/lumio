@@ -20,7 +20,9 @@ if ! adb -s "$BOX" get-state >/dev/null 2>&1; then
 fi
 
 cd "$ROOT/app"
-flutter build apk --release --target-platform android-arm
+# LUMIO_BUILD_ARGS : défines supplémentaires (ex. --dart-define=LUMIO_DEBUG_TORRENT=1).
+# shellcheck disable=SC2086
+flutter build apk --release --target-platform android-arm ${LUMIO_BUILD_ARGS:-}
 APK="build/app/outputs/flutter-apk/app-release.apk"
 
 adb -s "$BOX" install -r "$APK"

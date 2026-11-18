@@ -38,6 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   url_launcher: ^6.3.3
   package_info_plus: ^10.2.2
+  libtorrent_flutter: 1.7.5
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/update/update_banner.dart';
 import 'package:lumio/ui/common/state_view.dart';
 
@@ -13,6 +14,8 @@ void main() {
     print('LUMIO_READY');
   });
 }
+
+const _debugTorrent = String.fromEnvironment('LUMIO_DEBUG_TORRENT') == '1';
 
 class LumioApp extends StatelessWidget {
   const LumioApp({super.key});
@@ -35,7 +38,7 @@ class LumioApp extends StatelessWidget {
         const SingleActivator(LogicalKeyboardKey.select):
             const ActivateIntent(),
       },
-      home: const RootScreen(),
+      home: _debugTorrent ? const TorrentSpikeScreen() : const RootScreen(),
     );
   }
 }
