@@ -189,6 +189,7 @@ class TvTopBar extends ConsumerWidget {
                   if (i > 0) const SizedBox(height: 16),
                   TvButton(
                     autofocus: i == 0,
+                    expand: true,
                     kind: TvButtonKind.secondary,
                     height: 80,
                     fontSize: 30,

@@ -2235,4 +2235,51 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tvEmptyStep3Body =>
       'Catalogs, \"Continue\" and \"My list\" fill the home screen.';
+
+  @override
+  String get tvOnbTagline => 'Your library, your sources.';
+
+  @override
+  String get tvOnbTaglineBody =>
+      'Bring movies, series and local files together in one place.';
+
+  @override
+  String get tvOnbDefault => 'Default';
+
+  @override
+  String get tvOnbProfileHeading => 'Create your profile';
+
+  @override
+  String get tvOnbProfileBody =>
+      'Each profile keeps its own list, progress and settings.';
+
+  @override
+  String get tvOnbLater => 'Later';
+
+  @override
+  String get tvOnbFinish => 'Finish';
+
+  @override
+  String get tvOnbAddonTitle => 'An addon';
+
+  @override
+  String get tvOnbAddonBody => 'Paste a link or scan a QR code';
+
+  @override
+  String get tvOnbJellyfinTitle => 'A Jellyfin server';
+
+  @override
+  String get tvOnbJellyfinBody => 'Your personal media library';
+
+  @override
+  String get tvOnbLocalTitle => 'A local folder';
+
+  @override
+  String get tvOnbLocalBody => 'Files on this device or on the network';
+
+  @override
+  String get tvOnbKidTitle => 'Kid profile';
+
+  @override
+  String get tvOnbKidBody => 'Age filter and PIN to leave';
 }

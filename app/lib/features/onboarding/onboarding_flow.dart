@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/jellyfin/jellyfin_screen.dart'
+    show JellyfinAddDialog;
 import 'package:lumio/features/local/local_screen.dart' show addLocalFolderFlow;
+import 'package:lumio/features/onboarding/tv_onboarding.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/features/pairing/pairing_screen.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
@@ -259,6 +263,7 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    if (isTvLayout(context)) return _tvBuild(context);
     return BackGuard(
       isOpen: _step > 0,
       onClose: _back,
@@ -319,6 +324,369 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
           ),
         ),
       ),
+    );
+  }
+
+  // --- disposition TV (maquettes Main, TV02, TV03) ---
+
+  Widget _tvBuild(BuildContext context) {
+    final l = context.l10n;
+    final dots = TvStepDots(
+      step: _step,
+      total: _steps,
+      label: l.onboardingStep(_step + 1, _steps),
+    );
+    final Widget page = switch (_step) {
+      0 => _tvLanguage(context, dots),
+      1 => _tvProfile(context, dots),
+      _ => _tvSources(context, dots),
+    };
+    return BackGuard(
+      isOpen: _step > 0,
+      onClose: _back,
+      child: TvScaffold(
+        onBack: _back,
+        child: Scaffold(
+          body: KeyedSubtree(
+            key: ValueKey('onboarding-step-$_step'),
+            child: page,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tvHeading(BuildContext context, String title, String? body) {
+    final t = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          header: true,
+          child: Text(
+            title,
+            style: t.displayLarge?.copyWith(fontSize: 64, height: 1.1),
+          ),
+        ),
+        if (body != null) ...[
+          const SizedBox(height: 12),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: Text(
+              body,
+              style: t.bodyLarge?.copyWith(
+                fontSize: 30,
+                height: 1.4,
+                color: context.lumio.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _tvLanguage(BuildContext context, Widget dots) {
+    final l = context.l10n;
+    final current = ref.watch(localeProvider).languageCode;
+    return Row(
+      children: [
+        TvOnboardingBrandPanel(
+          title: l.tvOnbTagline,
+          body: l.tvOnbTaglineBody,
+          dots: dots,
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 140, vertical: 96),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    l.onboardingLanguageTitle,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.displayLarge?.copyWith(fontSize: 52),
+                  ),
+                ),
+                const SizedBox(height: 36),
+                for (final (code, label) in const [
+                  ('fr', 'Français'),
+                  ('en', 'English'),
+                ]) ...[
+                  TvChoiceRow(
+                    key: ValueKey('lang-$code'),
+                    label: label,
+                    selected: current == code,
+                    autofocus: current == code,
+                    trailing: code == 'fr' ? l.tvOnbDefault : null,
+                    onSelect: () async {
+                      try {
+                        await ref
+                            .read(localeProvider.notifier)
+                            .set(Locale(code));
+                      } on Object {
+                        // La langue reste appliquée pour la session.
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                const Spacer(),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TvButton(
+                    key: const ValueKey('onboarding-next'),
+                    label: l.continueAction,
+                    height: 88,
+                    horizontalPadding: 56,
+                    fontSize: 30,
+                    onPressed: () => _go(1),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _tvFooter(
+    BuildContext context, {
+    required Widget primary,
+    Widget? later,
+  }) {
+    final l = context.l10n;
+    return Row(
+      children: [
+        if (_step > 0)
+          TvButton(
+            key: const ValueKey('onboarding-back'),
+            kind: TvButtonKind.nav,
+            label: l.back,
+            fontSize: 30,
+            horizontalPadding: 28,
+            onPressed: _busy ? null : _back,
+          ),
+        const Spacer(),
+        ?later,
+        if (later != null) const SizedBox(width: 32),
+        primary,
+      ],
+    );
+  }
+
+  Widget _tvProfile(BuildContext context, Widget dots) {
+    final l = context.l10n;
+    final c = context.lumio;
+    final t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 140, vertical: 96),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          dots,
+          const SizedBox(height: 32),
+          _tvHeading(context, l.tvOnbProfileHeading, l.tvOnbProfileBody),
+          const SizedBox(height: 72),
+          Text(
+            l.onboardingProfileName,
+            style: t.bodyLarge
+                ?.weighted(FontWeight.w600)
+                .copyWith(fontSize: 28, color: c.textMuted),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 900,
+            child: TextField(
+              key: const ValueKey('onboarding-name'),
+              controller: _name,
+              maxLength: 30,
+              textInputAction: TextInputAction.done,
+              style: t.bodyLarge?.copyWith(fontSize: 36),
+              decoration: const InputDecoration(
+                counterText: '',
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 36,
+                  vertical: 28,
+                ),
+              ),
+              onSubmitted: (_) => _saveNameAndNext(),
+            ),
+          ),
+          const SizedBox(height: 40),
+          SizedBox(
+            width: 900,
+            child: FocusableCard(
+              key: const ValueKey('onboarding-add-kid'),
+              borderRadius: BorderRadius.circular(20),
+              semanticLabel: l.onboardingAddKid,
+              enabled: !_busy,
+              onSelect: _addKid,
+              child: Container(
+                height: 104,
+                padding: const EdgeInsets.symmetric(horizontal: 36),
+                decoration: BoxDecoration(
+                  color: c.surface,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l.onboardingAddKid,
+                            style: t.bodyLarge
+                                ?.weighted(FontWeight.w600)
+                                .copyWith(fontSize: 30, height: 1.2),
+                          ),
+                          Text(
+                            _kids > 0 && _kidName != null
+                                ? l.onboardingKidAdded(_kidName!)
+                                : l.tvOnbKidBody,
+                            style: t.bodyLarge?.copyWith(
+                              fontSize: 26,
+                              height: 1.2,
+                              color: c.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.child_care, color: c.textMuted, size: 40),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const Spacer(),
+          _tvFooter(
+            context,
+            primary: TvButton(
+              key: const ValueKey('onboarding-next'),
+              autofocus: true,
+              label: l.continueAction,
+              height: 88,
+              horizontalPadding: 56,
+              fontSize: 30,
+              onPressed: _busy ? null : _saveNameAndNext,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tvSources(BuildContext context, Widget dots) {
+    final l = context.l10n;
+    final c = context.lumio;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 140, vertical: 96),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          dots,
+          const SizedBox(height: 32),
+          _tvHeading(
+            context,
+            l.onboardingSourcesTitle,
+            l.onboardingSourcesBody,
+          ),
+          const SizedBox(height: 64),
+          Wrap(
+            spacing: 40,
+            runSpacing: 40,
+            children: [
+              TvSourceCard(
+                key: const ValueKey('onboarding-add-addon'),
+                autofocus: true,
+                icon: Icons.add,
+                iconColor: c.accent,
+                title: l.tvOnbAddonTitle,
+                subtitle: l.tvOnbAddonBody,
+                onSelect: () => _addAddon(),
+              ),
+              TvSourceCard(
+                key: const ValueKey('onboarding-add-jellyfin'),
+                icon: Icons.dns_outlined,
+                iconColor: const Color(0xFFFF8A7A),
+                title: l.tvOnbJellyfinTitle,
+                subtitle: l.tvOnbJellyfinBody,
+                onSelect: _addJellyfin,
+              ),
+              TvSourceCard(
+                key: const ValueKey('onboarding-add-folder'),
+                icon: Icons.folder_outlined,
+                iconColor: const Color(0xFF9AD66B),
+                title: l.tvOnbLocalTitle,
+                subtitle: l.tvOnbLocalBody,
+                onSelect: () => addLocalFolderFlow(context, ref),
+              ),
+            ],
+          ),
+          // Masqué tant que `backendUrl` est vide.
+          if (ref.watch(pairingClientProvider) != null) ...[
+            const SizedBox(height: 32),
+            TvButton(
+              key: const ValueKey('onboarding-pair'),
+              kind: TvButtonKind.secondary,
+              label: l.pairPhoneButton,
+              height: 72,
+              fontSize: 28,
+              horizontalPadding: 36,
+              onPressed: _addFromPhone,
+            ),
+          ],
+          if (_installed > 0) ...[
+            const SizedBox(height: 32),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                l.onboardingAddonsInstalled(_installed),
+                key: const ValueKey('onboarding-installed'),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontSize: 30),
+              ),
+            ),
+          ],
+          const Spacer(),
+          _tvFooter(
+            context,
+            later: TvButton(
+              key: const ValueKey('onboarding-skip'),
+              kind: TvButtonKind.nav,
+              label: l.tvOnbLater,
+              fontSize: 30,
+              horizontalPadding: 28,
+              onPressed: _busy ? null : () => _finish(skipped: true),
+            ),
+            primary: TvButton(
+              key: const ValueKey('onboarding-finish'),
+              label: l.tvOnbFinish,
+              height: 88,
+              horizontalPadding: 56,
+              fontSize: 30,
+              onPressed: _busy ? null : () => _finish(skipped: _installed == 0),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addJellyfin() async {
+    if (!await requireParent(context, ref)) return;
+    if (!mounted) return;
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => const JellyfinAddDialog(),
     );
   }
 

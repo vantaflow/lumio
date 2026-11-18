@@ -925,5 +925,20 @@
   "tvEmptyStep2Title": "Or send it from your phone",
   "tvEmptyStep2Body": "Scan the QR code shown, paste the link on your phone.",
   "tvEmptyStep3Title": "Watch",
-  "tvEmptyStep3Body": "Catalogs, \"Continue\" and \"My list\" fill the home screen."
+  "tvEmptyStep3Body": "Catalogs, \"Continue\" and \"My list\" fill the home screen.",
+  "tvOnbTagline": "Your library, your sources.",
+  "tvOnbTaglineBody": "Bring movies, series and local files together in one place.",
+  "tvOnbDefault": "Default",
+  "tvOnbProfileHeading": "Create your profile",
+  "tvOnbProfileBody": "Each profile keeps its own list, progress and settings.",
+  "tvOnbLater": "Later",
+  "tvOnbFinish": "Finish",
+  "tvOnbAddonTitle": "An addon",
+  "tvOnbAddonBody": "Paste a link or scan a QR code",
+  "tvOnbJellyfinTitle": "A Jellyfin server",
+  "tvOnbJellyfinBody": "Your personal media library",
+  "tvOnbLocalTitle": "A local folder",
+  "tvOnbLocalBody": "Files on this device or on the network",
+  "tvOnbKidTitle": "Kid profile",
+  "tvOnbKidBody": "Age filter and PIN to leave"
 }

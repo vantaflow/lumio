@@ -3883,6 +3883,96 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Catalogues, « Continuer » et « Ma liste » remplissent l\'accueil.'**
   String get tvEmptyStep3Body;
+
+  /// No description provided for @tvOnbTagline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre bibliothèque, vos sources.'**
+  String get tvOnbTagline;
+
+  /// No description provided for @tvOnbTaglineBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réunissez films, séries et fichiers locaux au même endroit.'**
+  String get tvOnbTaglineBody;
+
+  /// No description provided for @tvOnbDefault.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par défaut'**
+  String get tvOnbDefault;
+
+  /// No description provided for @tvOnbProfileHeading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créez votre profil'**
+  String get tvOnbProfileHeading;
+
+  /// No description provided for @tvOnbProfileBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque profil garde sa liste, sa progression et ses réglages.'**
+  String get tvOnbProfileBody;
+
+  /// No description provided for @tvOnbLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus tard'**
+  String get tvOnbLater;
+
+  /// No description provided for @tvOnbFinish.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminer'**
+  String get tvOnbFinish;
+
+  /// No description provided for @tvOnbAddonTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un addon'**
+  String get tvOnbAddonTitle;
+
+  /// No description provided for @tvOnbAddonBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez un lien ou scannez un QR code'**
+  String get tvOnbAddonBody;
+
+  /// No description provided for @tvOnbJellyfinTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un serveur Jellyfin'**
+  String get tvOnbJellyfinTitle;
+
+  /// No description provided for @tvOnbJellyfinBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre médiathèque personnelle'**
+  String get tvOnbJellyfinBody;
+
+  /// No description provided for @tvOnbLocalTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un dossier local'**
+  String get tvOnbLocalTitle;
+
+  /// No description provided for @tvOnbLocalBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fichiers de cet appareil ou du réseau'**
+  String get tvOnbLocalBody;
+
+  /// No description provided for @tvOnbKidTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil enfant'**
+  String get tvOnbKidTitle;
+
+  /// No description provided for @tvOnbKidBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Filtre par âge et PIN pour quitter'**
+  String get tvOnbKidBody;
 }
 
 class _AppLocalizationsDelegate

@@ -34,6 +34,7 @@ class TvButton extends StatelessWidget {
     this.icon,
     this.destructive = false,
     this.scale = 1.04,
+    this.expand = false,
   });
 
   final String label;
@@ -47,6 +48,9 @@ class TvButton extends StatelessWidget {
   final Widget? icon;
   final bool destructive;
   final double scale;
+
+  /// Occupe toute la largeur disponible (listes de boutons).
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +72,7 @@ class TvButton extends StatelessWidget {
       onSelect: onPressed ?? () {},
       child: Container(
         height: height,
+        width: expand ? double.infinity : null,
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         decoration: BoxDecoration(color: bg, borderRadius: radius),
         child: Row(

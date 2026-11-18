@@ -1161,5 +1161,20 @@
   "tvEmptyStep2Title": "Ou envoyez-le du téléphone",
   "tvEmptyStep2Body": "Scannez le QR code affiché, collez le lien sur le téléphone.",
   "tvEmptyStep3Title": "Regardez",
-  "tvEmptyStep3Body": "Catalogues, « Continuer » et « Ma liste » remplissent l'accueil."
+  "tvEmptyStep3Body": "Catalogues, « Continuer » et « Ma liste » remplissent l'accueil.",
+  "tvOnbTagline": "Votre bibliothèque, vos sources.",
+  "tvOnbTaglineBody": "Réunissez films, séries et fichiers locaux au même endroit.",
+  "tvOnbDefault": "Par défaut",
+  "tvOnbProfileHeading": "Créez votre profil",
+  "tvOnbProfileBody": "Chaque profil garde sa liste, sa progression et ses réglages.",
+  "tvOnbLater": "Plus tard",
+  "tvOnbFinish": "Terminer",
+  "tvOnbAddonTitle": "Un addon",
+  "tvOnbAddonBody": "Collez un lien ou scannez un QR code",
+  "tvOnbJellyfinTitle": "Un serveur Jellyfin",
+  "tvOnbJellyfinBody": "Votre médiathèque personnelle",
+  "tvOnbLocalTitle": "Un dossier local",
+  "tvOnbLocalBody": "Fichiers de cet appareil ou du réseau",
+  "tvOnbKidTitle": "Profil enfant",
+  "tvOnbKidBody": "Filtre par âge et PIN pour quitter"
 }
