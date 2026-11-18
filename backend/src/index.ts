@@ -3,6 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { authRoutes, requireUser } from './auth';
 import { LogEmailSender } from './email';
 import { pairPageRoutes, pairRoutes } from './pair';
+import { accountRoutes, syncRoutes } from './sync';
 import type { AppEnv, Deps } from './types';
 
 export { requireUser };
@@ -27,6 +28,8 @@ export function createApp(overrides: Partial<Deps> = {}) {
   app.route('/auth', authRoutes);
   app.route('/pair', pairRoutes);
   app.route('/p', pairPageRoutes);
+  app.route('/sync', syncRoutes);
+  app.route('/account', accountRoutes);
 
   app.get('/me', async (c) => c.json({ userId: await requireUser(c) }));
 

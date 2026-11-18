@@ -21,6 +21,12 @@ bool isProfileLocked(Profile p, List<Profile> all, {required bool hasPin}) {
   return !p.isKid && all.any((x) => x.isKid);
 }
 
+/// Un profil enfant sans PIN parent sur l'appareil (typiquement reçu d'un
+/// autre appareil par la synchronisation) n'est pas sélectionnable : rien ne
+/// l'empêcherait de quitter le profil. Un PIN doit d'abord être créé.
+bool kidProfileNeedsPin(Profile p, {required bool hasPin}) =>
+    p.isKid && !hasPin;
+
 /// Mention d'âge d'un profil enfant (« Enfant · 12+ »).
 String kidLabel(Profile p, [AppLocalizations? l]) {
   l ??= AppLocalizationsFr();
@@ -49,7 +55,10 @@ class ProfileGate extends ConsumerWidget {
         ),
       ),
       data: (list) {
+        // Un profil enfant seul n'est pas choisi d'office : le sélecteur
+        // vérifie qu'un PIN parent existe (voir kidProfileNeedsPin).
         if (list.length == 1 &&
+            !list.single.isKid &&
             !ref.watch(profileManagementRequestedProvider)) {
           // Un seul profil : choisi automatiquement.
           Future.microtask(() {
@@ -126,6 +135,12 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       return;
     }
     if (!await _refreshPin() || !mounted) return;
+    if (kidProfileNeedsPin(p, hasPin: _hasPin)) {
+      _toast(context.l10n.kidProfileNeedsPin);
+      final created = await createParentPinFlow(context, ref);
+      if (!created || !mounted) return;
+      if (!await _refreshPin() || !mounted || !_hasPin) return;
+    }
     if (isProfileLocked(p, all, hasPin: _hasPin)) {
       final ok = await verifyParentPinFlow(
         context,

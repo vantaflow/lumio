@@ -27,3 +27,5 @@ export 'src/profiles/content_rating.dart';
 export 'src/profiles/pin.dart';
 export 'src/search/search_service.dart';
 export 'src/search/text_normalize.dart';
+export 'src/sync/sync_engine.dart';
+export 'src/sync/sync_models.dart';

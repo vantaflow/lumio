@@ -114,6 +114,8 @@ void main() {
     final h = _H(tester)..start();
     await h.run(h.repo.ensureDefault);
     await h.run(() => h.repo.create('Léa', limit: AgeLimit.age7, isKid: true));
+    // Un profil enfant suppose un PIN parent (voir kidProfileNeedsPin).
+    await h.run(() => h.repo.createParentPin('1234'));
     final c = await h.pump(const ProfileGate(child: _child));
 
     expect(find.text('Qui regarde ?'), findsOneWidget);
@@ -123,7 +125,7 @@ void main() {
     expect(find.text('Enfant · 7+'), findsOneWidget);
     expect(find.text('Ajouter'), findsOneWidget);
 
-    // Pas encore de PIN : aucun verrou, on entre directement.
+    // Le profil enfant lui-même n'est pas verrouillé : on entre directement.
     await tester.tap(find.text('Léa'));
     await h.settle();
     expect(find.text('ACCUEIL'), findsOneWidget);

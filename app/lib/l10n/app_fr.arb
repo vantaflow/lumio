@@ -583,5 +583,34 @@
     "placeholders": {
       "percent": {}
     }
-  }
+  },
+  "settingsAccount": "Compte et synchronisation",
+  "accountSettingsHint": "Retrouvez votre liste et votre progression sur vos autres appareils",
+  "accountTitle": "Compte",
+  "accountIntro": "Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d'addons ne sont pas envoyés.",
+  "accountEmailLabel": "Adresse e-mail",
+  "accountSendCode": "Recevoir un code",
+  "accountCodeSent": "Un code de connexion vous a été envoyé par e-mail.",
+  "accountCodeLabel": "Code reçu par e-mail",
+  "accountSignIn": "Se connecter",
+  "accountSignedInAs": "Connecté : {email}",
+  "@accountSignedInAs": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "accountSyncIdle": "Synchronisé",
+  "accountSyncSyncing": "Synchronisation en cours…",
+  "accountSyncOffline": "Hors ligne : nouvel essai automatique",
+  "accountSyncNow": "Synchroniser maintenant",
+  "accountSignOut": "Se déconnecter",
+  "accountSignedOutDone": "Déconnecté. Vos données restent sur cet appareil.",
+  "accountDelete": "Supprimer mon compte",
+  "accountDeleteConfirm": "Supprimer le compte et toutes les données synchronisées sur le serveur ? Les données de cet appareil sont conservées.",
+  "accountDeleted": "Compte supprimé",
+  "accountErrInvalidEmail": "Adresse e-mail invalide",
+  "accountErrRejected": "Code refusé ou expiré",
+  "accountErrRate": "Trop de tentatives, réessayez plus tard",
+  "accountErrUnavailable": "Serveur injoignable, réessayez plus tard",
+  "kidProfileNeedsPin": "Ce profil enfant vient d'un autre appareil. Créez d'abord un PIN parent pour l'utiliser."
 }

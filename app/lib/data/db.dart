@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:lumio/data/sync_schema.dart';
 
 part 'db.g.dart';
 
@@ -120,11 +121,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (m) => m.createAll(),
+    onCreate: (m) async {
+      await m.createAll();
+      await installSyncSchema(this);
+    },
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.createTable(titleSettingsTable);
       if (from < 3) {
@@ -152,6 +156,24 @@ class AppDatabase extends _$AppDatabase {
         } else {
           await m.addColumn(libraryItems, libraryItems.certification);
         }
+      }
+      // v7 : file d'envoi de la synchronisation ; les données existantes y
+      // sont inscrites pour être envoyées à la première connexion.
+      if (from < 7) {
+        // Tables d'origine éventuellement absentes d'une base très ancienne.
+        for (final TableInfo<Table, dynamic> t in [
+          profiles,
+          settings,
+          progress,
+          libraryItems,
+        ]) {
+          final has = await customSelect(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            variables: [Variable.withString(t.actualTableName)],
+          ).get();
+          if (has.isEmpty) await m.createTable(t);
+        }
+        await installSyncSchema(this, backfill: true);
       }
     },
     beforeOpen: (details) async {

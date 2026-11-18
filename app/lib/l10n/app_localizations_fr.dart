@@ -1077,4 +1077,85 @@ class AppLocalizationsFr extends AppLocalizations {
   String torrentBuffered(Object percent) {
     return '$percent % téléchargé';
   }
+
+  @override
+  String get settingsAccount => 'Compte et synchronisation';
+
+  @override
+  String get accountSettingsHint =>
+      'Retrouvez votre liste et votre progression sur vos autres appareils';
+
+  @override
+  String get accountTitle => 'Compte';
+
+  @override
+  String get accountIntro =>
+      'Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d\'addons ne sont pas envoyés.';
+
+  @override
+  String get accountEmailLabel => 'Adresse e-mail';
+
+  @override
+  String get accountSendCode => 'Recevoir un code';
+
+  @override
+  String get accountCodeSent =>
+      'Un code de connexion vous a été envoyé par e-mail.';
+
+  @override
+  String get accountCodeLabel => 'Code reçu par e-mail';
+
+  @override
+  String get accountSignIn => 'Se connecter';
+
+  @override
+  String accountSignedInAs(Object email) {
+    return 'Connecté : $email';
+  }
+
+  @override
+  String get accountSyncIdle => 'Synchronisé';
+
+  @override
+  String get accountSyncSyncing => 'Synchronisation en cours…';
+
+  @override
+  String get accountSyncOffline => 'Hors ligne : nouvel essai automatique';
+
+  @override
+  String get accountSyncNow => 'Synchroniser maintenant';
+
+  @override
+  String get accountSignOut => 'Se déconnecter';
+
+  @override
+  String get accountSignedOutDone =>
+      'Déconnecté. Vos données restent sur cet appareil.';
+
+  @override
+  String get accountDelete => 'Supprimer mon compte';
+
+  @override
+  String get accountDeleteConfirm =>
+      'Supprimer le compte et toutes les données synchronisées sur le serveur ? Les données de cet appareil sont conservées.';
+
+  @override
+  String get accountDeleted => 'Compte supprimé';
+
+  @override
+  String get accountErrInvalidEmail => 'Adresse e-mail invalide';
+
+  @override
+  String get accountErrRejected => 'Code refusé ou expiré';
+
+  @override
+  String get accountErrRate => 'Trop de tentatives, réessayez plus tard';
+
+  @override
+  String get accountErrUnavailable =>
+      'Serveur injoignable, réessayez plus tard';
+
+  @override
+  String get kidProfileNeedsPin =>
+      'Ce profil enfant vient d\'un autre appareil. Créez d\'abord un PIN parent pour l\'utiliser.';
 }

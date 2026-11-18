@@ -1064,4 +1064,83 @@ class AppLocalizationsEn extends AppLocalizations {
   String torrentBuffered(Object percent) {
     return '$percent% downloaded';
   }
+
+  @override
+  String get settingsAccount => 'Account and sync';
+
+  @override
+  String get accountSettingsHint =>
+      'Get your list and progress on your other devices';
+
+  @override
+  String get accountTitle => 'Account';
+
+  @override
+  String get accountIntro =>
+      'Sign in with your e-mail to sync your list, progress, profiles and settings. Your addon links are not sent.';
+
+  @override
+  String get accountEmailLabel => 'E-mail address';
+
+  @override
+  String get accountSendCode => 'Get a code';
+
+  @override
+  String get accountCodeSent => 'A sign-in code was sent to your e-mail.';
+
+  @override
+  String get accountCodeLabel => 'Code received by e-mail';
+
+  @override
+  String get accountSignIn => 'Sign in';
+
+  @override
+  String accountSignedInAs(Object email) {
+    return 'Signed in: $email';
+  }
+
+  @override
+  String get accountSyncIdle => 'Up to date';
+
+  @override
+  String get accountSyncSyncing => 'Syncing…';
+
+  @override
+  String get accountSyncOffline => 'Offline: retrying automatically';
+
+  @override
+  String get accountSyncNow => 'Sync now';
+
+  @override
+  String get accountSignOut => 'Sign out';
+
+  @override
+  String get accountSignedOutDone =>
+      'Signed out. Your data stays on this device.';
+
+  @override
+  String get accountDelete => 'Delete my account';
+
+  @override
+  String get accountDeleteConfirm =>
+      'Delete the account and all synced data on the server? Data on this device is kept.';
+
+  @override
+  String get accountDeleted => 'Account deleted';
+
+  @override
+  String get accountErrInvalidEmail => 'Invalid e-mail address';
+
+  @override
+  String get accountErrRejected => 'Code refused or expired';
+
+  @override
+  String get accountErrRate => 'Too many attempts, try again later';
+
+  @override
+  String get accountErrUnavailable => 'Server unreachable, try again later';
+
+  @override
+  String get kidProfileNeedsPin =>
+      'This kids profile came from another device. Create a parent PIN first to use it.';
 }

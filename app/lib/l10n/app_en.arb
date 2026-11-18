@@ -354,5 +354,34 @@
     "placeholders": {
       "percent": {}
     }
-  }
+  },
+  "settingsAccount": "Account and sync",
+  "accountSettingsHint": "Get your list and progress on your other devices",
+  "accountTitle": "Account",
+  "accountIntro": "Sign in with your e-mail to sync your list, progress, profiles and settings. Your addon links are not sent.",
+  "accountEmailLabel": "E-mail address",
+  "accountSendCode": "Get a code",
+  "accountCodeSent": "A sign-in code was sent to your e-mail.",
+  "accountCodeLabel": "Code received by e-mail",
+  "accountSignIn": "Sign in",
+  "accountSignedInAs": "Signed in: {email}",
+  "@accountSignedInAs": {
+    "placeholders": {
+      "email": {}
+    }
+  },
+  "accountSyncIdle": "Up to date",
+  "accountSyncSyncing": "Syncing…",
+  "accountSyncOffline": "Offline: retrying automatically",
+  "accountSyncNow": "Sync now",
+  "accountSignOut": "Sign out",
+  "accountSignedOutDone": "Signed out. Your data stays on this device.",
+  "accountDelete": "Delete my account",
+  "accountDeleteConfirm": "Delete the account and all synced data on the server? Data on this device is kept.",
+  "accountDeleted": "Account deleted",
+  "accountErrInvalidEmail": "Invalid e-mail address",
+  "accountErrRejected": "Code refused or expired",
+  "accountErrRate": "Too many attempts, try again later",
+  "accountErrUnavailable": "Server unreachable, try again later",
+  "kidProfileNeedsPin": "This kids profile came from another device. Create a parent PIN first to use it."
 }

@@ -1963,6 +1963,150 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{percent} % téléchargé'**
   String torrentBuffered(Object percent);
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte et synchronisation'**
+  String get settingsAccount;
+
+  /// No description provided for @accountSettingsHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retrouvez votre liste et votre progression sur vos autres appareils'**
+  String get accountSettingsHint;
+
+  /// No description provided for @accountTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte'**
+  String get accountTitle;
+
+  /// No description provided for @accountIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d\'addons ne sont pas envoyés.'**
+  String get accountIntro;
+
+  /// No description provided for @accountEmailLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse e-mail'**
+  String get accountEmailLabel;
+
+  /// No description provided for @accountSendCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recevoir un code'**
+  String get accountSendCode;
+
+  /// No description provided for @accountCodeSent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un code de connexion vous a été envoyé par e-mail.'**
+  String get accountCodeSent;
+
+  /// No description provided for @accountCodeLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code reçu par e-mail'**
+  String get accountCodeLabel;
+
+  /// No description provided for @accountSignIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se connecter'**
+  String get accountSignIn;
+
+  /// No description provided for @accountSignedInAs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecté : {email}'**
+  String accountSignedInAs(Object email);
+
+  /// No description provided for @accountSyncIdle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisé'**
+  String get accountSyncIdle;
+
+  /// No description provided for @accountSyncSyncing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisation en cours…'**
+  String get accountSyncSyncing;
+
+  /// No description provided for @accountSyncOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Hors ligne : nouvel essai automatique'**
+  String get accountSyncOffline;
+
+  /// No description provided for @accountSyncNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchroniser maintenant'**
+  String get accountSyncNow;
+
+  /// No description provided for @accountSignOut.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se déconnecter'**
+  String get accountSignOut;
+
+  /// No description provided for @accountSignedOutDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déconnecté. Vos données restent sur cet appareil.'**
+  String get accountSignedOutDone;
+
+  /// No description provided for @accountDelete.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer mon compte'**
+  String get accountDelete;
+
+  /// No description provided for @accountDeleteConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer le compte et toutes les données synchronisées sur le serveur ? Les données de cet appareil sont conservées.'**
+  String get accountDeleteConfirm;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte supprimé'**
+  String get accountDeleted;
+
+  /// No description provided for @accountErrInvalidEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse e-mail invalide'**
+  String get accountErrInvalidEmail;
+
+  /// No description provided for @accountErrRejected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code refusé ou expiré'**
+  String get accountErrRejected;
+
+  /// No description provided for @accountErrRate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop de tentatives, réessayez plus tard'**
+  String get accountErrRate;
+
+  /// No description provided for @accountErrUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur injoignable, réessayez plus tard'**
+  String get accountErrUnavailable;
+
+  /// No description provided for @kidProfileNeedsPin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce profil enfant vient d\'un autre appareil. Créez d\'abord un PIN parent pour l\'utiliser.'**
+  String get kidProfileNeedsPin;
 }
 
 class _AppLocalizationsDelegate

@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
@@ -37,6 +38,18 @@ Future<void> main() async {
     },
     onDetach: () => unawaited(cache.cleanOnExit()),
   );
+  // Synchronisation multi-appareils : un cycle toutes les 15 s au premier
+  // plan seulement (nulle sans backend configuré).
+  final sync = container.read(syncServiceProvider);
+  if (sync != null) {
+    unawaited(sync.start());
+    AppLifecycleListener(
+      onResume: () => unawaited(sync.start()),
+      onInactive: sync.stop,
+      onHide: sync.stop,
+      onPause: sync.stop,
+    );
+  }
   runApp(
     UncontrolledProviderScope(container: container, child: const LumioApp()),
   );
