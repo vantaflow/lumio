@@ -40,7 +40,10 @@ String? episodeLabel(Meta meta, String videoId) {
 /// Implémentation réelle : titre depuis `MetaService`, lecture au flux
 /// préféré du profil, à la position enregistrée (le lecteur reprend seul).
 class DefaultContinuePlayback implements ContinuePlayback {
-  DefaultContinuePlayback(this._ref);
+  DefaultContinuePlayback(this._ref) {
+    // Les fiches mises en cache dépendent des addons installés.
+    _ref.listen(activeAddonsProvider, (_, _) => _metas.clear());
+  }
 
   final Ref _ref;
   final Map<String, Future<Meta>> _metas = {};
@@ -92,10 +95,10 @@ class DefaultContinuePlayback implements ContinuePlayback {
       tell('Fiche indisponible. Réessayez.');
       return;
     }
-    if (!profileAllows(
-      _ref.read(currentProfileProvider),
-      meta.certification ?? entry.certification,
-    )) {
+    if (!contentAllowed(_ref.read(currentProfileProvider), [
+      meta.certification,
+      entry.certification,
+    ])) {
       tell('Ce contenu n\'est pas autorisé pour ce profil.');
       return;
     }

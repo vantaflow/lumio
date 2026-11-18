@@ -67,13 +67,10 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
     super.dispose();
   }
 
-  bool _allowed(Meta? meta) {
-    final profile = ref.read(currentProfileProvider);
-    final pre = widget.preview.certification;
-    // Les deux certifications connues doivent convenir ; inconnue = refusée.
-    return profileAllows(profile, meta?.certification ?? pre) &&
-        (pre == null || profileAllows(profile, pre));
-  }
+  bool _allowed(Meta? meta) => contentAllowed(
+    ref.read(currentProfileProvider),
+    [meta?.certification, widget.preview.certification],
+  );
 
   Future<void> _load() async {
     setState(() => _phase = _Phase.loading);
@@ -233,14 +230,20 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       ..sort(
         (a, b) => order.indexOf(a.addonId).compareTo(order.indexOf(b.addonId)),
       );
-    final preferred = preferredStream([
+    final preferred = preferredPlayable([
       for (final g in groups) ...g.items,
     ], prefs);
     final inList =
         ref.watch(libraryProvider).value?.any((m) => m.id == meta.id) ?? false;
-    final allowPoster = ref
-        .watch(searchPrivateSourcesProvider)
-        .contains(widget.preview.sourceAddonId);
+    // L'affiche n'est autorisée en réseau privé que si c'est celle du
+    // catalogue (addon source privé) ; une affiche fournie par la fusion de
+    // fiches (addon inconnu) reste en réseau public.
+    final allowPoster =
+        meta.poster != null &&
+        meta.poster == widget.preview.poster &&
+        ref
+            .watch(searchPrivateSourcesProvider)
+            .contains(widget.preview.sourceAddonId);
 
     final info = _Info(
       meta: meta,

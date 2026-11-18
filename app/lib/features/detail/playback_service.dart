@@ -157,14 +157,16 @@ class PlaybackLauncher {
     final service = StreamService(_ref.read(addonClientProvider));
     final out = StreamController<StreamGroup>();
     final subs = <StreamSubscription<StreamGroup>>[];
+    var cancelled = false;
     out.onCancel = () {
+      cancelled = true;
       for (final s in subs) {
         s.cancel();
       }
     };
     () async {
       final addons = await _addons();
-      if (out.isClosed) return;
+      if (cancelled || out.isClosed) return;
       var pending = addons.length;
       if (pending == 0) {
         await out.close();
@@ -238,10 +240,9 @@ class PlaybackLauncher {
     await for (final g in loadStreams(type, id)) {
       all.addAll(g.items);
     }
-    return preferredStream(
-      directOnly ? all.where((s) => !s.isTorrent) : all,
-      prefs,
-    );
+    return directOnly
+        ? preferredStream(all.where((s) => !s.isTorrent), prefs)
+        : preferredPlayable(all, prefs);
   }
 
   bool allowPrivateFor(String storageId) => _ref

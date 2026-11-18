@@ -15,6 +15,7 @@ import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/library/library_screen.dart';
 import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -39,6 +40,52 @@ AddonManifest _manifest(
 
 InstalledAddon _installed(String storageId, AddonManifest m) =>
     InstalledAddon(id: storageId, manifest: m, position: 0, enabled: true);
+
+/// Délègue à [_inner] en notant le niveau de confiance réseau demandé.
+class _Recording extends AddonClient {
+  _Recording(this._inner, this._trust, this.seen, [this.calls])
+    : super(FakeAddonFetcher());
+
+  final _FakeClient _inner;
+  final bool _trust;
+  final Map<String, bool> seen;
+  final List<String>? calls;
+
+  void _note(AddonManifest a) {
+    seen[a.id] = _trust;
+    calls?.add(a.id);
+  }
+
+  @override
+  Future<Map<String, dynamic>?> rawMeta(AddonManifest a, String t, String i) {
+    _note(a);
+    return _inner.rawMeta(a, t, i);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> rawStreams(
+    AddonManifest a,
+    String t,
+    String i,
+  ) {
+    _note(a);
+    return Future.value([
+      {'name': 'x', 'title': 'x', 'url': 'https://cdn.example.com/${a.id}.mp4'},
+    ]);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> rawSubtitles(
+    AddonManifest a,
+    String t,
+    String i,
+  ) {
+    _note(a);
+    return Future.value([
+      {'id': a.id, 'url': 'https://cdn.example.com/${a.id}.srt', 'lang': 'fr'},
+    ]);
+  }
+}
 
 class _FakeAddons extends AddonsController {
   _FakeAddons(this.list);
@@ -490,6 +537,161 @@ void main() {
     );
     expect(find.textContaining('pas autorisé'), findsNothing);
     expect(h.client.streamCalls, isNotEmpty);
+    await h.close();
+  });
+
+  group('affiche : confiance réseau suivant la vraie source', () {
+    bool? posterAllow(WidgetTester t) {
+      for (final i in t.widgetList<Image>(find.byType(Image))) {
+        final p = i.image;
+        if (p is GuardedNetworkImage) return p.allowPrivate;
+      }
+      return null;
+    }
+
+    testWidgets('affiche privée fournie par un addon public : refusée', (
+      t,
+    ) async {
+      final h = _H(t);
+      final priv = _manifest(
+        'org.priv',
+        url: 'http://192.168.1.5:7000/manifest.json',
+      );
+      h.client.metas['org.pub'] = {'poster': 'http://192.168.1.9/p.jpg'};
+      await h.pump(
+        preview: MetaPreview(
+          id: 'tt1',
+          type: 'movie',
+          name: 'T',
+          sourceAddonId: 'org.priv',
+        ),
+        addons: [
+          _installed('p1', priv),
+          _installed('s2', _manifest('org.pub')),
+        ],
+      );
+      expect(posterAllow(t), isFalse);
+      await h.close();
+    });
+
+    testWidgets('affiche du catalogue d\'un addon privé : autorisée', (
+      t,
+    ) async {
+      final h = _H(t);
+      final priv = _manifest(
+        'org.priv',
+        url: 'http://192.168.1.5:7000/manifest.json',
+      );
+      await h.pump(
+        preview: MetaPreview(
+          id: 'tt1',
+          type: 'movie',
+          name: 'T',
+          poster: Uri.parse('http://192.168.1.5:7000/p.jpg'),
+          sourceAddonId: 'org.priv',
+        ),
+        addons: [_installed('p1', priv)],
+      );
+      expect(posterAllow(t), isTrue);
+      await h.close();
+    });
+  });
+
+  group('RoutingAddonClient', () {
+    test(
+      'allowPrivate par addon selon son URL ; ids de stockage conservés',
+      () async {
+        final seen = <String, bool>{};
+        final inner = <bool, _FakeClient>{};
+        AddonClient factory({required bool allowPrivate}) {
+          final c = inner.putIfAbsent(allowPrivate, () => _FakeClient());
+          return _Recording(c, allowPrivate, seen);
+        }
+
+        final priv = _manifest(
+          'org.priv',
+          url: 'http://192.168.1.5:7000/manifest.json',
+        );
+        // Hostile : l'id de manifeste de l'addon public = id de stockage privé.
+        final pub = _manifest('p1');
+        final db = AppDatabase(NativeDatabase.memory());
+        final c = ProviderContainer(
+          overrides: [
+            appDatabaseProvider.overrideWithValue(db),
+            addonsProvider.overrideWith(
+              () =>
+                  _FakeAddons([_installed('p1', priv), _installed('s2', pub)]),
+            ),
+            addonClientProvider.overrideWithValue(
+              RoutingAddonClient(factory: factory),
+            ),
+          ],
+        );
+        addTearDown(() async {
+          c.dispose();
+          await db.close();
+        });
+        final l = c.read(playbackLauncherProvider);
+        final groups = await l.loadStreams('movie', 'tt1').toList();
+        final subs = await l.loadSubtitles('movie', 'tt1');
+        await l.loadMeta(_preview());
+        expect(seen['org.priv'], isTrue);
+        expect(seen['p1'], isFalse);
+        expect({for (final g in groups) g.addonId}, {'p1', 's2'});
+        final fromPublic = groups.firstWhere((g) => g.addonId == 's2');
+        expect(fromPublic.items.single.addonId, 's2');
+        expect({for (final s in subs) s.addonId}, {'p1', 's2'});
+        expect(l.allowPrivateFor('p1'), isTrue);
+        expect(l.allowPrivateFor('s2'), isFalse);
+      },
+    );
+
+    test('aucune requête après annulation du consommateur', () async {
+      final calls = <String>[];
+      final c0 = _FakeClient();
+      AddonClient factory({required bool allowPrivate}) =>
+          _Recording(c0, allowPrivate, {}, calls);
+      final db = AppDatabase(NativeDatabase.memory());
+      final c = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          addonsProvider.overrideWith(
+            () => _FakeAddons([_installed('s1', _manifest('org.a'))]),
+          ),
+          addonClientProvider.overrideWithValue(
+            RoutingAddonClient(factory: factory),
+          ),
+        ],
+      );
+      addTearDown(() async {
+        c.dispose();
+        await db.close();
+      });
+      final sub = c
+          .read(playbackLauncherProvider)
+          .loadStreams('movie', 'tt1')
+          .listen((_) {});
+      await sub.cancel();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(calls, isEmpty);
+    });
+  });
+
+  testWidgets('« Lecture auto » préfère un lien direct à un torrent', (
+    t,
+  ) async {
+    final h = _H(t);
+    h.client.streams['org.a'] = [
+      _torrent('T', desc: 'Film VF 1080p 👤 500'),
+      _direct('d', 'https://cdn.example.com/d.mp4', desc: 'Film VF 720p'),
+    ];
+    await h.pump(preview: _preview());
+    await t.tap(find.textContaining('Lecture auto'));
+    await h.settle();
+    expect(
+      h.players.single.item.url.toString(),
+      'https://cdn.example.com/d.mp4',
+    );
     await h.close();
   });
 

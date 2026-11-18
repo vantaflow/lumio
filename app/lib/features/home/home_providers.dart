@@ -260,6 +260,15 @@ bool profileAllows(Profile? profile, String? certification) =>
     !profile.isKid ||
     ratingAllows(certification, _limitOf(profile));
 
+/// Règle unique des profils enfants pour une fiche : refusé si une
+/// certification connue ([certs], valeurs nulles ignorées) n'est pas permise,
+/// ou si aucune n'est connue.
+bool contentAllowed(Profile? profile, Iterable<String?> certs) {
+  if (profile == null || !profile.isKid) return true;
+  final known = [for (final c in certs) ?c];
+  return known.isNotEmpty && known.every((c) => profileAllows(profile, c));
+}
+
 /// Éléments visibles par le profil actif (filtre d'âge : certification
 /// inconnue masquée pour un profil enfant).
 List<MetaPreview> visibleItems(List<MetaPreview> items, Profile? profile) {
