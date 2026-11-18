@@ -16,6 +16,8 @@ import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/home_screen.dart';
+import 'package:lumio/features/local/local_providers.dart';
+import 'package:lumio/features/local/local_screen.dart' show LocalTitleCard;
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/theme.dart';
@@ -180,6 +182,7 @@ class _H {
     List<ProgressEntry> progress = const [],
     Profile? profile,
     List<MetaPreview>? library,
+    List<MetaPreview>? local,
   }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
@@ -199,6 +202,7 @@ class _H {
         addonClientProvider.overrideWithValue(_OfflineClient()),
         if (library != null)
           libraryProvider.overrideWith((ref) => Stream.value(library)),
+        if (local != null) localPreviewsProvider.overrideWithValue(local),
       ],
     );
     addTearDown(container.dispose);
@@ -376,6 +380,55 @@ void main() {
   });
 
   group('accueil', () {
+    MetaPreview localMeta(String id, String name) => MetaPreview(
+      id: id,
+      type: 'movie',
+      name: name,
+      sourceAddonId: 'local',
+      sourceKind: 'local',
+    );
+
+    testWidgets(
+      'vidéos locales sans addon : rangée « Dossiers locaux », badge Local, '
+      'carte-titre sans affiche',
+      (t) async {
+        final h = _H(t);
+        await h.pump(local: [localMeta('local:aa', 'Mon film')]);
+        expect(find.text('Dossiers locaux'), findsOneWidget);
+        expect(find.text('Mon film'), findsWidgets); // carte-titre + légende
+        expect(find.text('Local'), findsOneWidget);
+        expect(find.byType(LocalTitleCard), findsOneWidget);
+        await h.close();
+      },
+    );
+
+    testWidgets('profil enfant : vidéos locales masquées', (t) async {
+      final h = _H(t);
+      await h.pump(local: [localMeta('local:aa', 'Mon film')], profile: _kid());
+      expect(find.text('Dossiers locaux'), findsNothing);
+      expect(find.text('Mon film'), findsNothing);
+      await h.close();
+    });
+
+    testWidgets('reprise locale d\'un autre appareil : masquée', (t) async {
+      final h = _H(t);
+      await h.pump(
+        addons: [_installed(_manifest('a'))],
+        aggregator: _FakeAggregator([
+          [
+            _row('a', 'top', [_meta('1')]),
+          ],
+        ]),
+        progress: [
+          _progress(meta: 'local:zz'),
+          _progress(),
+        ],
+      );
+      expect(find.text('Série tt9'), findsOneWidget);
+      expect(find.text('Série local:zz'), findsNothing);
+      await h.close();
+    });
+
     testWidgets(
       '« Continuer » d\'abord, puis les catalogues ; un clic reprend',
       (t) async {

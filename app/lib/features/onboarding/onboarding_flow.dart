@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/local/local_screen.dart' show addLocalFolderFlow;
 import 'package:lumio/features/pairing/pairing_screen.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
@@ -420,14 +421,19 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _title(context, l.onboardingSourcesTitle, l.onboardingSourcesBody),
-        // « Ajouter un dossier » arrive avec les sources locales (Task 36) :
-        // pas de bouton inactif d'ici là.
         FilledButton.icon(
           key: const ValueKey('onboarding-add-addon'),
           autofocus: true,
           onPressed: () => _addAddon(),
           icon: const Icon(Icons.extension),
           label: Text(l.addAddon),
+        ),
+        const SizedBox(height: LumioSpacing.sm),
+        OutlinedButton.icon(
+          key: const ValueKey('onboarding-add-folder'),
+          onPressed: () => addLocalFolderFlow(context, ref),
+          icon: const Icon(Icons.folder_open),
+          label: Text(l.localAddFolder),
         ),
         // Masqué tant que `backendUrl` est vide.
         if (ref.watch(pairingClientProvider) != null) ...[

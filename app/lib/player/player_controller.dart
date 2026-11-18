@@ -131,6 +131,7 @@ class PlayerController {
   StreamItem? _item;
   bool _allowPrivate = false;
   bool _trustedLocal = false;
+  LocalFileSource? _local;
   bool _refused = false;
   bool _viaProxy = false;
   bool _playing = false;
@@ -156,11 +157,13 @@ class PlayerController {
 
   /// Ouvre [s] ; [allowPrivate] seulement pour un addon autorisé sur le réseau
   /// privé. [trustedLocal] : lecture directe réservée aux URL de nos propres
-  /// composants (torrent), jamais aux données d'un addon. Échec : phase `failed` avec message ([PlayerState.error]).
+  /// composants (torrent), jamais aux données d'un addon. [local] : fichier
+  /// d'un dossier local accordé (lecture `file://`). Échec : phase `failed` avec message ([PlayerState.error]).
   Future<void> open(
     StreamItem s, {
     bool allowPrivate = false,
     bool trustedLocal = false,
+    LocalFileSource? local,
     Duration start = Duration.zero,
   }) async {
     final attempt = _gate.current;
@@ -168,6 +171,7 @@ class PlayerController {
     _item = s;
     _allowPrivate = allowPrivate;
     _trustedLocal = trustedLocal;
+    _local = local;
     _refused = false;
     _lastStatus = null;
     firstFrameMs = null;
@@ -193,6 +197,7 @@ class PlayerController {
         proxy: _proxy,
         allowPrivate: allowPrivate,
         trustedLocal: trustedLocal,
+        local: local,
       );
       _viaProxy = route.kind == PlayRouteKind.proxy;
       if (_viaProxy) {
@@ -229,6 +234,7 @@ class PlayerController {
       s,
       allowPrivate: _allowPrivate,
       trustedLocal: _trustedLocal,
+      local: _local,
       start: state.position,
     );
   }

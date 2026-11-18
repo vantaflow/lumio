@@ -1632,4 +1632,128 @@ class AppLocalizationsFr extends AppLocalizations {
   String resetHealth(Object name) {
     return 'Réinitialiser les mesures de $name';
   }
+
+  @override
+  String get localFolders => 'Dossiers locaux';
+
+  @override
+  String get localFoldersHint => 'Les vidéos stockées sur cet appareil';
+
+  @override
+  String get localAddFolder => 'Ajouter un dossier';
+
+  @override
+  String get localEmpty =>
+      'Aucun dossier. Ajoutez un dossier de vidéos pour les retrouver dans Lumio.';
+
+  @override
+  String localVideoCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count vidéos',
+      one: '1 vidéo',
+      zero: 'Aucune vidéo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get localScanNow => 'Analyser maintenant';
+
+  @override
+  String get localScanning => 'Analyse en cours…';
+
+  @override
+  String localScanDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count vidéos',
+      one: '1 vidéo',
+      zero: 'aucune vidéo',
+    );
+    return 'Analyse terminée : $_temp0';
+  }
+
+  @override
+  String localRemoveFolder(String path) {
+    return 'Retirer le dossier $path';
+  }
+
+  @override
+  String get localFolderRemoved =>
+      'Dossier retiré de Lumio. Vos fichiers ne sont pas touchés.';
+
+  @override
+  String get localPermissionDenied =>
+      'Lumio a besoin d\'accéder à vos vidéos. Autorisez l\'accès dans les réglages de l\'appareil.';
+
+  @override
+  String get localPickerUnavailable =>
+      'Le sélecteur de dossier n\'est pas disponible. Saisissez le chemin du dossier.';
+
+  @override
+  String get localPathTitle => 'Chemin du dossier';
+
+  @override
+  String get localPathLabel => 'Chemin';
+
+  @override
+  String get localPathHint => '/storage/emulated/0/Movies';
+
+  @override
+  String get localChooseFolder => 'Choisir dans le sélecteur';
+
+  @override
+  String get localTypePath => 'Saisir un chemin';
+
+  @override
+  String get localSdNote =>
+      'Le sélecteur n\'atteint que le stockage interne. Pour une carte SD ou une clé USB, saisissez le chemin.';
+
+  @override
+  String get localFolderMissing => 'Ce dossier est introuvable.';
+
+  @override
+  String get localFolderDenied => 'Accès refusé à ce dossier.';
+
+  @override
+  String get localFolderOverlap => 'Ce dossier recoupe un dossier déjà ajouté.';
+
+  @override
+  String localFolderAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count vidéos',
+      one: '1 vidéo',
+      zero: 'aucune vidéo',
+    );
+    return 'Dossier ajouté : $_temp0';
+  }
+
+  @override
+  String get localScanFailed => 'L\'analyse du dossier a échoué.';
+
+  @override
+  String get localFixTitle => 'Corriger le titre';
+
+  @override
+  String get localFixLabel => 'Titre';
+
+  @override
+  String get localFixReset => 'Rétablir le titre détecté';
+
+  @override
+  String get localFileMissing =>
+      'Fichier introuvable : il a peut-être été déplacé. Relancez l\'analyse.';
+
+  @override
+  String get localPlayFailed => 'Impossible de lire ce fichier.';
+
+  @override
+  String localDetected(String title) {
+    return 'Détecté : $title';
+  }
 }

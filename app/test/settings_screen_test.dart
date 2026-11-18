@@ -174,6 +174,18 @@ void main() {
     await h.dispose();
   });
 
+  testWidgets('dossiers locaux : section dédiée, la tuile ouvre l\'écran', (
+    tester,
+  ) async {
+    final h = _H(tester)..start();
+    await h.pump(const SettingsScreen());
+    expect(find.text('Dossiers locaux'), findsWidgets);
+    await h.tapTile('localFolders');
+    expect(find.textContaining('Aucun dossier'), findsOneWidget);
+    expect(find.text('Ajouter un dossier'), findsOneWidget);
+    await h.dispose();
+  });
+
   testWidgets('langues et qualité : modifient les préférences du profil', (
     tester,
   ) async {

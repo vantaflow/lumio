@@ -5,6 +5,7 @@ import 'package:lumio/data/db.dart';
 /// Identifiants des rangées fixes de l'accueil.
 const continueRowId = 'continue';
 const libraryRowId = 'library';
+const localRowId = 'local';
 
 /// Identifiant d'une rangée de catalogue.
 String catalogRowId(String addonId, String type, String catalogId) =>

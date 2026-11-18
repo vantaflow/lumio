@@ -78,4 +78,64 @@ void main() {
       throwsA(isA<UnsafeUrlException>()),
     );
   });
+
+  group('LocalFileSource', () {
+    const root = '/storage/emulated/0/Movies';
+    Future<PlayRoute> local(String path, {List<String> roots = const [root]}) =>
+        routePlayback(
+          item('https://x/ignored'),
+          proxy: () async => proxy,
+          local: LocalFileSource(path: path, grantedFolders: roots),
+        );
+
+    test('fichier dans un dossier accordé : file:// direct', () async {
+      final r = await local('$root/Sous/Film (2019).mkv');
+      expect(r.kind, PlayRouteKind.direct);
+      expect(r.url.scheme, 'file');
+      expect(r.url.toFilePath(), '$root/Sous/Film (2019).mkv');
+    });
+
+    test('hors des dossiers accordés, traversée, relatif : refusé', () async {
+      for (final path in [
+        '/etc/passwd',
+        '/storage/emulated/0/Other/a.mkv',
+        '$root/../Other/a.mkv',
+        '${root}2/a.mkv', // préfixe voisin, pas un sous-dossier
+        'Movies/a.mkv',
+        '$root/a\u0000.mkv',
+        '',
+      ]) {
+        await expectLater(
+          local(path),
+          throwsA(isA<UnsafeUrlException>()),
+          reason: path,
+        );
+      }
+      await expectLater(
+        local('$root/a.mkv', roots: const []),
+        throwsA(isA<UnsafeUrlException>()),
+      );
+    });
+
+    test('extension non vidéo refusée', () async {
+      await expectLater(
+        local('$root/notes.txt'),
+        throwsA(isA<UnsafeUrlException>()),
+      );
+    });
+
+    test(
+      'un flux d\'addon en file: reste refusé sans LocalFileSource',
+      () async {
+        await expectLater(
+          route(item('file://$root/a.mkv')),
+          throwsA(isA<UnsafeUrlException>()),
+        );
+        await expectLater(
+          route(item('file://$root/a.mkv'), trustedLocal: true),
+          throwsA(isA<UnsafeUrlException>()),
+        );
+      },
+    );
+  });
 }

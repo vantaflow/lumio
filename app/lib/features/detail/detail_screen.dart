@@ -7,7 +7,9 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/detail/streams_list.dart';
+import 'package:lumio/data/local_library.dart' show localSourceKind;
 import 'package:lumio/features/home/home_providers.dart';
+import 'package:lumio/features/local/local_screen.dart' show openLocalDetail;
 import 'package:lumio/features/search/search_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
@@ -23,9 +25,12 @@ import 'package:lumio_core/lumio_core.dart' as core show Video;
 const detailRouteKey = 'detail';
 
 /// Ouvre la fiche de [item] (accueil, recherche, « Ma liste »).
-Future<void> openDetail(BuildContext context, MetaPreview item) => Navigator.of(
-  context,
-).push(MaterialPageRoute<void>(builder: (_) => DetailScreen(preview: item)));
+Future<void> openDetail(BuildContext context, MetaPreview item) =>
+    item.sourceKind == localSourceKind
+    ? openLocalDetail(context, item)
+    : Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => DetailScreen(preview: item)),
+      );
 
 enum _Phase { loading, ready, refused, error }
 

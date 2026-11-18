@@ -8,6 +8,7 @@ import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
+import 'package:lumio/features/local/local_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -325,9 +326,13 @@ final homeSummaryProvider = Provider<HomeSummary>((ref) {
   }
   final specs = ref.watch(homeRowsProvider.select((s) => s.specs));
   final ids = [for (final s in specs) s.id];
-  if (specs.isEmpty) return HomeSummary(HomePhase.noAddons, ids);
-
   final profile = ref.watch(currentProfileProvider);
+  final local = visibleItems(ref.watch(localPreviewsProvider), profile);
+  // Sans addon, des vidéos locales suffisent à remplir l'accueil.
+  if (specs.isEmpty && local.isEmpty) {
+    return HomeSummary(HomePhase.noAddons, ids);
+  }
+
   final rows = ref.watch(homeRowsProvider);
   if (rows.complete && rows.rows.values.every((r) => !r.failed)) {
     final cont = visibleProgress(
@@ -338,7 +343,7 @@ final homeSummaryProvider = Provider<HomeSummary>((ref) {
       ref.watch(libraryProvider).value ?? const [],
       profile,
     );
-    if (cont.isEmpty && lib.isEmpty) {
+    if (cont.isEmpty && lib.isEmpty && local.isEmpty) {
       final raw = rows.rows.values.fold<int>(0, (n, r) => n + r.items.length);
       final shown = rows.rows.values.fold<int>(
         0,

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
+import 'package:lumio/data/local_library.dart' show LocalItemView, isLocalId;
 import 'package:lumio/features/detail/detail_screen.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/home/home_providers.dart';
+import 'package:lumio/features/local/local_providers.dart';
+import 'package:lumio/features/local/local_screen.dart';
 import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -74,6 +77,13 @@ class DefaultContinuePlayback implements ContinuePlayback {
 
   @override
   Future<ContinueInfo> describe(ProgressEntry entry) async {
+    if (isLocalId(entry.metaId)) {
+      final item = await _ref.read(localLibraryProvider).item(entry.metaId);
+      return ContinueInfo(
+        title: item?.displayTitle ?? entry.metaId,
+        subtitle: item?.episodeLabel,
+      );
+    }
     final meta = await _meta(entry);
     return ContinueInfo(
       title: meta.name,
@@ -89,6 +99,27 @@ class DefaultContinuePlayback implements ContinuePlayback {
     void tell(String m) => messenger
       ?..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(m)));
+    if (isLocalId(entry.metaId)) {
+      final library = _ref.read(localLibraryProvider);
+      final item = await library.item(entry.metaId);
+      if (!context.mounted) return;
+      if (item == null) {
+        tell(l.localFileMissing);
+        return;
+      }
+      // Fichier local : jamais de certification, refusé aux profils enfants.
+      await playLocalItem(
+        context,
+        library: library,
+        item: item,
+        profileId: _ref.read(currentProfileIdProvider),
+        allowed: contentAllowed(_ref.read(currentProfileProvider), [
+          entry.certification,
+        ]),
+        build: _ref.read(playerBuilderProvider),
+      );
+      return;
+    }
     final launcher = _ref.read(playbackLauncherProvider);
     final Meta meta;
     try {

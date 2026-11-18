@@ -10,6 +10,7 @@ import 'package:lumio/data/db.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/title_settings_store.dart';
 import 'package:lumio/player/next_episode_overlay.dart';
+import 'package:lumio/player/play_router.dart' show LocalFileSource;
 import 'package:lumio/player/player_controller.dart';
 import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/player/subtitle_style.dart';
@@ -35,6 +36,7 @@ class FakeCtl extends Fake implements PlayerController {
     StreamItem s, {
     bool allowPrivate = false,
     bool trustedLocal = false,
+    LocalFileSource? local,
     Duration start = Duration.zero,
   }) async => opened.add((s.title, start));
   @override

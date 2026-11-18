@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lumio/player/play_router.dart' show LocalFileSource;
 import 'package:lumio/player/player_controller.dart';
 import 'package:lumio/player/source_fallback.dart';
 import 'package:lumio/player/subtitle_style.dart';
@@ -14,6 +15,7 @@ class RecordingPlayerController extends Fake implements PlayerController {
   final _state = ValueNotifier<PlayerState>(const PlayerState());
   final opened = <StreamItem>[];
   final trusted = <bool>[];
+  final locals = <LocalFileSource?>[];
   final failures = <String>[];
 
   /// Sources dont l'ouverture échoue (par titre) : `open` affiche l'échec.
@@ -42,10 +44,12 @@ class RecordingPlayerController extends Fake implements PlayerController {
     StreamItem s, {
     bool allowPrivate = false,
     bool trustedLocal = false,
+    LocalFileSource? local,
     Duration start = Duration.zero,
   }) async {
     opened.add(s);
     trusted.add(trustedLocal);
+    locals.add(local);
     if (failOpen.contains(s.title)) {
       fail('échec ${s.title}', fallbackable: true);
       return;

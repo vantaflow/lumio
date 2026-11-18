@@ -107,6 +107,40 @@ class TitleSettingsTable extends Table {
   Set<Column<Object>> get primaryKey => {profileId, metaId};
 }
 
+/// Dossiers locaux accordés par l'utilisateur (v9). Propres à l'appareil :
+/// jamais synchronisés.
+class LocalFolders extends Table {
+  TextColumn get path => text()();
+  IntColumn get addedAt => integer().withDefault(const Constant(0))();
+
+  /// Dernière analyse réussie (ms) ; 0 si jamais.
+  IntColumn get lastScanAt => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {path};
+}
+
+/// Vidéos trouvées dans les dossiers locaux (v9). [id] = `local:<sha1 du
+/// chemin>` ; [titleOverride] est la correction manuelle, conservée aux
+/// réanalyses.
+class LocalItems extends Table {
+  TextColumn get id => text()();
+  TextColumn get folderPath => text()();
+  TextColumn get path => text()();
+  TextColumn get fileName => text()();
+  TextColumn get title => text()();
+  TextColumn get titleOverride => text().nullable()();
+  IntColumn get year => integer().nullable()();
+  IntColumn get season => integer().nullable()();
+  IntColumn get episode => integer().nullable()();
+  IntColumn get sizeBytes => integer().withDefault(const Constant(0))();
+  IntColumn get modifiedAt => integer().withDefault(const Constant(0))();
+  IntColumn get addedAt => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Profiles,
@@ -115,13 +149,15 @@ class TitleSettingsTable extends Table {
     Progress,
     Settings,
     TitleSettingsTable,
+    LocalFolders,
+    LocalItems,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -178,6 +214,11 @@ class AppDatabase extends _$AppDatabase {
       }
       // v8 : déclencheurs de la synchronisation des addons (blob chiffré).
       if (from == 7) await installSyncSchema(this);
+      // v9 : dossiers locaux et leurs vidéos.
+      if (from < 9) {
+        await m.createTable(localFolders);
+        await m.createTable(localItems);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

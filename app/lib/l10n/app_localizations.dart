@@ -2851,6 +2851,180 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Réinitialiser les mesures de {name}'**
   String resetHealth(Object name);
+
+  /// No description provided for @localFolders.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossiers locaux'**
+  String get localFolders;
+
+  /// No description provided for @localFoldersHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les vidéos stockées sur cet appareil'**
+  String get localFoldersHint;
+
+  /// No description provided for @localAddFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un dossier'**
+  String get localAddFolder;
+
+  /// No description provided for @localEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun dossier. Ajoutez un dossier de vidéos pour les retrouver dans Lumio.'**
+  String get localEmpty;
+
+  /// No description provided for @localVideoCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucune vidéo} =1{1 vidéo} other{{count} vidéos}}'**
+  String localVideoCount(int count);
+
+  /// No description provided for @localScanNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Analyser maintenant'**
+  String get localScanNow;
+
+  /// No description provided for @localScanning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Analyse en cours…'**
+  String get localScanning;
+
+  /// No description provided for @localScanDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Analyse terminée : {count, plural, =0{aucune vidéo} =1{1 vidéo} other{{count} vidéos}}'**
+  String localScanDone(int count);
+
+  /// No description provided for @localRemoveFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer le dossier {path}'**
+  String localRemoveFolder(String path);
+
+  /// No description provided for @localFolderRemoved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossier retiré de Lumio. Vos fichiers ne sont pas touchés.'**
+  String get localFolderRemoved;
+
+  /// No description provided for @localPermissionDenied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lumio a besoin d\'accéder à vos vidéos. Autorisez l\'accès dans les réglages de l\'appareil.'**
+  String get localPermissionDenied;
+
+  /// No description provided for @localPickerUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le sélecteur de dossier n\'est pas disponible. Saisissez le chemin du dossier.'**
+  String get localPickerUnavailable;
+
+  /// No description provided for @localPathTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chemin du dossier'**
+  String get localPathTitle;
+
+  /// No description provided for @localPathLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chemin'**
+  String get localPathLabel;
+
+  /// No description provided for @localPathHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'/storage/emulated/0/Movies'**
+  String get localPathHint;
+
+  /// No description provided for @localChooseFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir dans le sélecteur'**
+  String get localChooseFolder;
+
+  /// No description provided for @localTypePath.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisir un chemin'**
+  String get localTypePath;
+
+  /// No description provided for @localSdNote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le sélecteur n\'atteint que le stockage interne. Pour une carte SD ou une clé USB, saisissez le chemin.'**
+  String get localSdNote;
+
+  /// No description provided for @localFolderMissing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce dossier est introuvable.'**
+  String get localFolderMissing;
+
+  /// No description provided for @localFolderDenied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès refusé à ce dossier.'**
+  String get localFolderDenied;
+
+  /// No description provided for @localFolderOverlap.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce dossier recoupe un dossier déjà ajouté.'**
+  String get localFolderOverlap;
+
+  /// No description provided for @localFolderAdded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossier ajouté : {count, plural, =0{aucune vidéo} =1{1 vidéo} other{{count} vidéos}}'**
+  String localFolderAdded(int count);
+
+  /// No description provided for @localScanFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'analyse du dossier a échoué.'**
+  String get localScanFailed;
+
+  /// No description provided for @localFixTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Corriger le titre'**
+  String get localFixTitle;
+
+  /// No description provided for @localFixLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre'**
+  String get localFixLabel;
+
+  /// No description provided for @localFixReset.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rétablir le titre détecté'**
+  String get localFixReset;
+
+  /// No description provided for @localFileMissing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fichier introuvable : il a peut-être été déplacé. Relancez l\'analyse.'**
+  String get localFileMissing;
+
+  /// No description provided for @localPlayFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de lire ce fichier.'**
+  String get localPlayFailed;
+
+  /// No description provided for @localDetected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Détecté : {title}'**
+  String localDetected(String title);
 }
 
 class _AppLocalizationsDelegate

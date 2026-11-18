@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/db.dart';
+import 'package:lumio/data/local_library.dart';
 import 'package:lumio/data/secret_store.dart';
+import 'package:lumio/features/local/local_providers.dart';
 import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -16,6 +20,19 @@ import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+
+class _FixedPicker implements FolderPicker {
+  _FixedPicker(this.path);
+  final String path;
+
+  @override
+  Future<String?> pick() async => path;
+}
+
+class _AllowStorage implements StoragePermission {
+  @override
+  Future<bool> ensure() async => true;
+}
 
 const _url = 'https://a.example.com/tok-a/manifest.json';
 
@@ -28,7 +45,10 @@ class _H {
   Future<T> run<T>(Future<T> Function() f) async =>
       (await tester.runAsync(f)) as T;
 
-  Future<void> start({Map<String, String> settings = const {}}) async {
+  Future<void> start({
+    Map<String, String> settings = const {},
+    List<Override> overrides = const [],
+  }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -50,6 +70,7 @@ class _H {
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
         addonRepositoryProvider.overrideWithValue(repo),
+        ...overrides,
       ],
     );
     addTearDown(container.dispose);
@@ -228,6 +249,36 @@ void main() {
     expect(await h.setting(AppSettingsStore.onboardingSkippedKey), isNull);
     await h.close();
   });
+
+  testWidgets(
+    '« Ajouter un dossier » : visible à l\'étape 3, dossier analysé',
+    (tester) async {
+      final dir = Directory.systemTemp.createTempSync('lumio_ob_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final h = _H(tester);
+      late LocalLibrary lib;
+      await h.start(
+        overrides: [
+          localLibraryProvider.overrideWith((ref) {
+            lib = LocalLibrary(
+              ref.watch(appDatabaseProvider),
+              scanner: (_) async => const [],
+            );
+            return lib;
+          }),
+          folderPickerProvider.overrideWithValue(_FixedPicker(dir.path)),
+          storagePermissionProvider.overrideWithValue(_AllowStorage()),
+        ],
+      );
+      await h.tapKey('onboarding-next');
+      await h.tapKey('onboarding-next');
+      expect(find.text('Ajouter un dossier'), findsOneWidget);
+      await h.tapKey('onboarding-add-folder');
+      expect(find.textContaining('Dossier ajouté'), findsOneWidget);
+      expect(await h.run(lib.grantedFolders), [normalizeFolder(dir.path)]);
+      await h.close();
+    },
+  );
 
   testWidgets('aucun texte de l\'assistant ne contient d\'URL d\'addon', (
     tester,

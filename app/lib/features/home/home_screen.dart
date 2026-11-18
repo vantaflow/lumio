@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/data/local_library.dart' show isLocalId;
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
 import 'package:lumio/features/library/library_screen.dart';
+import 'package:lumio/features/local/local_providers.dart';
+import 'package:lumio/features/local/local_screen.dart';
 import 'package:lumio/features/search/search_screen.dart';
 import 'package:lumio/features/settings/settings_screen.dart';
 import 'package:lumio/features/home/continue_playback.dart';
@@ -56,6 +61,16 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _topBarNode = FocusNode(debugLabel: 'Home.customize');
   final _topBarFocused = ValueNotifier<bool>(false);
+
+  @override
+  void initState() {
+    super.initState();
+    // Réanalyse des dossiers locaux au démarrage (limitée dans le temps ;
+    // les échecs sont ignorés).
+    unawaited(
+      ref.read(localLibraryProvider).rescanAll().catchError((Object _) {}),
+    );
+  }
 
   @override
   void dispose() {
@@ -265,7 +280,12 @@ class _HomeBody extends ConsumerWidget {
         break;
     }
     if (!layout.hasValue) return const _SkeletonList();
-    final natural = [continueRowId, libraryRowId, ...summary.catalogIds];
+    final natural = [
+      continueRowId,
+      libraryRowId,
+      localRowId,
+      ...summary.catalogIds,
+    ];
     final ids = layout.requireValue.visible(natural);
     return ListView.builder(
       cacheExtent: 1500,
@@ -278,6 +298,7 @@ class _HomeBody extends ConsumerWidget {
           child: switch (id) {
             continueRowId => const _ContinueRow(),
             libraryRowId => _LibraryRow(onOpenItem: onOpenItem),
+            localRowId => _LocalRow(onOpenItem: onOpenItem),
             _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
           },
         );
@@ -348,6 +369,29 @@ class _LibraryRow extends ConsumerWidget {
   }
 }
 
+/// Vidéos des dossiers locaux (badge « Local », carte-titre sans affiche) ;
+/// masquées aux profils enfants (aucune certification connue).
+class _LocalRow extends ConsumerWidget {
+  const _LocalRow({required this.onOpenItem});
+
+  final void Function(MetaPreview item)? onOpenItem;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = visibleItems(
+      ref.watch(localPreviewsProvider),
+      ref.watch(currentProfileProvider),
+    );
+    if (items.isEmpty) return const SizedBox.shrink();
+    return _PosterRow(
+      rowId: localRowId,
+      title: context.l10n.localFolders,
+      items: items,
+      onOpenItem: onOpenItem,
+    );
+  }
+}
+
 class _PosterRow extends ConsumerWidget {
   const _PosterRow({
     required this.rowId,
@@ -390,10 +434,18 @@ class _ContinueRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entries = visibleProgress(
-      ref.watch(continueWatchingProvider).value ?? const [],
-      ref.watch(currentProfileProvider),
-    );
+    // Une reprise locale dont le fichier n'est pas (ou plus) dans ce
+    // appareil (progression synchronisée d'un autre) est masquée.
+    final localIds = {
+      for (final i in ref.watch(localItemsProvider).value ?? const []) i.id,
+    };
+    final entries = [
+      for (final e in visibleProgress(
+        ref.watch(continueWatchingProvider).value ?? const [],
+        ref.watch(currentProfileProvider),
+      ))
+        if (!isLocalId(e.metaId) || localIds.contains(e.metaId)) e,
+    ];
     if (entries.isEmpty) return const SizedBox.shrink();
     final playback = ref.watch(continuePlaybackProvider);
     return TvRow(
@@ -458,6 +510,7 @@ class PosterCard extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(LumioRadius.md),
                     child: _Poster(
+                      title: item.sourceKind == 'local' ? item.name : null,
                       url: item.poster,
                       allowPrivate: allowPrivate,
                       width: _posterWidth,
@@ -519,8 +572,12 @@ class _Poster extends StatelessWidget {
     required this.url,
     required this.allowPrivate,
     required this.width,
+    this.title,
   });
 
+  /// Titre pour la carte générée quand il n'y a pas d'affiche (fichiers
+  /// locaux) ; sinon une icône neutre.
+  final String? title;
   final Uri? url;
   final bool allowPrivate;
   final double width;
@@ -528,12 +585,18 @@ class _Poster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
-    Widget placeholder() => ColoredBox(
-      color: lumio.surfaceRaised,
-      child: Center(
-        child: Icon(Icons.movie_outlined, size: 48, color: lumio.textMuted),
-      ),
-    );
+    Widget placeholder() => title != null
+        ? LocalTitleCard(title: title!)
+        : ColoredBox(
+            color: lumio.surfaceRaised,
+            child: Center(
+              child: Icon(
+                Icons.movie_outlined,
+                size: 48,
+                color: lumio.textMuted,
+              ),
+            ),
+          );
     final u = url;
     if (u == null) return placeholder();
     return Image(

@@ -9,6 +9,7 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/player/next_episode_overlay.dart';
+import 'package:lumio/player/play_router.dart' show LocalFileSource;
 import 'package:lumio/player/player_controller.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
@@ -102,6 +103,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
     this.resolveNext,
     this.resolveNextRanked,
     this.fallbacks = const [],
+    this.local,
     this.subtitles = const [],
     this.allowPrivateForAddon,
     this.videoBuilder,
@@ -141,6 +143,10 @@ class PlayerScreen extends ConsumerStatefulWidget {
   /// Sources de secours de [item] (lecture automatique) : essayées dans
   /// l'ordre si [item] échoue avant la première image.
   final List<StreamItem> fallbacks;
+
+  /// [item] est un fichier d'un dossier local accordé : lu en `file://` par
+  /// le chemin interne de [routePlayback], seulement pour [item] lui-même.
+  final LocalFileSource? local;
 
   /// Sous-titres proposés par les addons pour ce flux.
   final List<SubtitleItem> subtitles;
@@ -289,6 +295,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       allowPrivate:
           widget.allowPrivateForAddon?.call(item.addonId) ??
           widget.allowPrivate,
+      local: identical(item, widget.item) ? widget.local : null,
       start: start,
     );
   }

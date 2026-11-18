@@ -1614,4 +1614,129 @@ class AppLocalizationsEn extends AppLocalizations {
   String resetHealth(Object name) {
     return 'Reset measurements for $name';
   }
+
+  @override
+  String get localFolders => 'Local folders';
+
+  @override
+  String get localFoldersHint => 'Videos stored on this device';
+
+  @override
+  String get localAddFolder => 'Add a folder';
+
+  @override
+  String get localEmpty =>
+      'No folders yet. Add a folder of videos to see them in Lumio.';
+
+  @override
+  String localVideoCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count videos',
+      one: '1 video',
+      zero: 'No videos',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get localScanNow => 'Scan now';
+
+  @override
+  String get localScanning => 'Scanning…';
+
+  @override
+  String localScanDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count videos',
+      one: '1 video',
+      zero: 'no videos',
+    );
+    return 'Scan finished: $_temp0';
+  }
+
+  @override
+  String localRemoveFolder(String path) {
+    return 'Remove folder $path';
+  }
+
+  @override
+  String get localFolderRemoved =>
+      'Folder removed from Lumio. Your files are untouched.';
+
+  @override
+  String get localPermissionDenied =>
+      'Lumio needs access to your videos. Allow it in the device settings.';
+
+  @override
+  String get localPickerUnavailable =>
+      'The folder picker is not available. Type the folder path.';
+
+  @override
+  String get localPathTitle => 'Folder path';
+
+  @override
+  String get localPathLabel => 'Path';
+
+  @override
+  String get localPathHint => '/storage/emulated/0/Movies';
+
+  @override
+  String get localChooseFolder => 'Choose with the picker';
+
+  @override
+  String get localTypePath => 'Type a path';
+
+  @override
+  String get localSdNote =>
+      'The picker only reaches internal storage. For an SD card or USB drive, type the path.';
+
+  @override
+  String get localFolderMissing => 'This folder was not found.';
+
+  @override
+  String get localFolderDenied => 'Access to this folder was denied.';
+
+  @override
+  String get localFolderOverlap =>
+      'This folder overlaps a folder already added.';
+
+  @override
+  String localFolderAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count videos',
+      one: '1 video',
+      zero: 'no videos',
+    );
+    return 'Folder added: $_temp0';
+  }
+
+  @override
+  String get localScanFailed => 'Scanning the folder failed.';
+
+  @override
+  String get localFixTitle => 'Fix the title';
+
+  @override
+  String get localFixLabel => 'Title';
+
+  @override
+  String get localFixReset => 'Restore the detected title';
+
+  @override
+  String get localFileMissing =>
+      'File not found: it may have been moved. Scan again.';
+
+  @override
+  String get localPlayFailed => 'This file cannot be played.';
+
+  @override
+  String localDetected(String title) {
+    return 'Detected: $title';
+  }
 }
