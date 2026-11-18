@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
+import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -15,7 +16,10 @@ const searchDebounce = Duration(milliseconds: 350);
 /// dérivé de l'URL INSTALLÉE (jamais de l'identifiant du manifeste).
 final searchServiceProvider = Provider<SearchService>(
   (ref) => SearchService(
-    (m) => defaultAddonClient(allowPrivate: isPrivateAddress(m.transportUrl)),
+    (m) => withHealth(
+      ref,
+      defaultAddonClient(allowPrivate: isPrivateAddress(m.transportUrl)),
+    ),
   ),
 );
 

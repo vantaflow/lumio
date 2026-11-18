@@ -933,5 +933,31 @@
         "type": "int"
       }
     }
+  },
+  "healthReliable": "Fiable",
+  "healthSlow": "Lent (> 3 s)",
+  "healthFailing": "Défaillant",
+  "healthUnknown": "Pas encore de mesure",
+  "healthDetail": "Médiane {latency} · {percent} % de réussite",
+  "@healthDetail": {
+    "placeholders": {
+      "latency": {},
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "healthSemantic": "Santé : {level}, {detail}",
+  "@healthSemantic": {
+    "placeholders": {
+      "level": {},
+      "detail": {}
+    }
+  },
+  "resetHealth": "Réinitialiser les mesures de {name}",
+  "@resetHealth": {
+    "placeholders": {
+      "name": {}
+    }
   }
 }

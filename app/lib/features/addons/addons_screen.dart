@@ -4,10 +4,13 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/features/addons/add_addon_dialog.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
+import 'package:lumio/features/addons/health_pill.dart';
+import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/theme.dart';
+import 'package:lumio_core/lumio_core.dart' show AddonHealth;
 
 /// Clé de la mémoire du focus de l'écran des addons.
 const addonsRouteKey = 'addons';
@@ -71,6 +74,9 @@ class _AddonList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ctl = ref.read(addonsProvider.notifier);
+    final health =
+        ref.watch(healthSnapshotProvider).value ??
+        const <String, AddonHealth>{};
     return ListView.separated(
       padding: const EdgeInsets.all(LumioSpacing.md),
       itemCount: list.length,
@@ -80,6 +86,8 @@ class _AddonList extends ConsumerWidget {
         return _AddonTile(
           key: ValueKey(a.id),
           addon: a,
+          health: health[a.id] ?? AddonHealth.empty,
+          onResetHealth: () => ref.read(addonHealthServiceProvider).reset(a.id),
           autofocus: a.id == remembered,
           onFocus: () => ref
               .read(focusMemoryProvider.notifier)
@@ -148,6 +156,8 @@ class _AddonTile extends StatelessWidget {
   const _AddonTile({
     super.key,
     required this.addon,
+    required this.health,
+    required this.onResetHealth,
     required this.autofocus,
     required this.onFocus,
     required this.canMoveUp,
@@ -159,6 +169,10 @@ class _AddonTile extends StatelessWidget {
   });
 
   final InstalledAddon addon;
+
+  /// Mesures de fiabilité de cet addon (locales).
+  final AddonHealth health;
+  final VoidCallback onResetHealth;
 
   /// Focus d'emblée (dernier addon focalisé avant un sous-écran).
   final bool autofocus;
@@ -231,6 +245,13 @@ class _AddonTile extends StatelessWidget {
                               color: c.warning,
                             ),
                           ),
+                        if (m != null)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: LumioSpacing.xs,
+                            ),
+                            child: HealthPill(health: health, showDetail: true),
+                          ),
                       ],
                     ),
                   ),
@@ -250,6 +271,12 @@ class _AddonTile extends StatelessWidget {
                       onPressed: canMoveDown ? onMoveDown : null,
                       icon: const Icon(Icons.arrow_downward),
                     ),
+                    if (health.samples > 0)
+                      IconButton(
+                        tooltip: context.l10n.resetHealth(addon.name),
+                        onPressed: onResetHealth,
+                        icon: const Icon(Icons.restart_alt),
+                      ),
                     Semantics(
                       label: context.l10n.enableAddon(addon.name),
                       child: Switch(

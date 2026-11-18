@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/stream_prefs.dart';
+import 'package:lumio/features/addons/health_pill.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/theme.dart';
@@ -86,9 +87,13 @@ class StreamsList extends StatelessWidget {
     required this.prefs,
     required this.preferred,
     required this.onSelect,
+    this.health = const {},
   });
 
   final List<StreamGroup> groups;
+
+  /// Mesures de fiabilité par identifiant de stockage d'addon.
+  final Map<String, AddonHealth> health;
 
   /// Nom affiché par identifiant de stockage d'addon.
   final Map<String, String> addonNames;
@@ -141,6 +146,11 @@ class StreamsList extends StatelessWidget {
                       : context.l10n.streamCount(g.items.length),
                   style: theme.textTheme.bodySmall,
                 ),
+                if (health[g.addonId] case final h?
+                    when h.level != HealthLevel.unknown) ...[
+                  const SizedBox(width: LumioSpacing.md),
+                  HealthPill(health: h),
+                ],
               ],
             ),
           ),

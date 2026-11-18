@@ -57,7 +57,10 @@ class _Harness {
   Future<void> pumpScreen([AddonRepository? r]) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [addonRepositoryProvider.overrideWithValue(r ?? repo)],
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          addonRepositoryProvider.overrideWithValue(r ?? repo),
+        ],
         child: MaterialApp(
           theme: LumioTheme.dark(),
           home: const AddonsScreen(),

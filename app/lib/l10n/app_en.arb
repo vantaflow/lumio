@@ -704,5 +704,31 @@
         "type": "int"
       }
     }
+  },
+  "healthReliable": "Reliable",
+  "healthSlow": "Slow (> 3 s)",
+  "healthFailing": "Failing",
+  "healthUnknown": "No measurements yet",
+  "healthDetail": "Median {latency} · {percent}% success",
+  "@healthDetail": {
+    "placeholders": {
+      "latency": {},
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "healthSemantic": "Health: {level}, {detail}",
+  "@healthSemantic": {
+    "placeholders": {
+      "level": {},
+      "detail": {}
+    }
+  },
+  "resetHealth": "Reset measurements for {name}",
+  "@resetHealth": {
+    "placeholders": {
+      "name": {}
+    }
   }
 }

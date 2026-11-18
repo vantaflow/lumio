@@ -2773,6 +2773,48 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{n} titre(s) n\'ont pas pu être ajoutés à la liste'**
   String otherImportSumLibraryFailed(int n);
+
+  /// No description provided for @healthReliable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fiable'**
+  String get healthReliable;
+
+  /// No description provided for @healthSlow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lent (> 3 s)'**
+  String get healthSlow;
+
+  /// No description provided for @healthFailing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Défaillant'**
+  String get healthFailing;
+
+  /// No description provided for @healthUnknown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas encore de mesure'**
+  String get healthUnknown;
+
+  /// No description provided for @healthDetail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Médiane {latency} · {percent} % de réussite'**
+  String healthDetail(Object latency, int percent);
+
+  /// No description provided for @healthSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'Santé : {level}, {detail}'**
+  String healthSemantic(Object level, Object detail);
+
+  /// No description provided for @resetHealth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialiser les mesures de {name}'**
+  String resetHealth(Object name);
 }
 
 class _AppLocalizationsDelegate

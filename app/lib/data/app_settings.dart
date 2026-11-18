@@ -31,6 +31,15 @@ class AppSettingsStore {
       .into(_db.settings)
       .insertOnConflictUpdate(SettingsCompanion.insert(key: key, value: value));
 
+  /// Toutes les lignes dont la clé commence par [prefix] (clé -> valeur).
+  Future<Map<String, String>> readPrefix(String prefix) async {
+    final rows = await _db.select(_db.settings).get();
+    return {
+      for (final r in rows)
+        if (r.key.startsWith(prefix)) r.key: r.value,
+    };
+  }
+
   Future<void> delete(String key) =>
       (_db.delete(_db.settings)..where((t) => t.key.equals(key))).go();
 

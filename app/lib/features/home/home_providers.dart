@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/library_repository.dart';
 import 'package:lumio/data/progress_repository.dart';
+import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/providers.dart';
@@ -25,7 +26,7 @@ final aggregatorFactoryProvider = Provider<AggregatorFactory>((ref) {
   return ({required bool allowPrivate}) => made.putIfAbsent(
     allowPrivate,
     () => CatalogAggregator(
-      defaultAddonClient(allowPrivate: allowPrivate),
+      withHealth(ref, defaultAddonClient(allowPrivate: allowPrivate)),
       cache,
     ),
   );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/stream_prefs.dart';
+import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
@@ -14,14 +15,29 @@ import 'package:lumio_core/lumio_core.dart' as core show Video;
 /// dérivé de l'URL installée (jamais de l'identifiant du manifeste). Un seul
 /// client sert ainsi `MetaService`, `StreamService` et `SubtitleService`.
 class RoutingAddonClient extends AddonClient {
-  RoutingAddonClient({AddonClientFactory factory = defaultAddonClient})
-    : _factory = factory,
-      super(const _NoFetcher());
+  RoutingAddonClient({
+    AddonClientFactory factory = defaultAddonClient,
+    HealthTracker? health,
+    String? Function(AddonManifest)? healthKey,
+  }) : _factory = factory,
+       _health = health,
+       _healthKey = healthKey,
+       super(const _NoFetcher());
 
   final AddonClientFactory _factory;
+  final HealthTracker? _health;
+  final String? Function(AddonManifest)? _healthKey;
 
-  AddonClient _for(AddonManifest a) =>
-      _factory(allowPrivate: isPrivateAddress(a.transportUrl));
+  /// Client de cet addon ; s'il y a un suivi de santé, chaque appel y est
+  /// enregistré sous l'identifiant de stockage de l'addon.
+  AddonClient _for(AddonManifest a) {
+    final client = _factory(allowPrivate: isPrivateAddress(a.transportUrl));
+    final health = _health;
+    final key = _healthKey;
+    return health == null || key == null
+        ? client
+        : HealthRecordingAddonClient(client, health, key);
+  }
 
   @override
   Future<Map<String, dynamic>?> rawMeta(
@@ -60,7 +76,10 @@ class _NoFetcher implements HttpFetcher {
 
 /// Client d'addons partagé par la fiche, les flux et les sous-titres.
 final addonClientProvider = Provider<AddonClient>(
-  (ref) => RoutingAddonClient(),
+  (ref) => RoutingAddonClient(
+    health: ref.watch(healthTrackerProvider),
+    healthKey: ref.read(healthKeyProvider),
+  ),
 );
 
 /// Addon actif, rattaché à son identifiant de STOCKAGE (unique).

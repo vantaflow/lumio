@@ -1576,4 +1576,31 @@ class AppLocalizationsFr extends AppLocalizations {
   String otherImportSumLibraryFailed(int n) {
     return '$n titre(s) n\'ont pas pu être ajoutés à la liste';
   }
+
+  @override
+  String get healthReliable => 'Fiable';
+
+  @override
+  String get healthSlow => 'Lent (> 3 s)';
+
+  @override
+  String get healthFailing => 'Défaillant';
+
+  @override
+  String get healthUnknown => 'Pas encore de mesure';
+
+  @override
+  String healthDetail(Object latency, int percent) {
+    return 'Médiane $latency · $percent % de réussite';
+  }
+
+  @override
+  String healthSemantic(Object level, Object detail) {
+    return 'Santé : $level, $detail';
+  }
+
+  @override
+  String resetHealth(Object name) {
+    return 'Réinitialiser les mesures de $name';
+  }
 }

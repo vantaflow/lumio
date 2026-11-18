@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/stream_prefs.dart';
+import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/detail/streams_list.dart';
 import 'package:lumio/features/home/home_providers.dart';
@@ -267,6 +268,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       streams: StreamsList(
         groups: groups,
         addonNames: names,
+        health:
+            ref.watch(healthSnapshotProvider).value ??
+            const <String, AddonHealth>{},
         loading: _loadingStreams,
         prefs: prefs,
         preferred: preferred,
