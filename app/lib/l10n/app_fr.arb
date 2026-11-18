@@ -1097,5 +1097,17 @@
   "calendarNotifyChannel": "Nouveaux épisodes",
   "calendarNotifyBody": "Nouvel épisode disponible : {episode}",
   "@calendarNotifyBody": {"placeholders": {"episode": {"type": "String"}}},
-  "calendarNotifyError": "Notifications non programmées : une erreur est survenue. Réessayez en rouvrant le calendrier."
+  "calendarNotifyError": "Notifications non programmées : une erreur est survenue. Réessayez en rouvrant le calendrier.",
+  "castTooltip": "Diffuser sur un appareil",
+  "castChooseDevice": "Choisir un appareil",
+  "castSearching": "Recherche d'appareils…",
+  "castNoDevice": "Aucun appareil trouvé",
+  "castNoDeviceHint": "Vérifiez que le téléviseur est allumé et sur le même réseau Wi-Fi.",
+  "castPlayingOn": "Lecture sur {device}",
+  "@castPlayingOn": {"placeholders": {"device": {"type": "String"}}},
+  "castStop": "Arrêter la diffusion",
+  "castFailed": "Impossible de diffuser sur cet appareil.",
+  "castUnsupported": "Ce flux ne peut pas être diffusé sur un appareil.",
+  "castLost": "Appareil de diffusion perdu : la lecture reprend ici.",
+  "castNetworkError": "Aucun réseau local commun avec cet appareil."
 }

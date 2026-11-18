@@ -3547,6 +3547,72 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Notifications non programmées : une erreur est survenue. Réessayez en rouvrant le calendrier.'**
   String get calendarNotifyError;
+
+  /// No description provided for @castTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Diffuser sur un appareil'**
+  String get castTooltip;
+
+  /// No description provided for @castChooseDevice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir un appareil'**
+  String get castChooseDevice;
+
+  /// No description provided for @castSearching.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche d\'appareils…'**
+  String get castSearching;
+
+  /// No description provided for @castNoDevice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun appareil trouvé'**
+  String get castNoDevice;
+
+  /// No description provided for @castNoDeviceHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifiez que le téléviseur est allumé et sur le même réseau Wi-Fi.'**
+  String get castNoDeviceHint;
+
+  /// No description provided for @castPlayingOn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture sur {device}'**
+  String castPlayingOn(String device);
+
+  /// No description provided for @castStop.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrêter la diffusion'**
+  String get castStop;
+
+  /// No description provided for @castFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de diffuser sur cet appareil.'**
+  String get castFailed;
+
+  /// No description provided for @castUnsupported.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce flux ne peut pas être diffusé sur un appareil.'**
+  String get castUnsupported;
+
+  /// No description provided for @castLost.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appareil de diffusion perdu : la lecture reprend ici.'**
+  String get castLost;
+
+  /// No description provided for @castNetworkError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun réseau local commun avec cet appareil.'**
+  String get castNetworkError;
 }
 
 class _AppLocalizationsDelegate

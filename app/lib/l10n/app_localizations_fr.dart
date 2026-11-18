@@ -2068,4 +2068,42 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get calendarNotifyError =>
       'Notifications non programmées : une erreur est survenue. Réessayez en rouvrant le calendrier.';
+
+  @override
+  String get castTooltip => 'Diffuser sur un appareil';
+
+  @override
+  String get castChooseDevice => 'Choisir un appareil';
+
+  @override
+  String get castSearching => 'Recherche d\'appareils…';
+
+  @override
+  String get castNoDevice => 'Aucun appareil trouvé';
+
+  @override
+  String get castNoDeviceHint =>
+      'Vérifiez que le téléviseur est allumé et sur le même réseau Wi-Fi.';
+
+  @override
+  String castPlayingOn(String device) {
+    return 'Lecture sur $device';
+  }
+
+  @override
+  String get castStop => 'Arrêter la diffusion';
+
+  @override
+  String get castFailed => 'Impossible de diffuser sur cet appareil.';
+
+  @override
+  String get castUnsupported =>
+      'Ce flux ne peut pas être diffusé sur un appareil.';
+
+  @override
+  String get castLost =>
+      'Appareil de diffusion perdu : la lecture reprend ici.';
+
+  @override
+  String get castNetworkError => 'Aucun réseau local commun avec cet appareil.';
 }

@@ -2051,4 +2051,40 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get calendarNotifyError =>
       'Notifications could not be scheduled. Try again by reopening the calendar.';
+
+  @override
+  String get castTooltip => 'Cast to a device';
+
+  @override
+  String get castChooseDevice => 'Choose a device';
+
+  @override
+  String get castSearching => 'Looking for devices…';
+
+  @override
+  String get castNoDevice => 'No device found';
+
+  @override
+  String get castNoDeviceHint =>
+      'Make sure the TV is on and on the same Wi-Fi network.';
+
+  @override
+  String castPlayingOn(String device) {
+    return 'Playing on $device';
+  }
+
+  @override
+  String get castStop => 'Stop casting';
+
+  @override
+  String get castFailed => 'Could not cast to this device.';
+
+  @override
+  String get castUnsupported => 'This stream cannot be cast to a device.';
+
+  @override
+  String get castLost => 'Cast device lost: playback resumes here.';
+
+  @override
+  String get castNetworkError => 'No local network shared with this device.';
 }

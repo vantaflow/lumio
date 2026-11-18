@@ -868,5 +868,17 @@
   "calendarNotifyChannel": "New episodes",
   "calendarNotifyBody": "New episode available: {episode}",
   "@calendarNotifyBody": {"placeholders": {"episode": {"type": "String"}}},
-  "calendarNotifyError": "Notifications could not be scheduled. Try again by reopening the calendar."
+  "calendarNotifyError": "Notifications could not be scheduled. Try again by reopening the calendar.",
+  "castTooltip": "Cast to a device",
+  "castChooseDevice": "Choose a device",
+  "castSearching": "Looking for devices…",
+  "castNoDevice": "No device found",
+  "castNoDeviceHint": "Make sure the TV is on and on the same Wi-Fi network.",
+  "castPlayingOn": "Playing on {device}",
+  "@castPlayingOn": {"placeholders": {"device": {"type": "String"}}},
+  "castStop": "Stop casting",
+  "castFailed": "Could not cast to this device.",
+  "castUnsupported": "This stream cannot be cast to a device.",
+  "castLost": "Cast device lost: playback resumes here.",
+  "castNetworkError": "No local network shared with this device."
 }

@@ -4,6 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/features/cast/cast_button.dart';
+import 'package:lumio/features/cast/player_cast.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
@@ -110,6 +112,9 @@ class PlayerScreen extends ConsumerStatefulWidget {
     this.allowPrivateForAddon,
     this.videoBuilder,
     this.tracksBackend,
+    this.castDiscover,
+    this.castSessionFactory,
+    this.castEnabled,
     super.key,
   });
 
@@ -165,6 +170,19 @@ class PlayerScreen extends ConsumerStatefulWidget {
   @visibleForTesting
   final TracksBackend Function(PlayerController controller)? tracksBackend;
 
+  /// Découverte des appareils de diffusion (tests) ; par défaut SSDP.
+  @visibleForTesting
+  final Stream<CastDevice> Function()? castDiscover;
+
+  /// Fabrique de session de cast (tests).
+  @visibleForTesting
+  final CastSession Function(CastDevice, CastSource, String)?
+  castSessionFactory;
+
+  /// Force l'affichage du bouton Cast (tests) ; par défaut selon la plateforme.
+  @visibleForTesting
+  final bool? castEnabled;
+
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
 }
@@ -201,6 +219,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   StreamItem? _current;
   final _torrentStatus = ValueNotifier<TorrentStatus?>(null);
   NetworkWatcher? _watcher;
+  late final PlayerCast _cast;
 
   core.Video? get _next {
     final m = widget.meta;
@@ -405,6 +424,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
             _torrentToken++;
             _torrentActive = false;
             unawaited(torrent.release());
+            unawaited(_cast.stop(resume: false)); // plus rien à relayer
             try {
               unawaited(_ctl.player.stop().catchError((Object _) {}));
             } on Object {
@@ -425,6 +445,34 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     if (_disposed || !mounted || token != _torrentToken) return;
     _watcher?.stop();
     _ctl.fail(message(context.l10n), fallbackable: fallbackable);
+  }
+
+  bool get _castShown => widget.castEnabled ?? castPlatformSupported;
+
+  /// Bouton Cast : choix de l'appareil puis transfert de la lecture.
+  Future<void> _openCast() async {
+    _hide?.cancel();
+    if (_ctl.castSource == null) {
+      _tellL((l) => l.castUnsupported);
+      return;
+    }
+    final device = await showCastPicker(context, discover: widget.castDiscover);
+    if (device == null || !mounted || _disposed) {
+      _armHide();
+      return;
+    }
+    final r = await _cast.start(device, _title);
+    if (!mounted || _disposed) return;
+    switch (r) {
+      case CastStart.started:
+        break;
+      case CastStart.unsupported:
+        _tellL((l) => l.castUnsupported);
+      case CastStart.noNetwork:
+        _tellL((l) => l.castNetworkError);
+      case CastStart.failed:
+        _tellL((l) => l.castFailed);
+    }
   }
 
   /// « Réessayer » : un torrent repart de la préparation, un lien direct
@@ -457,6 +505,19 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         PlayerController(proxy: () => ref.read(localProxyProvider.future));
     _ctl.stateListenable.addListener(_onState);
     _events = ref.read(playbackEventsProvider);
+    _cast = PlayerCast(
+      source: () => _ctl.castSource,
+      position: () => _ctl.state.position,
+      pauseLocal: () => _ctl.player.pause(),
+      resumeLocal: (at) async {
+        if (_disposed) return;
+        await _ctl.player.seek(at);
+        await _ctl.player.play();
+        _showControls(focusPlay: true);
+      },
+      onLost: () => _tellL((l) => l.castLost),
+      createSession: widget.castSessionFactory,
+    )..addListener(() => mounted ? setState(() {}) : null);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _recorder = _newRecorder();
     unawaited(_openFrom(widget.item, alternatives: widget.fallbacks));
@@ -566,6 +627,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final st = _ctl.state;
     _recorder?.flush(st.position, st.duration, force: true);
     _hide?.cancel();
+    _cast.dispose(); // ferme le serveur de cast et arrête l'appareil
     _ctl.stateListenable.removeListener(_onState);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _root.dispose();
@@ -765,7 +827,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
     // Panneau ouvert : il gère seul les touches (flèches = navigation).
-    if (_panel || _showNext) return KeyEventResult.ignored;
+    if (_panel || _showNext || _cast.active) return KeyEventResult.ignored;
     final action = mapPlayerKey(event.logicalKey, controlsVisible: _controls);
     switch (action) {
       case PlayerKeyAction.none:
@@ -847,7 +909,17 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         ),
                       ),
                     ),
-                  if (failed)
+                  if (_cast.active)
+                    CastBar(
+                      title: _title,
+                      deviceName: _cast.device!.friendlyName,
+                      paused: _cast.paused,
+                      onPlayPause: () => unawaited(_cast.togglePause()),
+                      onSeekBack: () => unawaited(_cast.seekBy(-seekStep)),
+                      onSeekForward: () => unawaited(_cast.seekBy(seekStep)),
+                      onStop: () => unawaited(_cast.stop()),
+                    )
+                  else if (failed)
                     _FailureView(
                       message: st.error ?? context.l10n.failGeneric,
                       onRetry: _retry,
@@ -869,6 +941,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                             playNode: _playNode,
                             tracksNode: _tracksNode,
                             onTracks: _tracks == null ? null : _openPanel,
+                            onCast: _castShown
+                                ? () => unawaited(_openCast())
+                                : null,
                             onPlayPause: () {
                               unawaited(_ctl.playPause());
                               _armHide();
@@ -989,6 +1064,7 @@ class _Controls extends StatelessWidget {
     required this.playNode,
     required this.tracksNode,
     required this.onTracks,
+    required this.onCast,
     required this.onPlayPause,
     required this.onSeekBy,
     required this.onSeekTo,
@@ -1000,6 +1076,7 @@ class _Controls extends StatelessWidget {
   final FocusNode playNode;
   final FocusNode tracksNode;
   final VoidCallback? onTracks;
+  final VoidCallback? onCast;
   final VoidCallback onPlayPause;
   final ValueChanged<Duration> onSeekBy;
   final ValueChanged<Duration> onSeekTo;
@@ -1010,6 +1087,10 @@ class _Controls extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.extension<LumioColors>() ?? LumioColors.dark;
     final big = MediaQuery.sizeOf(context).width >= 1280;
+    // Téléphone : écart réduit pour que cinq boutons tiennent sur la ligne.
+    final gap = MediaQuery.sizeOf(context).width < 600
+        ? LumioSpacing.sm
+        : LumioSpacing.lg;
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1051,7 +1132,7 @@ class _Controls extends StatelessWidget {
                     size: big ? 88 : 56,
                     onPressed: () => onSeekBy(-seekStep),
                   ),
-                  const SizedBox(width: LumioSpacing.lg),
+                  SizedBox(width: gap),
                   _RoundButton(
                     focusNode: playNode,
                     icon: state.isPlaying ? Icons.pause : Icons.play_arrow,
@@ -1062,7 +1143,7 @@ class _Controls extends StatelessWidget {
                     primary: true,
                     onPressed: onPlayPause,
                   ),
-                  const SizedBox(width: LumioSpacing.lg),
+                  SizedBox(width: gap),
                   _RoundButton(
                     icon: Icons.forward_10,
                     label: context.l10n.seekForward10,
@@ -1070,13 +1151,22 @@ class _Controls extends StatelessWidget {
                     onPressed: () => onSeekBy(seekStep),
                   ),
                   if (onTracks != null) ...[
-                    const SizedBox(width: LumioSpacing.lg),
+                    SizedBox(width: gap),
                     _RoundButton(
                       focusNode: tracksNode,
                       icon: Icons.subtitles,
                       label: context.l10n.tracksAndSubtitles,
                       size: big ? 88 : 56,
                       onPressed: onTracks!,
+                    ),
+                  ],
+                  if (onCast != null) ...[
+                    SizedBox(width: gap),
+                    _RoundButton(
+                      icon: Icons.cast,
+                      label: context.l10n.castTooltip,
+                      size: big ? 88 : 56,
+                      onPressed: onCast!,
                     ),
                   ],
                 ],

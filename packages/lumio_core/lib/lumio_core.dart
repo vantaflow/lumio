@@ -42,3 +42,7 @@ export 'src/tracking/tracker.dart';
 export 'src/tracking/simkl_client.dart';
 export 'src/tracking/trakt_client.dart';
 export 'src/tracking/scrobble_queue.dart';
+export 'src/cast/ssdp.dart';
+export 'src/cast/dlna_renderer.dart';
+export 'src/cast/cast_server.dart';
+export 'src/cast/cast_session.dart';

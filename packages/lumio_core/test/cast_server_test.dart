@@ -1,0 +1,210 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:lumio_core/lumio_core.dart';
+import 'package:test/test.dart';
+
+Future<(int, String, Map<String, String>)> _get(
+  Uri url, {
+  String method = 'GET',
+  Map<String, String> headers = const {},
+}) async {
+  final c = HttpClient();
+  try {
+    final r = await c.openUrl(method, url);
+    headers.forEach(r.headers.set);
+    final res = await r.close();
+    final body = await res.transform(latin1.decoder).join();
+    final h = <String, String>{};
+    res.headers.forEach((n, v) => h[n] = v.join(','));
+    return (res.statusCode, body, h);
+  } finally {
+    c.close(force: true);
+  }
+}
+
+void main() {
+  late HttpServer upstream;
+  late List<String> upstreamRanges;
+  late Directory tmp;
+  final media = List<int>.generate(1000, (i) => i % 251);
+
+  setUp(() async {
+    upstreamRanges = [];
+    tmp = await Directory.systemTemp.createTemp('cast_test');
+    upstream = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    upstream.listen((req) async {
+      upstreamRanges.add(req.headers.value('range') ?? '');
+      if (req.uri.path == '/hls') {
+        req.response.headers.contentType = ContentType(
+          'application',
+          'vnd.apple.mpegurl',
+        );
+        req.response.write('#EXTM3U');
+      } else {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        final r = req.headers.value('range');
+        if (r != null) {
+          req.response.statusCode = 206;
+          req.response.headers.set('content-range', 'bytes 0-9/1000');
+          req.response.add(media.sublist(0, 10));
+        } else {
+          req.response.add(media);
+        }
+      }
+      await req.response.close();
+    });
+  });
+
+  tearDown(() async {
+    await upstream.close(force: true);
+    await tmp.delete(recursive: true);
+  });
+
+  Future<CastServer> start({InternetAddress? allowed, CastSource? source}) =>
+      CastServer.start(
+        bindAddress: InternetAddress.loopbackIPv4,
+        allowedClient: allowed ?? InternetAddress.loopbackIPv4,
+        source:
+            source ??
+            CastHttpSource(
+              Uri.parse('http://127.0.0.1:${upstream.port}/v.mp4'),
+            ),
+      );
+
+  test('le jeton est aléatoire (128 bits) et unique par session', () async {
+    final a = await start();
+    final b = await start();
+    addTearDown(a.close);
+    addTearDown(b.close);
+    expect(RegExp(r'^/[0-9a-f]{32}$').hasMatch(a.url.path), isTrue);
+    expect(a.url.path, isNot(b.url.path));
+    expect(a.url.host, '127.0.0.1');
+  });
+
+  test('sert la ressource au rendu autorisé, avec Range relayé', () async {
+    final s = await start();
+    addTearDown(s.close);
+    final (code, body, h) = await _get(s.url);
+    expect(code, 200);
+    expect(body.length, greaterThan(500));
+    expect(h['content-type'], contains('video/mp4'));
+    final (c2, _, h2) = await _get(s.url, headers: {'range': 'bytes=0-9'});
+    expect(c2, 206);
+    expect(h2['content-range'], 'bytes 0-9/1000');
+    expect(upstreamRanges.last, 'bytes=0-9');
+  });
+
+  test('un autre chemin que le jeton : 404, rien ne part en amont', () async {
+    final s = await start();
+    addTearDown(s.close);
+    final base = s.url.replace(path: '/');
+    for (final p in [
+      '/',
+      '/p/abc',
+      '${s.url.path}x',
+      '/${'0' * 32}',
+      '${s.url.path}/a',
+    ]) {
+      final (code, _, _) = await _get(base.replace(path: p));
+      expect(code, 404, reason: p);
+    }
+    expect(upstreamRanges, isEmpty);
+  });
+
+  test('un client dont l\'IP n\'est pas celle du rendu : refusé', () async {
+    // Le seul client possible ici est 127.0.0.1 : on n'autorise que l'autre.
+    final s = await start(allowed: InternetAddress('192.168.1.99'));
+    addTearDown(s.close);
+    final (code, body, _) = await _get(s.url);
+    expect(code, 404);
+    expect(body, isEmpty);
+    expect(upstreamRanges, isEmpty);
+  });
+
+  test('méthodes autres que GET/HEAD : refusées', () async {
+    final s = await start();
+    addTearDown(s.close);
+    final (code, _, _) = await _get(s.url, method: 'POST');
+    expect(code, 404);
+  });
+
+  test(
+    'flux HLS : refusé (415), jamais relayé avec ses segments locaux',
+    () async {
+      final s = await start(
+        source: CastHttpSource(
+          Uri.parse('http://127.0.0.1:${upstream.port}/hls'),
+        ),
+      );
+      addTearDown(s.close);
+      final (code, body, _) = await _get(s.url);
+      expect(code, 415);
+      expect(body, isNot(contains('EXTM3U')));
+    },
+  );
+
+  test('source amont hors boucle locale : ArgumentError', () {
+    expect(
+      () => CastServer.start(
+        bindAddress: InternetAddress.loopbackIPv4,
+        allowedClient: InternetAddress.loopbackIPv4,
+        source: CastHttpSource(Uri.parse('http://203.0.113.9/v.mp4')),
+      ),
+      throwsArgumentError,
+    );
+  });
+
+  test('fichier local : contenu et Range', () async {
+    final f = File('${tmp.path}/film.mp4')..writeAsBytesSync(media);
+    final s = await start(source: CastFileSource(f));
+    addTearDown(s.close);
+    final c = HttpClient();
+    final r = await c.getUrl(s.url);
+    r.headers.set('range', 'bytes=10-19');
+    final res = await r.close();
+    final bytes = await res.fold<List<int>>([], (a, b) => a..addAll(b));
+    c.close(force: true);
+    expect(res.statusCode, 206);
+    expect(bytes, media.sublist(10, 20));
+    expect(res.headers.value('content-range'), 'bytes 10-19/1000');
+    final (head, _, hh) = await _get(s.url, method: 'HEAD');
+    expect(head, 200);
+    expect(hh['content-length'], '1000');
+  });
+
+  test('close() : le port est libéré, plus aucune réponse', () async {
+    final s = await start();
+    final url = s.url;
+    await s.close();
+    await expectLater(_get(url), throwsA(isA<SocketException>()));
+    await s.close(); // idempotent
+  });
+
+  group('pickLanAddress', () {
+    final tv = InternetAddress('192.168.1.20');
+    test('préfère le même /24, sinon le même /16, jamais public ni boucle', () {
+      expect(
+        pickLanAddress(tv, [
+          InternetAddress('10.0.0.4'),
+          InternetAddress('192.168.2.5'),
+          InternetAddress('192.168.1.7'),
+        ]),
+        InternetAddress('192.168.1.7'),
+      );
+      expect(
+        pickLanAddress(tv, [InternetAddress('192.168.2.5')]),
+        InternetAddress('192.168.2.5'),
+      );
+      expect(
+        pickLanAddress(tv, [
+          InternetAddress('10.0.0.4'),
+          InternetAddress('127.0.0.1'),
+          InternetAddress('203.0.113.9'),
+        ]),
+        isNull,
+      );
+    });
+  });
+}

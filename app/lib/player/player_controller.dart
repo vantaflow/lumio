@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
@@ -139,6 +141,14 @@ class PlayerController {
   bool _opened = false;
   int? _lastStatus;
   bool _disposed = false;
+  CastSource? _castSource;
+
+  /// Source de la lecture en cours telle que le serveur de cast peut la
+  /// relayer (fichier local, ou URL de nos composants sur la boucle locale :
+  /// proxy ou moteur de torrents). `null` : rien d'ouvert ou flux non
+  /// diffusable (playlist HLS). Ne sort jamais de l'appareil : seul le serveur
+  /// de cast la lit.
+  CastSource? get castSource => _castSource;
 
   // Basculement automatique (voir [playWithFallback]).
   int _runId = 0;
@@ -174,6 +184,7 @@ class PlayerController {
     _local = local;
     _refused = false;
     _lastStatus = null;
+    _castSource = null;
     firstFrameMs = null;
     _opened = false;
     _firstFrame = Completer<int>();
@@ -200,6 +211,11 @@ class PlayerController {
         local: local,
       );
       _viaProxy = route.kind == PlayRouteKind.proxy;
+      _castSource = local != null
+          ? CastFileSource(File(local.path))
+          : (url.path.toLowerCase().endsWith('.m3u8')
+                ? null
+                : CastHttpSource(route.url));
       if (_viaProxy) {
         _proxySub ??= (await _proxy()).events.listen((e) {
           if (e.status != 0) _lastStatus = e.status;
