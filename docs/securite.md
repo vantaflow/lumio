@@ -39,15 +39,23 @@ texte opaque et ne reçoit jamais la phrase secrète.
   la même erreur.
 - La phrase (12 caractères au moins) est saisie une fois par appareil, reste
   dans le stockage sécurisé de l'appareil et sert à synchroniser sans
-  intervention. La dérivation s'exécute hors du fil d'interface.
+  intervention. La dérivation s'exécute hors du fil d'interface. La phrase
+  n'est pas normalisée en Unicode (NFC) : aucun paquet maintenu n'est
+  disponible hors ligne, deux claviers produisant des formes différentes d'un
+  même accent donneraient des clés différentes.
 - Rien n'est envoyé tant que le blob du serveur n'a pas été lu avec la phrase
   courante : un nouvel appareil n'écrase jamais les addons existants. Avec une
   mauvaise phrase, les addons locaux ne sont pas modifiés.
 - À la réception, les addons manquants sont installés par le chemin normal
   (garde d'URL, récupération du manifeste). Une adresse du réseau local n'est
   jamais autorisée automatiquement : elle attend la confirmation de
-  l'utilisateur. Un addon n'est retiré localement que s'il venait du dernier
-  blob ; un addon ajouté sur l'appareil n'est jamais touché.
+  l'utilisateur. Le clair chiffré porte un numéro de génération croissant, un
+  identifiant d'appareil et la liste des suppressions explicites (90 jours,
+  100 au plus) : un blob de génération plus ancienne (rejeu du serveur,
+  appareil en retard) est ignoré et remplacé par un envoi à jour. Un addon
+  n'est retiré localement que par une suppression explicite et seulement s'il
+  venait du dernier blob ; son absence d'un blob ne supprime jamais rien, et
+  un addon ajouté sur l'appareil n'est jamais touché.
 - Phrase perdue : « Réinitialiser » supprime le blob distant (pierre
   tombale) ; les addons doivent être réajoutés ou renvoyés depuis un appareil
   qui les a encore, le reste des données reste disponible. Une phrase perdue

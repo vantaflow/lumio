@@ -203,9 +203,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       AddonSyncStatus.wrongPassphrase => l.addonSyncWrong,
       AddonSyncStatus.tooLarge => l.addonSyncTooLarge,
       AddonSyncStatus.resetting => l.addonSyncResetting,
+      AddonSyncStatus.phraseReset => l.addonSyncPhraseReset,
     };
     final hasPhrase =
         st.status != AddonSyncStatus.noPassphrase &&
+        st.status != AddonSyncStatus.phraseReset &&
         st.status != AddonSyncStatus.resetting;
     final bad =
         st.status == AddonSyncStatus.wrongPassphrase ||
@@ -228,24 +230,24 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
         Row(
           children: [
             OutlinedButton(
-              key: ValueKey('account:allow:${p.index}'),
+              key: ValueKey('account:allow:${p.hash}'),
               onPressed: _busy
                   ? null
                   : () => _pending(
                       () => ref
                           .read(addonSyncProvider)
-                          .installPending(p.index)
+                          .installPending(p.hash)
                           .then((_) {}),
                     ),
               child: Text(l.addonSyncAllow),
             ),
             const SizedBox(width: LumioSpacing.sm),
             OutlinedButton(
-              key: ValueKey('account:ignore:${p.index}'),
+              key: ValueKey('account:ignore:${p.hash}'),
               onPressed: _busy
                   ? null
                   : () => _pending(
-                      () => ref.read(addonSyncProvider).dismissPending(p.index),
+                      () => ref.read(addonSyncProvider).dismissPending(p.hash),
                     ),
               child: Text(l.addonSyncIgnore),
             ),

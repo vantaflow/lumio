@@ -421,5 +421,6 @@
   "passphraseErrMismatch": "The two phrases differ",
   "passphraseSave": "Save",
   "passphraseSaved": "Secret phrase saved",
-  "passphraseErrSave": "Could not save the secret phrase"
+  "passphraseErrSave": "Could not save the secret phrase",
+  "addonSyncPhraseReset": "Secret phrase needs to be entered again: addon sync was reset from another device."
 }

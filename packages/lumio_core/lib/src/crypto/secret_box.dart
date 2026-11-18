@@ -3,7 +3,6 @@ import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart' as c;
 
 /// Phrase secrète erronée, ou contenu altéré / illisible : on ne distingue
@@ -56,18 +55,18 @@ abstract final class SecretBox {
     return Isolate.run(() => _open(parsed, passphrase, aad));
   }
 
-  /// PBKDF2-HMAC-SHA256, un seul bloc de 32 octets (exposé pour les tests).
-  static List<int> pbkdf2(List<int> password, List<int> salt, int iter) {
-    final hmac = Hmac(sha256, password);
-    var u = hmac.convert([...salt, 0, 0, 0, 1]).bytes;
-    final t = Uint8List.fromList(u);
-    for (var i = 1; i < iter; i++) {
-      u = hmac.convert(u).bytes;
-      for (var j = 0; j < keyLength; j++) {
-        t[j] ^= u[j];
-      }
-    }
-    return t;
+  /// PBKDF2-HMAC-SHA256 (exposé pour les tests de vecteurs).
+  static Future<List<int>> pbkdf2(
+    List<int> password,
+    List<int> salt,
+    int iter,
+  ) async {
+    final key = await c.Pbkdf2(
+      macAlgorithm: c.Hmac.sha256(),
+      iterations: iter,
+      bits: keyLength * 8,
+    ).deriveKey(secretKey: c.SecretKey(password), nonce: salt);
+    return key.extractBytes();
   }
 
   static String _b64(List<int> b) => base64Url.encode(b).replaceAll('=', '');
@@ -120,7 +119,7 @@ abstract final class SecretBox {
   ) async {
     final salt = _random(saltLength);
     final nonce = _random(nonceLength);
-    final key = pbkdf2(utf8.encode(passphrase), salt, iterations);
+    final key = await pbkdf2(utf8.encode(passphrase), salt, iterations);
     final box = await _aes.encrypt(
       utf8.encode(plaintext),
       secretKey: c.SecretKey(key),
@@ -137,7 +136,7 @@ abstract final class SecretBox {
     String aad,
   ) async {
     try {
-      final key = pbkdf2(utf8.encode(passphrase), p.salt, iterations);
+      final key = await pbkdf2(utf8.encode(passphrase), p.salt, iterations);
       final cut = p.data.length - tagLength;
       final clear = await _aes.decrypt(
         c.SecretBox(

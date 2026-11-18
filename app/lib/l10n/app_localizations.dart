@@ -2263,6 +2263,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Impossible d\'enregistrer la phrase secrète'**
   String get passphraseErrSave;
+
+  /// No description provided for @addonSyncPhraseReset.
+  ///
+  /// In fr, this message translates to:
+  /// **'Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil.'**
+  String get addonSyncPhraseReset;
 }
 
 class _AppLocalizationsDelegate

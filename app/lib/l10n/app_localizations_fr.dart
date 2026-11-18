@@ -1248,4 +1248,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get passphraseErrSave => 'Impossible d\'enregistrer la phrase secrète';
+
+  @override
+  String get addonSyncPhraseReset =>
+      'Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil.';
 }

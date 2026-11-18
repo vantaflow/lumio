@@ -8,23 +8,29 @@ void main() {
   const pass = 'correct horse battery staple';
   const plain = '[{"url":"https://a.example/k3y/manifest.json","logo":null}]';
 
-  test('PBKDF2-HMAC-SHA256 : vecteurs RFC 7914', () {
+  test('PBKDF2-HMAC-SHA256 : vecteurs RFC 7914', () async {
     String hex(List<int> b) =>
         b.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
     expect(
-      hex(SecretBox.pbkdf2(utf8.encode('passwd'), utf8.encode('salt'), 1)),
+      hex(
+        await SecretBox.pbkdf2(utf8.encode('passwd'), utf8.encode('salt'), 1),
+      ),
       '55ac046e56e3089fec1691c22544b605f94185216dde0465e68b9d57c20dacbc',
     );
     expect(
       hex(
-        SecretBox.pbkdf2(utf8.encode('Password'), utf8.encode('NaCl'), 80000),
+        await SecretBox.pbkdf2(
+          utf8.encode('Password'),
+          utf8.encode('NaCl'),
+          80000,
+        ),
       ),
       '4ddcd8f60b98be21830cee5ef22701f9641a4418d04c0414aeff08876b34ab56',
     );
     // Cohérence avec une implémentation de référence (package crypto).
     final hmac = Hmac(sha256, utf8.encode('p'));
     expect(
-      SecretBox.pbkdf2(utf8.encode('p'), [1, 2, 3], 1),
+      await SecretBox.pbkdf2(utf8.encode('p'), [1, 2, 3], 1),
       hmac.convert([1, 2, 3, 0, 0, 0, 1]).bytes,
     );
   });

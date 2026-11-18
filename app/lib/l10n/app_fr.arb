@@ -650,5 +650,6 @@
   "passphraseErrMismatch": "Les deux phrases sont différentes",
   "passphraseSave": "Enregistrer",
   "passphraseSaved": "Phrase secrète enregistrée",
-  "passphraseErrSave": "Impossible d'enregistrer la phrase secrète"
+  "passphraseErrSave": "Impossible d'enregistrer la phrase secrète",
+  "addonSyncPhraseReset": "Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil."
 }

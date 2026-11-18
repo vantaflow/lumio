@@ -525,9 +525,10 @@ class SyncService {
   /// Déconnexion : les données locales restent, la file est abandonnée.
   Future<void> signOut() async {
     _cancelTimer();
+    // La phrase quitte l'appareil d'abord : même si la suite échoue.
+    await addons?.forget();
     await _api.signOut();
     await _store.reset();
-    await addons?.forget();
     _signedIn = false;
     _failures = 0;
     _setStatus(SyncStatus.signedOut);
@@ -536,9 +537,12 @@ class SyncService {
   /// Supprime le compte et ses données sur le serveur, puis se déconnecte.
   Future<void> deleteAccount() async {
     _cancelTimer();
-    await _api.deleteAccount();
-    await _store.reset();
-    await addons?.forget();
+    try {
+      await _api.deleteAccount();
+      await _store.reset();
+    } finally {
+      await addons?.forget();
+    }
     _signedIn = false;
     _failures = 0;
     _setStatus(SyncStatus.signedOut);

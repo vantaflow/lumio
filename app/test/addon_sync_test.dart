@@ -150,6 +150,13 @@ Map<String, Map<String, Object?>> _manifests() => {
   _urlLan: sampleManifest(id: 'org.lan', name: 'Maison'),
 };
 
+Future<Map<String, Object?>> blobAt(
+  Map<String, Object?> item,
+  String p,
+) async => Map<String, Object?>.from(
+  jsonDecode(await _fakeOpen((item['payload']! as Map)['blob'] as String, p))
+      as Map,
+);
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   late FakeServer server;
@@ -168,7 +175,9 @@ void main() {
 
   Future<Map<String, Object?>> serverPlain(String pass) async {
     final blob = (server.addonsItem!['payload']! as Map)['blob'] as String;
-    return {'entries': jsonDecode(await _fakeOpen(blob, pass))};
+    return Map<String, Object?>.from(
+      jsonDecode(await _fakeOpen(blob, pass)) as Map,
+    );
   }
 
   test('sans phrase secrète : aucun addon envoyé, état affiché', () async {
@@ -203,7 +212,9 @@ void main() {
     expect(wire, isNot(contains('tok-secret')));
     expect(wire, isNot(contains('example.com')));
     final plain = jsonDecode(await _fakeOpen(payload['blob'] as String, _pass));
-    expect(plain, [
+    expect((plain as Map)['gen'], 1);
+    expect(plain['removed'], isEmpty);
+    expect(plain['entries'], [
       {'url': _urlA, 'logo': null, 'enabled': true, 'position': 0},
       {'url': _urlB, 'logo': null, 'enabled': false, 'position': 1},
     ]);
@@ -344,7 +355,7 @@ void main() {
       containsAll([_urlLan, _urlA]),
     );
     // Confirmation locale : installée par le chemin normal.
-    expect(await b.sync.installPending(0), isTrue);
+    expect(await b.sync.installPending(st.pendingPrivate.single.hash), isTrue);
     expect(await b.urls(), contains(_urlLan));
     expect((await b.sync.state()).pendingPrivate, isEmpty);
   });
@@ -357,7 +368,9 @@ void main() {
     await b.signIn();
     await b.sync.setPassphrase(_pass);
     await b.cycle();
-    await b.sync.dismissPending(0);
+    await b.sync.dismissPending(
+      (await b.sync.state()).pendingPrivate.single.hash,
+    );
     await b.cycle();
     expect((await serverPlain(_pass))['entries'], isEmpty);
   });
@@ -448,7 +461,7 @@ void main() {
                   (server.addonsItem!['payload']! as Map)['blob'] as String,
                   'toute nouvelle phrase secrete',
                 ),
-              ))
+              ))['entries']
               as List)
           .map((e) => e['url']),
       [_urlB],
@@ -633,4 +646,223 @@ void main() {
       expect(rows, hasLength(1));
     },
   );
+
+  group('génération et suppressions explicites', () {
+    test(
+      'rejeu d\'un ancien blob : aucune suppression, aucune réinstallation',
+      () async {
+        await a.repo.install(_urlA);
+        await a.repo.install(_urlB);
+        await a.signIn();
+        await a.sync.setPassphrase(_pass);
+        await a.cycle();
+        await b.signIn();
+        await b.sync.setPassphrase(_pass);
+        await b.cycle();
+        await a.cycle(); // A a vu la publication de B
+        final old = Map<String, Object?>.from(server.addonsItem!);
+        final oldGen = (await blobAt(old, _pass))['gen'] as int;
+
+        // A retire B : suppression explicite (gen 2), propagée à B.
+        await a.repo.remove((await a.repo.list()).last.id);
+        await a.cycle();
+        final cur = await blobAt(server.addonsItem!, _pass);
+        expect(cur['gen'], oldGen + 1);
+        expect(cur['removed'], hasLength(1));
+        await b.cycle();
+        expect(await b.urls(), [_urlA]);
+
+        // Le serveur rejoue l'ancien blob (gen 1, qui contient encore B).
+        server.items['addons/all'] = {...old, 'version': ++server.version};
+        await b.cycle();
+        await a.cycle();
+        expect(await b.urls(), [_urlA]);
+        expect(await a.urls(), [_urlA]);
+        expect(
+          b.fetcher.requested.where((u) => u.toString() == _urlB).length,
+          1,
+        );
+        // Et l'état à jour est republié (gen au-dessus de ce qui a été vu).
+        expect(
+          (await blobAt(server.addonsItem!, _pass))['entries'],
+          hasLength(1),
+        );
+        expect(
+          (await blobAt(server.addonsItem!, _pass))['gen'] as int,
+          greaterThan(oldGen + 1),
+        );
+      },
+    );
+
+    test(
+      'rejeu quand un addon local venait du blob : jamais supprimé',
+      () async {
+        await a.repo.install(_urlA);
+        await a.repo.install(_urlB);
+        await a.signIn();
+        await a.sync.setPassphrase(_pass);
+        await a.cycle();
+        await b.signIn();
+        await b.sync.setPassphrase(_pass);
+        await b.cycle();
+        // Un blob plus ancien sans B (appareil en retard) ne retire rien.
+        final stale = jsonEncode({
+          'v': 1,
+          'gen': 0,
+          'device': 'zz',
+          'entries': [
+            {'url': _urlA, 'logo': null, 'enabled': true, 'position': 0},
+          ],
+          'removed': [],
+        });
+        server.items['addons/all'] = {
+          'kind': 'addons',
+          'key': 'all',
+          'payload': {'blob': await _fakeSeal(stale, _pass)},
+          'deleted': 0,
+          'version': ++server.version,
+        };
+        await b.cycle();
+        expect(await b.urls(), [_urlA, _urlB]);
+        await a.cycle();
+        expect(await a.urls(), [_urlA, _urlB]);
+      },
+    );
+
+    test(
+      'appareil en retard (génération plus basse) : ignoré puis corrigé',
+      () async {
+        await a.repo.install(_urlA);
+        await a.signIn();
+        await a.sync.setPassphrase(_pass);
+        await a.cycle();
+        await a.repo.install(_urlB);
+        await a.cycle();
+        await a.repo.install(_urlC);
+        await a.cycle(); // gen 3
+        // Un appareil en retard pousse gen 2 sans B ni C.
+        server.items['addons/all'] = {
+          'kind': 'addons',
+          'key': 'all',
+          'payload': {
+            'blob': await _fakeSeal(
+              jsonEncode({
+                'v': 1,
+                'gen': 2,
+                'device': 'late',
+                'entries': [
+                  {'url': _urlA, 'logo': null, 'enabled': true, 'position': 0},
+                ],
+                'removed': [],
+              }),
+              _pass,
+            ),
+          },
+          'deleted': 0,
+          'version': ++server.version,
+        };
+        await a.cycle();
+        expect(await a.urls(), [_urlA, _urlB, _urlC]);
+        final cur = await blobAt(server.addonsItem!, _pass);
+        expect(cur['gen'] as int, greaterThan(3));
+        expect(cur['entries'], hasLength(3));
+      },
+    );
+
+    test('une suppression puis un nouvel ajout : l\'addon revient', () async {
+      await a.repo.install(_urlA);
+      await a.repo.install(_urlB);
+      await a.signIn();
+      await a.sync.setPassphrase(_pass);
+      await a.cycle();
+      await b.signIn();
+      await b.sync.setPassphrase(_pass);
+      await b.cycle();
+      await a.repo.remove((await a.repo.list()).last.id);
+      await a.cycle();
+      await b.cycle();
+      expect(await b.urls(), [_urlA]);
+      await a.repo.install(_urlB);
+      await a.cycle();
+      expect((await blobAt(server.addonsItem!, _pass))['removed'], isEmpty);
+      await b.cycle();
+      expect(await b.urls(), [_urlA, _urlB]);
+    });
+  });
+
+  test('réinitialisation par un autre appareil : l\'appareil en ligne ne '
+      'renvoie rien et redemande la phrase, sans boucle', () async {
+    await a.repo.install(_urlA);
+    await a.signIn();
+    await a.sync.setPassphrase(_pass);
+    await a.cycle();
+    await b.signIn();
+    await b.sync.setPassphrase(_pass);
+    await b.cycle();
+
+    await b.sync.requestReset();
+    await b.cycle();
+    expect(server.addonsItem!['deleted'], 1);
+    final version = server.version;
+
+    // A, encore en ligne avec l'ancienne phrase, ne ressuscite pas le blob.
+    await a.cycle();
+    await a.cycle();
+    expect((await a.sync.state()).status, AddonSyncStatus.phraseReset);
+    expect(await a.sync.passphrase(), isNull);
+    expect(server.addonsItem!['deleted'], 1);
+    expect(server.version, version);
+    expect(await a.urls(), [_urlA]);
+
+    // B définit une nouvelle phrase ; A la saisit : plus de phrase erronée.
+    const next = 'la toute nouvelle phrase';
+    await b.repo.install(_urlB);
+    await b.sync.setPassphrase(next);
+    await b.cycle();
+    expect(server.addonsItem!['deleted'], 0);
+    await a.cycle();
+    expect((await a.sync.state()).status, AddonSyncStatus.phraseReset);
+    await a.sync.setPassphrase(next);
+    await a.cycle();
+    await b.cycle();
+    expect((await a.sync.state()).status, AddonSyncStatus.ready);
+    expect((await b.sync.state()).status, AddonSyncStatus.ready);
+    expect((await a.urls()).toSet(), {_urlA, _urlB});
+  });
+
+  test('changement de phrase : un blob de l\'ancienne phrase reçu pendant le '
+      'rechiffrement ne bloque pas l\'envoi', () async {
+    await a.repo.install(_urlA);
+    await a.signIn();
+    await a.sync.setPassphrase(_pass);
+    await a.cycle();
+    await b.signIn();
+    await b.sync.setPassphrase(_pass);
+    await b.cycle();
+
+    await a.sync.changePassphrase('nouvelle phrase secrete 2');
+    // Avant l'envoi, B publie (ancienne phrase) et A le reçoit.
+    await b.repo.install(_urlB);
+    await b.cycle();
+    final item = server.addonsItem!;
+    await a.sync.recordRemote(
+      SyncItem(
+        kind: 'addons',
+        key: 'all',
+        payload: Map<String, dynamic>.from(item['payload']! as Map),
+        version: 99,
+      ),
+    );
+    final res = await a.sync.process();
+    expect(res.needsPush, isTrue);
+    expect(
+      (await a.sync.state()).status,
+      isNot(AddonSyncStatus.wrongPassphrase),
+    );
+    await a.cycle();
+    expect(
+      await blobAt(server.addonsItem!, 'nouvelle phrase secrete 2'),
+      isNotEmpty,
+    );
+  });
 }

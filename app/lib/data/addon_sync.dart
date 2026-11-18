@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:drift/drift.dart';
 import 'package:lumio/data/addon_repository.dart';
@@ -42,13 +43,19 @@ enum AddonSyncStatus {
 
   /// Réinitialisation demandée, suppression du blob distant en attente.
   resetting,
+
+  /// Un autre appareil a réinitialisé la synchronisation des addons : la
+  /// phrase locale est oubliée, rien n'est envoyé avant une nouvelle saisie.
+  phraseReset,
 }
 
 /// Un addon reçu dont l'adresse désigne le réseau local : il attend la
 /// confirmation de l'utilisateur sur cet appareil.
 class PendingPrivateAddon {
-  const PendingPrivateAddon(this.index, this.label);
-  final int index;
+  const PendingPrivateAddon(this.hash, this.label);
+
+  /// Empreinte de l'adresse (clé stable, jamais l'adresse elle-même).
+  final String hash;
 
   /// Adresse masquée (`redactUrl`).
   final String label;
@@ -127,6 +134,16 @@ class AddonSync {
   static const _kTooLarge = 'addons_toolarge';
   static const _kReset = 'addons_reset';
   static const _kRetryAt = 'addons_retry_at';
+  static const _kGen = 'addons_gen';
+  static const _kDevice = 'addons_device';
+  static const _kRemoved = 'addons_removed';
+  static const _kChanging = 'addons_changing';
+
+  /// Les suppressions explicites sont gardées 90 jours, 100 au plus, et
+  /// identifiées par un préfixe de 16 caractères de l'empreinte.
+  static const _tombstoneMaxAge = Duration(days: 90);
+  static const _tombstoneMax = 100;
+  static const _tombstoneHashLength = 16;
 
   // --- sync_meta ---------------------------------------------------------
 
@@ -188,7 +205,11 @@ class AddonSync {
   /// elle est trop courte.
   Future<AddonProcessResult> setPassphrase(String phrase) => _locked(() async {
     _checkLength(phrase);
+    // Nouvelle clé = nouvelle époque : les numéros de génération d'une autre
+    // phrase ne comptent plus (ses blobs ne s'ouvrent de toute façon pas).
+    if (await passphrase() != phrase) await _del(_kGen);
     await _secrets.write(AddonSyncSecretKeys.passphrase, phrase);
+    await _del(_kChanging);
     await _del(_kReset);
     await _del(_kReady);
     await _del(_kStatus);
@@ -205,6 +226,9 @@ class AddonSync {
       throw StateError('phrase courante non validée');
     }
     await _secrets.write(AddonSyncSecretKeys.passphrase, phrase);
+    // Jusqu'à l'envoi, un blob de l'ancienne phrase qui arrive ne bloque pas
+    // le nouvel envoi.
+    await _set(_kChanging, '1');
     await _del(_kStatus);
     await _del(_kTooLarge);
     await _enqueue();
@@ -219,6 +243,7 @@ class AddonSync {
     await _del(_kStatus);
     await _del(_kTooLarge);
     await _del(_kRemoteNew);
+    await _del(_kChanging);
     await _set(_kReset, '1');
     await _enqueue();
   });
@@ -252,10 +277,29 @@ class AddonSync {
     if (pass == null || await _get(_kReady) != '1') return null;
     if (await _get(_kTooLarge) == '$seq') return null;
     final entries = await _entries();
-    final plain = jsonEncode([for (final e in entries) e.toJson()]);
+    final gen = await _gen() + 1;
+    final device = await _deviceId();
+    var removed = await _removedFor(entries);
+    String build() => jsonEncode({
+      'v': 1,
+      'gen': gen,
+      'device': device,
+      'entries': [for (final e in entries) e.toJson()],
+      'removed': [
+        for (final t in removed) {'h': t.hash, 't': t.at},
+      ],
+    });
+    var plain = build();
+    // Les plus anciennes suppressions cèdent la place avant de déclarer le
+    // blob trop gros.
+    while (utf8.encode(plain).length > _maxPlainBytes && removed.isNotEmpty) {
+      removed = removed.sublist(0, removed.length - 1);
+      plain = build();
+    }
     if (utf8.encode(plain).length > _maxPlainBytes) {
       return _tooLarge(seq);
     }
+    await _set(_kRemoved, jsonEncode([for (final t in removed) t.toJson()]));
     final sealed = await _seal(plain, pass);
     final payload = {'blob': sealed};
     if (utf8.encode(jsonEncode(payload)).length > SyncLimits.maxPayloadBytes) {
@@ -267,7 +311,12 @@ class AddonSync {
     };
     await _set(
       _kSnapshot,
-      jsonEncode({'seq': seq, 'hashes': hashes.toList(), 'blob': sealed}),
+      jsonEncode({
+        'seq': seq,
+        'gen': gen,
+        'hashes': hashes.toList(),
+        'blob': sealed,
+      }),
     );
     return SyncItem(
       kind: SyncKind.addons,
@@ -294,6 +343,7 @@ class AddonSync {
             await _del(_kOrigin);
             await _del(_kReady);
             await _del(_kStatus);
+            await _del(_kChanging);
             await _secrets.delete(AddonSyncSecretKeys.carry);
           }
           return;
@@ -304,6 +354,9 @@ class AddonSync {
           final j = jsonDecode(raw) as Map;
           if (j['seq'] == seq) {
             await _set(_kOrigin, jsonEncode(j['hashes']));
+            final g = j['gen'];
+            if (g is int && g > await _gen()) await _set(_kGen, '$g');
+            await _del(_kChanging);
             if (await _get(_kStatus) == 'toolarge') await _del(_kStatus);
           }
         } on Object {
@@ -360,7 +413,7 @@ class AddonSync {
     if (ready && !fresh) return _retryCarry();
 
     // Contenu distant : aucun / pierre tombale / blob.
-    List<_Entry>? remote; // nul = pas de blob (rien à supprimer côté local)
+    _Plain? remote; // nul = pas de blob
     final rawRemote = await _get(_kRemote);
     Map<String, Object?>? r;
     if (rawRemote != null) {
@@ -371,13 +424,29 @@ class AddonSync {
         r = null;
       }
     }
+    if (r != null && r['deleted'] == true && ready) {
+      // Un autre appareil a réinitialisé : ce n'est pas à nous de renvoyer
+      // nos addons avec une phrase qui n'a plus cours. Phrase oubliée, plus
+      // aucun envoi avant une nouvelle saisie.
+      await _secrets.delete(AddonSyncSecretKeys.passphrase);
+      await _del(_kReady);
+      await _del(_kRemoteNew);
+      await _del(_kChanging);
+      await _set(_kStatus, 'reset');
+      return const AddonProcessResult();
+    }
     if (r != null && r['deleted'] != true && r['blob'] is String) {
       try {
         final plain = await _open(r['blob']! as String, pass);
-        remote = _parseEntries(plain);
+        remote = _parsePlain(plain);
       } on WrongPassphraseException {
-        await _del(_kReady);
         await _del(_kRemoteNew);
+        if (await _get(_kChanging) == '1') {
+          // Blob de l'ancienne phrase arrivé pendant le changement : sans
+          // effet, le nouvel envoi (déjà en file) le remplacera.
+          return AddonProcessResult(needsPush: await _queued());
+        }
+        await _del(_kReady);
         await _set(_kStatus, 'wrong');
         return const AddonProcessResult();
       }
@@ -393,6 +462,20 @@ class AddonSync {
     await _del(_kRemoteNew);
     if (await _get(_kStatus) == 'wrong') await _del(_kStatus);
 
+    if (remote != null) {
+      final stored = await _gen();
+      final mine = await _deviceId();
+      if (remote.gen < stored ||
+          (remote.gen == stored && remote.device == mine)) {
+        // Blob plus ancien (rejeu, appareil en retard) ou le nôtre qui
+        // revient : rien n'est appliqué, surtout aucune suppression. Un blob
+        // plus ancien que notre état est remplacé par un envoi à jour.
+        if (remote.gen < stored) await _enqueue();
+        return AddonProcessResult(needsPush: await _queued());
+      }
+      if (remote.gen > stored) await _set(_kGen, '${remote.gen}');
+    }
+
     final changed = await _merge(remote);
     return AddonProcessResult(
       needsPush: await _queued(),
@@ -400,21 +483,46 @@ class AddonSync {
     );
   }
 
-  /// Applique [remote] (nul = aucun blob) aux addons locaux.
-  Future<bool> _merge(List<_Entry>? remote) async {
+  /// Applique [remote] (nul = aucun blob) aux addons locaux. Un addon n'est
+  /// supprimé que par une suppression explicite du blob, jamais parce qu'il
+  /// y manque.
+  Future<bool> _merge(_Plain? remote) async {
     var changed = false;
-    final entries = remote ?? const <_Entry>[];
+    final entries = remote?.entries ?? const <_Entry>[];
     final byHash = {for (final e in entries) e.hash!: e};
     final origin = await _origin();
+    final gone = {
+      for (final t in remote?.removed ?? const <_Tombstone>[]) t.hash,
+    };
 
-    // 1. Supprimés ailleurs : seulement ceux qui venaient du blob.
-    if (remote != null) {
+    // 1. Supprimés ailleurs, explicitement : seulement ceux qui venaient du
+    // blob.
+    if (gone.isNotEmpty) {
       for (final row in await _rows()) {
-        if (origin.contains(row.urlHash) && !byHash.containsKey(row.urlHash)) {
+        if (origin.contains(row.urlHash) &&
+            !byHash.containsKey(row.urlHash) &&
+            gone.contains(_short(row.urlHash))) {
           await _repo.remove(row.id);
           changed = true;
         }
       }
+    }
+    if (remote != null) {
+      // Les suppressions connues suivent, sans ce qui est de nouveau présent.
+      final merged = <String, _Tombstone>{
+        for (final t in await _loadRemoved()) t.hash: t,
+      };
+      for (final t in remote.removed) {
+        final old = merged[t.hash];
+        if (old == null || old.at < t.at) merged[t.hash] = t;
+      }
+      for (final h in byHash.keys) {
+        merged.remove(_short(h));
+      }
+      await _set(
+        _kRemoved,
+        jsonEncode([for (final t in _prune(merged.values)) t.toJson()]),
+      );
     }
 
     // 2. Activation des addons déjà présents.
@@ -547,16 +655,14 @@ class AddonSync {
 
   // --- confirmation des adresses locales ---------------------------------
 
-  /// L'utilisateur confirme l'addon [index] (adresse locale) : installé avec
+  /// L'utilisateur confirme l'addon [hash] (adresse locale) : installé avec
   /// `allowPrivate`, par le chemin normal. Renvoie vrai si c'est fait.
-  Future<bool> installPending(int index) => _locked(() async {
+  Future<bool> installPending(String hash) => _locked(() async {
     final carry = await _loadCarry();
-    final priv = [
-      for (final c in carry)
-        if (c.kind == _CarryKind.private) c,
-    ];
-    if (index < 0 || index >= priv.length) return false;
-    final target = priv[index];
+    final target = carry
+        .where((c) => c.kind == _CarryKind.private && c.entry.hash == hash)
+        .firstOrNull;
+    if (target == null) return false;
     final res = await _tryInstall(target.entry, allowPrivate: true);
     final next = [
       for (final c in carry)
@@ -567,19 +673,15 @@ class AddonSync {
     return res == null;
   });
 
-  /// L'utilisateur renonce à l'addon [index] : il ne sera plus renvoyé.
-  Future<void> dismissPending(int index) => _locked(() async {
+  /// L'utilisateur renonce à l'addon [hash] : il ne sera plus renvoyé.
+  Future<void> dismissPending(String hash) => _locked(() async {
     final carry = await _loadCarry();
-    final priv = [
+    final next = [
       for (final c in carry)
-        if (c.kind == _CarryKind.private) c,
+        if (!(c.kind == _CarryKind.private && c.entry.hash == hash)) c,
     ];
-    if (index < 0 || index >= priv.length) return;
-    final target = priv[index];
-    await _saveCarry([
-      for (final c in carry)
-        if (!identical(c, target)) c,
-    ]);
+    if (next.length == carry.length) return;
+    await _saveCarry(next);
     if (await _get(_kReady) == '1') await _enqueue();
   });
 
@@ -590,16 +692,18 @@ class AddonSync {
       return const AddonSyncState(AddonSyncStatus.resetting);
     }
     if (await passphrase() == null) {
-      return const AddonSyncState(AddonSyncStatus.noPassphrase);
+      return AddonSyncState(
+        await _get(_kStatus) == 'reset'
+            ? AddonSyncStatus.phraseReset
+            : AddonSyncStatus.noPassphrase,
+      );
     }
     final carry = await _loadCarry();
-    final pending = <PendingPrivateAddon>[];
-    var i = 0;
-    for (final c in carry) {
-      if (c.kind == _CarryKind.private) {
-        pending.add(PendingPrivateAddon(i++, redactUrl(c.entry.url)));
-      }
-    }
+    final pending = [
+      for (final c in carry)
+        if (c.kind == _CarryKind.private)
+          PendingPrivateAddon(c.entry.hash!, redactUrl(c.entry.url)),
+    ];
     final failed = carry.where((c) => c.kind == _CarryKind.failed).length;
     final status = await _get(_kStatus);
     final s = status == 'wrong'
@@ -610,6 +714,67 @@ class AddonSync {
         ? AddonSyncStatus.ready
         : AddonSyncStatus.waiting;
     return AddonSyncState(s, pendingPrivate: pending, failed: failed);
+  }
+
+  // --- génération, appareil, suppressions -------------------------------
+
+  Future<int> _gen() async => int.tryParse(await _get(_kGen) ?? '') ?? 0;
+
+  Future<String> _deviceId() async {
+    var id = await _get(_kDevice);
+    if (id == null) {
+      final r = Random.secure();
+      id = [
+        for (var i = 0; i < 8; i++)
+          r.nextInt(256).toRadixString(16).padLeft(2, '0'),
+      ].join();
+      await _set(_kDevice, id);
+    }
+    return id;
+  }
+
+  String _short(String hash) => hash.length > _tombstoneHashLength
+      ? hash.substring(0, _tombstoneHashLength)
+      : hash;
+
+  Future<List<_Tombstone>> _loadRemoved() async {
+    final raw = await _get(_kRemoved);
+    if (raw == null) return [];
+    try {
+      return [for (final j in jsonDecode(raw) as List) ?_Tombstone.fromJson(j)];
+    } on Object {
+      return [];
+    }
+  }
+
+  /// Plus récentes d'abord, 90 jours et 100 au plus.
+  List<_Tombstone> _prune(Iterable<_Tombstone> all) {
+    final limit =
+        _now().subtract(_tombstoneMaxAge).millisecondsSinceEpoch ~/ 1000;
+    final out = [
+      for (final t in all)
+        if (t.at >= limit) t,
+    ]..sort((a, b) => b.at.compareTo(a.at));
+    return out.length > _tombstoneMax ? out.sublist(0, _tombstoneMax) : out;
+  }
+
+  /// Suppressions à publier : celles déjà connues, plus les addons venus du
+  /// dernier blob qui ne sont plus là (supprimés ici), sans ceux qui sont
+  /// de nouveau présents.
+  Future<List<_Tombstone>> _removedFor(List<_Entry> entries) async {
+    final present = {for (final e in entries) _short(e.hash!)};
+    final now = _now().millisecondsSinceEpoch ~/ 1000;
+    final all = <String, _Tombstone>{
+      for (final t in await _loadRemoved()) t.hash: t,
+    };
+    for (final h in await _origin()) {
+      final k = _short(h);
+      if (!present.contains(k)) all.putIfAbsent(k, () => _Tombstone(k, now));
+    }
+    for (final k in present) {
+      all.remove(k);
+    }
+    return _prune(all.values);
   }
 
   // --- données locales ---------------------------------------------------
@@ -662,23 +827,39 @@ class AddonSync {
     return out;
   }
 
-  /// Entrées d'un blob déchiffré ; nul si le contenu n'a pas la forme prévue.
-  List<_Entry>? _parseEntries(String plain) {
+  /// Contenu d'un blob déchiffré ; nul s'il n'a pas la forme prévue.
+  _Plain? _parsePlain(String plain) {
     final Object? j;
     try {
       j = jsonDecode(plain);
     } on FormatException {
       return null;
     }
-    if (j is! List || j.length > _maxEntries) return null;
+    if (j is! Map || j['v'] != 1) return null;
+    final gen = j['gen'];
+    final device = j['device'];
+    final list = j['entries'];
+    final rem = j['removed'];
+    if (gen is! int ||
+        gen < 0 ||
+        device is! String ||
+        device.length > 64 ||
+        list is! List ||
+        list.length > _maxEntries ||
+        rem is! List ||
+        rem.length > 1000) {
+      return null;
+    }
     final out = <_Entry>[];
     final seen = <String>{};
-    for (var i = 0; i < j.length; i++) {
-      final e = _Entry.fromJson(j[i], i);
+    for (var i = 0; i < list.length; i++) {
+      final e = _Entry.fromJson(list[i], i);
       if (e == null) continue;
       if (seen.add(e.hash!)) out.add(e);
     }
-    return out;
+    return _Plain(gen, device, out, [
+      for (final t in rem) ?_Tombstone.fromJson(t),
+    ]);
   }
 
   Future<List<_Carry>> _loadCarry() async {
@@ -702,6 +883,31 @@ class AddonSync {
         jsonEncode([for (final c in carry) c.toJson()]),
       );
     }
+  }
+}
+
+class _Plain {
+  _Plain(this.gen, this.device, this.entries, this.removed);
+  final int gen;
+  final String device;
+  final List<_Entry> entries;
+  final List<_Tombstone> removed;
+}
+
+/// Suppression explicite : préfixe d'empreinte et date (secondes).
+class _Tombstone {
+  _Tombstone(this.hash, this.at);
+  final String hash;
+  final int at;
+
+  Map<String, Object?> toJson() => {'h': hash, 't': at};
+
+  static _Tombstone? fromJson(Object? j) {
+    if (j is! Map) return null;
+    final h = j['h'];
+    final t = j['t'];
+    if (h is! String || h.isEmpty || h.length > 64 || t is! num) return null;
+    return _Tombstone(h, t.toInt());
   }
 }
 

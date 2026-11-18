@@ -1233,4 +1233,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passphraseErrSave => 'Could not save the secret phrase';
+
+  @override
+  String get addonSyncPhraseReset =>
+      'Secret phrase needs to be entered again: addon sync was reset from another device.';
 }
