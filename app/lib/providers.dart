@@ -169,6 +169,21 @@ class CurrentProfileController extends Notifier<Profile?> {
   }
 }
 
+/// Vrai quand l'utilisateur a demandé la gestion des profils : le sélecteur
+/// s'affiche même avec un seul profil (sinon il serait choisi seul et la
+/// création de profils serait inaccessible).
+final profileManagementRequestedProvider = NotifierProvider<_Flag, bool>(
+  _Flag.new,
+);
+
+class _Flag extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  // ignore: use_setters_to_change_properties
+  void set(bool v) => state = v;
+}
+
 /// Identifiant du profil actif (le profil « default » tant qu'aucun n'est
 /// choisi) ; à utiliser par les écrans qui lisent ou écrivent des données de
 /// profil.

@@ -103,15 +103,22 @@ class RecoveryCode {
       '${code.substring(0, 5)}-${code.substring(5)}';
 }
 
-/// Verrou après échecs : 3 échecs consécutifs verrouillent 5 minutes.
-/// L'état est sérialisable (survit au redémarrage) ; l'horloge est injectable.
+/// Verrou après échecs : 3 échecs consécutifs verrouillent, d'abord 5 min,
+/// puis 15 min, puis 60 min à chaque cycle suivant ; seul un succès remet les
+/// cycles à zéro. L'état est sérialisable (survit au redémarrage) ; l'horloge
+/// est injectable.
+///
+/// Limite acceptée : l'horloge de l'appareil fait foi, un changement d'heure
+/// manuel contourne donc le verrou.
 class PinLockout {
   PinLockout({
     DateTime Function()? now,
     int failures = 0,
+    int cycles = 0,
     DateTime? lockedUntil,
   }) : _now = now ?? DateTime.now,
        _failures = failures,
+       _cycles = cycles,
        _lockedUntil = lockedUntil;
 
   factory PinLockout.fromJson(
@@ -122,6 +129,7 @@ class PinLockout {
     return PinLockout(
       now: now,
       failures: json['failures'] is int ? json['failures']! as int : 0,
+      cycles: json['cycles'] is int ? json['cycles']! as int : 0,
       lockedUntil: until is int
           ? DateTime.fromMillisecondsSinceEpoch(until, isUtc: true)
           : null,
@@ -131,8 +139,17 @@ class PinLockout {
   static const maxFailures = 3;
   static const lockDuration = Duration(minutes: 5);
 
+  /// Durée du verrou selon le nombre de verrous déjà subis (le dernier
+  /// palier sert ensuite de plafond).
+  static const lockDurations = [
+    Duration(minutes: 5),
+    Duration(minutes: 15),
+    Duration(minutes: 60),
+  ];
+
   final DateTime Function() _now;
   int _failures;
+  int _cycles;
   DateTime? _lockedUntil;
 
   bool get locked {
@@ -155,17 +172,22 @@ class PinLockout {
     if (locked) return;
     _failures++;
     if (_failures >= maxFailures) {
-      _lockedUntil = _now().add(lockDuration);
+      final i = _cycles.clamp(0, lockDurations.length - 1);
+      _lockedUntil = _now().add(lockDurations[i]);
+      _cycles++;
+      _failures = 0;
     }
   }
 
   void success() {
     _failures = 0;
+    _cycles = 0;
     _lockedUntil = null;
   }
 
   Map<String, Object?> toJson() => {
     'failures': _failures,
+    'cycles': _cycles,
     'until': _lockedUntil?.toUtc().millisecondsSinceEpoch,
   };
 }

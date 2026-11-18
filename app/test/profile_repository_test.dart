@@ -173,6 +173,32 @@ void main() {
       expect(await again.verifyParentPin('1234'), PinResult.ok);
     });
 
+    test(
+      'verrous croissants persistés : 5 puis 15 min, succès remet à 0',
+      () async {
+        await repo.createParentPin('1234');
+        Future<void> lockOut(Duration d) async {
+          final r = ProfileRepository(
+            db,
+            now: () => clock,
+            hashPin: (p) async => 'h:$p',
+            verifyPin: (p, s) async => s == 'h:$p',
+          );
+          for (var i = 0; i < 3; i++) {
+            await r.verifyParentPin('0000');
+          }
+          expect(await r.lockRemaining(), d);
+          clock = clock.add(d);
+        }
+
+        await lockOut(const Duration(minutes: 5));
+        await lockOut(const Duration(minutes: 15));
+        await lockOut(const Duration(minutes: 60));
+        expect(await repo.verifyParentPin('1234'), PinResult.ok);
+        await lockOut(const Duration(minutes: 5));
+      },
+    );
+
     test('un succès remet le compteur à zéro', () async {
       await repo.createParentPin('1234');
       await repo.verifyParentPin('0000');

@@ -12,6 +12,13 @@ import 'package:lumio/providers.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
+class _BrokenPinRepo extends ProfileRepository {
+  _BrokenPinRepo(super.db);
+
+  @override
+  Future<bool> hasParentPin() async => throw StateError('base illisible');
+}
+
 class _H {
   _H(this.tester);
   final WidgetTester tester;
@@ -389,6 +396,85 @@ void main() {
     await h.settle();
     expect(find.text('Zoé'), findsOneWidget);
     expect((await h.run(h.repo.list)).map((p) => p.name), contains('Zoé'));
+    await h.dispose();
+  });
+
+  testWidgets(
+    'profil unique : gestion accessible, ajout enfant, PIN, sélecteur',
+    (tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final h = _H(tester)..start();
+      final c = await h.pump(
+        const ProfileGate(
+          child: Scaffold(
+            body: Column(children: [ProfileButton(), Text('ACCUEIL')]),
+          ),
+        ),
+      );
+      // Base neuve : « Moi » choisi seul.
+      expect(find.text('ACCUEIL'), findsOneWidget);
+      expect(c.read(currentProfileProvider)?.name, 'Moi');
+
+      // Le bouton de profil ouvre la gestion malgré l'unique profil.
+      await tester.tap(find.text('Moi'));
+      await h.settle();
+      expect(find.text('Gérer les profils'), findsWidgets);
+      expect(find.text('Terminé'), findsOneWidget);
+      expect(find.text('ACCUEIL'), findsNothing);
+
+      await tester.tap(find.text('Ajouter'));
+      await h.settle();
+      await tester.enterText(find.byType(TextField), 'Léa');
+      await tester.tap(find.text('Profil enfant'));
+      await tester.pump();
+      await tester.tap(find.text('Enregistrer'));
+      await h.settle();
+      // Création du PIN parent, puis code de récupération.
+      expect(find.text('Choisissez un PIN'), findsOneWidget);
+      await _type(tester, '1234');
+      await h.settle();
+      await _type(tester, '1234');
+      await h.settle();
+      expect(find.text('Code de récupération'), findsOneWidget);
+      await tester.tap(find.text('J\'ai noté le code'));
+      await h.settle();
+      expect((await h.run(h.repo.list)).map((p) => p.name), ['Moi', 'Léa']);
+      expect(await h.run(h.repo.hasParentPin), isTrue);
+
+      // Deux profils : à la sélection suivante, le sélecteur s'affiche.
+      await tester.tap(find.text('Terminé'));
+      await h.settle();
+      await tester.tap(find.text('Léa'));
+      await h.settle();
+      expect(find.text('ACCUEIL'), findsOneWidget);
+      expect(c.read(currentProfileProvider)?.name, 'Léa');
+      await tester.tap(find.text('Léa').first);
+      await h.settle();
+      expect(find.text('PIN parent'), findsOneWidget);
+      await _type(tester, '1234');
+      await h.settle();
+      expect(find.text('Qui regarde ?'), findsOneWidget);
+      await h.dispose();
+    },
+  );
+
+  testWidgets('lecture du PIN impossible : échec fermé avec message', (
+    tester,
+  ) async {
+    final h = _H(tester)..start();
+    await h.run(h.repo.ensureDefault);
+    await h.run(() => h.repo.create('Léa', isKid: true));
+    h.repo = _BrokenPinRepo(h.db);
+    await h.pump(const ProfileGate(child: _child));
+    await tester.tap(find.text('Moi'));
+    await h.settle();
+    expect(find.text('ACCUEIL'), findsNothing);
+    expect(
+      find.text('Contrôle parental indisponible. Réessayez.'),
+      findsOneWidget,
+    );
     await h.dispose();
   });
 

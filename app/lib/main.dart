@@ -8,7 +8,6 @@ import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/update/update_banner.dart';
-import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:media_kit/media_kit.dart';
@@ -58,7 +57,6 @@ class RootScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(currentProfileProvider);
     return Scaffold(
       body: Column(
         children: [
@@ -70,16 +68,7 @@ class RootScreen extends ConsumerWidget {
                 end: LumioSpacing.md,
                 top: LumioSpacing.sm,
               ),
-              child: TextButton.icon(
-                onPressed: () async {
-                  // Un profil enfant ne peut pas changer de profil sans le
-                  // PIN parent.
-                  if (!await requireParent(context, ref)) return;
-                  ref.read(currentProfileProvider.notifier).select(null);
-                },
-                icon: const Icon(Icons.account_circle_outlined),
-                label: Text(profile?.name ?? 'Profil'),
-              ),
+              child: const ProfileButton(),
             ),
           ),
           Expanded(

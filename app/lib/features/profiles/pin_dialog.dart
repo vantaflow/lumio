@@ -17,7 +17,7 @@ class PinEntry {
 }
 
 String _lockMessage(Duration remaining) {
-  final min = (remaining.inSeconds / 60).ceil().clamp(1, 5);
+  final min = (remaining.inSeconds / 60).ceil().clamp(1, 60);
   return 'Trop d\'essais. Réessayez dans $min min.';
 }
 
@@ -509,7 +509,17 @@ Future<bool> verifyParentPinFlow(
   String? subtitle,
 }) async {
   final repo = ref.read(profileRepositoryProvider);
-  if (!await repo.hasParentPin()) {
+  final bool hasPin;
+  try {
+    hasPin = await repo.hasParentPin();
+  } on Object {
+    // Échec fermé : sans savoir si un PIN existe, on n'autorise rien.
+    if (context.mounted) {
+      _toast(context, 'Contrôle parental indisponible. Réessayez.');
+    }
+    return false;
+  }
+  if (!hasPin) {
     if (!context.mounted) return false;
     return createParentPinFlow(context, ref);
   }

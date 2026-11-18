@@ -44,7 +44,8 @@ class ProfileGate extends ConsumerWidget {
         ),
       ),
       data: (list) {
-        if (list.length == 1) {
+        if (list.length == 1 &&
+            !ref.watch(profileManagementRequestedProvider)) {
           // Un seul profil : choisi automatiquement.
           Future.microtask(() {
             if (context.mounted && ref.read(currentProfileProvider) == null) {
@@ -70,8 +71,9 @@ class ProfilePickerScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
-  bool _manage = false;
-  bool _hasPin = false;
+  late bool _manage = ref.read(profileManagementRequestedProvider);
+  // Échec fermé : tant qu'on ignore s'il existe un PIN, on le suppose requis.
+  bool _hasPin = true;
   bool _busy = false;
 
   @override
@@ -80,12 +82,19 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
     _refreshPin();
   }
 
-  Future<void> _refreshPin() async {
+  /// Relit l'existence du PIN. Faux (avec message) si la lecture échoue :
+  /// l'action protégée doit alors être refusée.
+  Future<bool> _refreshPin() async {
     try {
       final has = await ref.read(profileRepositoryProvider).hasParentPin();
       if (mounted) setState(() => _hasPin = has);
+      return true;
     } on Object {
-      // Sans information : on considère qu'aucun PIN n'existe encore.
+      if (mounted) {
+        setState(() => _hasPin = true);
+        _toast('Contrôle parental indisponible. Réessayez.');
+      }
+      return false;
     }
   }
 
@@ -111,8 +120,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       await _edit(p);
       return;
     }
-    await _refreshPin();
-    if (!mounted) return;
+    if (!await _refreshPin() || !mounted) return;
     if (isProfileLocked(p, all, hasPin: _hasPin)) {
       final ok = await verifyParentPinFlow(
         context,
@@ -121,6 +129,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       );
       if (!ok || !mounted) return;
     }
+    ref.read(profileManagementRequestedProvider.notifier).set(false);
     ref.read(currentProfileProvider.notifier).select(p);
   });
 
@@ -129,15 +138,13 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       setState(() => _manage = false);
       return;
     }
-    await _refreshPin();
-    if (!mounted) return;
+    if (!await _refreshPin() || !mounted) return;
     if (_hasPin && !await verifyParentPinFlow(context, ref)) return;
     if (mounted) setState(() => _manage = true);
   });
 
   Future<void> _add() => _guard(() async {
-    await _refreshPin();
-    if (!mounted) return;
+    if (!await _refreshPin() || !mounted) return;
     if (_hasPin && !await verifyParentPinFlow(context, ref)) return;
     if (!mounted) return;
     await _edit(null);
@@ -181,11 +188,11 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   }
 
   Future<bool> _ensurePin() async {
+    if (!await _refreshPin() || !mounted) return false;
     if (_hasPin) return true;
     final ok = await createParentPinFlow(context, ref);
     if (!mounted) return false;
-    await _refreshPin();
-    return ok;
+    return await _refreshPin() && ok;
   }
 
   @override
@@ -614,6 +621,48 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
         ),
         FilledButton(onPressed: _save, child: const Text('Enregistrer')),
       ],
+    );
+  }
+}
+
+/// Bouton de profil de la barre haute : change de profil (PIN parent pour un
+/// profil enfant) ; avec un seul profil, ouvre la gestion des profils pour en
+/// ajouter, créer le PIN parent ou renommer « Moi ».
+class ProfileButton extends ConsumerWidget {
+  const ProfileButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(currentProfileProvider);
+    return TextButton.icon(
+      onPressed: () async {
+        final repo = ref.read(profileRepositoryProvider);
+        final single = (ref.read(profilesProvider).value?.length ?? 0) <= 1;
+        if (single) {
+          // Gestion : protégée par le PIN s'il existe (échec fermé).
+          final bool hasPin;
+          try {
+            hasPin = await repo.hasParentPin();
+          } on Object {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Contrôle parental indisponible. Réessayez.'),
+                ),
+              );
+            }
+            return;
+          }
+          if (!context.mounted) return;
+          if (hasPin && !await verifyParentPinFlow(context, ref)) return;
+          ref.read(profileManagementRequestedProvider.notifier).set(true);
+        } else if (!await requireParent(context, ref)) {
+          return;
+        }
+        ref.read(currentProfileProvider.notifier).select(null);
+      },
+      icon: const Icon(Icons.account_circle_outlined),
+      label: Text(profile?.name ?? 'Profil'),
     );
   }
 }

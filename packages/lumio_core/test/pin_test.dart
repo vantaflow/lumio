@@ -85,6 +85,43 @@ void main() {
       expect(lock.locked, isFalse);
     });
 
+    test(
+      'verrous croissants : 5, 15 puis 60 min (plafond), succès remet à 0',
+      () {
+        void lockOut(Duration expected) {
+          lock
+            ..fail()
+            ..fail()
+            ..fail();
+          expect(lock.remaining, expected);
+          clock = clock.add(expected);
+          expect(lock.locked, isFalse);
+        }
+
+        lockOut(const Duration(minutes: 5));
+        lockOut(const Duration(minutes: 15));
+        lockOut(const Duration(minutes: 60));
+        lockOut(const Duration(minutes: 60));
+        lock.success();
+        lockOut(const Duration(minutes: 5));
+      },
+    );
+
+    test('le palier survit à la sérialisation', () {
+      lock
+        ..fail()
+        ..fail()
+        ..fail();
+      clock = clock.add(const Duration(minutes: 5));
+      var restored = PinLockout.fromJson(lock.toJson(), now: () => clock)
+        ..fail()
+        ..fail()
+        ..fail();
+      expect(restored.remaining, const Duration(minutes: 15));
+      restored = PinLockout.fromJson(restored.toJson(), now: () => clock);
+      expect(restored.remaining, const Duration(minutes: 15));
+    });
+
     test('un succès remet le compteur à zéro', () {
       lock
         ..fail()
