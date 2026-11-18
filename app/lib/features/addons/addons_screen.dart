@@ -69,17 +69,40 @@ class _AddonList extends ConsumerWidget {
           addon: a,
           canMoveUp: i > 0,
           canMoveDown: i < list.length - 1,
-          onMoveUp: () => ctl.move(a.id, -1),
-          onMoveDown: () => ctl.move(a.id, 1),
-          onToggle: (v) => ctl.setEnabled(a.id, v),
+          onMoveUp: () => _run(context, ref, () => ctl.move(a.id, -1)),
+          onMoveDown: () => _run(context, ref, () => ctl.move(a.id, 1)),
+          onToggle: (v) => _run(context, ref, () => ctl.setEnabled(a.id, v)),
           onDelete: () async {
-            if (await _confirmDelete(context, a.manifest.name)) {
-              await ctl.remove(a.id);
+            if (await _confirmDelete(context, a.name) && context.mounted) {
+              await _run(context, ref, () => ctl.remove(a.id));
             }
           },
         );
       },
     );
+  }
+
+  /// Exécute une modification ; en cas d'échec, affiche un message français
+  /// au lieu de laisser remonter une erreur asynchrone.
+  Future<void> _run(
+    BuildContext context,
+    WidgetRef ref,
+    Future<void> Function() op,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await op();
+    } catch (_) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Action impossible : l\'addon n\'a pas été modifié'),
+          ),
+        );
+      // Resynchronise l'affichage avec la base.
+      await ref.read(addonsProvider.notifier).refresh().catchError((_) {});
+    }
   }
 
   Future<bool> _confirmDelete(BuildContext context, String name) async {
@@ -135,7 +158,7 @@ class _AddonTile extends StatelessWidget {
     final c = context.lumio;
     final theme = Theme.of(context);
     final m = addon.manifest;
-    final types = m.types.map(contentTypeLabel).join(' · ');
+    final types = m?.types.map(contentTypeLabel).join(' · ') ?? '';
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -150,7 +173,7 @@ class _AddonTile extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AddonLogo(logo: m.logo),
+                AddonLogo(logo: addon.logo),
                 const SizedBox(width: LumioSpacing.md),
                 ConstrainedBox(
                   constraints: const BoxConstraints(
@@ -161,16 +184,21 @@ class _AddonTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        m.name,
+                        addon.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleLarge,
                       ),
                       Text(
-                        '$types · v${m.version}',
-                        maxLines: 1,
+                        m == null
+                            ? 'Addon illisible : supprimez-le puis '
+                                  'réinstallez-le'
+                            : '$types · v${m.version}',
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: m == null ? c.error : null,
+                        ),
                       ),
                       if (!addon.enabled)
                         Text(
@@ -187,22 +215,24 @@ class _AddonTile extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (m != null) ...[
+                  IconButton(
+                    tooltip: 'Monter ${addon.name}',
+                    onPressed: canMoveUp ? onMoveUp : null,
+                    icon: const Icon(Icons.arrow_upward),
+                  ),
+                  IconButton(
+                    tooltip: 'Descendre ${addon.name}',
+                    onPressed: canMoveDown ? onMoveDown : null,
+                    icon: const Icon(Icons.arrow_downward),
+                  ),
+                  Semantics(
+                    label: 'Activer ${addon.name}',
+                    child: Switch(value: addon.enabled, onChanged: onToggle),
+                  ),
+                ],
                 IconButton(
-                  tooltip: 'Monter ${m.name}',
-                  onPressed: canMoveUp ? onMoveUp : null,
-                  icon: const Icon(Icons.arrow_upward),
-                ),
-                IconButton(
-                  tooltip: 'Descendre ${m.name}',
-                  onPressed: canMoveDown ? onMoveDown : null,
-                  icon: const Icon(Icons.arrow_downward),
-                ),
-                Semantics(
-                  label: 'Activer ${m.name}',
-                  child: Switch(value: addon.enabled, onChanged: onToggle),
-                ),
-                IconButton(
-                  tooltip: 'Supprimer ${m.name}',
+                  tooltip: 'Supprimer ${addon.name}',
                   onPressed: onDelete,
                   icon: Icon(Icons.delete_outline, color: c.error),
                 ),

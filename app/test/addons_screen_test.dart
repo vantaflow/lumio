@@ -17,6 +17,19 @@ const _urlA = 'https://a.example.com/tok-a/manifest.json';
 const _urlB = 'https://b.example.com/tok-b/manifest.json';
 const _lan = 'http://192.168.1.20:7000/manifest.json';
 
+class _FailingRepo extends AddonRepository {
+  _FailingRepo(super.db, super.secrets);
+
+  @override
+  Future<void> setEnabled(String id, bool on) async => throw StateError('x');
+
+  @override
+  Future<void> reorder(List<String> ids) async => throw StateError('x');
+
+  @override
+  Future<void> remove(String id) async => throw StateError('x');
+}
+
 class _Harness {
   _Harness(this.tester);
   final WidgetTester tester;
@@ -41,10 +54,10 @@ class _Harness {
     );
   }
 
-  Future<void> pumpScreen() async {
+  Future<void> pumpScreen([AddonRepository? r]) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [addonRepositoryProvider.overrideWithValue(repo)],
+        overrides: [addonRepositoryProvider.overrideWithValue(r ?? repo)],
         child: MaterialApp(
           theme: LumioTheme.dark(),
           home: const AddonsScreen(),
@@ -121,9 +134,7 @@ void main() {
     await h.settle();
     expect(find.text('Alpha'), findsOneWidget);
     expect(find.text('Installer'), findsNothing);
-    expect((await tester.runAsync(h.repo.list))!.map((a) => a.manifest.name), [
-      'Alpha',
-    ]);
+    expect((await tester.runAsync(h.repo.list))!.map((a) => a.name), ['Alpha']);
     await h.dispose();
   });
 
@@ -178,7 +189,7 @@ void main() {
     expect(find.text('Maison'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Installer'));
     await h.settle();
-    expect((await tester.runAsync(h.repo.list))!.map((a) => a.manifest.name), [
+    expect((await tester.runAsync(h.repo.list))!.map((a) => a.name), [
       'Maison',
     ]);
     await h.dispose();
@@ -224,6 +235,86 @@ void main() {
     await h.settle();
     expect(order(), ['Alpha']);
     expect(h.secrets.snapshot, hasLength(1));
+    await h.dispose();
+  });
+
+  testWidgets('échec de modification : message français, pas d\'erreur', (
+    tester,
+  ) async {
+    final h = _Harness(tester);
+    await h.start();
+    await tester.runAsync(() async {
+      await h.repo.install(_urlA);
+      await h.repo.install(_urlB);
+    });
+    await h.pumpScreen(_FailingRepo(h.db, h.secrets));
+
+    final msg = find.textContaining('Action impossible');
+    await tester.tap(find.byTooltip('Monter Bravo'));
+    await h.settle();
+    expect(msg, findsOneWidget);
+    ScaffoldMessenger.of(
+      tester.element(find.byType(Scaffold).first),
+    ).hideCurrentSnackBar();
+    await h.settle();
+
+    await tester.tap(find.byType(Switch).first);
+    await h.settle();
+    expect(msg, findsOneWidget);
+    ScaffoldMessenger.of(
+      tester.element(find.byType(Scaffold).first),
+    ).hideCurrentSnackBar();
+    await h.settle();
+
+    await tester.tap(find.byTooltip('Supprimer Alpha'));
+    await h.settle();
+    await tester.tap(find.widgetWithText(TextButton, 'Supprimer'));
+    await h.settle();
+    expect(msg, findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.text('Alpha'), findsOneWidget);
+    await h.dispose();
+  });
+
+  testWidgets('aperçu : « Déjà installé » et Installer inactif', (
+    tester,
+  ) async {
+    final h = _Harness(tester);
+    await h.start();
+    await tester.runAsync(() => h.repo.install(_urlA));
+    await h.pumpScreen();
+    await tester.tap(find.widgetWithText(FilledButton, 'Ajouter un addon'));
+    await h.settle();
+    await tester.enterText(
+      find.byType(TextField),
+      'https://A.example.com/tok-a',
+    );
+    await h.settle();
+    expect(find.text('Déjà installé'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Installer'))
+          .onPressed,
+      isNull,
+    );
+    await h.dispose();
+  });
+
+  testWidgets('addon illisible : signalé, seule la suppression reste', (
+    tester,
+  ) async {
+    final h = _Harness(tester);
+    await h.start();
+    final a = (await tester.runAsync(() => h.repo.install(_urlA)))!;
+    await tester.runAsync(() => h.secrets.delete('addon_url:${a.id}'));
+    await h.pumpScreen();
+    expect(find.textContaining('Addon illisible'), findsOneWidget);
+    expect(find.byType(Switch), findsNothing);
+    await tester.tap(find.byTooltip('Supprimer a'));
+    await h.settle();
+    await tester.tap(find.widgetWithText(TextButton, 'Supprimer'));
+    await h.settle();
+    expect(find.textContaining('Aucun addon installé'), findsOneWidget);
     await h.dispose();
   });
 }

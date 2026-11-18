@@ -99,4 +99,25 @@ void main() {
       expect(() => normalizeAddonUrl('ftp://ex.com'), throwsFormatException);
     });
   });
+
+  group('UnsafeUrlException.code', () {
+    UnsafeUrlReason codeOf(String u) {
+      try {
+        UrlGuard.check(Uri.parse(u));
+      } on UnsafeUrlException catch (e) {
+        return e.code;
+      }
+      fail('non refusée : $u');
+    }
+
+    test('adresse privée ou locale : privateAddress', () {
+      expect(codeOf('http://192.168.1.2/x'), UnsafeUrlReason.privateAddress);
+      expect(codeOf('http://localhost/x'), UnsafeUrlReason.privateAddress);
+    });
+
+    test('autres refus : other', () {
+      expect(codeOf('ftp://ex.com/x'), UnsafeUrlReason.other);
+      expect(codeOf('http://0x7f.1/x'), UnsafeUrlReason.other);
+    });
+  });
 }

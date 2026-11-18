@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/addon_repository.dart';
@@ -9,15 +11,32 @@ import 'support/fake_addon_fetcher.dart';
 
 const _url = 'https://films.example.com/secret-token-123/manifest.json';
 
+class _FlakySecrets extends MemorySecretStore {
+  bool failWrite = false;
+  bool failDelete = false;
+
+  @override
+  Future<void> write(String k, String v) async {
+    if (failWrite) throw StateError('écriture impossible');
+    return super.write(k, v);
+  }
+
+  @override
+  Future<void> delete(String k) async {
+    if (failDelete) throw StateError('suppression impossible');
+    return super.delete(k);
+  }
+}
+
 void main() {
   late AppDatabase db;
-  late MemorySecretStore secrets;
+  late _FlakySecrets secrets;
   late FakeAddonFetcher fetcher;
   late AddonRepository repo;
 
   setUp(() {
     db = AppDatabase(NativeDatabase.memory());
-    secrets = MemorySecretStore();
+    secrets = _FlakySecrets();
     fetcher = FakeAddonFetcher({_url: sampleManifest()});
     repo = AddonRepository(
       db,
@@ -32,12 +51,12 @@ void main() {
     'install valide : listé avec nom et types, URL jamais dans SQLite',
     () async {
       final a = await repo.install(_url);
-      expect(a.manifest.name, 'Films libres');
+      expect(a.name, 'Films libres');
 
       final list = await repo.list();
       expect(list, hasLength(1));
-      expect(list.single.manifest.name, 'Films libres');
-      expect(list.single.manifest.types, ['movie', 'series']);
+      expect(list.single.name, 'Films libres');
+      expect(list.single.manifest!.types, ['movie', 'series']);
       expect(list.single.enabled, isTrue);
 
       final rows = await db.customSelect('SELECT * FROM addons').get();
@@ -47,7 +66,7 @@ void main() {
         expect('$v', isNot(contains('secret-token-123')));
       }
       expect(rows.single.data['secret_key'], 'addon_url:${a.id}');
-      expect(secrets.snapshot['addon_url:${a.id}'], _url);
+      expect(jsonDecode(secrets.snapshot['addon_url:${a.id}']!)['url'], _url);
       expect((await repo.urlOf(a.id)).toString(), _url);
     },
   );
@@ -111,7 +130,7 @@ void main() {
       expect(await repo.list(), isEmpty);
 
       final a = await repo.install(lan, allowPrivate: true);
-      expect(a.manifest.name, 'Maison');
+      expect(a.name, 'Maison');
     },
   );
 
@@ -146,5 +165,59 @@ void main() {
     final l = await repo.list();
     expect(l.firstWhere((e) => e.id == a.id).enabled, isFalse);
     expect(l.firstWhere((e) => e.id == b.id).enabled, isTrue);
+  });
+
+  test('logo : jamais dans SQLite, restitué depuis le SecretStore', () async {
+    const logo = 'https://films.example.com/secret-token-123/logo.png';
+    fetcher.manifests[_url] = sampleManifest(logo: logo);
+    final a = await repo.install(_url);
+    expect(a.logo.toString(), logo);
+
+    final rows = await db.customSelect('SELECT * FROM addons').get();
+    for (final v in rows.single.data.values) {
+      expect('$v', isNot(contains('secret-token-123')));
+      expect('$v', isNot(contains('logo.png')));
+    }
+    final l = (await repo.list()).single;
+    expect(l.logo.toString(), logo);
+    expect(l.manifest!.logo.toString(), logo);
+  });
+
+  test('secret manquant : addon marqué broken, supprimable', () async {
+    final a = await repo.install(_url);
+    await secrets.delete('addon_url:${a.id}');
+    final l = (await repo.list()).single;
+    expect(l.broken, isTrue);
+    expect(l.manifest, isNull);
+    await repo.remove(a.id);
+    expect(await repo.list(), isEmpty);
+  });
+
+  test('install : échec d\'écriture du secret, ni ligne ni secret', () async {
+    secrets.failWrite = true;
+    await expectLater(repo.install(_url), throwsStateError);
+    expect(await repo.list(), isEmpty);
+    expect(await db.customSelect('SELECT * FROM addons').get(), isEmpty);
+    expect(secrets.snapshot, isEmpty);
+  });
+
+  test('remove : échec de suppression du secret, ligne conservée', () async {
+    final a = await repo.install(_url);
+    secrets.failDelete = true;
+    await expectLater(repo.remove(a.id), throwsStateError);
+    expect(await repo.list(), hasLength(1));
+    secrets.failDelete = false;
+    await repo.remove(a.id);
+    expect(await repo.list(), isEmpty);
+    expect(secrets.snapshot, isEmpty);
+  });
+
+  test('isInstalled détecte l\'URL normalisée', () async {
+    expect(await repo.isInstalled(_url), isFalse);
+    await repo.install(_url);
+    expect(
+      await repo.isInstalled('https://FILMS.example.com/secret-token-123/'),
+      isTrue,
+    );
   });
 }

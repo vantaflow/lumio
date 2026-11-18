@@ -47,6 +47,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
   bool _installing = false;
   bool _allowPrivate = false;
   AddonManifest? _preview;
+  bool _already = false;
   String? _error;
 
   @override
@@ -78,6 +79,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     _generation++;
     setState(() {
       _preview = null;
+      _already = false;
       _error = null;
       _loading = false;
     });
@@ -91,6 +93,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
 
   Future<void> _paste() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
     final text = data?.text?.trim();
     if (text == null || text.isEmpty) {
       setState(() => _error = 'Le presse-papiers est vide');
@@ -111,12 +114,13 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
       _preview = null;
     });
     try {
-      final m = await ref
-          .read(addonRepositoryProvider)
-          .preview(text, allowPrivate: _allowPrivate);
+      final repo = ref.read(addonRepositoryProvider);
+      final m = await repo.preview(text, allowPrivate: _allowPrivate);
+      final already = await repo.isInstalled(text);
       if (!mounted || gen != _generation) return;
       setState(() {
         _preview = m;
+        _already = already;
         _loading = false;
       });
     } on PrivateAddressException {
@@ -243,7 +247,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (_preview != null)
-                _Preview(manifest: _preview!),
+                _Preview(manifest: _preview!, already: _already),
               const SizedBox(height: LumioSpacing.md),
               Text(
                 'N\'installez que des addons de sources de confiance : un '
@@ -262,7 +266,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                   ),
                   const SizedBox(width: LumioSpacing.sm),
                   FilledButton(
-                    onPressed: _preview != null && !_installing
+                    onPressed: _preview != null && !_already && !_installing
                         ? _install
                         : null,
                     style: FilledButton.styleFrom(
@@ -287,8 +291,9 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
 }
 
 class _Preview extends StatelessWidget {
-  const _Preview({required this.manifest});
+  const _Preview({required this.manifest, required this.already});
   final AddonManifest manifest;
+  final bool already;
 
   @override
   Widget build(BuildContext context) {
@@ -318,6 +323,16 @@ class _Preview extends StatelessWidget {
                   'Version ${manifest.version}',
                   style: theme.textTheme.bodySmall,
                 ),
+                if (already)
+                  Padding(
+                    padding: const EdgeInsets.only(top: LumioSpacing.xs),
+                    child: Text(
+                      'Déjà installé',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: c.warning,
+                      ),
+                    ),
+                  ),
                 if (manifest.description != null) ...[
                   const SizedBox(height: LumioSpacing.sm),
                   Text(
@@ -376,6 +391,15 @@ class AddonLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.lumio;
     final fallback = Icon(Icons.extension_outlined, color: c.accent);
+    // Le logo vient de l'addon : adresse locale ou réseau privé = pas chargé.
+    var safe = logo != null;
+    if (safe) {
+      try {
+        UrlGuard.check(logo!);
+      } on UnsafeUrlException {
+        safe = false;
+      }
+    }
     return Container(
       width: size,
       height: size,
@@ -385,7 +409,7 @@ class AddonLogo extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
-      child: logo == null
+      child: !safe
           ? fallback
           : Image.network(
               logo.toString(),

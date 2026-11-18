@@ -1,9 +1,19 @@
 import 'dart:io';
 
+/// Cause du refus d'une URL par [UrlGuard].
+enum UnsafeUrlReason {
+  /// Hôte local ou adresse de réseau privé : confirmable par l'utilisateur.
+  privateAddress,
+  other,
+}
+
 /// URL refusée par [UrlGuard] (schéma interdit, hôte local ou réseau privé).
 class UnsafeUrlException implements Exception {
-  const UnsafeUrlException(this.reason);
+  const UnsafeUrlException(this.reason, {this.code = UnsafeUrlReason.other});
   final String reason;
+
+  /// Cause machine (ne pas comparer le texte français de [reason]).
+  final UnsafeUrlReason code;
 
   @override
   String toString() => 'UnsafeUrlException: $reason';
@@ -34,7 +44,10 @@ class UrlGuard {
     if (allowPrivate) return;
 
     if (host == 'localhost' || host.endsWith('.localhost')) {
-      throw const UnsafeUrlException('hôte local');
+      throw const UnsafeUrlException(
+        'hôte local',
+        code: UnsafeUrlReason.privateAddress,
+      );
     }
     // Formes numériques (127.1, 0177.0.0.1, 0x7f.1, 2130706433) que le
     // résolveur système interprète comme des IPv4 : seule la forme décimale
@@ -46,7 +59,10 @@ class UrlGuard {
     }
     final addr = InternetAddress.tryParse(host);
     if (addr != null && _isPrivate(addr)) {
-      throw const UnsafeUrlException('réseau privé');
+      throw const UnsafeUrlException(
+        'réseau privé',
+        code: UnsafeUrlReason.privateAddress,
+      );
     }
   }
 

@@ -20,20 +20,29 @@ class PrivateAddressException extends AddonException {
 
 /// Addon installé. L'URL n'y figure pas : voir [AddonRepository.urlOf].
 ///
-/// `manifest.transportUrl` est restitué depuis le `SecretStore` quand il est
-/// disponible ; ne jamais l'afficher ni le journaliser (utiliser `redactUrl`).
+/// [manifest] est nul si l'addon est [broken] (manifeste illisible ou secret
+/// manquant) : l'utilisateur peut alors seulement le supprimer.
+/// `manifest.transportUrl` vient du `SecretStore` ; ne jamais l'afficher ni le
+/// journaliser (utiliser `redactUrl`).
 class InstalledAddon {
   const InstalledAddon({
     required this.id,
     required this.manifest,
     required this.position,
     required this.enabled,
+    this.logo,
   });
 
   final String id;
-  final AddonManifest manifest;
+  final AddonManifest? manifest;
   final int position;
   final bool enabled;
+
+  /// Logo (URL stockée dans le SecretStore, jamais dans SQLite).
+  final Uri? logo;
+
+  bool get broken => manifest == null;
+  String get name => manifest?.name ?? id;
 }
 
 typedef AddonClientFactory = AddonClient Function({required bool allowPrivate});
@@ -58,8 +67,6 @@ class AddonRepository {
   final SecretStore _secrets;
   final AddonClientFactory _clientFactory;
   final String profileScope;
-
-  static const _placeholder = 'https://addon.invalid/manifest.json';
 
   static String secretKeyFor(String id) => 'addon_url:$id';
 
@@ -98,22 +105,32 @@ class AddonRepository {
       )..addColumns([maxPos])).getSingle();
       final position = (row.read(maxPos) ?? -1) + 1;
       final secretKey = secretKeyFor(id);
-      await _secrets.write(secretKey, url.toString());
+      await _db
+          .into(_db.addons)
+          .insert(
+            AddonsCompanion.insert(
+              id: id,
+              profileScope: Value(profileScope),
+              position: position,
+              manifestJson: jsonEncode(manifestToJson(manifest)),
+              secretKey: secretKey,
+              urlHash: hash,
+            ),
+          );
       try {
-        await _db
-            .into(_db.addons)
-            .insert(
-              AddonsCompanion.insert(
-                id: id,
-                profileScope: Value(profileScope),
-                position: position,
-                manifestJson: jsonEncode(manifestToJson(manifest)),
-                secretKey: secretKey,
-                urlHash: hash,
-              ),
-            );
+        await _secrets.write(
+          secretKey,
+          jsonEncode({
+            'url': url.toString(),
+            'logo': manifest.logo?.toString(),
+          }),
+        );
       } catch (_) {
-        await _secrets.delete(secretKey);
+        // L'exception annule la transaction (pas de ligne orpheline) ; on
+        // nettoie aussi une écriture partielle du secret.
+        try {
+          await _secrets.delete(secretKey);
+        } catch (_) {}
         rethrow;
       }
       return InstalledAddon(
@@ -121,6 +138,7 @@ class AddonRepository {
         manifest: manifest,
         position: position,
         enabled: true,
+        logo: manifest.logo,
       );
     });
   }
@@ -133,26 +151,30 @@ class AddonRepository {
             .get();
     final out = <InstalledAddon>[];
     for (final r in rows) {
-      final addon = await _toInstalled(r);
-      if (addon != null) out.add(addon);
+      out.add(await _toInstalled(r));
     }
     return out;
   }
 
   /// URL (secrète) d'un addon installé, pour construire des requêtes.
   Future<Uri> urlOf(String id) async {
-    final raw = await _secrets.read(secretKeyFor(id));
-    if (raw == null) {
+    final url = (await _readSecret(secretKeyFor(id)))?.url;
+    if (url == null) {
       throw const AddonException('URL de l\'addon introuvable');
     }
-    return Uri.parse(raw);
+    return url;
   }
 
+  /// Vrai si cette adresse (normalisée) est déjà installée.
+  Future<bool> isInstalled(String rawUrl) =>
+      _hashExists(_hash(_normalize(rawUrl)));
+
+  /// Supprime d'abord le secret : en cas d'échec ensuite, la ligne reste
+  /// (visible, `broken`) et la suppression peut être relancée ; jamais de
+  /// secret orphelin.
   Future<void> remove(String id) async {
-    await _db.transaction(() async {
-      await (_db.delete(_db.addons)..where((a) => a.id.equals(id))).go();
-    });
     await _secrets.delete(secretKeyFor(id));
+    await (_db.delete(_db.addons)..where((a) => a.id.equals(id))).go();
   }
 
   /// Applique l'ordre de [ids] (premier = priorité maximale). Les addons non
@@ -195,7 +217,7 @@ class AddonRepository {
     try {
       UrlGuard.check(url, allowPrivate: allowPrivate);
     } on UnsafeUrlException catch (e) {
-      if (e.reason == 'réseau privé' || e.reason == 'hôte local') {
+      if (e.code == UnsafeUrlReason.privateAddress) {
         throw PrivateAddressException(cause: e);
       }
       throw AddonException('Adresse refusée : ${e.reason}', cause: e);
@@ -225,34 +247,56 @@ class AddonRepository {
     return taken == null ? manifestId : '$manifestId#${hash.substring(0, 8)}';
   }
 
-  Future<InstalledAddon?> _toInstalled(Addon r) async {
-    final Object? json;
+  Future<({Uri url, Uri? logo})?> _readSecret(String key) async {
+    final raw = await _secrets.read(key);
+    if (raw == null) return null;
     try {
-      json = jsonDecode(r.manifestJson);
+      final j = jsonDecode(raw);
+      if (j is! Map) return null;
+      final url = Uri.tryParse('${j['url']}');
+      if (url == null || !url.hasScheme || url.host.isEmpty) return null;
+      final logoRaw = j['logo'];
+      return (url: url, logo: logoRaw is String ? Uri.tryParse(logoRaw) : null);
     } on FormatException {
-      return null;
-    }
-    final stored = await _secrets.read(r.secretKey);
-    final url = Uri.tryParse(stored ?? '') ?? Uri.parse(_placeholder);
-    try {
-      return InstalledAddon(
-        id: r.id,
-        manifest: AddonManifest.fromJson(json, url),
-        position: r.position,
-        enabled: r.enabled,
-      );
-    } on ManifestException {
       return null;
     }
   }
 
-  /// Sérialisation du manifeste SANS `transportUrl` (l'URL est un secret).
+  Future<InstalledAddon> _toInstalled(Addon r) async {
+    InstalledAddon broken() => InstalledAddon(
+      id: r.id,
+      manifest: null,
+      position: r.position,
+      enabled: r.enabled,
+    );
+    final secret = await _readSecret(r.secretKey);
+    if (secret == null) return broken();
+    try {
+      final json = jsonDecode(r.manifestJson);
+      if (json is Map && secret.logo != null) {
+        json['logo'] = secret.logo.toString();
+      }
+      return InstalledAddon(
+        id: r.id,
+        manifest: AddonManifest.fromJson(json, secret.url),
+        position: r.position,
+        enabled: r.enabled,
+        logo: secret.logo,
+      );
+    } on FormatException {
+      return broken();
+    } on ManifestException {
+      return broken();
+    }
+  }
+
+  /// Sérialisation du manifeste SANS `transportUrl` ni `logo` (URL secrètes,
+  /// stockées dans le SecretStore).
   static Map<String, Object?> manifestToJson(AddonManifest m) => {
     'id': m.id,
     'version': m.version,
     'name': m.name,
     'description': ?m.description,
-    'logo': ?m.logo?.toString(),
     'types': m.types,
     'resources': [
       for (final r in m.resources)
