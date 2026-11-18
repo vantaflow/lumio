@@ -78,10 +78,13 @@ String? metaText(Object? v) {
 /// UTC et non comme heure locale. `null` si illisible.
 DateTime? parseUtc(String s) {
   final t = s.trim();
+  if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(t)) {
+    return DateTime.tryParse('${t}T00:00:00Z');
+  }
   final hasZone = RegExp(
     r'(Z|[+-]\d{2}(:?\d{2})?)$',
     caseSensitive: false,
-  ).hasMatch(t.contains('T') || t.contains(' ') ? t : '');
+  ).hasMatch(t);
   return DateTime.tryParse(hasZone ? t : '${t}Z')?.toUtc();
 }
 
