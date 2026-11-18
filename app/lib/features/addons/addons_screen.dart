@@ -6,7 +6,11 @@ import 'package:lumio/features/addons/add_addon_dialog.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/theme.dart';
+
+/// Clé de la mémoire du focus de l'écran des addons.
+const addonsRouteKey = 'addons';
 
 /// Gestion des addons : liste ordonnable (l'ordre est la priorité des
 /// sources), activation, suppression avec confirmation, ajout.
@@ -17,6 +21,12 @@ class AddonsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final addons = ref.watch(addonsProvider);
     Future<void> add() => showAddAddonDialog(context);
+    var remembered = ref
+        .read(focusMemoryProvider.notifier)
+        .restore(addonsRouteKey);
+    if (!(addons.value?.any((a) => a.id == remembered) ?? false)) {
+      remembered = null;
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.addonsTitle),
@@ -25,6 +35,9 @@ class AddonsScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsetsDirectional.only(end: LumioSpacing.sm),
               child: FilledButton.icon(
+                // Action principale : focus d'emblée, sauf si un addon était
+                // focalisé avant (retour d'un sous-écran).
+                autofocus: remembered == null,
                 onPressed: add,
                 icon: const Icon(Icons.add),
                 label: Text(context.l10n.addAddon),
@@ -44,15 +57,16 @@ class AddonsScreen extends ConsumerWidget {
                 actionLabel: context.l10n.addAddon,
                 onAction: add,
               )
-            : _AddonList(list: list),
+            : _AddonList(list: list, remembered: remembered),
       ),
     );
   }
 }
 
 class _AddonList extends ConsumerWidget {
-  const _AddonList({required this.list});
+  const _AddonList({required this.list, required this.remembered});
   final List<InstalledAddon> list;
+  final String? remembered;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,6 +80,10 @@ class _AddonList extends ConsumerWidget {
         return _AddonTile(
           key: ValueKey(a.id),
           addon: a,
+          autofocus: a.id == remembered,
+          onFocus: () => ref
+              .read(focusMemoryProvider.notifier)
+              .remember(addonsRouteKey, a.id),
           canMoveUp: i > 0,
           canMoveDown: i < list.length - 1,
           onMoveUp: () => _run(context, ref, () => ctl.move(a.id, -1)),
@@ -130,6 +148,8 @@ class _AddonTile extends StatelessWidget {
   const _AddonTile({
     super.key,
     required this.addon,
+    required this.autofocus,
+    required this.onFocus,
     required this.canMoveUp,
     required this.canMoveDown,
     required this.onMoveUp,
@@ -139,6 +159,10 @@ class _AddonTile extends StatelessWidget {
   });
 
   final InstalledAddon addon;
+
+  /// Focus d'emblée (dernier addon focalisé avant un sous-écran).
+  final bool autofocus;
+  final VoidCallback onFocus;
   final bool canMoveUp;
   final bool canMoveDown;
   final VoidCallback onMoveUp;
@@ -154,85 +178,97 @@ class _AddonTile extends StatelessWidget {
     final types =
         m?.types.map((t) => contentTypeLabel(t, context.l10n)).join(' · ') ??
         '';
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: LumioSpacing.md,
-          vertical: LumioSpacing.sm,
-        ),
-        child: Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: LumioSpacing.sm,
-          runSpacing: LumioSpacing.xs,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AddonLogo(logo: addon.logo),
-                const SizedBox(width: LumioSpacing.md),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 120,
-                    maxWidth: 360,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        addon.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      Text(
-                        m == null
-                            ? context.l10n.addonBroken
-                            : '$types · v${m.version}',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: m == null ? c.error : null,
-                        ),
-                      ),
-                      if (!addon.enabled)
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: (f) {
+        if (f) onFocus();
+      },
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: LumioSpacing.md,
+            vertical: LumioSpacing.sm,
+          ),
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: LumioSpacing.sm,
+            runSpacing: LumioSpacing.xs,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AddonLogo(logo: addon.logo),
+                  const SizedBox(width: LumioSpacing.md),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 120,
+                      maxWidth: 360,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          context.l10n.addonDisabled,
+                          addon.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleLarge,
+                        ),
+                        Text(
+                          m == null
+                              ? context.l10n.addonBroken
+                              : '$types · v${m.version}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: c.warning,
+                            color: m == null ? c.error : null,
                           ),
                         ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (m != null) ...[
-                  IconButton(
-                    tooltip: context.l10n.moveAddonUp(addon.name),
-                    onPressed: canMoveUp ? onMoveUp : null,
-                    icon: const Icon(Icons.arrow_upward),
-                  ),
-                  IconButton(
-                    tooltip: context.l10n.moveAddonDown(addon.name),
-                    onPressed: canMoveDown ? onMoveDown : null,
-                    icon: const Icon(Icons.arrow_downward),
-                  ),
-                  Semantics(
-                    label: context.l10n.enableAddon(addon.name),
-                    child: Switch(value: addon.enabled, onChanged: onToggle),
+                        if (!addon.enabled)
+                          Text(
+                            context.l10n.addonDisabled,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: c.warning,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ],
-                IconButton(
-                  tooltip: context.l10n.deleteAddon(addon.name),
-                  onPressed: onDelete,
-                  icon: Icon(Icons.delete_outline, color: c.error),
-                ),
-              ],
-            ),
-          ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (m != null) ...[
+                    IconButton(
+                      tooltip: context.l10n.moveAddonUp(addon.name),
+                      onPressed: canMoveUp ? onMoveUp : null,
+                      icon: const Icon(Icons.arrow_upward),
+                    ),
+                    IconButton(
+                      tooltip: context.l10n.moveAddonDown(addon.name),
+                      onPressed: canMoveDown ? onMoveDown : null,
+                      icon: const Icon(Icons.arrow_downward),
+                    ),
+                    Semantics(
+                      label: context.l10n.enableAddon(addon.name),
+                      child: Switch(
+                        autofocus: autofocus,
+                        value: addon.enabled,
+                        onChanged: onToggle,
+                      ),
+                    ),
+                  ],
+                  IconButton(
+                    autofocus: autofocus && m == null,
+                    tooltip: context.l10n.deleteAddon(addon.name),
+                    onPressed: onDelete,
+                    icon: Icon(Icons.delete_outline, color: c.error),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

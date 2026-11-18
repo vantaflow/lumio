@@ -43,6 +43,14 @@
       "source": {}
     }
   },
+  "itemSemanticYear": "{name}, {year}, {source}",
+  "@itemSemanticYear": {
+    "placeholders": {
+      "name": {},
+      "year": {},
+      "source": {}
+    }
+  },
   "sheetUnavailable": "Fiche indisponible. Réessayez.",
   "notAllowedForProfile": "Ce contenu n'est pas autorisé pour ce profil.",
   "noSourceAvailable": "Aucune source disponible. Vérifiez vos addons.",
@@ -437,6 +445,7 @@
   "creditsLibmpv": "libmpv : lecteur vidéo (LGPL/GPL)",
   "creditsMediaKit": "media_kit : intégration Flutter du lecteur",
   "creditsLibtorrent": "libtorrent : moteur de torrents (BSD)",
+  "creditsFonts": "Polices Bricolage Grotesque et Manrope (licence SIL OFL 1.1)",
   "settingsNone": "Aucun",
   "subtitlesNone": "Aucun sous-titre",
   "errDuplicate": "Cet addon est déjà installé",

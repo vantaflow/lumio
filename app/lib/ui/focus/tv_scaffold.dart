@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/ui/focus/tv_detection.dart';
 
 /// Retour (touche Retour / Échap / bouton B de manette).
 class BackIntent extends Intent {
@@ -93,17 +94,16 @@ class BackGuard extends StatelessWidget {
   }
 }
 
-/// Vrai pour une disposition télévision : grand écran (plus petit côté
-/// >= 720 dp), hors ordinateur, sans souris branchée. [override] sert aux
-/// tests.
+/// Vrai pour une disposition télévision : l'appareil est un Android TV
+/// (`android.software.leanback`, voir [androidTvProvider]). Une tablette
+/// tactile, même grande, n'est jamais une TV. [override] sert aux tests.
 bool isTvLayout(BuildContext context, {bool? override}) {
   if (override != null) return override;
-  final platform = Theme.of(context).platform;
-  if (platform == TargetPlatform.macOS ||
-      platform == TargetPlatform.windows ||
-      platform == TargetPlatform.linux) {
-    return false;
-  }
-  if (MediaQuery.sizeOf(context).shortestSide < 720) return false;
-  return !RendererBinding.instance.mouseTracker.mouseIsConnected;
+  final scope = context
+      .getElementForInheritedWidgetOfExactType<UncontrolledProviderScope>();
+  if (scope == null) return false;
+  return ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(androidTvProvider);
 }

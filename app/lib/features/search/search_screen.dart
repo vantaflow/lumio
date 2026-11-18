@@ -137,14 +137,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 horizontal: LumioSpacing.xl,
                 vertical: LumioSpacing.lg,
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(width: 520, child: _keyboardPane(context)),
-                  const SizedBox(width: LumioSpacing.xl),
-                  Expanded(child: _resultsPane(context)),
-                ],
-              ),
+              child: _narrow(context)
+                  // Téléphone : champ en haut (clavier du système), résultats
+                  // dessous.
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _keyboardPane(context),
+                        Expanded(child: _resultsPane(context)),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(width: 520, child: _keyboardPane(context)),
+                        const SizedBox(width: LumioSpacing.xl),
+                        Expanded(child: _resultsPane(context)),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -170,10 +180,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return KeyEventResult.ignored;
   }
 
+  /// Écran étroit (téléphone) : pas de clavier à l'écran, sauf sur une TV.
+  bool _narrow(BuildContext context) => MediaQuery.sizeOf(context).width < 720;
+
   Widget _keyboardPane(BuildContext context) {
     final lumio = context.lumio;
     final keys = _arabic ? _arabicKeys : _latinKeys;
     final tv = isTvLayout(context, override: widget.tvLayout);
+    final showKeys = tv || !_narrow(context);
     return FocusTraversalGroup(
       child: SingleChildScrollView(
         child: Column(
@@ -202,51 +216,54 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
             const SizedBox(height: LumioSpacing.md),
+            if (showKeys)
+              Wrap(
+                spacing: LumioSpacing.sm,
+                runSpacing: LumioSpacing.sm,
+                children: [
+                  for (var i = 0; i < keys.length; i++)
+                    _Key(
+                      key: ValueKey('key-${keys[i]}'),
+                      label: keys[i],
+                      autofocus: i == 0,
+                      onSelect: () => _type(keys[i]),
+                    ),
+                ],
+              ),
+            if (showKeys) const SizedBox(height: LumioSpacing.md),
             Wrap(
               spacing: LumioSpacing.sm,
               runSpacing: LumioSpacing.sm,
               children: [
-                for (var i = 0; i < keys.length; i++)
+                if (showKeys) ...[
                   _Key(
-                    key: ValueKey('key-${keys[i]}'),
-                    label: keys[i],
-                    autofocus: i == 0,
-                    onSelect: () => _type(keys[i]),
+                    key: const ValueKey('key-space'),
+                    label: context.l10n.kbSpace,
+                    wide: true,
+                    semantic: context.l10n.kbSpace,
+                    onSelect: () => _type(' '),
                   ),
-              ],
-            ),
-            const SizedBox(height: LumioSpacing.md),
-            Wrap(
-              spacing: LumioSpacing.sm,
-              runSpacing: LumioSpacing.sm,
-              children: [
-                _Key(
-                  key: const ValueKey('key-space'),
-                  label: context.l10n.kbSpace,
-                  wide: true,
-                  semantic: context.l10n.kbSpace,
-                  onSelect: () => _type(' '),
-                ),
-                _Key(
-                  key: const ValueKey('key-backspace'),
-                  icon: Icons.backspace_outlined,
-                  semantic: context.l10n.kbErase,
-                  onSelect: _backspace,
-                ),
-                _Key(
-                  key: const ValueKey('key-clear'),
-                  label: context.l10n.kbAll,
-                  semantic: context.l10n.kbClearAll,
-                  onSelect: () => _setText(''),
-                ),
-                _Key(
-                  key: const ValueKey('key-layout'),
-                  label: _arabic ? 'ABC' : 'ع',
-                  semantic: _arabic
-                      ? context.l10n.kbLatin
-                      : context.l10n.kbArabic,
-                  onSelect: () => setState(() => _arabic = !_arabic),
-                ),
+                  _Key(
+                    key: const ValueKey('key-backspace'),
+                    icon: Icons.backspace_outlined,
+                    semantic: context.l10n.kbErase,
+                    onSelect: _backspace,
+                  ),
+                  _Key(
+                    key: const ValueKey('key-clear'),
+                    label: context.l10n.kbAll,
+                    semantic: context.l10n.kbClearAll,
+                    onSelect: () => _setText(''),
+                  ),
+                  _Key(
+                    key: const ValueKey('key-layout'),
+                    label: _arabic ? 'ABC' : 'ع',
+                    semantic: _arabic
+                        ? context.l10n.kbLatin
+                        : context.l10n.kbArabic,
+                    onSelect: () => setState(() => _arabic = !_arabic),
+                  ),
+                ],
                 if (_micAvailable)
                   _Key(
                     key: const ValueKey('key-mic'),
@@ -328,9 +345,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       body = GridView.builder(
         controller: _grid,
         padding: const EdgeInsets.all(LumioSpacing.md),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 220,
-          mainAxisExtent: 340,
+          mainAxisExtent: 340 + lumioTextGrowth(context, 2, 0),
           crossAxisSpacing: LumioSpacing.lg,
           mainAxisSpacing: LumioSpacing.lg,
         ),
@@ -348,7 +365,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               Scrollable.ensureVisible(
                 context,
                 alignment: 0.5,
-                duration: LumioMotion.focus,
+                duration:
+                    (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+                    ? Duration.zero
+                    : LumioMotion.focus,
               );
             },
             child: Align(
@@ -377,7 +397,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: LumioSpacing.sm,
+          runSpacing: LumioSpacing.sm,
           children: [
             for (final f in _TypeFilter.values) ...[
               _FilterChip(
@@ -390,7 +413,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 selected: _filter == f,
                 onSelect: () => setState(() => _filter = f),
               ),
-              const SizedBox(width: LumioSpacing.sm),
             ],
             if (s.searching && visible.isNotEmpty)
               const SizedBox(
@@ -488,10 +510,16 @@ class _FilterChip extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: selected ? lumio.onAccent : lumio.text,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: lumioTouchMin - 16),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: selected ? lumio.onAccent : lumio.text,
+                ),
+              ),
             ),
           ),
         ),

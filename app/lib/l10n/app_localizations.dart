@@ -290,6 +290,12 @@ abstract class AppLocalizations {
   /// **'{name}, {source}'**
   String itemSemantic(Object name, Object source);
 
+  /// No description provided for @itemSemanticYear.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name}, {year}, {source}'**
+  String itemSemanticYear(Object name, Object year, Object source);
+
   /// No description provided for @sheetUnavailable.
   ///
   /// In fr, this message translates to:
@@ -1555,6 +1561,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'libtorrent : moteur de torrents (BSD)'**
   String get creditsLibtorrent;
+
+  /// No description provided for @creditsFonts.
+  ///
+  /// In fr, this message translates to:
+  /// **'Polices Bricolage Grotesque et Manrope (licence SIL OFL 1.1)'**
+  String get creditsFonts;
 
   /// No description provided for @settingsNone.
   ///

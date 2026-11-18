@@ -169,8 +169,8 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final lumio = context.lumio;
     return Padding(
-      padding: const EdgeInsetsDirectional.only(
-        start: 96,
+      padding: EdgeInsetsDirectional.only(
+        start: MediaQuery.sizeOf(context).width >= 720 ? 96 : LumioSpacing.md,
         end: LumioSpacing.xl,
         top: LumioSpacing.sm,
         bottom: LumioSpacing.sm,
@@ -186,34 +186,40 @@ class _TopBar extends StatelessWidget {
               ).textTheme.headlineMedium?.copyWith(color: lumio.accent),
             ),
           ),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: onSearch,
-            icon: const Icon(Icons.search),
-            label: Text(context.l10n.homeSearch),
+          // Wrap : les boutons passent à la ligne si le texte TV est large.
+          Expanded(
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: LumioSpacing.sm,
+              runSpacing: LumioSpacing.xs,
+              children: [
+                TextButton.icon(
+                  onPressed: onSearch,
+                  icon: const Icon(Icons.search),
+                  label: Text(context.l10n.homeSearch),
+                ),
+                TextButton.icon(
+                  onPressed: onLibrary,
+                  icon: const Icon(Icons.bookmark_border),
+                  label: Text(context.l10n.homeManageList),
+                ),
+                TextButton.icon(
+                  focusNode: customizeNode,
+                  onPressed: onCustomize,
+                  icon: const Icon(Icons.tune),
+                  label: Text(context.l10n.homeCustomize),
+                ),
+                TextButton.icon(
+                  key: const ValueKey('home-settings'),
+                  onPressed: onSettings,
+                  icon: const Icon(Icons.settings_outlined),
+                  label: Text(context.l10n.homeSettings),
+                ),
+                const ProfileButton(),
+              ],
+            ),
           ),
-          const SizedBox(width: LumioSpacing.sm),
-          TextButton.icon(
-            onPressed: onLibrary,
-            icon: const Icon(Icons.bookmark_border),
-            label: Text(context.l10n.homeManageList),
-          ),
-          const SizedBox(width: LumioSpacing.sm),
-          TextButton.icon(
-            focusNode: customizeNode,
-            onPressed: onCustomize,
-            icon: const Icon(Icons.tune),
-            label: Text(context.l10n.homeCustomize),
-          ),
-          const SizedBox(width: LumioSpacing.sm),
-          TextButton.icon(
-            key: const ValueKey('home-settings'),
-            onPressed: onSettings,
-            icon: const Icon(Icons.settings_outlined),
-            label: Text(context.l10n.homeSettings),
-          ),
-          const SizedBox(width: LumioSpacing.sm),
-          const ProfileButton(),
         ],
       ),
     );
@@ -363,8 +369,9 @@ class _PosterRow extends ConsumerWidget {
       title: title,
       restorationId: rowId,
       routeKey: homeRouteKey,
+      autofocusFirst: true,
       itemExtent: _posterWidth,
-      height: _posterHeight + 72,
+      height: _posterHeight + 80 + lumioTextGrowth(context, 2, 0),
       items: [
         for (final m in items)
           PosterCard(
@@ -393,8 +400,9 @@ class _ContinueRow extends ConsumerWidget {
       title: context.l10n.continueWatching,
       restorationId: continueRowId,
       routeKey: homeRouteKey,
+      autofocusFirst: true,
       itemExtent: _continueWidth,
-      height: _continueHeight + 72,
+      height: _continueHeight + 72 + lumioTextGrowth(context, 1, 1),
       items: [
         for (final e in entries)
           _ContinueCard(key: ValueKey(e.videoId), entry: e, playback: playback),
@@ -404,6 +412,10 @@ class _ContinueRow extends ConsumerWidget {
 }
 
 // --- cartes ---
+
+/// Année (4 chiffres) tirée de `releaseInfo` (`2008`, `2008–2013`…), ou null.
+String? _year(String? releaseInfo) =>
+    RegExp(r'\b(19|20)\d{2}\b').firstMatch(releaseInfo ?? '')?.group(0);
 
 /// Carte d'affiche : image gardée, titre, badge de source.
 class PosterCard extends StatelessWidget {
@@ -426,7 +438,13 @@ class PosterCard extends StatelessWidget {
       width: _posterWidth,
       child: FocusableCard(
         onSelect: onSelect,
-        semanticLabel: context.l10n.itemSemantic(item.name, source),
+        semanticLabel: _year(item.releaseInfo) == null
+            ? context.l10n.itemSemantic(item.name, source)
+            : context.l10n.itemSemanticYear(
+                item.name,
+                _year(item.releaseInfo)!,
+                source,
+              ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

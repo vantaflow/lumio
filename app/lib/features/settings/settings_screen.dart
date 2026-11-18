@@ -11,6 +11,7 @@ import 'package:lumio/features/profiles/pin_dialog.dart' show requireParent;
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
+import 'package:lumio/ui/focus/focus_ring.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart' show Quality;
@@ -106,17 +107,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       title: Text(title),
       children: [
         for (final (i, (value, label)) in options.indexed)
-          ListTile(
-            key: ValueKey('choice:$label'),
-            autofocus: value == current || (current == null && i == 0),
-            selected: value == current,
-            leading: Icon(
-              value == current
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_off,
+          FocusRing(
+            child: ListTile(
+              key: ValueKey('choice:$label'),
+              autofocus: value == current || (current == null && i == 0),
+              selected: value == current,
+              leading: Icon(
+                value == current
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_off,
+              ),
+              title: Text(label),
+              onTap: () => Navigator.pop(ctx, value),
             ),
-            title: Text(label),
-            onTap: () => Navigator.pop(ctx, value),
           ),
       ],
     ),
@@ -367,17 +370,19 @@ class _Tile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final memory = ref.read(focusMemoryProvider.notifier);
     final remembered = memory.restore(settingsRouteKey);
-    return ListTile(
-      key: ValueKey('setting:$id'),
-      autofocus: remembered == id || (remembered == null && id == 'addons'),
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      trailing: const Icon(Icons.chevron_right),
-      onFocusChange: (f) {
-        if (f) memory.remember(settingsRouteKey, id);
-      },
-      onTap: onTap,
+    return FocusRing(
+      child: ListTile(
+        key: ValueKey('setting:$id'),
+        autofocus: remembered == id || (remembered == null && id == 'addons'),
+        leading: Icon(icon),
+        title: Text(title),
+        subtitle: subtitle == null ? null : Text(subtitle!),
+        trailing: const Icon(Icons.chevron_right),
+        onFocusChange: (f) {
+          if (f) memory.remember(settingsRouteKey, id);
+        },
+        onTap: onTap,
+      ),
     );
   }
 }
@@ -445,6 +450,7 @@ class AboutScreen extends StatelessWidget {
           Text(l.creditsLibmpv),
           Text(l.creditsMediaKit),
           Text(l.creditsLibtorrent),
+          Text(l.creditsFonts),
           const SizedBox(height: LumioSpacing.lg),
           Align(
             alignment: AlignmentDirectional.centerStart,

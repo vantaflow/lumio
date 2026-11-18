@@ -176,24 +176,31 @@ class _FocusableCardState extends State<FocusableCard> {
       label: widget.semanticLabel,
       onTap: widget.enabled ? widget.onSelect : null,
       onLongPress: widget.enabled ? widget.onLongPress : null,
-      child: Focus(
-        focusNode: widget.focusNode,
-        autofocus: widget.autofocus,
-        canRequestFocus: widget.enabled,
-        onKeyEvent: _onKey,
-        onFocusChange: (f) {
-          if (!f) {
-            _timer?.cancel();
-            _selectDown = false;
-          }
-          setState(() => _focused = f);
-          widget.onFocusChange?.call(f);
-        },
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.enabled ? widget.onSelect : null,
-          onLongPress: widget.enabled ? widget.onLongPress : null,
-          child: body,
+      // Avec une étiquette, un seul nœud d'accessibilité décrit la carte
+      // (pas de doublon « focus/tap » sans libellé pour le lecteur d'écran).
+      child: ExcludeSemantics(
+        excluding: widget.semanticLabel != null,
+        child: Focus(
+          includeSemantics: false,
+          focusNode: widget.focusNode,
+          autofocus: widget.autofocus,
+          canRequestFocus: widget.enabled,
+          onKeyEvent: _onKey,
+          onFocusChange: (f) {
+            if (!f) {
+              _timer?.cancel();
+              _selectDown = false;
+            }
+            setState(() => _focused = f);
+            widget.onFocusChange?.call(f);
+          },
+          child: GestureDetector(
+            excludeFromSemantics: true,
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.enabled ? widget.onSelect : null,
+            onLongPress: widget.enabled ? widget.onLongPress : null,
+            child: body,
+          ),
         ),
       ),
     );

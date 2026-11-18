@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/player/tracks_panel.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart' hide Video;
 import 'package:lumio_core/lumio_core.dart' as core show Video;
@@ -518,103 +520,109 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final fade = MediaQuery.of(context).disableAnimations
         ? Duration.zero
         : LumioMotion.panel;
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Focus(
-        focusNode: _root,
-        autofocus: true,
-        onKeyEvent: _onKey,
-        child: ValueListenableBuilder<PlayerState>(
-          valueListenable: _ctl.stateListenable,
-          builder: (context, st, _) {
-            final failed = st.phase == PlayerPhase.failed;
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                widget.videoBuilder?.call(_ctl) ??
-                    Video(
-                      controller: _ctl.video,
-                      controls: NoVideoControls,
-                      fill: Colors.black,
+    // Retour système : ferme d'abord le panneau ou la carte « Épisode
+    // suivant » au lieu de quitter la lecture.
+    return BackGuard(
+      isOpen: _panel || _showNext,
+      onClose: () => _panel ? _closePanel() : _cancelNext(),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Focus(
+          focusNode: _root,
+          autofocus: true,
+          onKeyEvent: _onKey,
+          child: ValueListenableBuilder<PlayerState>(
+            valueListenable: _ctl.stateListenable,
+            builder: (context, st, _) {
+              final failed = st.phase == PlayerPhase.failed;
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  widget.videoBuilder?.call(_ctl) ??
+                      Video(
+                        controller: _ctl.video,
+                        controls: NoVideoControls,
+                        fill: Colors.black,
+                      ),
+                  if (st.phase == PlayerPhase.buffering ||
+                      st.phase == PlayerPhase.opening)
+                    Center(
+                      child: Semantics(
+                        label: context.l10n.buffering,
+                        child: CircularProgressIndicator(color: colors.accent),
+                      ),
                     ),
-                if (st.phase == PlayerPhase.buffering ||
-                    st.phase == PlayerPhase.opening)
-                  Center(
-                    child: Semantics(
-                      label: context.l10n.buffering,
-                      child: CircularProgressIndicator(color: colors.accent),
-                    ),
-                  ),
-                if (failed)
-                  _FailureView(
-                    message: st.error ?? context.l10n.failGeneric,
-                    onRetry: _ctl.retry,
-                    onOther: () =>
-                        Navigator.of(context).pop(PlayerExit.pickAnother),
-                    onBack: () => Navigator.of(context).pop(PlayerExit.back),
-                  )
-                else
-                  AnimatedOpacity(
-                    opacity: _controls ? 1 : 0,
-                    duration: fade,
-                    child: ExcludeFocus(
-                      excluding: !_controls || _panel,
-                      child: IgnorePointer(
-                        ignoring: !_controls,
-                        child: _Controls(
-                          title: _title,
-                          state: st,
-                          playNode: _playNode,
-                          tracksNode: _tracksNode,
-                          onTracks: _tracks == null ? null : _openPanel,
-                          onPlayPause: () {
-                            unawaited(_ctl.playPause());
-                            _armHide();
-                          },
-                          onSeekBy: (d) {
-                            unawaited(_ctl.seekBy(d));
-                            _flushAfterSeek(_ctl.state.position + d);
-                            _armHide();
-                          },
-                          onSeekTo: (t) {
-                            unawaited(_ctl.seekTo(t));
-                            _flushAfterSeek(t);
-                            _armHide();
-                          },
-                          onTouch: () => _showControls(),
+                  if (failed)
+                    _FailureView(
+                      message: st.error ?? context.l10n.failGeneric,
+                      onRetry: _ctl.retry,
+                      onOther: () =>
+                          Navigator.of(context).pop(PlayerExit.pickAnother),
+                      onBack: () => Navigator.of(context).pop(PlayerExit.back),
+                    )
+                  else
+                    AnimatedOpacity(
+                      opacity: _controls ? 1 : 0,
+                      duration: fade,
+                      child: ExcludeFocus(
+                        excluding: !_controls || _panel,
+                        child: IgnorePointer(
+                          ignoring: !_controls,
+                          child: _Controls(
+                            title: _title,
+                            state: st,
+                            playNode: _playNode,
+                            tracksNode: _tracksNode,
+                            onTracks: _tracks == null ? null : _openPanel,
+                            onPlayPause: () {
+                              unawaited(_ctl.playPause());
+                              _armHide();
+                            },
+                            onSeekBy: (d) {
+                              unawaited(_ctl.seekBy(d));
+                              _flushAfterSeek(_ctl.state.position + d);
+                              _armHide();
+                            },
+                            onSeekTo: (t) {
+                              unawaited(_ctl.seekTo(t));
+                              _flushAfterSeek(t);
+                              _armHide();
+                            },
+                            onTouch: () => _showControls(),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                if (_showNext && !failed && _next != null)
-                  NextEpisodeOverlay(
-                    key: ValueKey(_videoId),
-                    paused: st.phase == PlayerPhase.paused,
-                    episodeTitle: _next!.title,
-                    onPlayNow: () => unawaited(_playNext()),
-                    onCancel: _cancelNext,
-                  ),
-                if (_panel && _tracks != null && !failed)
-                  PositionedDirectional(
-                    top: 0,
-                    bottom: 0,
-                    end: 0,
-                    child: TracksPanel(
-                      controller: _tracks!,
-                      onClose: _closePanel,
+                  if (_showNext && !failed && _next != null)
+                    NextEpisodeOverlay(
+                      key: ValueKey(_videoId),
+                      paused: st.phase == PlayerPhase.paused,
+                      episodeTitle: _next!.title,
+                      onPlayNow: () => unawaited(_playNext()),
+                      onCancel: _cancelNext,
                     ),
-                  ),
-                if (!_controls && !failed && !_panel)
-                  // Toucher l'écran réaffiche les commandes (téléphone/bureau).
-                  Positioned.fill(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onTap: () => _showControls(focusPlay: true),
+                  if (_panel && _tracks != null && !failed)
+                    PositionedDirectional(
+                      top: 0,
+                      bottom: 0,
+                      end: 0,
+                      child: TracksPanel(
+                        controller: _tracks!,
+                        onClose: _closePanel,
+                      ),
                     ),
-                  ),
-              ],
-            );
-          },
+                  if (!_controls && !failed && !_panel)
+                    // Toucher l'écran réaffiche les commandes (téléphone/bureau).
+                    Positioned.fill(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () => _showControls(focusPlay: true),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -921,7 +929,10 @@ class _ProgressBarState extends State<_ProgressBar> {
                     onHorizontalDragUpdate: (d) =>
                         _seekFromDx(d.localPosition.dx, w),
                     child: SizedBox(
-                      height: handle + 2 * lumioFocusWidth,
+                      height: math.max(
+                        handle + 2 * lumioFocusWidth,
+                        lumioTouchMin,
+                      ),
                       child: Stack(
                         alignment: AlignmentDirectional.centerStart,
                         clipBehavior: Clip.none,
@@ -932,7 +943,9 @@ class _ProgressBarState extends State<_ProgressBar> {
                           PositionedDirectional(
                             start: (w - handle) * frac(st.position),
                             child: AnimatedContainer(
-                              duration: LumioMotion.focus,
+                              duration: MediaQuery.of(context).disableAnimations
+                                  ? Duration.zero
+                                  : LumioMotion.focus,
                               width: handle,
                               height: handle,
                               decoration: BoxDecoration(

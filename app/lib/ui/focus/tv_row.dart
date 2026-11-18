@@ -21,6 +21,7 @@ class TvRow extends ConsumerStatefulWidget {
     this.height = 194,
     this.gap = LumioSpacing.lg,
     this.horizontalPadding = 96,
+    this.autofocusFirst = false,
   });
 
   final String title;
@@ -43,6 +44,10 @@ class TvRow extends ConsumerStatefulWidget {
   final double gap;
   final double horizontalPadding;
 
+  /// Sans focus mémorisé, donne le focus à la première carte si rien d'autre
+  /// n'est focalisé (première rangée affichée : le focus initial de l'écran).
+  final bool autofocusFirst;
+
   @override
   ConsumerState<TvRow> createState() => _TvRowState();
 }
@@ -57,6 +62,10 @@ class _TvRowState extends ConsumerState<TvRow> {
   int? _restoreAt;
   String _route = 'unnamed';
   bool _initialized = false;
+
+  /// Focus automatique : abandonné si l'utilisateur a déjà focalisé autre
+  /// chose.
+  bool _onlyIfIdle = false;
 
   int? _readMemory() {
     final key = ref
@@ -75,6 +84,12 @@ class _TvRowState extends ConsumerState<TvRow> {
     if (_initialized) return;
     _initialized = true;
     _restoreAt = _readMemory();
+    if (_restoreAt == null &&
+        widget.autofocusFirst &&
+        widget.items.isNotEmpty) {
+      _restoreAt = 0;
+      _onlyIfIdle = true;
+    }
     final extent = widget.itemExtent ?? widget.estimatedExtent;
     _controller = ScrollController(
       initialScrollOffset: _restoreAt != null
@@ -89,6 +104,10 @@ class _TvRowState extends ConsumerState<TvRow> {
   void _tryRestore(int attempts) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      if (_onlyIfIdle) {
+        final f = FocusManager.instance.primaryFocus;
+        if (f != null && f is! FocusScopeNode) return;
+      }
       for (final n in _restoreNode.descendants) {
         if (n.canRequestFocus && !n.skipTraversal) {
           n.requestFocus();
@@ -120,6 +139,11 @@ class _TvRowState extends ConsumerState<TvRow> {
     );
   }
 
+  /// Marge latérale : réduite sur téléphone (largeur < 720 dp).
+  double _hPad(BuildContext context) => MediaQuery.sizeOf(context).width < 720
+      ? LumioSpacing.md
+      : widget.horizontalPadding;
+
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
@@ -128,7 +152,7 @@ class _TvRowState extends ConsumerState<TvRow> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: widget.horizontalPadding),
+          padding: EdgeInsets.symmetric(horizontal: _hPad(context)),
           child: Semantics(
             header: true,
             child: Text(
@@ -152,7 +176,7 @@ class _TvRowState extends ConsumerState<TvRow> {
                 ? null
                 : widget.itemExtent! + widget.gap,
             padding: EdgeInsets.symmetric(
-              horizontal: widget.horizontalPadding,
+              horizontal: _hPad(context),
               vertical: 12,
             ),
             itemBuilder: (context, i) {

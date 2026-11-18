@@ -10,13 +10,20 @@ import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/ui/focus/tv_detection.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:media_kit/media_kit.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  runApp(const ProviderScope(child: LumioApp()));
+  final tv = await detectAndroidTv();
+  runApp(
+    ProviderScope(
+      overrides: [androidTvProvider.overrideWithValue(tv)],
+      child: const LumioApp(),
+    ),
+  );
   SchedulerBinding.instance.addPostFrameCallback((_) {
     // Lu par scripts/box-smoke.sh dans logcat.
     // ignore: avoid_print
@@ -46,6 +53,8 @@ class LumioApp extends ConsumerWidget {
       theme: LumioTheme.dark(),
       darkTheme: LumioTheme.dark(),
       themeMode: ThemeMode.dark,
+      builder: (context, child) =>
+          LumioThemeScope(tv: ref.watch(androidTvProvider), child: child!),
       shortcuts: {
         ...WidgetsApp.defaultShortcuts,
         // Télécommande Android TV : OK/Entrée active l'élément ciblé.

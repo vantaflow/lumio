@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 /// Jetons de design Lumio (source : docs/design/tokens.json).
 ///
 /// Sombre d'abord ; le clair sert au téléphone et au bureau. Les tailles de
-/// texte ci-dessous sont celles du téléphone/bureau ; la TV (canevas
-/// 1920x1080) les étendra à la tâche d'accessibilité TV.
+/// texte existent en deux échelles : téléphone/bureau et TV (canevas
+/// 1920x1080, texte >= 24 sp), voir [LumioTheme.dark] paramètre `tv`.
 class LumioColors extends ThemeExtension<LumioColors> {
   const LumioColors({
     required this.bg,
@@ -115,6 +115,18 @@ abstract final class LumioMotion {
   static const screen = Duration(milliseconds: 280);
 }
 
+/// Hauteur supplémentaire due à l'échelle de texte TV : [titleLines] lignes de
+/// titre et [captionLines] de légende, par rapport à l'échelle téléphone
+/// (16 sp x 1,4 et 12 sp x 1,3).
+double lumioTextGrowth(BuildContext context, int titleLines, int captionLines) {
+  final t = Theme.of(context).textTheme;
+  double line(TextStyle? s) => (s?.fontSize ?? 16) * (s?.height ?? 1.4);
+  final grown =
+      titleLines * line(t.titleMedium) + captionLines * line(t.bodySmall);
+  final base = titleLines * 16 * 1.4 + captionLines * 12 * 1.3;
+  return grown > base ? grown - base : 0;
+}
+
 /// Cibles tactiles minimales (dp).
 const double lumioTouchMin = 48;
 
@@ -122,10 +134,17 @@ const _fontDisplay = 'Bricolage Grotesque';
 const _fontBody = 'Manrope';
 
 abstract final class LumioTheme {
-  static ThemeData dark() => _build(LumioColors.dark, Brightness.dark);
-  static ThemeData light() => _build(LumioColors.light, Brightness.light);
+  /// Largeur logique minimale pour appliquer l'échelle TV (avec `tv`).
+  static const tvMinWidth = 960.0;
 
-  static ThemeData _build(LumioColors c, Brightness b) {
+  static ThemeData dark({bool tv = false}) =>
+      _build(LumioColors.dark, Brightness.dark, tv);
+  static ThemeData light({bool tv = false}) =>
+      _build(LumioColors.light, Brightness.light, tv);
+
+  static ThemeData _build(LumioColors c, Brightness b, bool tv) {
+    // Échelle de texte : (téléphone, TV) d'après docs/design/README.md.
+    double sz(double phone, double tvSize) => tv ? tvSize : phone;
     final scheme = ColorScheme(
       brightness: b,
       primary: c.accent,
@@ -153,6 +172,7 @@ abstract final class LumioTheme {
       fontFamily: _fontDisplay,
       fontSize: size,
       fontWeight: FontWeight.w700,
+      fontVariations: const [FontVariation.weight(700)],
       height: h,
       color: c.text,
     );
@@ -161,23 +181,40 @@ abstract final class LumioTheme {
           fontFamily: _fontBody,
           fontSize: size,
           fontWeight: w,
+          fontVariations: [FontVariation.weight(w.value.toDouble())],
           height: h,
           color: c.text,
         );
 
-    // Téléphone / bureau (docs/design/README.md, colonne « Téléphone »).
+    // docs/design/README.md : display 72/32, h1 64/28, h2 44/20, title 34/18,
+    // body 30/16, label 28/14, caption (minimum) 24/12.
+    final display0 = sz(32, 72);
+    final h1 = sz(28, 64);
+    final h2 = sz(20, 44);
+    final title = sz(18, 34);
+    final bodySz = sz(16, 30);
+    final label = sz(14, 28);
+    final caption = sz(12, 24);
     final textTheme = TextTheme(
-      displayLarge: display(32, 1.15),
-      headlineLarge: display(28, 1.15),
-      headlineMedium: display(20, 1.2),
-      titleLarge: display(18, 1.25),
-      titleMedium: body(16, 1.4, FontWeight.w600),
-      bodyLarge: body(16, 1.4),
-      bodyMedium: body(16, 1.4),
-      bodySmall: body(12, 1.3, FontWeight.w600).copyWith(color: c.textMuted),
-      labelLarge: body(14, 1.3, FontWeight.w600),
-      labelMedium: body(14, 1.3, FontWeight.w600),
-      labelSmall: body(12, 1.3, FontWeight.w600),
+      displayLarge: display(display0, 1.15),
+      displayMedium: display(display0, 1.15),
+      displaySmall: display(display0, 1.15),
+      headlineLarge: display(h1, 1.15),
+      headlineMedium: display(h2, 1.2),
+      headlineSmall: display(h2, 1.2),
+      titleLarge: display(title, 1.25),
+      titleMedium: body(bodySz, 1.4, FontWeight.w600),
+      titleSmall: body(label, 1.3, FontWeight.w600),
+      bodyLarge: body(bodySz, 1.4),
+      bodyMedium: body(bodySz, 1.4),
+      bodySmall: body(
+        caption,
+        1.3,
+        FontWeight.w600,
+      ).copyWith(color: c.textMuted),
+      labelLarge: body(label, 1.3, FontWeight.w600),
+      labelMedium: body(label, 1.3, FontWeight.w600),
+      labelSmall: body(caption, 1.3, FontWeight.w600),
     );
 
     // Anneau de focus visible sur tout bouton, y compris à la télécommande.
@@ -203,7 +240,7 @@ abstract final class LumioTheme {
         foregroundColor: c.text,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleTextStyle: display(20, 1.2),
+        titleTextStyle: display(h2, 1.2),
       ),
       cardTheme: CardThemeData(
         color: c.surface,
@@ -219,8 +256,8 @@ abstract final class LumioTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(LumioRadius.xl),
         ),
-        titleTextStyle: display(20, 1.2),
-        contentTextStyle: body(16, 1.4),
+        titleTextStyle: display(h2, 1.2),
+        contentTextStyle: body(bodySz, 1.4),
       ),
       dividerTheme: DividerThemeData(color: c.outline, space: 1),
       filledButtonTheme: FilledButtonThemeData(
@@ -273,7 +310,7 @@ abstract final class LumioTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: c.surface,
-        hintStyle: body(16, 1.4).copyWith(color: c.textMuted),
+        hintStyle: body(bodySz, 1.4).copyWith(color: c.textMuted),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(LumioRadius.md),
           borderSide: BorderSide(color: c.outline),
@@ -299,7 +336,7 @@ abstract final class LumioTheme {
       progressIndicatorTheme: ProgressIndicatorThemeData(color: c.accent),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: c.surfaceFocus,
-        contentTextStyle: body(16, 1.4),
+        contentTextStyle: body(bodySz, 1.4),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -310,4 +347,53 @@ extension LumioColorsContext on BuildContext {
   /// Jetons de couleur du thème courant.
   LumioColors get lumio =>
       Theme.of(this).extension<LumioColors>() ?? LumioColors.dark;
+}
+
+class _NoTransitionsBuilder extends PageTransitionsBuilder {
+  const _NoTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
+}
+
+/// Applique le thème adapté à l'écran : échelle TV (texte >= 24 sp) si
+/// l'appareil est une TV et la largeur >= [LumioTheme.tvMinWidth] ; aucune
+/// animation de transition ni d'ondulation avec « réduire les animations »
+/// (`MediaQuery.disableAnimations`), pour toute l'application.
+class LumioThemeScope extends StatelessWidget {
+  const LumioThemeScope({super.key, required this.tv, required this.child});
+
+  final bool tv;
+  final Widget child;
+
+  static final _phone = LumioTheme.dark();
+  static final _tv = LumioTheme.dark(tv: true);
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    var theme = tv && mq.size.width >= LumioTheme.tvMinWidth ? _tv : _phone;
+    if (mq.disableAnimations) {
+      theme = theme.copyWith(
+        splashFactory: NoSplash.splashFactory,
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: _NoTransitionsBuilder(),
+            TargetPlatform.iOS: _NoTransitionsBuilder(),
+            TargetPlatform.macOS: _NoTransitionsBuilder(),
+            TargetPlatform.windows: _NoTransitionsBuilder(),
+            TargetPlatform.linux: _NoTransitionsBuilder(),
+            TargetPlatform.fuchsia: _NoTransitionsBuilder(),
+          },
+        ),
+      );
+    }
+    return Theme(data: theme, child: child);
+  }
 }

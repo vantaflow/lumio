@@ -110,6 +110,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String itemSemanticYear(Object name, Object year, Object source) {
+    return '$name, $year, $source';
+  }
+
+  @override
   String get sheetUnavailable => 'Details unavailable. Try again.';
 
   @override
@@ -821,6 +826,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get creditsLibtorrent => 'libtorrent: torrent engine (BSD)';
+
+  @override
+  String get creditsFonts =>
+      'Fonts Bricolage Grotesque and Manrope (SIL OFL 1.1 licence)';
 
   @override
   String get settingsNone => 'None';

@@ -5,6 +5,8 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/focus/focus_memory.dart';
+import 'package:lumio/ui/focus/focus_ring.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
@@ -203,6 +205,9 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
     final list = ref.watch(profilesProvider).value ?? const <Profile>[];
     final theme = Theme.of(context);
     final c = context.lumio;
+    final memory = ref.read(focusMemoryProvider.notifier);
+    var remembered = memory.restore(profilesRouteKey);
+    if (!list.any((p) => p.id == remembered)) remembered = null;
     return Scaffold(
       body: TvScaffold(
         onBack: _manage ? () => setState(() => _manage = false) : () {},
@@ -236,7 +241,11 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                             hasPin: _hasPin,
                           ),
                           manage: _manage,
-                          autofocus: i == 0,
+                          autofocus: remembered == null
+                              ? i == 0
+                              : list[i].id == remembered,
+                          onFocus: () =>
+                              memory.remember(profilesRouteKey, list[i].id),
                           onSelect: () => _open(list[i], list),
                         ),
                       if (list.length < maxProfiles) _AddTile(onSelect: _add),
@@ -261,6 +270,9 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   }
 }
 
+/// Clé de la mémoire du focus du sélecteur de profil.
+const profilesRouteKey = 'profiles';
+
 /// Couleurs d'avatar (ambre, turquoise et teintes sobres ; aucun violet).
 const _avatarColors = [
   Color(0xFFFFB84D),
@@ -280,6 +292,7 @@ class _ProfileTile extends StatelessWidget {
     required this.manage,
     required this.autofocus,
     required this.onSelect,
+    required this.onFocus,
   });
 
   final Profile profile;
@@ -288,6 +301,7 @@ class _ProfileTile extends StatelessWidget {
   final bool manage;
   final bool autofocus;
   final VoidCallback onSelect;
+  final VoidCallback onFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -303,6 +317,9 @@ class _ProfileTile extends StatelessWidget {
         children: [
           FocusableCard(
             autofocus: autofocus,
+            onFocusChange: (f) {
+              if (f) onFocus();
+            },
             semanticLabel: [
               name,
               ?sub,
@@ -576,11 +593,13 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
                 },
                 onSubmitted: (_) => _save(),
               ),
-              SwitchListTile(
-                value: _kid,
-                onChanged: (v) => setState(() => _kid = v),
-                title: Text(context.l10n.kidProfile),
-                subtitle: Text(context.l10n.kidProfileHint),
+              FocusRing(
+                child: SwitchListTile(
+                  value: _kid,
+                  onChanged: (v) => setState(() => _kid = v),
+                  title: Text(context.l10n.kidProfile),
+                  subtitle: Text(context.l10n.kidProfileHint),
+                ),
               ),
               if (_kid) ...[
                 Padding(
@@ -593,20 +612,25 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
                   spacing: LumioSpacing.sm,
                   children: [
                     for (final (limit, label) in _limits(context.l10n))
-                      ChoiceChip(
-                        label: Text(label),
-                        selected: _limit == limit,
-                        onSelected: (_) => setState(() => _limit = limit),
+                      FocusRing(
+                        borderRadius: BorderRadius.circular(LumioRadius.sm),
+                        child: ChoiceChip(
+                          label: Text(label),
+                          selected: _limit == limit,
+                          onSelected: (_) => setState(() => _limit = limit),
+                        ),
                       ),
                   ],
                 ),
               ],
               if (!_kid)
-                SwitchListTile(
-                  value: _locked,
-                  onChanged: (v) => setState(() => _locked = v),
-                  title: Text(context.l10n.lockByPin),
-                  subtitle: Text(context.l10n.lockByPinHint),
+                FocusRing(
+                  child: SwitchListTile(
+                    value: _locked,
+                    onChanged: (v) => setState(() => _locked = v),
+                    title: Text(context.l10n.lockByPin),
+                    subtitle: Text(context.l10n.lockByPinHint),
+                  ),
                 ),
             ],
           ),

@@ -10,3 +10,7 @@ Zlib
 ISC
 GPL-3.0
 LGPL
+# Les polices embarquées (app/assets/fonts : Bricolage Grotesque, Manrope) sont
+# sous SIL OFL 1.1 ; ce ne sont pas des dépendances Dart, elles ne passent pas
+# par ce contrôle (textes de licence fournis à côté des fichiers, crédités dans
+# Réglages > À propos).
