@@ -15,11 +15,12 @@ import 'package:lumio/features/profiles/pin_dialog.dart' show requireParent;
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/torrent/torrent_providers.dart' show networkProbeProvider;
 import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
-import 'package:lumio_core/lumio_core.dart' show Quality;
+import 'package:lumio_core/lumio_core.dart' show NetInterface, Quality;
 
 /// Clé de la mémoire du focus et nom de route de l'écran.
 const settingsRouteKey = 'settings';
@@ -333,6 +334,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               () => ref
                   .read(torrentSettingsProvider.notifier)
                   .setClearCacheOnExit(picked),
+            );
+          }
+        },
+      ),
+      _Tile(
+        id: 'requireVpn',
+        icon: Icons.vpn_lock_outlined,
+        title: l.settingsRequireVpn,
+        subtitle: torrents.requireVpn ? l.optionYes : l.optionNo,
+        onTap: () async {
+          final picked = await _choose<bool>(
+            title: l.settingsRequireVpn,
+            options: [(true, l.optionYes), (false, l.optionNo)],
+            current: torrents.requireVpn,
+          );
+          if (picked != null) {
+            await _save(
+              () => ref
+                  .read(torrentSettingsProvider.notifier)
+                  .setRequireVpn(picked),
+            );
+          }
+        },
+      ),
+      _Tile(
+        id: 'vpnInterface',
+        icon: Icons.lan_outlined,
+        title: l.settingsVpnInterface,
+        subtitle: torrents.vpnInterface ?? l.vpnAny,
+        onTap: () async {
+          List<NetInterface> up;
+          try {
+            up = await ref.read(networkProbeProvider).upInterfaces();
+          } on Object {
+            up = const [];
+          }
+          if (!mounted) return;
+          // Interfaces VPN nommées actuellement actives, plus celle déjà
+          // choisie (même si elle est éteinte) ; « n'importe quel VPN » en tête.
+          final names = <String>{
+            for (final i in up)
+              if (i.isVpn && !i.anonymousVpn) i.name,
+            ?torrents.vpnInterface,
+          };
+          final picked = await _choose<String>(
+            title: l.settingsVpnInterface,
+            options: [('', l.vpnAny), for (final n in names) (n, n)],
+            current: torrents.vpnInterface ?? '',
+          );
+          if (picked != null) {
+            await _save(
+              () => ref
+                  .read(torrentSettingsProvider.notifier)
+                  .setVpnInterface(picked.isEmpty ? null : picked),
             );
           }
         },

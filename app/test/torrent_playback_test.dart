@@ -4,6 +4,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/l10n/app_localizations_en.dart';
@@ -17,6 +18,7 @@ import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
+import 'support/fake_network.dart';
 import 'support/fake_torrent_engine.dart';
 import 'support/recording_player.dart';
 
@@ -444,6 +446,9 @@ void main() {
         ProviderScope(
           overrides: [
             appDatabaseProvider.overrideWithValue(db),
+            torrentPrivacyProvider.overrideWithValue(
+              OpenPrivacy(AppSettingsStore(db)),
+            ),
             torrentPlaybackFactoryProvider.overrideWithValue(
               () => TorrentPlayback(
                 engine: e,

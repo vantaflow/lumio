@@ -24,10 +24,12 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/player/playback_report.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+import 'support/fake_network.dart';
 import 'tracks_panel_test.dart' show FakeBackend;
 
 const _urlA = 'https://a.example.com/tok-a/manifest.json';
@@ -57,6 +59,13 @@ class _H {
         appDatabaseProvider.overrideWithValue(db),
         addonRepositoryProvider.overrideWithValue(repo),
         appVersionProvider.overrideWith((ref) async => '1.2.3'),
+        networkProbeProvider.overrideWithValue(
+          FakeNetworkProbe(const [
+            NetInterface('wlan0'),
+            NetInterface('wg0'),
+            NetInterface('vpn', anonymousVpn: true),
+          ]),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -75,7 +84,7 @@ class _H {
   }
 
   Future<void> pump(Widget home) async {
-    tester.view.physicalSize = const Size(1920, 1400);
+    tester.view.physicalSize = const Size(1920, 2000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
@@ -209,6 +218,35 @@ void main() {
     expect(t.uploadKbps, 512);
     expect(await h.stored(AppSettingsStore.torrentCacheKey), '5');
     expect(await h.stored(AppSettingsStore.uploadKey), '512');
+    await h.dispose();
+  });
+
+  testWidgets('VPN exigé et interface : enregistrés, interfaces VPN actives', (
+    tester,
+  ) async {
+    final h = _H(tester)..start();
+    await h.pump(const SettingsScreen());
+    expect(h.container.read(torrentSettingsProvider).requireVpn, isFalse);
+    expect(find.text('Exiger un VPN pour les torrents'), findsOneWidget);
+
+    await h.tapTile('requireVpn');
+    await h.tapText('Oui');
+    expect(h.container.read(torrentSettingsProvider).requireVpn, isTrue);
+    expect(await h.stored(AppSettingsStore.requireVpnKey), '1');
+
+    await h.tapTile('vpnInterface');
+    // Seules les interfaces VPN nommées actuellement actives, plus « tout VPN ».
+    expect(find.text('wlan0'), findsNothing);
+    expect(find.text('vpn'), findsNothing);
+    expect(find.text('N\'importe quel VPN'), findsWidgets);
+    await h.tapText('wg0');
+    expect(h.container.read(torrentSettingsProvider).vpnInterface, 'wg0');
+    expect(await h.stored(AppSettingsStore.vpnInterfaceKey), 'wg0');
+
+    await h.tapTile('vpnInterface');
+    await h.tapText('N\'importe quel VPN');
+    expect(h.container.read(torrentSettingsProvider).vpnInterface, isNull);
+    expect(await h.stored(AppSettingsStore.vpnInterfaceKey), '');
     await h.dispose();
   });
 

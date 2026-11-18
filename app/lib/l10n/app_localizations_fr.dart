@@ -1045,6 +1045,47 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune source disponible pour ce torrent. Essayez un autre flux.';
 
   @override
+  String get torrentVpnRequired =>
+      'Un VPN est exigé pour les torrents et aucun n\'est actif. Activez votre VPN puis réessayez.';
+
+  @override
+  String get torrentVpnLost =>
+      'VPN coupé : torrent arrêté pour protéger votre adresse IP.';
+
+  @override
+  String get torrentNoVpnReminder =>
+      'Aucun VPN détecté : votre adresse IP est visible des autres pairs.';
+
+  @override
+  String get torrentIpWarningTitle => 'Votre adresse IP sera visible';
+
+  @override
+  String get torrentIpWarningBody =>
+      'Avec un torrent, les autres participants de l\'échange voient votre adresse IP. Pour la protéger, utilisez un VPN. Vous pouvez en exiger un dans les réglages.';
+
+  @override
+  String get torrentIpWarningContinue => 'Continuer';
+
+  @override
+  String get torrentIpWarningCancel => 'Annuler';
+
+  @override
+  String get torrentIpWarningDeclined =>
+      'Torrent non démarré. Relancez la lecture pour continuer.';
+
+  @override
+  String get settingsRequireVpn => 'Exiger un VPN pour les torrents';
+
+  @override
+  String get settingsVpnInterface => 'Interface VPN';
+
+  @override
+  String get vpnAny => 'N\'importe quel VPN';
+
+  @override
+  String get vpnNone => 'Aucun VPN actif détecté';
+
+  @override
   String get torrentNoFile =>
       'Ce torrent ne contient aucun fichier lisible. Essayez un autre flux.';
 

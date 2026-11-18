@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/addon_repository.dart';
+import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/stream_prefs.dart';
@@ -23,6 +24,7 @@ import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+import 'support/fake_network.dart';
 import 'support/fake_torrent_engine.dart';
 import 'support/recording_player.dart';
 
@@ -184,6 +186,9 @@ class _H {
     container = ProviderContainer(
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
+        torrentPrivacyProvider.overrideWithValue(
+          OpenPrivacy(AppSettingsStore(db)),
+        ),
         addonsProvider.overrideWith(
           () => _FakeAddons(addons ?? [_installed('s1', _manifest('org.a'))]),
         ),

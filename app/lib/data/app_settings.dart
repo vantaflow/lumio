@@ -12,6 +12,9 @@ class AppSettingsStore {
   static const torrentCacheKey = 'torrent_cache_gb';
   static const uploadKey = 'upload_kbps';
   static const clearCacheOnExitKey = 'clear_cache_on_exit';
+  static const requireVpnKey = 'torrent_require_vpn';
+  static const vpnInterfaceKey = 'torrent_vpn_interface';
+  static const ipWarningAcceptedKey = 'torrent_ip_warning_accepted';
   static const onboardingDoneKey = 'onboarding_done';
   static const onboardingSkippedKey = 'onboarding_skipped';
   static const sourcesReminderDismissedKey = 'sources_reminder_dismissed';
@@ -40,6 +43,8 @@ class TorrentSettings {
     this.cacheGb = 2,
     this.uploadKbps = 0,
     this.clearCacheOnExit = false,
+    this.requireVpn = false,
+    this.vpnInterface,
   });
 
   /// Taille maximale du cache de lecture, en Go.
@@ -51,6 +56,12 @@ class TorrentSettings {
   /// Vider le cache à la fermeture (activé par défaut sur TV).
   final bool clearCacheOnExit;
 
+  /// Refuser et couper les torrents tant qu'aucun VPN n'est actif.
+  final bool requireVpn;
+
+  /// Interface VPN précise exigée (`tun0`) ; `null` = n'importe quel VPN.
+  final String? vpnInterface;
+
   static const cacheChoicesGb = [1, 2, 3, 5];
   static const uploadChoicesKbps = [0, 256, 512, 1024, 2048];
 
@@ -58,9 +69,14 @@ class TorrentSettings {
     int? cacheGb,
     int? uploadKbps,
     bool? clearCacheOnExit,
+    bool? requireVpn,
+    String? vpnInterface,
+    bool anyVpnInterface = false,
   }) => TorrentSettings(
     cacheGb: cacheGb ?? this.cacheGb,
     uploadKbps: uploadKbps ?? this.uploadKbps,
     clearCacheOnExit: clearCacheOnExit ?? this.clearCacheOnExit,
+    requireVpn: requireVpn ?? this.requireVpn,
+    vpnInterface: anyVpnInterface ? null : vpnInterface ?? this.vpnInterface,
   );
 }

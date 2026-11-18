@@ -1,6 +1,7 @@
 import 'package:lumio/data/pairing_client.dart';
 import 'package:lumio/data/profile_repository.dart' show ProfileLimitException;
 import 'package:lumio/l10n/app_localizations.dart';
+import 'package:lumio/torrent/network_watcher.dart' show VpnRequiredException;
 import 'package:lumio_core/lumio_core.dart';
 
 /// Message d'erreur traduit pour l'interface. Le [AddonException.message]
@@ -20,6 +21,7 @@ String l10nForError(AppLocalizations l, Object error) {
   if (error is InsufficientStorageException) {
     return l.torrentInsufficientStorage;
   }
+  if (error is VpnRequiredException) return l.torrentVpnRequired;
   if (error is PairingException) {
     return switch (error.code) {
       PairingErrorCode.insecureUrl => l.errPairInsecure,

@@ -5,9 +5,11 @@ import 'package:lumio/data/app_settings.dart' as prefs;
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/torrent/cache_manager.dart';
 import 'package:lumio/torrent/libtorrent_engine.dart';
+import 'package:lumio/torrent/network_watcher.dart';
 import 'package:lumio/torrent/torrent_engine.dart';
 import 'package:lumio/torrent/torrent_playback.dart';
 import 'package:lumio/ui/focus/tv_detection.dart';
+import 'package:lumio_core/lumio_core.dart' show GuardStop;
 import 'package:path_provider/path_provider.dart';
 
 /// Moteur de torrents unique pour toute l'application ; remplacé en test.
@@ -16,6 +18,19 @@ final torrentEngineProvider = Provider<TorrentEngine>((ref) {
   ref.onDispose(() => engine.dispose());
   return engine;
 });
+
+/// Interfaces réseau actives ; remplacé en test.
+final networkProbeProvider = Provider<NetworkProbe>(
+  (ref) => const PlatformNetworkProbe(),
+);
+
+/// Confidentialité réseau des torrents (coupe-circuit VPN, avertissement IP).
+final torrentPrivacyProvider = Provider<TorrentPrivacy>(
+  (ref) => TorrentPrivacy(
+    probe: ref.watch(networkProbeProvider),
+    store: ref.watch(appSettingsStoreProvider),
+  ),
+);
 
 /// Dossier de travail des torrents (vidé à chaque lecture par `release`).
 final torrentSavePathProvider = Provider<Future<String>>((ref) async {
@@ -74,10 +89,18 @@ final torrentPlaybackFactoryProvider = Provider<TorrentPlayback Function()>((
     await ref.read(torrentEngineProvider).init(settings);
   }
 
-  Future<void> ready() => init ??= start().catchError((Object e) {
+  Future<void> initOnce() => init ??= start().catchError((Object e) {
     init = null; // nouvelle tentative au prochain torrent
     throw e;
   });
+
+  Future<void> ready() async {
+    // Coupe-circuit à chaque démarrage, avant tout contact avec des pairs.
+    final d = await ref.read(torrentPrivacyProvider).evaluate();
+    if (d is GuardStop) throw const VpnRequiredException();
+    await initOnce();
+  }
+
   return () => TorrentPlayback(
     engine: ref.read(torrentEngineProvider),
     ready: ready,
