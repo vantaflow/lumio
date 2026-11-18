@@ -79,16 +79,18 @@ void main() {
   );
 
   testWidgets('déjà à jour : aucune bannière', (tester) async {
+    final f = _Fetcher();
     await tester.pumpWidget(
       _wrap(
         UpdateBanner(
           manifestUrl: 'https://example.org/update.json',
-          fetcher: _Fetcher(),
+          fetcher: f,
           currentVersion: () async => '2.0.0',
         ),
       ),
     );
     await tester.pumpAndSettle();
+    expect(f.calls, 1);
     expect(find.byType(MaterialBanner), findsNothing);
   });
 }
