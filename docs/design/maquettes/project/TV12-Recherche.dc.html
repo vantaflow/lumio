@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Recherche</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box;display:flex}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.k{width:76px;height:84px;border-radius:14px;background:#2A3340;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700}
+.kr{display:flex;gap:10px;margin-bottom:10px}
+.card{position:relative;width:230px;height:340px;border-radius:18px;display:flex;align-items:flex-end;padding:14px;box-sizing:border-box;font-size:26px;font-weight:700;flex:none}
+.bd{position:absolute;top:10px;left:10px;background:rgba(14,17,22,.88);font-size:24px;padding:4px 12px;border-radius:10px}
+.focus{outline:4px solid #FFE08A;outline-offset:3px}
+</style>
+</helmet>
+<div class="tv">
+<div style="width:760px;padding:80px 40px 0 96px;box-sizing:border-box;background:#12171E">
+<div style="display:flex;gap:16px;margin-bottom:28px"><div style="flex:1;height:100px;border-radius:20px;background:#161B22;border:3px solid #3A4452;display:flex;align-items:center;padding:0 28px;font-size:38px;gap:10px;box-sizing:border-box">sint<span style="width:3px;height:48px;background:#FFB84D"></span></div>
+<div style="width:100px;height:100px;border-radius:50px;background:#FFB84D;display:flex;align-items:center;justify-content:center"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1A1100" stroke-width="2" stroke-linecap="round" aria-label="Recherche vocale" role="img"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></div></div>
+<div class="kr"><div class="k">A</div><div class="k">Z</div><div class="k">E</div><div class="k">R</div><div class="k">T</div><div class="k">Y</div><div class="k">U</div><div class="k">I</div></div>
+<div class="kr"><div class="k">Q</div><div class="k">S</div><div class="k">D</div><div class="k">F</div><div class="k">G</div><div class="k">H</div><div class="k">J</div><div class="k">K</div></div>
+<div class="kr"><div class="k">W</div><div class="k">X</div><div class="k">C</div><div class="k">V</div><div class="k">B</div><div class="k">N</div><div class="k focus">L</div><div class="k">M</div></div>
+<div class="kr"><div class="k" style="width:236px;font-size:28px">Espace</div><div class="k" style="width:236px;font-size:28px">Effacer</div><div class="k" style="width:236px;font-size:28px">123</div></div>
+<div style="font-size:26px;color:#A9B2BF;margin-top:16px;line-height:1.4">Recherche dans tous vos addons, vos dossiers.</div>
+</div>
+<div style="flex:1;padding:80px 96px 0 56px;box-sizing:border-box">
+<div style="display:flex;gap:14px;margin-bottom:32px"><span style="background:#FFB84D;color:#1A1100;font-weight:700;padding:12px 28px;border-radius:30px;font-size:28px">Tout</span><span style="background:#2A3340;padding:12px 28px;border-radius:30px;font-size:28px;font-weight:600">Films</span><span style="background:#2A3340;padding:12px 28px;border-radius:30px;font-size:28px;font-weight:600">Séries</span></div>
+<h2 class="hd" style="font-size:36px;margin-bottom:20px">Films et séries · 9 résultats</h2>
+<div style="display:flex;gap:24px"><div class="card focus" style="background:linear-gradient(135deg,#7A3B2E,#C98A3D)"><span class="bd">Direct</span>Sintel</div><div class="card" style="background:linear-gradient(135deg,#2E5A7A,#7AB8C9)"><span class="bd">Torrent</span>Sintel Lite</div><div class="card" style="background:linear-gradient(135deg,#2E6F5A,#C9C94A)"><span class="bd">Jellyfin</span>Sintel (2010)</div></div>
+</div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

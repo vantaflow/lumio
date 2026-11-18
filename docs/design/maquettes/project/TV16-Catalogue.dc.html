@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Catalogue d'addons</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box;padding:64px 96px}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.tab{display:inline-flex;align-items:center;height:64px;padding:0 32px;border-radius:32px;font-size:28px;font-weight:600;color:#A9B2BF;background:#161B22}
+.ton{background:#F3F5F7;color:#0E1116;font-weight:700}
+.ch{display:inline-flex;align-items:center;height:52px;padding:0 24px;border-radius:26px;background:#2A3340;font-size:24px;font-weight:600}
+.cd{width:400px;height:250px;border-radius:24px;background:#161B22;padding:28px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;flex:none;position:relative}
+.lg{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-weight:700;font-size:32px;color:#0E1116}
+.sm{font-size:24px;color:#A9B2BF;line-height:1.35}
+.ok{position:absolute;top:24px;right:24px;font-size:24px;font-weight:700;color:#5BD68A}
+.fx{outline:4px solid #FFE08A;outline-offset:4px;background:#2A3340;transform:scale(1.04)}
+</style>
+</helmet>
+<div class="tv">
+<div style="font-size:26px;color:#A9B2BF">Réglages › Sources</div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;margin:8px 0 32px"><h1 class="hd" style="font-size:60px">Ajouter un addon</h1>
+<div style="display:flex;gap:12px"><span class="tab ton">Catalogue</span><span class="tab">Par lien</span><span class="tab">Depuis le téléphone</span></div></div>
+<div style="display:flex;gap:12px;margin-bottom:32px"><span class="ch" style="background:#FFB84D;color:#1A1100;font-weight:700">Populaires</span><span class="ch">Films et séries</span><span class="ch">Torrents</span><span class="ch">Débrideurs</span><span class="ch">Sous-titres</span><span class="ch">Anime</span><span class="ch">Métadonnées</span><span class="ch">Suivi</span><span class="ch">Plus…</span></div>
+<div style="display:flex;gap:32px;flex-wrap:wrap">
+<div class="cd fx"><div style="display:flex;gap:20px;align-items:center"><div class="lg" style="background:#4FD1C5">C</div><div><div style="font-size:30px;font-weight:700">Cinemeta</div><div class="sm">Catalogues · Fiches</div></div></div><div class="sm">Films et séries populaires, fiches et épisodes.</div><span class="ok">Installé</span></div>
+<div class="cd"><div style="display:flex;gap:20px;align-items:center"><div class="lg" style="background:#FFB84D">O</div><div><div style="font-size:30px;font-weight:700">OpenSubtitles</div><div class="sm">Sous-titres</div></div></div><div class="sm">Sous-titres dans votre langue pour vos lectures.</div></div>
+<div class="cd"><div style="display:flex;gap:20px;align-items:center"><div class="lg" style="background:#FF8A7A">A</div><div><div style="font-size:30px;font-weight:700">Anime Kitsu</div><div class="sm">Catalogues · Fiches</div></div></div><div class="sm">Catalogue et fiches d'anime.</div></div>
+<div class="cd"><div style="display:flex;gap:20px;align-items:center"><div class="lg" style="background:#9AD66B">I</div><div><div style="font-size:30px;font-weight:700">IMDb Ratings</div><div class="sm">Infos et notes</div></div></div><div class="sm">Les notes IMDb affichées sur chaque fiche.</div></div>
+<div class="cd"><div style="display:flex;gap:20px;align-items:center"><div class="lg" style="background:#7AB8C9">R</div><div><div style="font-size:30px;font-weight:700">Radios</div><div class="sm">Radio</div></div></div><div class="sm">Stations de radio en ligne.</div></div>
+<div class="cd"><div style="display:flex;gap:20px;align-items:center"><div class="lg" style="background:#C9A0F0">W</div><div><div style="font-size:30px;font-weight:700">Watch Next</div><div class="sm">Infos et notes</div></div></div><div class="sm">Idées de titres proches de celui que vous regardez.</div></div>
+</div>
+<div class="sm" style="position:absolute;left:96px;bottom:56px;max-width:1500px">Catalogue communautaire stremio-addons.net. Les addons à configurer (clé de débrideur, langues…) s'ouvrent sur votre téléphone. Installez uniquement des sources de confiance.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

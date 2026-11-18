@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Dossiers locaux TV</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box}
+.tv *{box-sizing:border-box}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+button,a,label{font-family:inherit;color:inherit;text-decoration:none;cursor:pointer}
+button{border:0;background:none;font-size:inherit;padding:0}
+.top{height:152px;display:flex;align-items:center;gap:28px;padding:0 96px}
+.back{width:72px;height:72px;border-radius:36px;background:#161B22;display:flex;align-items:center;justify-content:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:14px;height:76px;padding:0 40px;border-radius:38px;font-weight:700;font-size:28px;background:#2A3340;color:#F3F5F7;white-space:nowrap}
+.bp{background:#FFB84D;color:#1A1100}
+.bd{background:#FF7A70;color:#1A0A08}
+.bt{background:transparent;color:#C9D0DA;font-weight:600}
+.bx{color:#FF7A70}
+.fx{outline:4px solid #FFE08A;outline-offset:4px}
+.sm{font-size:24px;color:#A9B2BF;line-height:1.35}
+.md{font-size:28px;color:#C9D0DA;line-height:1.4}
+.sec{font-size:26px;font-weight:700;color:#4FD1C5;letter-spacing:1px;margin:0 0 16px}
+.row{display:flex;align-items:center;gap:24px;min-height:104px;border-radius:22px;background:#161B22;padding:0 32px}
+.row .t{font-size:30px;font-weight:700}
+.fld{display:block}
+.fld .l{font-size:24px;color:#A9B2BF;font-weight:600;margin-bottom:8px}
+.inp{display:flex;align-items:center;height:80px;border-radius:18px;background:#0E1116;border:2px solid #3A4452;padding:0 24px;font-size:30px;font-weight:600;width:100%;text-align:left}
+.inp.ph{color:#6F7B8B}
+.err{color:#FF7A70;font-size:26px;font-weight:600;margin-top:10px;display:flex;gap:10px;align-items:center}
+.tg{width:84px;height:46px;border-radius:23px;position:relative;flex:none;display:inline-block}
+.tg i{position:absolute;top:6px;width:34px;height:34px;border-radius:17px;background:#F3F5F7}
+.on{background:#FFB84D}.on i{right:6px}.off{background:#3A4452}.off i{left:6px}
+.dim{position:absolute;left:0;top:0;width:1920px;height:1080px;background:rgba(6,8,12,.76)}
+.pan{background:#161B22;border-radius:32px;padding:44px 48px;display:flex;flex-direction:column;gap:20px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.pan h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0;font-size:44px;line-height:1.15}
+.acts{display:flex;gap:16px;justify-content:flex-end;margin-top:12px}
+.snack{position:absolute;left:50%;transform:translateX(-50%);bottom:64px;background:#2A3340;border-radius:18px;padding:22px 36px;font-size:26px;font-weight:600;display:flex;gap:14px;align-items:center;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.chip{display:inline-flex;align-items:center;gap:10px;height:56px;padding:0 24px;border-radius:28px;background:#2A3340;font-weight:700;font-size:26px}
+.chip.sel{background:#FFB84D;color:#1A1100}
+.hl{display:inline-flex;align-items:center;gap:10px;font-size:24px;font-weight:700;color:#C9D0DA}
+.hl b{width:14px;height:14px;border-radius:7px;display:inline-block}
+.note{position:absolute;font-size:24px;font-weight:700;color:#4FD1C5;letter-spacing:.5px}
+.poster{border-radius:18px;display:flex;align-items:flex-end;padding:16px;font-weight:700;font-size:26px;line-height:1.15;font-family:'Bricolage Grotesque',sans-serif}
+.stv{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
+.card{background:#161B22;border-radius:24px;padding:36px}
+</style>
+</helmet>
+<div class="tv">
+<div class="top"><button class="back" type="button" aria-label="Retour"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M15 5l-7 7 7 7"/></svg></button><div style="flex:1"><h1 class="hd" style="font-size:56px">Dossiers locaux</h1><div class="sm" style="margin-top:4px">Les vidéos stockées sur cet appareil</div></div><button type="button" class="back" style="margin-right:12px" aria-label="Analyser maintenant"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 12a8 8 0 0114-5M20 12a8 8 0 01-14 5M18 3v4h-4M6 21v-4h4"/></svg></button><button class="btn bp fx" type="button"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M12 5v14M5 12h14"/></svg>Ajouter un dossier</button></div><div style="padding:0 96px;display:flex;flex-direction:column;gap:14px">
+<div class="md" style="display:flex;gap:14px;align-items:center;color:#FFB84D"><svg width="32" height="32" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="14" fill="none" stroke="#3A4452" stroke-width="4"/><path d="M18 4a14 14 0 0114 14" fill="none" stroke="#FFB84D" stroke-width="4" stroke-linecap="round"/></svg>Analyse en cours…</div>
+<a href="#" class="row" style="min-height:96px;background:#161B22"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4FD1C5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><div style="flex:1"><div class="t" style="font-size:30px;font-weight:700">/storage/emulated/0/Movies</div><div class=sm>3 vidéos</div></div><button type="button" class="back" style="background:#0E1116" aria-label="Retirer le dossier /storage/emulated/0/Movies"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF7A70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></a><a href="#" class="row" style="min-height:96px;background:#161B22"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4FD1C5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><div style="flex:1"><div class="t" style="font-size:30px;font-weight:700">/storage/emulated/0/Download/Animation</div><div class=sm>2 vidéos</div></div><button type="button" class="back" style="background:#0E1116" aria-label="Retirer le dossier /storage/emulated/0/Download/Animation"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF7A70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></a>
+<div class="row" style="min-height:96px;gap:20px"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 5h16v14H4zM4 9h16M8 5v4M12 5v4M16 5v4"/></svg><div style="flex:1"><div style="font-size:30px;font-weight:700">Sintel</div><div class="sm">Sintel.2010.1080p.mkv</div></div><button type="button" class="back" style="background:#0E1116" aria-label="Corriger le titre"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></svg></button></div><div class="row" style="min-height:96px;gap:20px"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 5h16v14H4zM4 9h16M8 5v4M12 5v4M16 5v4"/></svg><div style="flex:1"><div style="font-size:30px;font-weight:700">Big Buck Bunny</div><div class="sm">big_buck_bunny_720p.mp4</div></div><button type="button" class="back" style="background:#0E1116" aria-label="Corriger le titre"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></svg></button></div><div class="row" style="min-height:96px;gap:20px"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 5h16v14H4zM4 9h16M8 5v4M12 5v4M16 5v4"/></svg><div style="flex:1"><div style="font-size:30px;font-weight:700">Tears of Steel</div><div class="sm">tears-of-steel.mkv</div></div><button type="button" class="back" style="background:#0E1116" aria-label="Corriger le titre"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></svg></button></div>
+</div><div class="snack"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFB84D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M5 12l5 5 9-10"/></svg>Analyse terminée : 5 vidéos</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

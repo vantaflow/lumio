@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Accueil TV</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.nav{display:flex;gap:12px;align-items:center;font-size:28px;font-weight:600}
+.nav span{padding:14px 28px;border-radius:30px;color:#A9B2BF}
+.card{position:relative;flex:none;width:300px;height:170px;border-radius:20px;overflow:hidden;display:flex;align-items:flex-end;padding:16px;box-sizing:border-box;font-size:26px;font-weight:700}
+.bd{position:absolute;top:12px;left:12px;background:rgba(14,17,22,.88);color:#F3F5F7;font-size:24px;font-weight:700;padding:4px 12px;border-radius:10px}
+.rt{font-size:34px;font-weight:700;margin:0 0 20px 96px;font-family:'Bricolage Grotesque',sans-serif}
+.rw{display:flex;gap:28px;margin-left:96px;padding:12px 0}
+.focus{outline:4px solid #FFE08A;outline-offset:4px;transform:scale(1.08);z-index:2}
+</style>
+</helmet>
+<div class="tv">
+<div style="height:120px;display:flex;align-items:center;justify-content:space-between;padding:0 96px">
+<div style="display:flex;align-items:center;gap:16px"><svg width="44" height="44" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" fill="none" stroke="#FFB84D" stroke-width="9"/><circle cx="36" cy="36" r="10" fill="#4FD1C5"/></svg><span class="hd" style="font-size:40px">Lumio</span></div>
+<div class="nav"><span style="background:#FFB84D;color:#1A1100">Accueil</span><span>Films</span><span>Séries</span><span>Recherche</span><span>Réglages</span></div>
+<div style="width:56px;height:56px;border-radius:28px;background:#FFB84D;color:#1A1100;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:28px">L</div>
+</div>
+<div style="height:430px;margin:0 96px 0;border-radius:28px;background:linear-gradient(100deg,#0E1116 20%,rgba(14,17,22,0) 70%),linear-gradient(135deg,#1F4A55,#8A5A2B);position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:48px;box-sizing:border-box">
+<div style="font-size:26px;color:#FFB84D;font-weight:700">REPRENDRE · Épisode 4 · 23 min restantes</div>
+<h1 class="hd" style="font-size:64px;margin:6px 0 20px">Cosmos Laundromat</h1>
+<div style="display:flex;gap:24px;align-items:center"><span style="display:inline-flex;align-items:center;height:72px;padding:0 40px;border-radius:36px;background:#FFB84D;color:#1A1100;font-weight:700;font-size:30px;outline:4px solid #FFE08A;outline-offset:4px">Reprendre</span><span style="display:inline-flex;align-items:center;height:72px;padding:0 36px;border-radius:36px;background:#2A3340;font-weight:600;font-size:30px">+ Ma liste</span></div>
+</div>
+<div style="margin-top:28px"><h2 class="rt">Continuer à regarder</h2>
+<div class="rw"><sc-for list="{{cont}}" as="c" hint-placeholder-count="5"><div class="card" style="{{c.st}}"><span class="bd">{{c.b}}</span>{{c.t}}<div style="position:absolute;left:0;bottom:0;height:8px;width:{{c.p}};background:#FFB84D"></div></div></sc-for></div></div>
+<div style="margin-top:12px"><h2 class="rt">Ma liste</h2>
+<div class="rw"><sc-for list="{{list}}" as="c" hint-placeholder-count="5"><div class="card" style="{{c.st}}"><span class="bd">{{c.b}}</span>{{c.t}}</div></sc-for></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() {
+const g = (a,b) => 'background:linear-gradient(135deg,' + a + ',' + b + ');';
+const f = 'outline:4px solid #FFE08A;outline-offset:4px;transform:scale(1.08);z-index:2;';
+return {
+cont: [
+{t:'Cosmos Laundromat',b:'Torrent',p:'62%',st:g('#2E6F7A','#8A5A2B')+f},
+{t:'Sintel',b:'Direct',p:'18%',st:g('#7A3B2E','#C98A3D')},
+{t:'Tears of Steel',b:'Jellyfin',p:'40%',st:g('#1F4A55','#3C8F7A')},
+{t:'Big Buck Bunny',b:'Local',p:'85%',st:g('#3C6B2E','#A0B84A')},
+{t:'Elephants Dream',b:'Torrent',p:'5%',st:g('#6B3C2E','#C9683D')}
+],
+list: [
+{t:'Spring',b:'Direct',st:g('#2E5A7A','#7AB8C9')},
+{t:'Agent 327',b:'Torrent',st:g('#4A2E2E','#C98A3D')},
+{t:'Caminandes',b:'Local',st:g('#2E6F5A','#C9C94A')},
+{t:'Charge',b:'Jellyfin',st:g('#7A4A2E','#D9A04A')},
+{t:'Hero',b:'Direct',st:g('#1F3A55','#4A8FC9')}
+]};
+}
+}
+</script>
+</body>
+</html>

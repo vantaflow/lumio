@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Réglages lecture</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box;display:flex}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.rail{width:480px;padding:72px 32px 0 72px;box-sizing:border-box;background:#12171E;display:flex;flex-direction:column;gap:8px}
+.mi{height:76px;border-radius:18px;display:flex;align-items:center;padding:0 24px;font-size:28px;font-weight:600;color:#A9B2BF}
+.on{background:#2A3340;color:#F3F5F7}
+.main{flex:1;padding:72px 96px 0 72px;box-sizing:border-box;display:flex;flex-direction:column}
+.sec{font-size:26px;font-weight:700;color:#4FD1C5;letter-spacing:1px;margin:28px 0 14px}
+.r{display:flex;align-items:center;gap:24px;height:104px;border-radius:22px;background:#161B22;padding:0 32px;box-sizing:border-box;margin-bottom:12px}
+.v{display:inline-flex;align-items:center;gap:12px;height:56px;padding:0 24px;border-radius:28px;background:#2A3340;font-size:26px;font-weight:600}
+.sm{font-size:24px;color:#A9B2BF}
+.fx{outline:4px solid #FFE08A;outline-offset:4px;background:#2A3340}
+.tg{width:84px;height:46px;border-radius:23px;position:relative;flex:none}
+.tg i{position:absolute;top:6px;width:34px;height:34px;border-radius:17px;background:#F3F5F7}
+</style>
+</helmet>
+<div class="tv">
+<div class="rail">
+<h1 class="hd" style="font-size:48px;margin:0 0 32px 24px">Réglages</h1>
+<div class="mi">Sources</div><div class="mi on">Lecture</div><div class="mi">Torrents et VPN</div><div class="mi">Profils et contrôle parental</div><div class="mi">Compte et synchro</div><div class="mi">Suivi Trakt · Simkl</div><div class="mi">Sauvegarde et import</div><div class="mi">Général</div>
+</div>
+<div class="main">
+<h2 class="hd" style="font-size:44px">Lecture</h2><div class="sm" style="margin-top:6px">Pour le profil Lilou.</div>
+<div class="sec">CHOIX DE LA SOURCE</div>
+<div class="r fx"><div style="flex:1"><div style="font-size:30px;font-weight:700">Qualité préférée</div><div class="sm">SD, 720p, 1080p ou 4K : Lumio la choisit d'abord.</div></div><span class="v">1080p<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2.5" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+<div class="r"><div style="flex:1"><div style="font-size:30px;font-weight:700">Préférer les liens directs</div><div class="sm">Avant les torrents, à qualité égale.</div></div><div class="tg" style="background:#FFB84D"><i style="right:6px"></i></div></div>
+<div class="sec">LANGUES</div>
+<div class="r"><div style="flex:1;font-size:30px;font-weight:700">Langue audio</div><span class="v">Français<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2.5" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+<div class="r"><div style="flex:1;font-size:30px;font-weight:700">Sous-titres</div><span class="v">Français · si audio étranger<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2.5" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></div>
+<div class="sec">ENCHAÎNEMENT</div>
+<div class="r"><div style="flex:1"><div style="font-size:30px;font-weight:700">Épisode suivant automatique</div><div class="sm">Compte à rebours de 8 s en fin d'épisode.</div></div><div class="tg" style="background:#FFB84D"><i style="right:6px"></i></div></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

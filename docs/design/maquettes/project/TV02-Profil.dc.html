@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Onboarding profil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box;padding:96px 140px;display:flex;flex-direction:column}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:88px;padding:0 56px;border-radius:44px;background:#FFB84D;color:#1A1100;font-size:30px;font-weight:700}
+.dot{width:16px;height:16px;border-radius:8px;background:#3A4452}
+.av{width:140px;height:140px;border-radius:70px;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque';font-size:64px;font-weight:700;color:#1A1100}
+</style>
+</helmet>
+<div class="tv">
+<div style="display:flex;gap:16px;align-items:center;color:#A9B2BF;font-size:26px"><span class="dot"></span><span class="dot" style="background:#FFB84D;width:48px"></span><span class="dot"></span><span>Étape 2 sur 3</span></div>
+<h1 class="hd" style="font-size:64px;margin-top:32px">Créez votre profil</h1>
+<p style="color:#A9B2BF;font-size:30px;margin:12px 0 0">Chaque profil garde sa liste, sa progression et ses réglages.</p>
+<div style="display:flex;gap:80px;margin-top:72px">
+<div style="display:flex;flex-direction:column;gap:28px">
+<span style="font-size:28px;color:#A9B2BF;font-weight:600">Avatar</span>
+<div style="display:flex;gap:28px">
+<div class="av" style="background:#FFB84D;outline:4px solid #FFE08A;outline-offset:6px">L</div>
+<div class="av" style="background:#4FD1C5">M</div>
+<div class="av" style="background:#FF8A7A">A</div>
+<div class="av" style="background:#9AD66B">K</div>
+</div>
+</div>
+</div>
+<div style="margin-top:64px;display:flex;flex-direction:column;gap:12px;width:900px">
+<span style="font-size:28px;color:#A9B2BF;font-weight:600">Nom du profil</span>
+<div style="height:104px;border-radius:20px;background:#161B22;border:2px solid #3A4452;display:flex;align-items:center;padding:0 36px;font-size:36px">Lilou</div>
+</div>
+<div style="margin-top:40px;display:flex;align-items:center;gap:24px;width:900px;height:104px;border-radius:20px;background:#161B22;padding:0 36px;box-sizing:border-box">
+<div style="flex:1"><div style="font-size:30px;font-weight:600">Profil enfant</div><div style="font-size:26px;color:#A9B2BF">Filtre par âge et PIN pour quitter</div></div>
+<div style="width:96px;height:52px;border-radius:26px;background:#3A4452;position:relative"><div style="position:absolute;left:6px;top:6px;width:40px;height:40px;border-radius:20px;background:#F3F5F7"></div></div>
+</div>
+<div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center"><span style="font-size:30px;color:#A9B2BF">Retour</span><span class="btn">Continuer</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

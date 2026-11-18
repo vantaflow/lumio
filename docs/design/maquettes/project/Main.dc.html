@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Onboarding langue</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box;display:flex}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.row{display:flex;align-items:center;gap:24px;height:96px;padding:0 36px;border-radius:20px;background:#161B22;font-size:32px;font-weight:600;box-sizing:border-box}
+.focus{outline:4px solid #FFE08A;outline-offset:4px;background:#2A3340;transform:scale(1.04)}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:88px;padding:0 56px;border-radius:44px;background:#FFB84D;color:#1A1100;font-size:30px;font-weight:700;border:0;font-family:inherit}
+.dot{width:16px;height:16px;border-radius:8px;background:#3A4452}
+</style>
+</helmet>
+<div class="tv">
+<div style="width:760px;height:100%;background:linear-gradient(160deg,#1B2A33,#0E1116 70%);padding:96px 80px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+<div style="display:flex;align-items:center;gap:20px">
+<svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" fill="none" stroke="#FFB84D" stroke-width="8"/><circle cx="36" cy="36" r="10" fill="#4FD1C5"/></svg>
+<span class="hd" style="font-size:56px">Lumio</span>
+</div>
+<div>
+<h1 class="hd" style="font-size:72px;line-height:1.05">Votre bibliothèque, vos sources.</h1>
+<p style="color:#A9B2BF;font-size:30px;line-height:1.4;margin-top:24px">Réunissez films, séries et fichiers locaux au même endroit.</p>
+</div>
+<div style="display:flex;gap:16px;align-items:center;color:#A9B2BF;font-size:26px"><span class="dot" style="background:#FFB84D;width:48px"></span><span class="dot"></span><span class="dot"></span><span>Étape 1 sur 3</span></div>
+</div>
+<div style="flex:1;padding:96px 140px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+<h2 class="hd" style="font-size:52px;margin-bottom:16px">Choisissez votre langue</h2>
+<sc-for list="{{langs}}" as="l" hint-placeholder-count="5">
+<div class="row" style="{{l.st}}"><span style="flex:1">{{l.n}}</span><span style="color:#A9B2BF;font-size:26px">{{l.c}}</span></div>
+</sc-for>
+<div style="margin-top:auto;display:flex;justify-content:flex-end"><span class="btn">Continuer</span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() {
+const f = 'outline:4px solid #FFE08A;outline-offset:4px;background:#2A3340;transform:scale(1.04)';
+return { langs: [
+{n:'Français',c:'Par défaut',st:f},{n:'English',c:'',st:''},{n:'العربية',c:'',st:''},{n:'Español',c:'',st:''},{n:'Deutsch',c:'',st:''}
+]};
+}
+}
+</script>
+</body>
+</html>

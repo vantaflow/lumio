@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Onboarding sources</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box;padding:96px 140px;display:flex;flex-direction:column}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:88px;padding:0 56px;border-radius:44px;background:#FFB84D;color:#1A1100;font-size:30px;font-weight:700}
+.dot{width:16px;height:16px;border-radius:8px;background:#3A4452}
+.src{width:520px;height:300px;border-radius:28px;background:#161B22;padding:36px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px}
+.src b{font-size:34px}.src span{font-size:26px;color:#A9B2BF;line-height:1.35}
+.ic{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:#2A3340}
+.focus{outline:4px solid #FFE08A;outline-offset:6px;background:#2A3340;transform:scale(1.04)}
+</style>
+</helmet>
+<div class="tv">
+<div style="display:flex;gap:16px;align-items:center;color:#A9B2BF;font-size:26px"><span class="dot"></span><span class="dot"></span><span class="dot" style="background:#FFB84D;width:48px"></span><span>Étape 3 sur 3</span></div>
+<h1 class="hd" style="font-size:64px;margin-top:32px">Ajoutez vos sources</h1>
+<p style="color:#A9B2BF;font-size:30px;margin:12px 0 0;max-width:1100px;line-height:1.4">Lumio ne fournit aucun contenu. Ajoutez un addon, un serveur ou un dossier de votre choix.</p>
+<div style="display:flex;gap:40px;margin-top:64px;flex-wrap:wrap">
+<div class="src focus"><div class="ic"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FFB84D" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></div><b>Un addon</b><span>Collez un lien ou scannez un QR code</span></div>
+<div class="src"><div class="ic"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF8A7A" stroke-width="2" aria-hidden="true"><rect x="4" y="3" width="16" height="7" rx="2"/><rect x="4" y="14" width="16" height="7" rx="2"/></svg></div><b>Un serveur Jellyfin</b><span>Votre médiathèque personnelle</span></div>
+<div class="src"><div class="ic"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9AD66B" stroke-width="2" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"/></svg></div><b>Un dossier local</b><span>Fichiers de cet appareil ou du réseau</span></div>
+</div>
+<div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center"><span style="font-size:30px;color:#A9B2BF">Retour</span><div style="display:flex;gap:32px;align-items:center"><span style="font-size:30px;color:#A9B2BF">Plus tard</span><span class="btn">Terminer</span></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

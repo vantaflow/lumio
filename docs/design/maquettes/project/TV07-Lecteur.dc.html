@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Lecteur</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:linear-gradient(135deg,#1F4A55,#2B1F18 60%,#0E1116);color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.cb{width:104px;height:104px;border-radius:52px;background:rgba(14,17,22,.82);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700}
+.pn{position:absolute;right:48px;top:120px;width:620px;border-radius:28px;background:#161B22;padding:36px;box-sizing:border-box}
+.o{height:76px;border-radius:16px;display:flex;align-items:center;padding:0 24px;font-size:28px;gap:16px}
+.focus{outline:4px solid #FFE08A;outline-offset:4px}
+</style>
+</helmet>
+<div class="tv">
+<div style="position:absolute;left:0;top:0;width:1920px;height:260px;background:linear-gradient(180deg,rgba(14,17,22,.9),rgba(14,17,22,0));padding:56px 96px;box-sizing:border-box"><div class="hd" style="font-size:44px">Cosmos Laundromat</div><div style="font-size:26px;color:#C9D0DA">Source Alpha · 1080p · FR</div></div>
+<div class="pn"><div style="font-size:32px;font-weight:700;margin-bottom:12px" class="hd">Pistes et sous-titres</div>
+<div style="font-size:26px;color:#A9B2BF;margin:12px 0 6px">Audio</div>
+<div class="o focus" style="background:#2A3340">Français · 5.1<span style="margin-left:auto;color:#FFB84D">Actif</span></div>
+<div class="o">English · stéréo</div>
+<div style="font-size:26px;color:#A9B2BF;margin:16px 0 6px">Sous-titres</div>
+<div class="o">Désactivés</div>
+<div class="o">Français · forcés</div>
+<div class="o">Rechercher des sous-titres…</div>
+</div>
+<div style="position:absolute;right:96px;bottom:300px;display:flex;align-items:center;gap:20px;background:rgba(14,17,22,.88);border-radius:20px;padding:16px 28px;font-size:28px;font-weight:600"><span>Épisode suivant · S01E05</span><span style="background:#FFB84D;color:#1A1100;padding:8px 20px;border-radius:30px;font-weight:700">Dans 8 s</span></div>
+<div style="position:absolute;left:0;bottom:0;width:1920px;height:300px;background:linear-gradient(0deg,rgba(14,17,22,.95),rgba(14,17,22,0));padding:0 96px 56px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-end;gap:28px">
+<div style="display:flex;align-items:center;gap:24px;font-size:28px;font-weight:600"><span>14:32</span>
+<div style="flex:1;height:12px;border-radius:6px;background:#3A4452;position:relative"><div style="width:38%;height:12px;border-radius:6px;background:#FFB84D"></div><div style="position:absolute;left:38%;top:-10px;width:32px;height:32px;margin-left:-16px;border-radius:16px;background:#FFE08A"></div></div><span>38:10</span></div>
+<div style="display:flex;justify-content:center;gap:32px;align-items:center">
+<div class="cb">−10 s</div>
+<div class="cb focus" style="width:128px;height:128px;border-radius:64px;background:#FFB84D;color:#1A1100"><svg width="56" height="56" viewBox="0 0 24 24" fill="#1A1100" aria-label="Pause" role="img"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></div>
+<div class="cb">+10 s</div>
+<div class="cb" style="width:auto;padding:0 36px;border-radius:52px">Pistes</div>
+<div class="cb" style="width:auto;padding:0 36px;border-radius:52px">Vitesse 1×</div>
+<div class="cb" style="width:auto;padding:0 36px;border-radius:52px">Suivant</div>
+</div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

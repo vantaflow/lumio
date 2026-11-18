@@ -1,0 +1,598 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-18T12:00:00Z"
+  },
+  "title": "Lumio — maquettes",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 01 · Onboarding · Langue"
+    },
+    "TV02-Profil.dc.html": {
+      "x": 2040,
+      "y": 0,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 02 · Onboarding · Profil"
+    },
+    "TV03-Sources.dc.html": {
+      "x": 4080,
+      "y": 0,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 03 · Onboarding · Ajouter vos sources"
+    },
+    "TV04-ChoixProfil.dc.html": {
+      "x": 0,
+      "y": 1200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 04 · Choix du profil (PIN)"
+    },
+    "TV05-Accueil.dc.html": {
+      "x": 2040,
+      "y": 1200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 05 · Accueil"
+    },
+    "TV06-Fiche.dc.html": {
+      "x": 4080,
+      "y": 1200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 06 · Fiche + flux par addon"
+    },
+    "TV07-Lecteur.dc.html": {
+      "x": 0,
+      "y": 2400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 07 · Lecteur"
+    },
+    "TV08-AjoutAddon.dc.html": {
+      "x": 2040,
+      "y": 2400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 08 · Ajouter un addon · Par lien"
+    },
+    "TV09-Appairage.dc.html": {
+      "x": 4080,
+      "y": 2400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 09 · Ajouter un addon · Depuis le téléphone (page de la box)"
+    },
+    "TV10-Reglages.dc.html": {
+      "x": 0,
+      "y": 3600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 10 · Réglages · Sources"
+    },
+    "TV12-Recherche.dc.html": {
+      "x": 2040,
+      "y": 3600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 11 · Recherche"
+    },
+    "M01-Accueil.dc.html": {
+      "x": 0,
+      "y": 6000,
+      "w": 390,
+      "h": 844,
+      "title": "Téléphone · Accueil"
+    },
+    "M02-Fiche.dc.html": {
+      "x": 470,
+      "y": 6000,
+      "w": 390,
+      "h": 844,
+      "title": "Téléphone · Fiche"
+    },
+    "M03-Ajout.dc.html": {
+      "x": 940,
+      "y": 6000,
+      "w": 390,
+      "h": 844,
+      "title": "Téléphone · Ajout d'addon"
+    },
+    "D01-Accueil.dc.html": {
+      "x": 1410,
+      "y": 6000,
+      "w": 1440,
+      "h": 900,
+      "title": "Bureau · Accueil"
+    },
+    "TV13-AccueilVide.dc.html": {
+      "x": 4080,
+      "y": 3600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 12 · Accueil vide (aucune source)"
+    },
+    "TV14-ReglagesLecture.dc.html": {
+      "x": 0,
+      "y": 4800,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 13 · Réglages · Lecture"
+    },
+    "TV15-ReglagesTorrents.dc.html": {
+      "x": 2040,
+      "y": 4800,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 14 · Réglages · Torrents et VPN"
+    },
+    "TV16-Catalogue.dc.html": {
+      "x": 4080,
+      "y": 4800,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 15 · Ajouter un addon · Catalogue (stremio-addons.net)"
+    },
+    "M04-PageWebBox.dc.html": {
+      "x": 2930,
+      "y": 6000,
+      "w": 390,
+      "h": 844,
+      "title": "Téléphone · Page web de la box"
+    },
+    "TV20-MaListe.dc.html": {
+      "x": 0,
+      "y": 7200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 20 · Ma liste"
+    },
+    "TV21-Calendrier.dc.html": {
+      "x": 2040,
+      "y": 7200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 21 · Calendrier des sorties"
+    },
+    "TV22-PersonnaliserAccueil.dc.html": {
+      "x": 4080,
+      "y": 7200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 22 · Personnaliser l'accueil"
+    },
+    "TV23-CompteSynchro.dc.html": {
+      "x": 0,
+      "y": 8400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 23 · Compte et synchronisation"
+    },
+    "TV24-PhraseSecrete.dc.html": {
+      "x": 2040,
+      "y": 8400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 24 · Phrase secrète"
+    },
+    "TV25-Suivi.dc.html": {
+      "x": 4080,
+      "y": 8400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 25 · Suivi Trakt et Simkl"
+    },
+    "TV26-TraktCode.dc.html": {
+      "x": 0,
+      "y": 9600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 26 · Code d'appareil Trakt"
+    },
+    "TV27-WatchParty.dc.html": {
+      "x": 2040,
+      "y": 9600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 27 · Regarder ensemble"
+    },
+    "TV28-Jellyfin.dc.html": {
+      "x": 4080,
+      "y": 9600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 28 · Jellyfin · serveurs et navigation"
+    },
+    "TV29-JellyfinFiche.dc.html": {
+      "x": 0,
+      "y": 10800,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 29 · Fiche Jellyfin"
+    },
+    "TV30-DossiersLocaux.dc.html": {
+      "x": 2040,
+      "y": 10800,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 30 · Dossiers locaux"
+    },
+    "TV31-FicheLocale.dc.html": {
+      "x": 4080,
+      "y": 10800,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 31 · Fiche locale"
+    },
+    "TV32-ImportStremio.dc.html": {
+      "x": 0,
+      "y": 12000,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 32 · Import depuis un autre client"
+    },
+    "TV33-Sauvegarde.dc.html": {
+      "x": 2040,
+      "y": 12000,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 33 · Sauvegarde"
+    },
+    "TV34-APropos.dc.html": {
+      "x": 4080,
+      "y": 12000,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 34 · À propos"
+    },
+    "TV35-ProfilsGestion.dc.html": {
+      "x": 0,
+      "y": 13200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 35 · Gestion des profils"
+    },
+    "P01-PIN.dc.html": {
+      "x": 0,
+      "y": 14700,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 01 · PIN"
+    },
+    "P02-EditeurProfil.dc.html": {
+      "x": 2040,
+      "y": 14700,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 02 · Éditeur de profil"
+    },
+    "P03-Cast.dc.html": {
+      "x": 4080,
+      "y": 14700,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 03 · Diffusion"
+    },
+    "P04-AlerteIP.dc.html": {
+      "x": 0,
+      "y": 15900,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 04 · Alerte adresse IP"
+    },
+    "P05-ChargementTorrent.dc.html": {
+      "x": 2040,
+      "y": 15900,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 05 · Chargement torrent"
+    },
+    "P06-EpisodeSuivant.dc.html": {
+      "x": 4080,
+      "y": 15900,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 06 · Épisode suivant"
+    },
+    "P07-AjoutJellyfin.dc.html": {
+      "x": 0,
+      "y": 17100,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 07 · Ajout Jellyfin"
+    },
+    "P08-ChoixDossier.dc.html": {
+      "x": 2040,
+      "y": 17100,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 08 · Choix du dossier"
+    },
+    "P09-Confirmation.dc.html": {
+      "x": 4080,
+      "y": 17100,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 09 · Confirmation"
+    },
+    "P10-ErreurLecture.dc.html": {
+      "x": 0,
+      "y": 18300,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 10 · Erreur de lecture"
+    },
+    "P11-AucunFlux.dc.html": {
+      "x": 2040,
+      "y": 18300,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 11 · Aucun flux"
+    },
+    "P12-AddonHorsLigne.dc.html": {
+      "x": 4080,
+      "y": 18300,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 12 · Addon hors ligne"
+    },
+    "P13-SelecteurOption.dc.html": {
+      "x": 0,
+      "y": 19500,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 13 · Sélecteur d'option"
+    },
+    "P14-ImportSauvegarde.dc.html": {
+      "x": 2040,
+      "y": 19500,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 14 · Import de sauvegarde"
+    },
+    "TV40-FicheSerie.dc.html": {
+      "x": 0,
+      "y": 21000,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 40 · Fiche série · saisons et épisodes"
+    },
+    "TV41-MaListeVide.dc.html": {
+      "x": 2040,
+      "y": 21000,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 41 · Ma liste · vide"
+    },
+    "TV42-CalendrierVide.dc.html": {
+      "x": 4080,
+      "y": 21000,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 42 · Calendrier · aucune série ou aucune sortie"
+    },
+    "TV43-MenuAvatar.dc.html": {
+      "x": 0,
+      "y": 22200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 43 · Menu de l'avatar"
+    },
+    "TV44-AccueilEtats.dc.html": {
+      "x": 2040,
+      "y": 22200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 44 · Accueil · rangée en chargement et en échec"
+    },
+    "TV45-AccueilFiltre.dc.html": {
+      "x": 4080,
+      "y": 22200,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 45 · Accueil · profil enfant sans contenu adapté"
+    },
+    "TV46-RechercheEtats.dc.html": {
+      "x": 0,
+      "y": 23400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 46 · Recherche · saisie vide et aucun résultat"
+    },
+    "TV47-ReglagesGeneral.dc.html": {
+      "x": 2040,
+      "y": 23400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 47 · Réglages · Général"
+    },
+    "TV48-SuiviNonConfigure.dc.html": {
+      "x": 4080,
+      "y": 23400,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 48 · Suivi · non configuré"
+    },
+    "TV49-DossiersVide.dc.html": {
+      "x": 0,
+      "y": 24600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 49 · Dossiers locaux · vide et accès refusé"
+    },
+    "TV50-JellyfinVide.dc.html": {
+      "x": 2040,
+      "y": 24600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 50 · Jellyfin · aucun serveur"
+    },
+    "TV51-AddonsVide.dc.html": {
+      "x": 4080,
+      "y": 24600,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 51 · Addons · aucun addon et erreurs"
+    },
+    "TV52-AccueilMiseAJour.dc.html": {
+      "x": 0,
+      "y": 25800,
+      "w": 1920,
+      "h": 1080,
+      "title": "TV 52 · Accueil · mise à jour disponible"
+    },
+    "P20-CreationPIN.dc.html": {
+      "x": 2040,
+      "y": 25800,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 20 · Création du PIN"
+    },
+    "P21-CodeRecuperation.dc.html": {
+      "x": 4080,
+      "y": 25800,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 21 · Code de récupération"
+    },
+    "P22-PINParent.dc.html": {
+      "x": 0,
+      "y": 27000,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 22 · PIN parent"
+    },
+    "P23-SousTitresReglages.dc.html": {
+      "x": 2040,
+      "y": 27000,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 23 · Réglages des sous-titres"
+    },
+    "P24-ErreurFiche.dc.html": {
+      "x": 4080,
+      "y": 27000,
+      "w": 1920,
+      "h": 1080,
+      "title": "Pop-up 24 · Fiche indisponible"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "TV02-Profil.dc.html",
+    "TV03-Sources.dc.html",
+    "TV04-ChoixProfil.dc.html",
+    "TV05-Accueil.dc.html",
+    "TV06-Fiche.dc.html",
+    "TV07-Lecteur.dc.html",
+    "TV08-AjoutAddon.dc.html",
+    "TV09-Appairage.dc.html",
+    "TV10-Reglages.dc.html",
+    "TV12-Recherche.dc.html",
+    "TV13-AccueilVide.dc.html",
+    "TV14-ReglagesLecture.dc.html",
+    "TV15-ReglagesTorrents.dc.html",
+    "TV16-Catalogue.dc.html",
+    "M01-Accueil.dc.html",
+    "M02-Fiche.dc.html",
+    "M03-Ajout.dc.html",
+    "D01-Accueil.dc.html",
+    "M04-PageWebBox.dc.html",
+    "TV20-MaListe.dc.html",
+    "TV21-Calendrier.dc.html",
+    "TV22-PersonnaliserAccueil.dc.html",
+    "TV23-CompteSynchro.dc.html",
+    "TV24-PhraseSecrete.dc.html",
+    "TV25-Suivi.dc.html",
+    "TV26-TraktCode.dc.html",
+    "TV27-WatchParty.dc.html",
+    "TV28-Jellyfin.dc.html",
+    "TV29-JellyfinFiche.dc.html",
+    "TV30-DossiersLocaux.dc.html",
+    "TV31-FicheLocale.dc.html",
+    "TV32-ImportStremio.dc.html",
+    "TV33-Sauvegarde.dc.html",
+    "TV34-APropos.dc.html",
+    "TV35-ProfilsGestion.dc.html",
+    "P01-PIN.dc.html",
+    "P02-EditeurProfil.dc.html",
+    "P03-Cast.dc.html",
+    "P04-AlerteIP.dc.html",
+    "P05-ChargementTorrent.dc.html",
+    "P06-EpisodeSuivant.dc.html",
+    "P07-AjoutJellyfin.dc.html",
+    "P08-ChoixDossier.dc.html",
+    "P09-Confirmation.dc.html",
+    "P10-ErreurLecture.dc.html",
+    "P11-AucunFlux.dc.html",
+    "P12-AddonHorsLigne.dc.html",
+    "P13-SelecteurOption.dc.html",
+    "P14-ImportSauvegarde.dc.html",
+    "TV40-FicheSerie.dc.html",
+    "TV41-MaListeVide.dc.html",
+    "TV42-CalendrierVide.dc.html",
+    "TV43-MenuAvatar.dc.html",
+    "TV44-AccueilEtats.dc.html",
+    "TV45-AccueilFiltre.dc.html",
+    "TV46-RechercheEtats.dc.html",
+    "TV47-ReglagesGeneral.dc.html",
+    "TV48-SuiviNonConfigure.dc.html",
+    "TV49-DossiersVide.dc.html",
+    "TV50-JellyfinVide.dc.html",
+    "TV51-AddonsVide.dc.html",
+    "TV52-AccueilMiseAJour.dc.html",
+    "P20-CreationPIN.dc.html",
+    "P21-CodeRecuperation.dc.html",
+    "P22-PINParent.dc.html",
+    "P23-SousTitresReglages.dc.html",
+    "P24-ErreurFiche.dc.html"
+  ],
+  "notes": {
+    "t1": {
+      "x": 0,
+      "y": -300,
+      "text": "Lumio — TV 1920×1080 (texte min 24, focus 4 px ambre)",
+      "kind": "title1",
+      "maxW": 5920
+    },
+    "t2": {
+      "x": 0,
+      "y": 5700,
+      "text": "Téléphone et bureau",
+      "kind": "title1",
+      "maxW": 3320
+    },
+    "t3": {
+      "x": 0,
+      "y": 6900,
+      "text": "Écrans secondaires",
+      "kind": "title1",
+      "maxW": 5920
+    },
+    "t4": {
+      "x": 0,
+      "y": 14400,
+      "text": "Pop-ups et états",
+      "kind": "title1",
+      "maxW": 5920
+    },
+    "t5": {
+      "x": 0,
+      "y": 20700,
+      "text": "Audit · écrans ajoutés",
+      "kind": "title1",
+      "maxW": 5920
+    }
+  },
+  "designSystems": []
+}

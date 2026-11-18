@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Depuis le téléphone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box;padding:64px 96px}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.tab{display:inline-flex;align-items:center;height:64px;padding:0 32px;border-radius:32px;font-size:28px;font-weight:600;color:#A9B2BF;background:#161B22}
+.ton{background:#F3F5F7;color:#0E1116;font-weight:700}
+.st{display:flex;gap:24px;align-items:center;font-size:30px;line-height:1.3}
+.nb{width:60px;height:60px;border-radius:30px;background:#2A3340;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:30px;flex:none}
+.sm{font-size:24px;color:#A9B2BF}
+</style>
+</helmet>
+<div class="tv">
+<div style="font-size:26px;color:#A9B2BF">Réglages › Sources</div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;margin:8px 0 48px"><h1 class="hd" style="font-size:60px">Ajouter un addon</h1>
+<div style="display:flex;gap:12px"><span class="tab">Catalogue</span><span class="tab">Par lien</span><span class="tab ton">Depuis le téléphone</span></div></div>
+<div style="display:flex;gap:96px;align-items:center">
+<div style="width:560px;height:560px;border-radius:36px;background:#F3F5F7;padding:44px;box-sizing:border-box;flex:none">
+<svg width="472" height="472" viewBox="0 0 21 21" shape-rendering="crispEdges" role="img" aria-label="QR code de la page Lumio sur le réseau local"><rect width="21" height="21" fill="#F3F5F7"/><g fill="#0E1116"><path d="M0 0h7v7H0zM14 0h7v7h-7zM0 14h7v7H0z"/><path d="M2 2h3v3H2zM16 2h3v3h-3zM2 16h3v3H2z" fill="#F3F5F7"/><path d="M8 1h2v2H8zM10 4h2v2h-2zM8 8h2v2H8zM12 8h3v2h-3zM9 11h2v3H9zM12 12h2v2h-2zM15 11h3v2h-3zM16 14h2v3h-2zM13 16h2v2h-2zM9 16h2v3H9zM18 18h3v3h-3zM11 19h2v2h-2zM0 9h3v2H0zM4 9h2v3H4zM1 12h2v1H1z"/></g></svg></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:32px">
+<div class="st"><div class="nb">1</div><span>Téléphone sur le même Wi-Fi que la TV</span></div>
+<div class="st"><div class="nb">2</div><span>Scannez le code : la page Lumio de cette TV s'ouvre</span></div>
+<div class="st"><div class="nb">3</div><span>Collez un lien, puis confirmez ici sur la TV</span></div>
+<div style="background:#161B22;border-radius:24px;padding:24px 32px;font-size:26px;color:#A9B2BF">Ou tapez dans le navigateur du téléphone<div style="font-family:'Bricolage Grotesque';font-size:52px;font-weight:700;color:#FFB84D;margin-top:6px">192.168.0.45:8790</div><div style="margin-top:6px">Code de sécurité : <b style="color:#F3F5F7;letter-spacing:6px">482 913</b></div></div>
+<div style="display:flex;align-items:center;gap:14px" class="sm"><span style="width:14px;height:14px;border-radius:7px;background:#5BD68A"></span>Page ouverte tant que cet écran est affiché · aucun serveur externe</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

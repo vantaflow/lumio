@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Réglages sources</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.tv{width:1920px;height:1080px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:28px;position:relative;overflow:hidden;box-sizing:border-box;display:flex}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.rail{width:480px;padding:72px 32px 0 72px;box-sizing:border-box;background:#12171E;display:flex;flex-direction:column;gap:8px}
+.mi{height:76px;border-radius:18px;display:flex;align-items:center;gap:20px;padding:0 24px;font-size:28px;font-weight:600;color:#A9B2BF}
+.mi svg{flex:none}
+.on{background:#2A3340;color:#F3F5F7}
+.main{flex:1;padding:72px 96px 0 72px;box-sizing:border-box;display:flex;flex-direction:column}
+.sec{font-size:26px;font-weight:700;color:#4FD1C5;letter-spacing:1px;margin:0 0 16px}
+.ar{display:flex;align-items:center;gap:24px;height:112px;border-radius:22px;background:#161B22;padding:0 32px;box-sizing:border-box}
+.lg{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:32px;color:#0E1116;font-family:'Bricolage Grotesque';flex:none}
+.sm{font-size:24px;color:#A9B2BF}
+.hl{display:inline-flex;align-items:center;gap:10px;font-size:24px;font-weight:700;color:#C9D0DA}
+.hl b{width:14px;height:14px;border-radius:7px}
+.tg{width:84px;height:46px;border-radius:23px;position:relative;flex:none}
+.tg i{position:absolute;top:6px;width:34px;height:34px;border-radius:17px;background:#F3F5F7}
+.fx{outline:4px solid #FFE08A;outline-offset:4px;background:#2A3340}
+.tile{flex:1;height:150px;border-radius:22px;background:#161B22;padding:28px 32px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between}
+.btn{display:inline-flex;align-items:center;height:72px;padding:0 36px;border-radius:36px;background:#FFB84D;color:#1A1100;font-size:28px;font-weight:700;border:0;font-family:inherit}
+</style>
+</helmet>
+<div class="tv">
+<div class="rail">
+<h1 class="hd" style="font-size:48px;margin:0 0 32px 24px">Réglages</h1>
+<div class="mi on"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFB84D" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Sources</div>
+<div class="mi"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>Lecture</div>
+<div class="mi"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" aria-hidden="true"><path d="M5 20v-8a7 7 0 0114 0v8h-4v-8a3 3 0 00-6 0v8z"/></svg>Torrents et VPN</div>
+<div class="mi"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Profils et contrôle parental</div>
+<div class="mi"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" aria-hidden="true"><path d="M4 12a8 8 0 0114-5M20 12a8 8 0 01-14 5M18 3v4h-4M6 21v-4h4"/></svg>Compte et synchro</div>
+<div class="mi"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" aria-hidden="true"><path d="M4 18l5-6 4 4 7-9"/></svg>Suivi Trakt · Simkl</div>
+<div class="mi"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Sauvegarde et import</div>
+<div class="mi"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Général</div>
+</div>
+<div class="main">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:36px"><div><h2 class="hd" style="font-size:44px">Sources</h2><div class="sm" style="margin-top:6px">D'où viennent vos films et séries.</div></div><button class="btn">+ Ajouter un addon</button></div>
+<div class="sec">ADDONS · L'ORDRE DÉCIDE DE LA PRIORITÉ</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="ar fx"><div class="lg" style="background:#4FD1C5">S</div><div style="flex:1"><div style="font-size:30px;font-weight:700">Source Alpha</div><div class="sm">Catalogues · Flux · 62 ms</div></div><span class="hl"><b style="background:#5BD68A"></b>Bonne santé</span><div class="tg" style="background:#FFB84D"><i style="right:6px"></i></div></div>
+<div class="ar"><div class="lg" style="background:#FFB84D">D</div><div style="flex:1"><div style="font-size:30px;font-weight:700">Direct Plus</div><div class="sm">Flux · 1 840 ms</div></div><span class="hl"><b style="background:#FFB84D"></b>Lente</span><div class="tg" style="background:#FFB84D"><i style="right:6px"></i></div></div>
+<div class="ar"><div class="lg" style="background:#FF8A7A">C</div><div style="flex:1"><div style="font-size:30px;font-weight:700">Catalogue Libre</div><div class="sm">Catalogues · désactivé</div></div><span class="hl"><b style="background:#FF7A70"></b>Hors ligne</span><div class="tg" style="background:#3A4452"><i style="left:6px"></i></div></div>
+</div>
+<div class="sm" style="margin:14px 0 40px">OK sur un addon : monter, descendre, configurer, supprimer.</div>
+<div class="sec">MES SOURCES PERSONNELLES</div>
+<div style="display:flex;gap:24px">
+<div class="tile"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:30px;font-weight:700">Dossiers locaux</span><span class="sm">2 dossiers</span></div><div class="sm">/Films · /Séries — dernière analyse il y a 2 h</div></div>
+<div class="tile"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:30px;font-weight:700">Serveurs Jellyfin</span><span class="hl"><b style="background:#5BD68A"></b>Connecté</span></div><div class="sm">Salon · 1 284 titres</div></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>
