@@ -93,9 +93,16 @@ Future<int?> addLocalFolderFlow(BuildContext context, WidgetRef ref) async {
     if (path == null || path.trim().isEmpty) return null;
   }
   try {
-    final n = await ref.read(localLibraryProvider).addFolder(path!);
-    tell(l.localFolderAdded(n));
+    final library = ref.read(localLibraryProvider);
+    final n = await library.addFolder(path!);
+    tell(
+      library.isIncomplete(path)
+          ? l.localScanIncomplete
+          : l.localFolderAdded(n),
+    );
     return n;
+  } on LocalFolderForbiddenException {
+    tell(l.localFolderForbidden);
   } on LocalFolderOverlapException {
     tell(l.localFolderOverlap);
   } on LocalScanException catch (e) {
@@ -522,9 +529,20 @@ class _LocalFoldersScreenState extends ConsumerState<LocalFoldersScreen> {
       await ref.read(localLibraryProvider).rescanAll(force: true);
       final n =
           (await ref.read(localLibraryProvider).watchItems().first).length;
+      final library = ref.read(localLibraryProvider);
+      final incomplete = [
+        for (final f in await library.grantedFolders())
+          if (library.isIncomplete(f)) f,
+      ].isNotEmpty;
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l.localScanDone(n))));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              incomplete ? l.localScanIncomplete : l.localScanDone(n),
+            ),
+          ),
+        );
     } on Object {
       messenger
         ..hideCurrentSnackBar()

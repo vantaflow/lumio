@@ -51,7 +51,7 @@ void main() {
       expect(await old.select(old.localItems).get(), isEmpty);
       expect((await old.select(old.settings).get()).single.value, 'en');
       // Les nouvelles tables sont utilisables.
-      final l = LocalLibrary(old, scanner: (_) async => const []);
+      final l = LocalLibrary(old, scanner: (_) async => const ScanResult([]));
       expect(await l.addFolder(tmp.path), 0);
       expect(await l.grantedFolders(), [normalizeFolder(tmp.path)]);
     },
@@ -213,7 +213,7 @@ void main() {
         now: () => clock,
         scanner: (_) async {
           calls++;
-          return const [];
+          return const ScanResult([]);
         },
       );
       await counting.addFolder(tmp.path);
@@ -236,7 +236,7 @@ void main() {
           scanner: (_) async {
             calls++;
             await Future<void>.delayed(const Duration(milliseconds: 20));
-            return const [];
+            return const ScanResult([]);
           },
         );
         await db
@@ -265,6 +265,88 @@ void main() {
       );
       expect(visibleItems(previews, kid), isEmpty);
       expect(visibleItems(previews, null), hasLength(1));
+    });
+  });
+
+  group('plafonds et dossiers interdits', () {
+    test('plafond d\'entrées : résultat partiel marqué', () {
+      for (var i = 0; i < 30; i++) {
+        touch('d${i % 3}/f$i.mkv');
+      }
+      final r = scanLocalFolderResult(tmp.path, maxEntries: 10);
+      expect(r.truncated, isTrue);
+      expect(r.files.length, lessThan(30));
+      expect(scanLocalFolderResult(tmp.path).truncated, isFalse);
+      expect(scanLocalFolderResult(tmp.path).files, hasLength(30));
+    });
+
+    test('plafond de durée : résultat partiel marqué', () {
+      touch('a.mkv');
+      final r = scanLocalFolderResult(tmp.path, maxDuration: Duration.zero);
+      expect(r.truncated, isTrue);
+    });
+
+    test('analyse partielle signalée par la bibliothèque', () async {
+      touch('a.mkv');
+      final l = LocalLibrary(
+        db,
+        scanner: (d) async => ScanResult(scanLocalFolder(d), truncated: true),
+      );
+      await l.addFolder(tmp.path);
+      expect(l.isIncomplete(tmp.path), isTrue);
+      expect(await db.select(db.localItems).get(), hasLength(1));
+    });
+
+    test('dossiers système, racine et chemin relatif : refusés', () async {
+      for (final path in ['/', '/proc', '/sys/kernel', '/dev', '/etc', 'rel']) {
+        await expectLater(
+          lib.addFolder(path),
+          throwsA(isA<LocalFolderForbiddenException>()),
+          reason: path,
+        );
+      }
+      expect(await lib.grantedFolders(), isEmpty);
+    });
+
+    test('lien vers /etc : refusé après résolution', () async {
+      final l = Link(p.join(tmp.path, 'x'))..createSync('/etc');
+      await expectLater(
+        lib.addFolder(l.path),
+        throwsA(isA<LocalFolderForbiddenException>()),
+      );
+    });
+
+    test('Windows : racine de lecteur et dossier Windows interdits', () {
+      final win = p.Context(style: p.Style.windows);
+      for (final path in [
+        r'C:\',
+        r'D:\',
+        r'C:\Windows',
+        r'C:\Windows\System32',
+      ]) {
+        expect(isForbiddenFolder(path, context: win), isTrue, reason: path);
+      }
+      expect(isForbiddenFolder(r'D:\Films', context: win), isFalse);
+    });
+
+    test('recoupement détecté sur les chemins réels (lien)', () async {
+      touch('sub/a.mkv');
+      await lib.addFolder(tmp.path);
+      final other = Directory.systemTemp.createTempSync('lumio_lnk_');
+      addTearDown(() => other.deleteSync(recursive: true));
+      Link(p.join(other.path, 'alias')).createSync(p.join(tmp.path, 'sub'));
+      await expectLater(
+        lib.addFolder(p.join(other.path, 'alias')),
+        throwsA(isA<LocalFolderOverlapException>()),
+      );
+    });
+
+    test('lien vers un sous-dossier du dossier : pas de doublon', () {
+      touch('real/a.mkv');
+      Link(p.join(tmp.path, 'alias')).createSync(p.join(tmp.path, 'real'));
+      final files = scanLocalFolder(tmp.path);
+      expect(files, hasLength(1));
+      expect(files.single.path, endsWith('real/a.mkv'));
     });
   });
 }

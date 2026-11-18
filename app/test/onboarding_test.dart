@@ -262,7 +262,7 @@ void main() {
           localLibraryProvider.overrideWith((ref) {
             lib = LocalLibrary(
               ref.watch(appDatabaseProvider),
-              scanner: (_) async => const [],
+              scanner: (_) async => const ScanResult([]),
             );
             return lib;
           }),

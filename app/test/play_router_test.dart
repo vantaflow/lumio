@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:lumio/player/local_proxy.dart';
 import 'package:lumio/player/play_router.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -85,7 +88,11 @@ void main() {
         routePlayback(
           item('https://x/ignored'),
           proxy: () async => proxy,
-          local: LocalFileSource(path: path, grantedFolders: roots),
+          local: LocalFileSource(
+            path: path,
+            grantedFolders: roots,
+            checkReal: false,
+          ),
         );
 
     test('fichier dans un dossier accordé : file:// direct', () async {
@@ -137,5 +144,70 @@ void main() {
         );
       },
     );
+  });
+
+  group('LocalFileSource : chemins réels et style Windows', () {
+    test('lien déplacé après l\'analyse : refusé', () {
+      final root = Directory.systemTemp.createTempSync('lumio_rt_');
+      final outside = Directory.systemTemp.createTempSync('lumio_out_');
+      addTearDown(() {
+        root.deleteSync(recursive: true);
+        outside.deleteSync(recursive: true);
+      });
+      File('${outside.path}/secret.mkv').writeAsStringSync('x');
+      File('${root.path}/a.mkv').writeAsStringSync('x');
+      final link = '${root.path}/l.mkv';
+      Link(link).createSync('${root.path}/a.mkv');
+      LocalFileSource src() =>
+          LocalFileSource(path: link, grantedFolders: [root.path]);
+      expect(src().validate().scheme, 'file'); // cible dans le dossier
+      Link(link)
+        ..deleteSync()
+        ..createSync('${outside.path}/secret.mkv'); // lien rediriger
+      expect(src().validate, throwsA(isA<UnsafeUrlException>()));
+    });
+
+    test('fichier absent : refusé', () {
+      final root = Directory.systemTemp.createTempSync('lumio_rt_');
+      addTearDown(() => root.deleteSync(recursive: true));
+      expect(
+        LocalFileSource(
+          path: '${root.path}/nope.mkv',
+          grantedFolders: [root.path],
+        ).validate,
+        throwsA(isA<UnsafeUrlException>()),
+      );
+    });
+
+    final win = p.Context(style: p.Style.windows);
+    LocalFileSource w(String path, [String root = r'C:\Videos']) =>
+        LocalFileSource(
+          path: path,
+          grantedFolders: [root],
+          checkReal: false,
+          context: win,
+        );
+
+    test('Windows : lettre de lecteur, casse mixte, sous-dossier', () {
+      expect(w(r'C:\Videos\Sub\Film.MKV').validate().scheme, 'file');
+      expect(w(r'C:\Videos\a.mp4', r'c:\videos').validate().scheme, 'file');
+    });
+
+    test('Windows : slashs, traversée, autre lecteur, relatif : refusés', () {
+      for (final path in [
+        'C:/Videos/a.mkv',
+        r'C:\Videos\..\Other\a.mkv',
+        r'D:\Videos\a.mkv',
+        r'C:\Videos2\a.mkv',
+        r'Videos\a.mkv',
+        r'\\srv\share\a.mkv',
+      ]) {
+        expect(
+          w(path).validate,
+          throwsA(isA<UnsafeUrlException>()),
+          reason: path,
+        );
+      }
+    });
   });
 }

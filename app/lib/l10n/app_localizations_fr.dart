@@ -1756,4 +1756,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String localDetected(String title) {
     return 'Détecté : $title';
   }
+
+  @override
+  String get localScanIncomplete =>
+      'Analyse incomplète : dossier trop volumineux';
+
+  @override
+  String get localFolderForbidden =>
+      'Ce dossier ne peut pas être ajouté (dossier système ou chemin non absolu).';
 }

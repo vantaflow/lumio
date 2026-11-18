@@ -772,5 +772,7 @@
   "localFileMissing": "File not found: it may have been moved. Scan again.",
   "localPlayFailed": "This file cannot be played.",
   "localDetected": "Detected: {title}",
-  "@localDetected": {"placeholders": {"title": {"type": "String"}}}
+  "@localDetected": {"placeholders": {"title": {"type": "String"}}},
+  "localScanIncomplete": "Incomplete scan: folder too large",
+  "localFolderForbidden": "This folder cannot be added (system folder or non-absolute path)."
 }

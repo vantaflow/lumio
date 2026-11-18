@@ -1739,4 +1739,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String localDetected(String title) {
     return 'Detected: $title';
   }
+
+  @override
+  String get localScanIncomplete => 'Incomplete scan: folder too large';
+
+  @override
+  String get localFolderForbidden =>
+      'This folder cannot be added (system folder or non-absolute path).';
 }

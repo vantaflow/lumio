@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:lumio/player/local_proxy.dart';
 import 'package:path/path.dart' as p;
 import 'package:lumio_core/lumio_core.dart';
@@ -18,31 +20,66 @@ const localVideoExtensions = {'mkv', 'mp4', 'avi', 'm4v', 'ts', 'webm'};
 /// permet une lecture `file://`. Construit uniquement par l'écran local, à
 /// partir de la base des dossiers accordés ; jamais depuis un flux d'addon.
 class LocalFileSource {
-  const LocalFileSource({required this.path, required this.grantedFolders});
+  const LocalFileSource({
+    required this.path,
+    required this.grantedFolders,
+    this.checkReal = true,
+    this.context,
+  });
 
   final String path;
 
   /// Dossiers accordés (chemins absolus normalisés).
   final List<String> grantedFolders;
 
+  /// Vérifie aussi les chemins réels (liens résolus) : un lien déplacé après
+  /// l'analyse ne doit pas sortir des dossiers accordés. Désactivé seulement
+  /// dans les tests de chemins fictifs.
+  final bool checkReal;
+
+  /// Style de chemins (tests Windows) ; par défaut celui de la plateforme.
+  final p.Context? context;
+
+  p.Context get _ctx => context ?? p.context;
+
   /// URL `file://` du fichier ; lève [UnsafeUrlException] si le chemin n'est
-  /// pas absolu et normalisé, sort des dossiers accordés ou n'est pas une
-  /// vidéo reconnue.
+  /// pas absolu et normalisé, sort des dossiers accordés (chemin écrit, puis
+  /// chemin réel) ou n'est pas une vidéo reconnue.
   Uri validate() {
+    final c = _ctx;
     if (path.isEmpty ||
         path.contains('\u0000') ||
-        !p.isAbsolute(path) ||
-        p.normalize(path) != path) {
+        !c.isAbsolute(path) ||
+        c.normalize(path) != path) {
       throw const UnsafeUrlException('chemin local invalide');
     }
-    final ext = p.extension(path).replaceFirst('.', '').toLowerCase();
+    final ext = c.extension(path).replaceFirst('.', '').toLowerCase();
     if (!localVideoExtensions.contains(ext)) {
       throw const UnsafeUrlException('type de fichier local non autorisé');
     }
-    if (!grantedFolders.any((root) => p.isWithin(root, path))) {
+    if (!grantedFolders.any((root) => c.isWithin(root, path))) {
       throw const UnsafeUrlException('fichier hors des dossiers accordés');
     }
-    return Uri.file(path);
+    if (checkReal) _checkReal(c);
+    return Uri.file(path, windows: c.style == p.Style.windows);
+  }
+
+  void _checkReal(p.Context c) {
+    final String real;
+    try {
+      real = File(path).resolveSymbolicLinksSync();
+    } on FileSystemException {
+      throw const UnsafeUrlException('fichier local introuvable');
+    }
+    for (final root in grantedFolders) {
+      try {
+        final realRoot = Directory(root).resolveSymbolicLinksSync();
+        if (c.isWithin(realRoot, real)) return;
+      } on FileSystemException {
+        continue;
+      }
+    }
+    throw const UnsafeUrlException('fichier hors des dossiers accordés');
   }
 }
 

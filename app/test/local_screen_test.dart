@@ -69,7 +69,7 @@ class _H {
     db = AppDatabase(NativeDatabase.memory());
     library = LocalLibrary(
       db,
-      scanner: (d) async => [
+      scanner: (d) async => ScanResult([
         ScannedFile(
           path: p.join(d, 'xyz_123.mp4'),
           fileName: 'xyz_123.mp4',
@@ -77,7 +77,7 @@ class _H {
           sizeBytes: 1,
           modifiedAt: 0,
         ),
-      ],
+      ]),
     );
     container = ProviderContainer(
       overrides: [

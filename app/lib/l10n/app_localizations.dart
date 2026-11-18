@@ -3025,6 +3025,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Détecté : {title}'**
   String localDetected(String title);
+
+  /// No description provided for @localScanIncomplete.
+  ///
+  /// In fr, this message translates to:
+  /// **'Analyse incomplète : dossier trop volumineux'**
+  String get localScanIncomplete;
+
+  /// No description provided for @localFolderForbidden.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce dossier ne peut pas être ajouté (dossier système ou chemin non absolu).'**
+  String get localFolderForbidden;
 }
 
 class _AppLocalizationsDelegate

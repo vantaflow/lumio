@@ -1001,5 +1001,7 @@
   "localFileMissing": "Fichier introuvable : il a peut-être été déplacé. Relancez l'analyse.",
   "localPlayFailed": "Impossible de lire ce fichier.",
   "localDetected": "Détecté : {title}",
-  "@localDetected": {"placeholders": {"title": {"type": "String"}}}
+  "@localDetected": {"placeholders": {"title": {"type": "String"}}},
+  "localScanIncomplete": "Analyse incomplète : dossier trop volumineux",
+  "localFolderForbidden": "Ce dossier ne peut pas être ajouté (dossier système ou chemin non absolu)."
 }
