@@ -40,6 +40,21 @@ void main() {
       expect(saved, hasLength(2));
     });
 
+    test('échecs d\'écriture : une seule alerte après 3 échecs', () async {
+      var notices = 0;
+      final failing = ProgressRecorder(
+        save: (pos, d) async => throw StateError('disque plein'),
+        onError: () => notices++,
+        now: () => clock,
+      );
+      for (var i = 1; i <= 5; i++) {
+        clock = clock.add(const Duration(seconds: 11));
+        failing.tick(Duration(seconds: i), dur);
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(notices, 1);
+    });
+
     test('sortie forcée, mais jamais position 0 ni durée inconnue', () {
       rec.flush(const Duration(seconds: 3), dur, force: true);
       rec.flush(const Duration(seconds: 4), dur, force: true);
@@ -158,6 +173,15 @@ void main() {
     final list = await repo.continueWatching('p').first;
     expect(list.single.videoId, 's:1:2');
     expect(list.single.position, _min * 30);
+  });
+
+  test('suivant déjà vu : jamais réinitialisé', () async {
+    await save('s', 's:1:2', 95);
+    await save('s', 's:1:1', 95, next: 's:1:2');
+    final e = (await repo.get('p', 's:1:2'))!;
+    expect(e.watched, isTrue);
+    expect(e.position, _min * 95);
+    expect(await repo.continueWatching('p').first, isEmpty);
   });
 
   test('au plus 20 entrées, profils isolés, flux mis à jour', () async {

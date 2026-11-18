@@ -266,7 +266,10 @@ class PlayerController {
     final p = player.platform;
     if (p is! NativePlayer) return null;
     try {
-      return parseCreditsStart(await p.getProperty('chapter-list'));
+      return parseCreditsStart(
+        await p.getProperty('chapter-list'),
+        duration: state.duration,
+      );
     } on Object {
       return null;
     }

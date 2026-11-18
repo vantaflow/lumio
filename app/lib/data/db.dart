@@ -113,6 +113,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 3) {
         await m.addColumn(progress, progress.metaId);
         await m.addColumn(progress, progress.watched);
+        // Lignes antérieures : vu à 90 % ou plus.
+        await customStatement(
+          'UPDATE progress SET watched = 1 '
+          'WHERE duration_ms > 0 AND position_ms * 10 >= duration_ms * 9',
+        );
       }
     },
     beforeOpen: (details) async {

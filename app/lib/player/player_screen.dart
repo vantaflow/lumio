@@ -153,6 +153,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   late String _title = widget.item.title;
   ProgressRecorder? _recorder;
   Duration? _credits;
+  bool _creditsRead = false;
   bool _offerDone = false;
   bool _showNext = false;
   bool _switching = false;
@@ -173,6 +174,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     // Lu ici : `ref` n'est plus utilisable quand dispose() écrit la sortie.
     final repo = ref.read(progressRepositoryProvider);
     return ProgressRecorder(
+      onError: () => _tell('Progression non enregistrée'),
       save: (pos, dur) => repo.save(
         widget.profileId,
         metaId,
@@ -204,9 +206,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     if (_disposed) return;
     if (start > Duration.zero) _tell('Reprise à ${formatClock(start)}');
     await _ctl.open(item, allowPrivate: widget.allowPrivate, start: start);
-    unawaited(_loadCredits());
   }
 
+  /// Lit les chapitres une fois la durée connue (pas avant : le filtre des
+  /// génériques d'ouverture en dépend).
   Future<void> _loadCredits() async {
     if (_next == null) return;
     try {
@@ -328,7 +331,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final p = st.phase;
     if (p == PlayerPhase.playing) {
       _recorder?.tick(st.position, st.duration);
+      if (!_creditsRead && st.duration > Duration.zero) {
+        _creditsRead = true;
+        unawaited(_loadCredits());
+      }
       _maybeOfferNext(st);
+    }
+    // Retour en arrière avant le point de déclenchement : l'invite s'efface
+    // (elle pourra revenir).
+    if (_showNext &&
+        !_switching &&
+        p != PlayerPhase.ended &&
+        !shouldOfferNext(st.position, st.duration, creditsStart: _credits)) {
+      _showNext = false;
+      _offerDone = false;
+      setState(() {});
     }
     if (p == _lastPhase) return;
     _lastPhase = p;
@@ -371,7 +388,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _root.requestFocus();
   }
 
-  /// Marque l'épisode comme vu s'il l'est (≥ 90 %), résout et ouvre le
+  /// « Lire maintenant » (ou fin du décompte) marque l'épisode courant comme
+  /// vu (écrit à sa durée) : l'utilisateur passe à la suite. Le suivant n'est
+  /// ajouté à « Continuer » que s'il n'a aucune progression ; un suivant déjà
+  /// vu n'est jamais réinitialisé. Résout et ouvre le
   /// suivant ; sans flux, message et lecture en cours conservée.
   Future<void> _playNext() async {
     final next = _next;
@@ -401,6 +421,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       _title = item!.title;
       _offerDone = false;
       _credits = null;
+      _creditsRead = false;
       _recorder = _newRecorder();
     });
     _switching = false;
@@ -542,6 +563,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 if (_showNext && !failed && _next != null)
                   NextEpisodeOverlay(
                     key: ValueKey(_videoId),
+                    paused: st.phase == PlayerPhase.paused,
                     episodeTitle: _next!.title,
                     onPlayNow: () => unawaited(_playNext()),
                     onCancel: _cancelNext,

@@ -97,19 +97,76 @@ void main() {
     );
   });
 
-  test('parseCreditsStart : chapitre Credits ou Générique', () {
+  test('shouldOfferNext : vidéo courte, position 0, avant 60 %', () {
+    const short = Duration(seconds: 20);
+    expect(shouldOfferNext(Duration.zero, short), isFalse);
+    expect(shouldOfferNext(const Duration(seconds: 15), short), isFalse);
+    const forty = Duration(seconds: 40);
+    expect(shouldOfferNext(const Duration(seconds: 15), forty), isFalse);
+    expect(shouldOfferNext(const Duration(seconds: 25), forty), isTrue);
+    // Chapitre trop tôt : borné à 60 %.
     expect(
-      parseCreditsStart(
-        '[{"title":"Intro","time":0.0},{"title":"Credits","time":2400.5}]',
+      shouldOfferNext(
+        const Duration(minutes: 10),
+        const Duration(minutes: 40),
+        creditsStart: const Duration(minutes: 5),
       ),
-      const Duration(milliseconds: 2400500),
+      isFalse,
     );
-    expect(
-      parseCreditsStart('[{"title":"Générique de fin","time":60}]'),
-      const Duration(minutes: 1),
-    );
-    expect(parseCreditsStart('[{"title":"Intro","time":0}]'), isNull);
-    expect(parseCreditsStart('pas du json'), isNull);
+  });
+
+  group('parseCreditsStart', () {
+    const dur = Duration(minutes: 40);
+    test('Credits en fin d\'épisode', () {
+      expect(
+        parseCreditsStart(
+          '[{"title":"Intro","time":0.0},{"title":"Credits","time":2400.5}]',
+          duration: const Duration(minutes: 45),
+        ),
+        const Duration(milliseconds: 2400500),
+      );
+      expect(
+        parseCreditsStart(
+          '[{"title":"Générique de fin","time":2300}]',
+          duration: dur,
+        ),
+        const Duration(seconds: 2300),
+      );
+    });
+    test('« Opening Credits » et génériques d\'ouverture ignorés', () {
+      expect(
+        parseCreditsStart(
+          '[{"title":"Opening Credits","time":0},'
+          '{"title":"Générique d\'ouverture","time":5},'
+          '{"title":"Générique de début","time":10}]',
+          duration: dur,
+        ),
+        isNull,
+      );
+    });
+    test('avant 50 % ignoré ; titre « de fin » préféré', () {
+      expect(
+        parseCreditsStart('[{"title":"Credits","time":600}]', duration: dur),
+        isNull,
+      );
+      expect(
+        parseCreditsStart(
+          '[{"title":"Credits","time":1300},{"title":"End Credits","time":2300}]',
+          duration: dur,
+        ),
+        const Duration(seconds: 2300),
+      );
+    });
+    test('durée inconnue ou JSON illisible : null', () {
+      expect(
+        parseCreditsStart(
+          '[{"title":"Credits","time":2300}]',
+          duration: Duration.zero,
+        ),
+        isNull,
+      );
+      expect(parseCreditsStart('pas du json', duration: dur), isNull);
+    });
   });
 
   testWidgets('décompte de 10 s puis lancement automatique', (t) async {
@@ -129,6 +186,27 @@ void main() {
     await t.pump(const Duration(seconds: 6));
     expect(played, 1);
     await t.pump(const Duration(seconds: 5));
+    expect(played, 1);
+  });
+
+  testWidgets('le décompte est suspendu en pause', (t) async {
+    var played = 0;
+    Widget build(bool paused) => host(
+      NextEpisodeOverlay(
+        episodeTitle: 'E2',
+        paused: paused,
+        onPlayNow: () => played++,
+        onCancel: () {},
+      ),
+    );
+    await t.pumpWidget(build(false));
+    await t.pump(const Duration(seconds: 3));
+    await t.pumpWidget(build(true));
+    await t.pump(const Duration(seconds: 20));
+    expect(played, 0);
+    expect(find.text('Épisode suivant dans 7 s'), findsOneWidget);
+    await t.pumpWidget(build(false));
+    await t.pump(const Duration(seconds: 7));
     expect(played, 1);
   });
 
@@ -300,6 +378,45 @@ void main() {
       await t.pump();
       expect(find.text('Lire maintenant'), findsNothing);
       expect(ctl.opened, hasLength(1));
+      await leave(t);
+    });
+
+    testWidgets('retour en arrière avant le déclenchement : invite effacée', (
+      t,
+    ) async {
+      await pumpScreen(t, resolve: (v) async => fail('résolu'));
+      ctl.emit(
+        const PlayerState(
+          phase: PlayerPhase.playing,
+          position: Duration(minutes: 39, seconds: 40),
+          duration: Duration(minutes: 40),
+        ),
+      );
+      await t.pump();
+      expect(find.text('Lire maintenant'), findsOneWidget);
+      ctl.emit(
+        const PlayerState(
+          phase: PlayerPhase.playing,
+          position: Duration(minutes: 20),
+          duration: Duration(minutes: 40),
+        ),
+      );
+      await t.pump();
+      expect(find.text('Lire maintenant'), findsNothing);
+      await leave(t);
+    });
+
+    testWidgets('vidéo de 20 s : jamais d\'invite', (t) async {
+      await pumpScreen(t, resolve: (v) async => fail('résolu'));
+      ctl.emit(
+        const PlayerState(
+          phase: PlayerPhase.playing,
+          position: Duration(seconds: 1),
+          duration: Duration(seconds: 20),
+        ),
+      );
+      await t.pump();
+      expect(find.text('Lire maintenant'), findsNothing);
       await leave(t);
     });
 

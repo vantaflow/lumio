@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:lumio/data/db.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -74,13 +75,18 @@ class ProgressRepository {
                     t.itemId.equals(nextVideoId),
               ))
               .getSingleOrNull();
-      // +1 ms : l'épisode suivant passe devant celui qui vient de finir.
-      if (existing != null && !existing.watched) {
-        await (_db.update(_db.progress)..where(
-              (t) =>
-                  t.profileId.equals(profileId) & t.itemId.equals(nextVideoId),
-            ))
-            .write(ProgressCompanion(updatedAt: Value(stamp + 1)));
+      // Le suivant n'est créé que s'il n'a aucune ligne. Entamé : sa
+      // progression est gardée et il passe devant (+1 ms) l'épisode qui vient
+      // de finir. Déjà vu (revisionnage) : on n'y touche pas.
+      if (existing != null) {
+        if (!existing.watched) {
+          await (_db.update(_db.progress)..where(
+                (t) =>
+                    t.profileId.equals(profileId) &
+                    t.itemId.equals(nextVideoId),
+              ))
+              .write(ProgressCompanion(updatedAt: Value(stamp + 1)));
+        }
         return;
       }
       await _db
@@ -160,6 +166,7 @@ class ProgressRecorder {
     required this.save,
     this.interval = const Duration(seconds: 10),
     this.minGap = const Duration(seconds: 1),
+    this.onError,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now {
     // Pas d'écriture avant [interval] : le début de lecture (position encore
@@ -171,6 +178,12 @@ class ProgressRecorder {
   final Future<void> Function(Duration pos, Duration dur) save;
   final Duration interval;
   final Duration minGap;
+
+  /// Appelée une seule fois après [failuresBeforeNotice] échecs consécutifs.
+  final void Function()? onError;
+  static const failuresBeforeNotice = 3;
+  int _failures = 0;
+  bool _noticed = false;
   final DateTime Function() _now;
 
   DateTime? _last;
@@ -194,6 +207,18 @@ class ProgressRecorder {
 
   void _write(Duration pos, Duration dur) {
     _last = _now();
-    unawaited(save(pos, dur).catchError((Object _) {}));
+    unawaited(
+      save(pos, dur).then(
+        (_) => _failures = 0,
+        onError: (Object e) {
+          // Pas d'URL ni de jeton ici : seulement le type de l'erreur.
+          debugPrint('Progression non enregistrée (${e.runtimeType})');
+          if (++_failures >= failuresBeforeNotice && !_noticed) {
+            _noticed = true;
+            onError?.call();
+          }
+        },
+      ),
+    );
   }
 }

@@ -10,33 +10,61 @@ const nextEpisodeLead = Duration(seconds: 30);
 /// Durée du décompte avant le lancement automatique.
 const nextEpisodeCountdown = Duration(seconds: 10);
 
+/// Part minimale de la durée avant laquelle on ne propose jamais la suite.
+const nextEpisodeMinFraction = 0.6;
+
 /// L'invite s'affiche à 30 s de la fin, ou au début du générique si le
-/// chapitre est connu. Jamais sans durée connue.
+/// chapitre est connu, mais jamais sans durée connue, sur une vidéo de 30 s
+/// ou moins, à la position 0, ni avant 60 % de la durée.
 bool shouldOfferNext(Duration pos, Duration dur, {Duration? creditsStart}) {
-  if (dur <= Duration.zero) return false;
-  final at = creditsStart ?? (dur - nextEpisodeLead);
+  if (dur <= nextEpisodeLead || pos <= Duration.zero) return false;
+  final floor = dur * nextEpisodeMinFraction;
+  var at = creditsStart ?? (dur - nextEpisodeLead);
+  if (at < floor) at = floor;
   return pos >= at;
 }
 
-/// Début du premier chapitre intitulé « Credits » ou « Générique » dans la
-/// liste de chapitres mpv (JSON `[{"title": "...", "time": 12.5}]`).
-Duration? parseCreditsStart(String json) {
+const _creditsWords = ['credits', 'crédits', 'générique', 'generique', 'outro'];
+const _openingWords = [
+  'opening',
+  'ouverture',
+  'début',
+  'debut',
+  'intro',
+  'start',
+  'recap',
+  'récap',
+];
+const _endWords = ['end', 'fin', 'outro', 'closing'];
+
+/// Début du chapitre de générique de fin dans la liste de chapitres mpv
+/// (JSON `[{"title": "...", "time": 12.5}]`). Ignore les génériques
+/// d'ouverture et tout chapitre commençant avant 50 % de [duration] ; préfère
+/// un titre « de fin » / « end » / « outro ».
+Duration? parseCreditsStart(String json, {required Duration duration}) {
+  if (duration <= Duration.zero) return null;
   try {
     final data = jsonDecode(json);
     if (data is! List) return null;
+    Duration? preferred;
+    Duration? any;
     for (final c in data) {
       if (c is! Map) continue;
       final title = c['title'];
       final time = c['time'];
       if (title is! String || time is! num) continue;
       final t = title.toLowerCase();
-      if (t.contains('credits') ||
-          t.contains('crédits') ||
-          t.contains('générique') ||
-          t.contains('generique')) {
-        return Duration(milliseconds: (time * 1000).round());
+      if (!_creditsWords.any(t.contains)) continue;
+      if (_openingWords.any(t.contains)) continue;
+      final at = Duration(milliseconds: (time * 1000).round());
+      if (at < duration * 0.5) continue;
+      if (_endWords.any(t.contains)) {
+        if (preferred == null || at < preferred) preferred = at;
+      } else if (any == null || at < any) {
+        any = at;
       }
     }
+    return preferred ?? any;
   } on Object {
     // Liste illisible : on retombe sur « 30 s avant la fin ».
   }
@@ -51,6 +79,7 @@ class NextEpisodeOverlay extends StatefulWidget {
     required this.onPlayNow,
     required this.onCancel,
     this.countdown = nextEpisodeCountdown,
+    this.paused = false,
     super.key,
   });
 
@@ -58,6 +87,9 @@ class NextEpisodeOverlay extends StatefulWidget {
   final VoidCallback onPlayNow;
   final VoidCallback onCancel;
   final Duration countdown;
+
+  /// Lecture en pause : le décompte est suspendu.
+  final bool paused;
 
   @override
   State<NextEpisodeOverlay> createState() => _NextEpisodeOverlayState();
@@ -78,6 +110,7 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
       if (mounted) _playNode.requestFocus();
     });
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (widget.paused) return;
       if (_left <= 1) {
         _fire(widget.onPlayNow);
       } else {
