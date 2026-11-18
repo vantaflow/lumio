@@ -8,3 +8,7 @@ node_modules/
 .wrangler/
 .flutter-plugins*
 .superpowers/
+app/build/
+packages/*/.dart_tool/
+.gradle/
+local.properties

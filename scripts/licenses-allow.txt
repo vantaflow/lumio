@@ -1,0 +1,12 @@
+# Licences acceptées (identifiants SPDX, un par ligne, comparaison sans casse).
+# Toute licence AGPL est refusée quoi qu'il arrive. Toute licence absente de
+# cette liste fait échouer scripts/check-licenses.sh.
+MIT
+BSD-2-Clause
+BSD-3-Clause
+Apache-2.0
+MPL-2.0
+Zlib
+ISC
+GPL-3.0
+LGPL
