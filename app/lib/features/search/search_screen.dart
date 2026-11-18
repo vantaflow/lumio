@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/home_screen.dart';
@@ -25,7 +26,10 @@ enum _TypeFilter { all, movie, series }
 
 /// Recherche unifiée (story 3.2) : clavier D-pad à gauche, résultats à droite.
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key, this.onOpenItem});
+  const SearchScreen({super.key, this.onOpenItem, this.tvLayout});
+
+  /// Force la disposition TV (tests) ; sinon détectée par `isTvLayout`.
+  final bool? tvLayout;
 
   final void Function(MetaPreview item)? onOpenItem;
 
@@ -118,22 +122,28 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
+    final tv = isTvLayout(context, override: widget.tvLayout);
     return TvScaffold(
-      child: Scaffold(
-        backgroundColor: lumio.bg,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: LumioSpacing.xl,
-              vertical: LumioSpacing.lg,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(width: 520, child: _keyboardPane(context)),
-                const SizedBox(width: LumioSpacing.xl),
-                Expanded(child: _resultsPane(context)),
-              ],
+      child: Focus(
+        canRequestFocus: false,
+        skipTraversal: true,
+        onKeyEvent: tv ? _onPhysicalKey : null,
+        child: Scaffold(
+          backgroundColor: lumio.bg,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: LumioSpacing.xl,
+                vertical: LumioSpacing.lg,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(width: 520, child: _keyboardPane(context)),
+                  const SizedBox(width: LumioSpacing.xl),
+                  Expanded(child: _resultsPane(context)),
+                ],
+              ),
             ),
           ),
         ),
@@ -141,9 +151,28 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  /// Clavier physique (USB/BT) sur TV : lettres, chiffres, espace, retour
+  /// arrière s'ajoutent à la requête.
+  KeyEventResult _onPhysicalKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+      _backspace();
+      return KeyEventResult.handled;
+    }
+    final c = event.character;
+    if (c != null &&
+        c.runes.length == 1 &&
+        RegExp(r'^[\p{L}\p{N} ]$', unicode: true).hasMatch(c)) {
+      _type(c);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
   Widget _keyboardPane(BuildContext context) {
     final lumio = context.lumio;
     final keys = _arabic ? _arabicKeys : _latinKeys;
+    final tv = isTvLayout(context, override: widget.tvLayout);
     return FocusTraversalGroup(
       child: SingleChildScrollView(
         child: Column(
@@ -151,10 +180,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           children: [
             TextField(
               controller: _controller,
-              readOnly: true,
-              canRequestFocus: false,
-              showCursor: false,
-              enableInteractiveSelection: false,
+              // TV : simple affichage (saisie par le clavier à l'écran) ;
+              // téléphone et bureau : champ normal (IME, clavier physique).
+              readOnly: tv,
+              canRequestFocus: !tv,
+              showCursor: !tv,
+              enableInteractiveSelection: !tv,
+              onChanged: tv
+                  ? null
+                  : (t) => ref.read(searchProvider.notifier).setQuery(t),
               style: Theme.of(context).textTheme.titleLarge,
               decoration: InputDecoration(
                 hintText: 'Rechercher un titre',

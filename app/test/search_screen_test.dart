@@ -111,6 +111,7 @@ Future<_FakeSearch> _pump(
   List<InstalledAddon>? addons,
   void Function(MetaPreview)? onOpen,
   String? remembered,
+  bool tv = true,
 }) async {
   t.view.physicalSize = const Size(1920, 1080);
   t.view.devicePixelRatio = 1;
@@ -138,7 +139,7 @@ Future<_FakeSearch> _pump(
       ],
       child: MaterialApp(
         theme: LumioTheme.dark(),
-        home: SearchScreen(onOpenItem: onOpen),
+        home: SearchScreen(onOpenItem: onOpen, tvLayout: tv),
       ),
     ),
   );
@@ -376,6 +377,31 @@ void main() {
       findsWidgets,
     );
     await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('TV : le champ n\'est pas focalisable', (t) async {
+    await _pump(t);
+    final f = t.widget<TextField>(find.byType(TextField));
+    expect(f.readOnly, isTrue);
+    expect(f.canRequestFocus, isFalse);
+  });
+
+  testWidgets('téléphone : la saisie met à jour la requête', (t) async {
+    final s = await _pump(t, tv: false);
+    await t.enterText(find.byType(TextField), 'matrix');
+    await t.pump(searchDebounce);
+    expect(s.queries, ['matrix']);
+  });
+
+  testWidgets('TV : clavier physique ajoute des lettres', (t) async {
+    final s = await _pump(t);
+    await t.sendKeyEvent(LogicalKeyboardKey.keyA, character: 'a');
+    await t.sendKeyEvent(LogicalKeyboardKey.keyB, character: 'b');
+    await t.pump(searchDebounce);
+    expect(s.queries, ['ab']);
+    await t.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await t.pump(searchDebounce);
+    expect(s.queries, ['ab', 'a']);
   });
 
   testWidgets('abonnement au service annulé à la fermeture', (t) async {

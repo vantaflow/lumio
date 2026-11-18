@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 /// Retour (touche Retour / Échap / bouton B de manette).
@@ -90,4 +91,19 @@ class BackGuard extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// Vrai pour une disposition télévision : grand écran (plus petit côté
+/// >= 720 dp), hors ordinateur, sans souris branchée. [override] sert aux
+/// tests.
+bool isTvLayout(BuildContext context, {bool? override}) {
+  if (override != null) return override;
+  final platform = Theme.of(context).platform;
+  if (platform == TargetPlatform.macOS ||
+      platform == TargetPlatform.windows ||
+      platform == TargetPlatform.linux) {
+    return false;
+  }
+  if (MediaQuery.sizeOf(context).shortestSide < 720) return false;
+  return !RendererBinding.instance.mouseTracker.mouseIsConnected;
 }
