@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:lumio/l10n/app_localizations.dart';
+import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/player/local_proxy.dart';
 import 'package:lumio/player/play_router.dart';
 import 'package:lumio/player/playback_report.dart';
@@ -64,7 +66,9 @@ class PlayerController {
     required Future<LocalProxy> Function() proxy,
     Player? player,
     this.stallTimeout = const Duration(seconds: 25),
-  }) : _proxy = proxy,
+    AppLocalizations? l10n,
+  }) : l10n = l10n ?? AppLocalizationsFr(),
+       _proxy = proxy,
        player = player ?? Player() {
     video = VideoController(this.player);
     _subs.addAll([
@@ -100,6 +104,9 @@ class PlayerController {
   final Player player;
   late final VideoController video;
   final Future<LocalProxy> Function() _proxy;
+
+  /// Textes des messages d'erreur ; mis à jour par l'écran selon la langue.
+  AppLocalizations l10n;
 
   /// Durée de mise en mémoire tampon continue avant de proposer une erreur.
   final Duration stallTimeout;
@@ -153,7 +160,7 @@ class PlayerController {
     _set(PlayerState(phase: PlayerPhase.opening, volume: state.volume));
     final url = s.url;
     if (url == null || s.isTorrent) {
-      _fail('Ce flux passe par un torrent : il n\'est pas lisible ici.');
+      _fail(l10n.torrentNotPlayable);
       return;
     }
     try {
@@ -176,7 +183,14 @@ class PlayerController {
       );
       _armStall();
     } catch (e) {
-      _fail(explainFailure(e, httpStatus: _lastStatus, refused: _refused));
+      _fail(
+        explainFailure(
+          e,
+          httpStatus: _lastStatus,
+          refused: _refused,
+          l10n: l10n,
+        ),
+      );
     }
   }
 
@@ -208,7 +222,14 @@ class PlayerController {
   void _onEngineError(String message) {
     // Le moteur signale aussi des avertissements bénins après une image.
     if (_opened && message.isEmpty) return;
-    _fail(explainFailure(message, httpStatus: _lastStatus, refused: _refused));
+    _fail(
+      explainFailure(
+        message,
+        httpStatus: _lastStatus,
+        refused: _refused,
+        l10n: l10n,
+      ),
+    );
   }
 
   void _fail(String message) {
@@ -236,7 +257,11 @@ class PlayerController {
     _stall = Timer(stallTimeout, () {
       if (_buffering || !_opened) {
         _fail(
-          explainFailure(TimeoutException('stall'), httpStatus: _lastStatus),
+          explainFailure(
+            TimeoutException('stall'),
+            httpStatus: _lastStatus,
+            l10n: l10n,
+          ),
         );
       }
     });

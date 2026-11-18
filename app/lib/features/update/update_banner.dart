@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/config.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -70,15 +71,15 @@ class _UpdateBannerState extends State<UpdateBanner> {
     final m = _update;
     if (m == null || _dismissed) return const SizedBox.shrink();
     return MaterialBanner(
-      content: Text('Mise à jour disponible : version ${m.version}'),
+      content: Text(context.l10n.updateAvailable(m.version)),
       leading: const Icon(Icons.system_update),
       actions: [
         TextButton(
           onPressed: () => _open(m.apkUrl),
-          child: const Text('Télécharger'),
+          child: Text(context.l10n.download),
         ),
         IconButton(
-          tooltip: 'Fermer',
+          tooltip: context.l10n.close,
           icon: const Icon(Icons.close),
           onPressed: () => setState(() => _dismissed = true),
         ),

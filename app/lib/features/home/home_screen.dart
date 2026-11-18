@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
 import 'package:lumio/features/library/library_screen.dart';
 import 'package:lumio/features/search/search_screen.dart';
+import 'package:lumio/features/settings/settings_screen.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
@@ -13,6 +15,7 @@ import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/update/update_banner.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
@@ -27,11 +30,14 @@ const _posterHeight = 270.0;
 const _continueWidth = 320.0;
 const _continueHeight = 180.0;
 
-String sourceLabel(String kind) => switch (kind) {
-  'local' => 'Local',
-  'jellyfin' => 'Jellyfin',
-  _ => 'addon',
-};
+String sourceLabel(String kind, [AppLocalizations? l]) {
+  l ??= AppLocalizationsFr();
+  return switch (kind) {
+    'local' => l.sourceLocal,
+    'jellyfin' => 'Jellyfin',
+    _ => l.sourceAddon,
+  };
+}
 
 /// Accueil : barre haute, « Continuer », « Ma liste », puis les catalogues des
 /// addons actifs (story 3.1).
@@ -88,6 +94,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Depuis un écran poussé : la fiche s'ouvre par-dessus cet écran.
   void _openFrom(MetaPreview item) => _open(item);
 
+  Future<void> _openSettings() => openSettings(context, ref);
+
   Future<void> _openEditor() => Navigator.of(
     context,
   ).push(MaterialPageRoute<void>(builder: (_) => const RowEditorScreen()));
@@ -121,6 +129,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onCustomize: _openEditor,
                     onSearch: _openSearch,
                     onLibrary: _openLibrary,
+                    onSettings: _openSettings,
                   ),
                 ),
                 Expanded(
@@ -144,12 +153,14 @@ class _TopBar extends StatelessWidget {
     required this.onCustomize,
     required this.onSearch,
     required this.onLibrary,
+    required this.onSettings,
   });
 
   final FocusNode customizeNode;
   final VoidCallback onCustomize;
   final VoidCallback onSearch;
   final VoidCallback onLibrary;
+  final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -176,20 +187,27 @@ class _TopBar extends StatelessWidget {
           TextButton.icon(
             onPressed: onSearch,
             icon: const Icon(Icons.search),
-            label: const Text('Recherche'),
+            label: Text(context.l10n.homeSearch),
           ),
           const SizedBox(width: LumioSpacing.sm),
           TextButton.icon(
             onPressed: onLibrary,
             icon: const Icon(Icons.bookmark_border),
-            label: const Text('Gérer ma liste'),
+            label: Text(context.l10n.homeManageList),
           ),
           const SizedBox(width: LumioSpacing.sm),
           TextButton.icon(
             focusNode: customizeNode,
             onPressed: onCustomize,
             icon: const Icon(Icons.tune),
-            label: const Text('Personnaliser'),
+            label: Text(context.l10n.homeCustomize),
+          ),
+          const SizedBox(width: LumioSpacing.sm),
+          TextButton.icon(
+            key: const ValueKey('home-settings'),
+            onPressed: onSettings,
+            icon: const Icon(Icons.settings_outlined),
+            label: Text(context.l10n.homeSettings),
           ),
           const SizedBox(width: LumioSpacing.sm),
           const ProfileButton(),
@@ -212,19 +230,15 @@ class _HomeBody extends ConsumerWidget {
     switch (summary.phase) {
       case HomePhase.error:
         return StateView.error(
-          message: 'Impossible de charger vos addons',
+          message: context.l10n.homeAddonsError,
           onRetry: () => ref.read(addonsProvider.notifier).reload(),
         );
       case HomePhase.noCatalog:
-        return const StateView.empty(
-          message: 'Vos addons ne proposent aucun catalogue',
-        );
+        return StateView.empty(message: context.l10n.homeNoCatalog);
       case HomePhase.noAddons:
         final help = StateView.empty(
-          message:
-              'Ajoutez un addon ou une source personnelle pour remplir '
-              'votre accueil.',
-          actionLabel: 'Gérer les addons',
+          message: context.l10n.homeNoAddons,
+          actionLabel: context.l10n.homeManageAddons,
           onAction: onOpenAddons,
         );
         // Les reprises restent accessibles même sans addon.
@@ -235,9 +249,7 @@ class _HomeBody extends ConsumerWidget {
           ],
         );
       case HomePhase.filtered:
-        return const StateView.empty(
-          message: 'Aucun contenu adapté à ce profil',
-        );
+        return StateView.empty(message: context.l10n.homeFiltered);
       case HomePhase.loading:
         return const _SkeletonList();
       case HomePhase.ready:
@@ -289,7 +301,7 @@ class _CatalogRowView extends ConsumerWidget {
         title: spec.title,
         message: row.error is AddonException
             ? (row.error! as AddonException).message
-            : 'Chargement impossible',
+            : context.l10n.homeRowFailed,
         onRetry: () => ref.read(homeRowsProvider.notifier).retry(rowId),
       );
     }
@@ -320,7 +332,7 @@ class _LibraryRow extends ConsumerWidget {
     if (items.isEmpty) return const SizedBox.shrink();
     return _PosterRow(
       rowId: libraryRowId,
-      title: 'Ma liste',
+      title: context.l10n.myList,
       items: items,
       onOpenItem: onOpenItem,
     );
@@ -375,7 +387,7 @@ class _ContinueRow extends ConsumerWidget {
     if (entries.isEmpty) return const SizedBox.shrink();
     final playback = ref.watch(continuePlaybackProvider);
     return TvRow(
-      title: 'Continuer à regarder',
+      title: context.l10n.continueWatching,
       restorationId: continueRowId,
       routeKey: homeRouteKey,
       itemExtent: _continueWidth,
@@ -406,12 +418,12 @@ class PosterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
-    final source = sourceLabel(item.sourceKind);
+    final source = sourceLabel(item.sourceKind, context.l10n);
     return SizedBox(
       width: _posterWidth,
       child: FocusableCard(
         onSelect: onSelect,
-        semanticLabel: '${item.name}, $source',
+        semanticLabel: context.l10n.itemSemantic(item.name, source),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -561,7 +573,7 @@ class _ContinueCardState extends State<_ContinueCard> {
           final info = snap.data ?? ContinueInfo(title: e.metaId);
           return FocusableCard(
             onSelect: () => widget.playback.play(context, e),
-            semanticLabel: 'Reprendre ${info.title}',
+            semanticLabel: context.l10n.resumeSemantic(info.title),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -646,7 +658,7 @@ class _SkeletonRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final lumio = context.lumio;
     return Semantics(
-      label: 'Chargement',
+      label: context.l10n.loading,
       child: Column(
         key: const ValueKey('skeleton-row'),
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -727,7 +739,7 @@ class _ErrorRow extends StatelessWidget {
           const SizedBox(height: LumioSpacing.sm),
           Text(message, style: TextStyle(color: lumio.textMuted)),
           const SizedBox(height: LumioSpacing.sm),
-          FilledButton(onPressed: onRetry, child: const Text('Réessayer')),
+          FilledButton(onPressed: onRetry, child: Text(context.l10n.retry)),
         ],
       ),
     );

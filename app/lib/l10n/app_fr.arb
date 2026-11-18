@@ -1,0 +1,442 @@
+{
+  "@@locale": "fr",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "retry": "Réessayer",
+  "close": "Fermer",
+  "back": "Retour",
+  "continueAction": "Continuer",
+  "save": "Enregistrer",
+  "add": "Ajouter",
+  "paste": "Coller",
+  "install": "Installer",
+  "done": "Terminé",
+  "loading": "Chargement",
+  "show": "Afficher",
+  "hide": "Masquer",
+  "moveUp": "Monter",
+  "moveDown": "Descendre",
+  "homeSearch": "Recherche",
+  "homeManageList": "Gérer ma liste",
+  "homeCustomize": "Personnaliser",
+  "homeSettings": "Réglages",
+  "homeAddonsError": "Impossible de charger vos addons",
+  "homeNoCatalog": "Vos addons ne proposent aucun catalogue",
+  "homeNoAddons": "Ajoutez un addon ou une source personnelle pour remplir votre accueil.",
+  "homeManageAddons": "Gérer les addons",
+  "homeFiltered": "Aucun contenu adapté à ce profil",
+  "homeRowFailed": "Chargement impossible",
+  "myList": "Ma liste",
+  "continueWatching": "Continuer à regarder",
+  "sourceLocal": "Local",
+  "sourceAddon": "addon",
+  "resumeSemantic": "Reprendre {title}",
+  "@resumeSemantic": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "itemSemantic": "{name}, {source}",
+  "@itemSemantic": {
+    "placeholders": {
+      "name": {},
+      "source": {}
+    }
+  },
+  "sheetUnavailable": "Fiche indisponible. Réessayez.",
+  "notAllowedForProfile": "Ce contenu n'est pas autorisé pour ce profil.",
+  "noSourceAvailable": "Aucune source disponible. Vérifiez vos addons.",
+  "addonsTitle": "Addons",
+  "addAddon": "Ajouter un addon",
+  "addonsLoadError": "Impossible de charger les addons",
+  "addonsEmpty": "Aucun addon installé. Un addon apporte des catalogues et des sources : ajoutez-en un avec son lien.",
+  "addonActionFailed": "Action impossible : l'addon n'a pas été modifié",
+  "removeAddonTitle": "Supprimer cet addon ?",
+  "removeAddonBody": "« {name} » sera retiré de Lumio. Ses catalogues et ses sources ne seront plus proposés.",
+  "@removeAddonBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "addonBroken": "Addon illisible : supprimez-le puis réinstallez-le",
+  "addonDisabled": "Désactivé",
+  "moveAddonUp": "Monter {name}",
+  "@moveAddonUp": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "moveAddonDown": "Descendre {name}",
+  "@moveAddonDown": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "enableAddon": "Activer {name}",
+  "@enableAddon": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "deleteAddon": "Supprimer {name}",
+  "@deleteAddon": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "typeMovie": "Films",
+  "typeSeries": "Séries",
+  "typeAnime": "Animes",
+  "typeOther": "Autres",
+  "resCatalog": "Catalogues",
+  "resMeta": "Fiches",
+  "resStream": "Flux",
+  "resSubtitles": "Sous-titres",
+  "resAddonCatalog": "Addons",
+  "clipboardEmpty": "Le presse-papiers est vide",
+  "localAddressRefused": "Adresse locale refusée : aucun addon installé",
+  "addonUnreadable": "Impossible de lire cet addon",
+  "localAddressTitle": "Adresse locale",
+  "localAddressBody": "Cette adresse pointe vers votre appareil ou votre réseau local. Ne continuez que si vous avez vous-même lancé cet addon.",
+  "installFailed": "Installation impossible",
+  "addonLinkLabel": "Lien de l'addon",
+  "trustWarning": "N'installez que des addons de sources de confiance : un addon voit ce que vous consultez.",
+  "versionLabel": "Version {version}",
+  "@versionLabel": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "alreadyInstalled": "Déjà installé",
+  "provides": "Fournit : {list}",
+  "@provides": {
+    "placeholders": {
+      "list": {}
+    }
+  },
+  "libraryLoadError": "Impossible de lire votre liste.",
+  "libraryEmpty": "Votre liste est vide. Ouvrez la fiche d'un titre puis choisissez « Ajouter à ma liste ».",
+  "updateAvailable": "Mise à jour disponible : version {version}",
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "download": "Télécharger",
+  "customizeHome": "Personnaliser l'accueil",
+  "progressNotSaved": "Progression non enregistrée",
+  "resumeAt": "Reprise à {time}",
+  "@resumeAt": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "settingsNotSaved": "Réglages non enregistrés",
+  "settingsUnavailable": "Réglages mémorisés indisponibles",
+  "subtitleSettingsNotApplied": "Réglages de sous-titres non appliqués",
+  "nextEpisodeUnavailable": "Épisode suivant indisponible",
+  "buffering": "Mise en mémoire tampon",
+  "chooseOtherSource": "Choisir une autre source",
+  "seekBack10": "Reculer de 10 secondes",
+  "seekForward10": "Avancer de 10 secondes",
+  "pause": "Pause",
+  "play": "Lecture",
+  "tracksAndSubtitles": "Pistes et sous-titres",
+  "seekBar": "Position de lecture",
+  "audio": "Audio",
+  "noAudioTrack": "Aucune piste audio disponible",
+  "subtitles": "Sous-titres",
+  "subtitlesOff": "Désactivés",
+  "addonSubtitle": "Addon · {lang}",
+  "@addonSubtitle": {
+    "placeholders": {
+      "lang": {}
+    }
+  },
+  "subtitleDelay": "Décalage des sous-titres",
+  "subtitleAdvance": "Avancer les sous-titres de 100 ms",
+  "subtitleRetard": "Retarder les sous-titres de 100 ms",
+  "subtitleSize": "Taille",
+  "opaqueBackground": "Fond opaque",
+  "subtitleUnreadable": "Sous-titre illisible",
+  "trackN": "Piste {n}",
+  "@trackN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nextEpisodeIn": "Épisode suivant dans {seconds} secondes : {title}",
+  "@nextEpisodeIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      },
+      "title": {}
+    }
+  },
+  "nextEpisodeInShort": "Épisode suivant dans {seconds} s",
+  "@nextEpisodeInShort": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "playNow": "Lire maintenant",
+  "torrentNotPlayable": "Ce flux passe par un torrent : il n'est pas lisible ici.",
+  "torrentSoon": "Lecture des torrents bientôt disponible",
+  "failTimeout": "Délai dépassé : la source ne répond pas.",
+  "failNetwork": "Connexion impossible : vérifiez le réseau.",
+  "failRedirect": "La source redirige de façon incorrecte.",
+  "failTooLarge": "La réponse de la source est trop volumineuse.",
+  "failFormat": "Format non pris en charge par le lecteur.",
+  "failTls": "La connexion sécurisée avec la source a échoué.",
+  "failGeneric": "La lecture a échoué.",
+  "failRefused": "Source refusée pour des raisons de sécurité.",
+  "httpDenied": "La source a répondu {status} : accès refusé.",
+  "@httpDenied": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "httpGone": "La source a répondu {status} : le fichier n'existe plus.",
+  "@httpGone": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "httpTooMany": "La source a répondu 429 : trop de demandes, réessayez plus tard.",
+  "httpServer": "La source a répondu {status} : elle est en panne.",
+  "@httpServer": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "httpOther": "La source a répondu {status}.",
+  "@httpOther": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "noStreams": "Aucun flux trouvé. Vérifiez vos addons.",
+  "addonFallback": "Addon",
+  "noResponse": "Ne répond pas",
+  "streamCount": "{count} flux",
+  "@streamCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "torrentLabel": "Torrent",
+  "kindTorrent": "torrent",
+  "kindDirect": "lien direct",
+  "seedersSemantic": "{count} sources",
+  "@seedersSemantic": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recommendedSemantic": "recommandé",
+  "recommended": "Recommandé",
+  "sizeGb": "{value} Go",
+  "@sizeGb": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "sizeMb": "{value} Mo",
+  "@sizeMb": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "listUpdateFailed": "Ma liste n'a pas pu être modifiée.",
+  "detailLoadError": "Impossible de charger la fiche.",
+  "autoPlayBest": "Lecture auto · meilleure source",
+  "removeFromList": "Retirer de ma liste",
+  "addToList": "Ajouter à ma liste",
+  "seasonEpisodes": "Épisodes",
+  "seasonSpecials": "Spéciaux",
+  "seasonN": "Saison {n}",
+  "@seasonN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "noEpisodes": "Aucun épisode disponible pour cette série.",
+  "seasonsTitle": "Saisons",
+  "sourcesTitle": "Sources",
+  "watchedSemantic": "vu",
+  "unwatchedSemantic": "non vu",
+  "episodeLetter": "É",
+  "watchedBadge": "Vu",
+  "searchHint": "Rechercher un titre",
+  "kbSpace": "Espace",
+  "kbErase": "Effacer",
+  "kbAll": "Tout",
+  "kbClearAll": "Tout effacer",
+  "kbLatin": "Clavier latin",
+  "kbArabic": "Clavier arabe",
+  "dictationStop": "Arrêter la dictée",
+  "dictationStart": "Dictée vocale",
+  "searchPrompt": "Tapez un titre pour lancer la recherche",
+  "searchNoAddon": "Aucun addon actif ne propose la recherche",
+  "searchNoResults": "Aucun résultat",
+  "filterAll": "Tout",
+  "filterMovies": "Films",
+  "filterSeries": "Séries",
+  "kidAllAges": "Enfant · Tous publics",
+  "kidYears": "Enfant · {years}+",
+  "@kidYears": {
+    "placeholders": {
+      "years": {
+        "type": "int"
+      }
+    }
+  },
+  "profilesLoadError": "Impossible de charger les profils",
+  "parentalUnavailable": "Contrôle parental indisponible. Réessayez.",
+  "pinFor": "PIN pour {name}",
+  "@pinFor": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "maxProfilesReached": "Six profils au maximum",
+  "profileNotModified": "Action impossible : le profil n'a pas été modifié",
+  "whoIsWatching": "Qui regarde ?",
+  "manageProfiles": "Gérer les profils",
+  "lockedSemantic": "verrouillé, PIN demandé",
+  "editSemantic": "modifier",
+  "pinBadge": "PIN",
+  "addProfileSemantic": "Ajouter un profil",
+  "nameRequired": "Donnez un nom au profil",
+  "deleteProfileTitle": "Supprimer ce profil ?",
+  "deleteProfileBody": "Sa progression, sa liste et ses réglages seront supprimés.",
+  "ageAll": "Tous publics",
+  "newProfile": "Nouveau profil",
+  "editProfile": "Modifier le profil",
+  "nameLabel": "Nom",
+  "kidProfile": "Profil enfant",
+  "kidProfileHint": "Contenus filtrés selon l'âge ; réglages et changement de profil protégés par le PIN parent.",
+  "ageLimit": "Limite d'âge",
+  "lockByPin": "Verrouiller par PIN",
+  "lockByPinHint": "Le PIN parent est demandé pour ouvrir ce profil.",
+  "profileFallback": "Profil",
+  "tooManyTries": "Trop d'essais. Réessayez dans {min} min.",
+  "@tooManyTries": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "pinWrong": "PIN incorrect",
+  "pinCheckFailed": "Vérification impossible. Réessayez.",
+  "pinForgot": "PIN oublié ?",
+  "pinDotsSemantic": "{filled, plural, =0{0 chiffre saisi sur 4} =1{1 chiffre saisi sur 4} other{{filled} chiffres saisis sur 4}}",
+  "@pinDotsSemantic": {
+    "placeholders": {
+      "filled": {
+        "type": "int"
+      }
+    }
+  },
+  "digitSemantic": "Chiffre {digit}",
+  "@digitSemantic": {
+    "placeholders": {
+      "digit": {}
+    }
+  },
+  "eraseLastDigit": "Effacer le dernier chiffre",
+  "recoveryTitle": "Code de récupération",
+  "recoveryBody": "Notez ce code et gardez-le en lieu sûr : il permet de choisir un nouveau PIN si vous l'oubliez. Il ne sera plus jamais affiché.",
+  "recoveryNoted": "J'ai noté le code",
+  "choosePin": "Choisissez un PIN",
+  "pinHint": "4 chiffres. Il protège les profils enfants et les réglages.",
+  "confirmPin": "Confirmez le PIN",
+  "pinMismatch": "Les deux PIN ne correspondent pas",
+  "pinSaveFailed": "Impossible d'enregistrer le PIN",
+  "recoveryWrong": "Code de récupération incorrect",
+  "tooManyTriesLater": "Trop d'essais. Réessayez dans quelques minutes.",
+  "recoveryFailed": "Récupération impossible",
+  "parentPin": "PIN parent",
+  "askParent": "Demandez à un parent de saisir son PIN.",
+  "settingsTitle": "Réglages",
+  "settingsAddons": "Addons",
+  "settingsAddonsHint": "Réordonner, activer ou supprimer vos addons",
+  "settingsLanguage": "Langue de l'interface",
+  "langFrench": "Français",
+  "langEnglish": "English",
+  "settingsPlayback": "Lecture",
+  "settingsAudioLang": "Langue audio par défaut",
+  "settingsSubtitleLang": "Langue des sous-titres par défaut",
+  "settingsQuality": "Qualité préférée",
+  "langSpanish": "Español",
+  "langGerman": "Deutsch",
+  "langItalian": "Italiano",
+  "langPortuguese": "Português",
+  "langArabic": "العربية",
+  "settingsDownloads": "Torrents",
+  "settingsTorrentCache": "Cache torrents",
+  "settingsUpload": "Débit montant",
+  "unlimited": "Illimité",
+  "cacheGb": "{n} Go",
+  "@cacheGb": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadKbps": "{n} Ko/s",
+  "@uploadKbps": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsVersion": "Version",
+  "versionValue": "Lumio {version}",
+  "@versionValue": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "debugUnlocked": "Menu debug activé",
+  "debugMenuTitle": "Menu debug",
+  "debugNone": "Aucun écran de debug",
+  "debugTorrent": "Spike torrent",
+  "debugPlayer": "Spike lecteur",
+  "settingsAbout": "À propos",
+  "aboutLicense": "Licence GPL-3.0",
+  "aboutCredits": "Crédits : libmpv, media_kit, libtorrent",
+  "openSourceLicenses": "Licences open source",
+  "settingSaveFailed": "Réglage non enregistré",
+  "gplTitle": "Licence GPL-3.0",
+  "gplText": "Lumio est un logiciel libre, distribué sous la licence publique générale GNU version 3 (GPL-3.0). Vous pouvez le copier, le modifier et le redistribuer selon les termes de cette licence. Il est fourni sans aucune garantie. Texte complet : https://www.gnu.org/licenses/gpl-3.0.html",
+  "creditsLibmpv": "libmpv : lecteur vidéo (LGPL/GPL)",
+  "creditsMediaKit": "media_kit : intégration Flutter du lecteur",
+  "creditsLibtorrent": "libtorrent : moteur de torrents (BSD)",
+  "settingsNone": "Aucun",
+  "subtitlesNone": "Aucun sous-titre"
+}

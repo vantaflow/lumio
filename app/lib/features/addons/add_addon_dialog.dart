@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/data/addon_repository.dart';
@@ -96,7 +97,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     if (!mounted) return;
     final text = data?.text?.trim();
     if (text == null || text.isEmpty) {
-      setState(() => _error = 'Le presse-papiers est vide');
+      setState(() => _error = context.l10n.clipboardEmpty);
       return;
     }
     _controller.text = text;
@@ -132,9 +133,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
         _allowPrivate = true;
         await _fetchPreview();
       } else {
-        setState(
-          () => _error = 'Adresse locale refusée : aucun addon installé',
-        );
+        setState(() => _error = context.l10n.localAddressRefused);
       }
     } on AddonException catch (e) {
       if (!mounted || gen != _generation) return;
@@ -145,7 +144,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     } catch (_) {
       if (!mounted || gen != _generation) return;
       setState(() {
-        _error = 'Impossible de lire cet addon';
+        _error = context.l10n.addonUnreadable;
         _loading = false;
       });
     }
@@ -155,20 +154,17 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Adresse locale'),
-        content: const Text(
-          'Cette adresse pointe vers votre appareil ou votre réseau local. '
-          'Ne continuez que si vous avez vous-même lancé cet addon.',
-        ),
+        title: Text(ctx.l10n.localAddressTitle),
+        content: Text(ctx.l10n.localAddressBody),
         actions: [
           TextButton(
             autofocus: true,
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
+            child: Text(ctx.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Continuer'),
+            child: Text(ctx.l10n.continueAction),
           ),
         ],
       ),
@@ -196,7 +192,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Installation impossible';
+        _error = context.l10n.installFailed;
         _installing = false;
       });
     }
@@ -215,7 +211,10 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Ajouter un addon', style: theme.textTheme.headlineMedium),
+              Text(
+                context.l10n.addAddon,
+                style: theme.textTheme.headlineMedium,
+              ),
               const SizedBox(height: LumioSpacing.md),
               TextField(
                 controller: _controller,
@@ -225,7 +224,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                 onChanged: _onChanged,
                 onSubmitted: (_) => _schedule(immediate: true),
                 decoration: InputDecoration(
-                  labelText: 'Lien de l\'addon',
+                  labelText: context.l10n.addonLinkLabel,
                   hintText: 'https://…/manifest.json',
                   errorText: _error,
                   errorMaxLines: 3,
@@ -237,7 +236,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                 child: OutlinedButton.icon(
                   onPressed: _paste,
                   icon: const Icon(Icons.content_paste),
-                  label: const Text('Coller'),
+                  label: Text(context.l10n.paste),
                 ),
               ),
               const SizedBox(height: LumioSpacing.md),
@@ -249,11 +248,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
               else if (_preview != null)
                 _Preview(manifest: _preview!, already: _already),
               const SizedBox(height: LumioSpacing.md),
-              Text(
-                'N\'installez que des addons de sources de confiance : un '
-                'addon voit ce que vous consultez.',
-                style: theme.textTheme.bodySmall,
-              ),
+              Text(context.l10n.trustWarning, style: theme.textTheme.bodySmall),
               const SizedBox(height: LumioSpacing.lg),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -262,7 +257,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                     onPressed: _installing
                         ? null
                         : () => Navigator.pop(context, false),
-                    child: const Text('Annuler'),
+                    child: Text(context.l10n.cancel),
                   ),
                   const SizedBox(width: LumioSpacing.sm),
                   FilledButton(
@@ -278,7 +273,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Installer'),
+                        : Text(context.l10n.install),
                   ),
                 ],
               ),
@@ -300,7 +295,7 @@ class _Preview extends StatelessWidget {
     final c = context.lumio;
     final theme = Theme.of(context);
     final resources = {
-      for (final r in manifest.resources) resourceLabel(r.name),
+      for (final r in manifest.resources) resourceLabel(r.name, context.l10n),
     };
     return Container(
       padding: const EdgeInsets.all(LumioSpacing.md),
@@ -320,14 +315,14 @@ class _Preview extends StatelessWidget {
               children: [
                 Text(manifest.name, style: theme.textTheme.titleLarge),
                 Text(
-                  'Version ${manifest.version}',
+                  context.l10n.versionLabel(manifest.version),
                   style: theme.textTheme.bodySmall,
                 ),
                 if (already)
                   Padding(
                     padding: const EdgeInsets.only(top: LumioSpacing.xs),
                     child: Text(
-                      'Déjà installé',
+                      context.l10n.alreadyInstalled,
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: c.warning,
                       ),
@@ -348,12 +343,12 @@ class _Preview extends StatelessWidget {
                   runSpacing: LumioSpacing.xs,
                   children: [
                     for (final t in manifest.types)
-                      _Chip(contentTypeLabel(t), c.secondary),
+                      _Chip(contentTypeLabel(t, context.l10n), c.secondary),
                   ],
                 ),
                 const SizedBox(height: LumioSpacing.sm),
                 Text(
-                  'Fournit : ${resources.join(', ')}',
+                  context.l10n.provides(resources.join(', ')),
                   style: theme.textTheme.bodySmall,
                 ),
               ],

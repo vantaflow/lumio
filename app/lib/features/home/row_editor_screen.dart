@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
@@ -15,8 +16,8 @@ class RowEditorScreen extends ConsumerWidget {
     final specs = ref.watch(homeRowsProvider.select((s) => s.specs));
     final layout = ref.watch(homeLayoutProvider).value ?? const HomeLayout();
     final titles = <String, String>{
-      continueRowId: 'Continuer à regarder',
-      libraryRowId: 'Ma liste',
+      continueRowId: context.l10n.continueWatching,
+      libraryRowId: context.l10n.myList,
       for (final s in specs) s.id: '${s.title} · ${s.addonName}',
     };
     final arranged = layout.arrange(titles.keys.toList());
@@ -24,7 +25,7 @@ class RowEditorScreen extends ConsumerWidget {
 
     return TvScaffold(
       child: Scaffold(
-        appBar: AppBar(title: const Text('Personnaliser l\'accueil')),
+        appBar: AppBar(title: Text(context.l10n.customizeHome)),
         body: ListView.builder(
           padding: const EdgeInsets.symmetric(
             horizontal: 96,
@@ -49,7 +50,7 @@ class RowEditorScreen extends ConsumerWidget {
                   ),
                   IconButton(
                     key: ValueKey('up:$id'),
-                    tooltip: 'Monter',
+                    tooltip: context.l10n.moveUp,
                     onPressed: i == 0
                         ? null
                         : () => controller.move(id, -1, arranged),
@@ -57,7 +58,7 @@ class RowEditorScreen extends ConsumerWidget {
                   ),
                   IconButton(
                     key: ValueKey('down:$id'),
-                    tooltip: 'Descendre',
+                    tooltip: context.l10n.moveDown,
                     onPressed: i == arranged.length - 1
                         ? null
                         : () => controller.move(id, 1, arranged),
@@ -66,7 +67,7 @@ class RowEditorScreen extends ConsumerWidget {
                   TextButton(
                     key: ValueKey('toggle:$id'),
                     onPressed: () => controller.setHidden(id, !hidden),
-                    child: Text(hidden ? 'Afficher' : 'Masquer'),
+                    child: Text(hidden ? context.l10n.show : context.l10n.hide),
                   ),
                 ],
               ),

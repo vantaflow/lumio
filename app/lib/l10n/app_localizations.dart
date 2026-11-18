@@ -1,0 +1,1604 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_fr.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('fr'),
+  ];
+
+  /// No description provided for @cancel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler'**
+  String get cancel;
+
+  /// No description provided for @delete.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer'**
+  String get delete;
+
+  /// No description provided for @retry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réessayer'**
+  String get retry;
+
+  /// No description provided for @close.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer'**
+  String get close;
+
+  /// No description provided for @back.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retour'**
+  String get back;
+
+  /// No description provided for @continueAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get continueAction;
+
+  /// No description provided for @save.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer'**
+  String get save;
+
+  /// No description provided for @add.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter'**
+  String get add;
+
+  /// No description provided for @paste.
+  ///
+  /// In fr, this message translates to:
+  /// **'Coller'**
+  String get paste;
+
+  /// No description provided for @install.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installer'**
+  String get install;
+
+  /// No description provided for @done.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminé'**
+  String get done;
+
+  /// No description provided for @loading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement'**
+  String get loading;
+
+  /// No description provided for @show.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher'**
+  String get show;
+
+  /// No description provided for @hide.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer'**
+  String get hide;
+
+  /// No description provided for @moveUp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Monter'**
+  String get moveUp;
+
+  /// No description provided for @moveDown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Descendre'**
+  String get moveDown;
+
+  /// No description provided for @homeSearch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche'**
+  String get homeSearch;
+
+  /// No description provided for @homeManageList.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérer ma liste'**
+  String get homeManageList;
+
+  /// No description provided for @homeCustomize.
+  ///
+  /// In fr, this message translates to:
+  /// **'Personnaliser'**
+  String get homeCustomize;
+
+  /// No description provided for @homeSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages'**
+  String get homeSettings;
+
+  /// No description provided for @homeAddonsError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de charger vos addons'**
+  String get homeAddonsError;
+
+  /// No description provided for @homeNoCatalog.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos addons ne proposent aucun catalogue'**
+  String get homeNoCatalog;
+
+  /// No description provided for @homeNoAddons.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoutez un addon ou une source personnelle pour remplir votre accueil.'**
+  String get homeNoAddons;
+
+  /// No description provided for @homeManageAddons.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérer les addons'**
+  String get homeManageAddons;
+
+  /// No description provided for @homeFiltered.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun contenu adapté à ce profil'**
+  String get homeFiltered;
+
+  /// No description provided for @homeRowFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement impossible'**
+  String get homeRowFailed;
+
+  /// No description provided for @myList.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma liste'**
+  String get myList;
+
+  /// No description provided for @continueWatching.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer à regarder'**
+  String get continueWatching;
+
+  /// No description provided for @sourceLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Local'**
+  String get sourceLocal;
+
+  /// No description provided for @sourceAddon.
+  ///
+  /// In fr, this message translates to:
+  /// **'addon'**
+  String get sourceAddon;
+
+  /// No description provided for @resumeSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reprendre {title}'**
+  String resumeSemantic(Object title);
+
+  /// No description provided for @itemSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name}, {source}'**
+  String itemSemantic(Object name, Object source);
+
+  /// No description provided for @sheetUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fiche indisponible. Réessayez.'**
+  String get sheetUnavailable;
+
+  /// No description provided for @notAllowedForProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce contenu n\'est pas autorisé pour ce profil.'**
+  String get notAllowedForProfile;
+
+  /// No description provided for @noSourceAvailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune source disponible. Vérifiez vos addons.'**
+  String get noSourceAvailable;
+
+  /// No description provided for @addonsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addons'**
+  String get addonsTitle;
+
+  /// No description provided for @addAddon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un addon'**
+  String get addAddon;
+
+  /// No description provided for @addonsLoadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de charger les addons'**
+  String get addonsLoadError;
+
+  /// No description provided for @addonsEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun addon installé. Un addon apporte des catalogues et des sources : ajoutez-en un avec son lien.'**
+  String get addonsEmpty;
+
+  /// No description provided for @addonActionFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Action impossible : l\'addon n\'a pas été modifié'**
+  String get addonActionFailed;
+
+  /// No description provided for @removeAddonTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer cet addon ?'**
+  String get removeAddonTitle;
+
+  /// No description provided for @removeAddonBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'« {name} » sera retiré de Lumio. Ses catalogues et ses sources ne seront plus proposés.'**
+  String removeAddonBody(Object name);
+
+  /// No description provided for @addonBroken.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addon illisible : supprimez-le puis réinstallez-le'**
+  String get addonBroken;
+
+  /// No description provided for @addonDisabled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactivé'**
+  String get addonDisabled;
+
+  /// No description provided for @moveAddonUp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Monter {name}'**
+  String moveAddonUp(Object name);
+
+  /// No description provided for @moveAddonDown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Descendre {name}'**
+  String moveAddonDown(Object name);
+
+  /// No description provided for @enableAddon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer {name}'**
+  String enableAddon(Object name);
+
+  /// No description provided for @deleteAddon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer {name}'**
+  String deleteAddon(Object name);
+
+  /// No description provided for @typeMovie.
+  ///
+  /// In fr, this message translates to:
+  /// **'Films'**
+  String get typeMovie;
+
+  /// No description provided for @typeSeries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Séries'**
+  String get typeSeries;
+
+  /// No description provided for @typeAnime.
+  ///
+  /// In fr, this message translates to:
+  /// **'Animes'**
+  String get typeAnime;
+
+  /// No description provided for @typeOther.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres'**
+  String get typeOther;
+
+  /// No description provided for @resCatalog.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catalogues'**
+  String get resCatalog;
+
+  /// No description provided for @resMeta.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fiches'**
+  String get resMeta;
+
+  /// No description provided for @resStream.
+  ///
+  /// In fr, this message translates to:
+  /// **'Flux'**
+  String get resStream;
+
+  /// No description provided for @resSubtitles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sous-titres'**
+  String get resSubtitles;
+
+  /// No description provided for @resAddonCatalog.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addons'**
+  String get resAddonCatalog;
+
+  /// No description provided for @clipboardEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le presse-papiers est vide'**
+  String get clipboardEmpty;
+
+  /// No description provided for @localAddressRefused.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse locale refusée : aucun addon installé'**
+  String get localAddressRefused;
+
+  /// No description provided for @addonUnreadable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de lire cet addon'**
+  String get addonUnreadable;
+
+  /// No description provided for @localAddressTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse locale'**
+  String get localAddressTitle;
+
+  /// No description provided for @localAddressBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette adresse pointe vers votre appareil ou votre réseau local. Ne continuez que si vous avez vous-même lancé cet addon.'**
+  String get localAddressBody;
+
+  /// No description provided for @installFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installation impossible'**
+  String get installFailed;
+
+  /// No description provided for @addonLinkLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien de l\'addon'**
+  String get addonLinkLabel;
+
+  /// No description provided for @trustWarning.
+  ///
+  /// In fr, this message translates to:
+  /// **'N\'installez que des addons de sources de confiance : un addon voit ce que vous consultez.'**
+  String get trustWarning;
+
+  /// No description provided for @versionLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Version {version}'**
+  String versionLabel(Object version);
+
+  /// No description provided for @alreadyInstalled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déjà installé'**
+  String get alreadyInstalled;
+
+  /// No description provided for @provides.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fournit : {list}'**
+  String provides(Object list);
+
+  /// No description provided for @libraryLoadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de lire votre liste.'**
+  String get libraryLoadError;
+
+  /// No description provided for @libraryEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre liste est vide. Ouvrez la fiche d\'un titre puis choisissez « Ajouter à ma liste ».'**
+  String get libraryEmpty;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mise à jour disponible : version {version}'**
+  String updateAvailable(Object version);
+
+  /// No description provided for @download.
+  ///
+  /// In fr, this message translates to:
+  /// **'Télécharger'**
+  String get download;
+
+  /// No description provided for @customizeHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Personnaliser l\'accueil'**
+  String get customizeHome;
+
+  /// No description provided for @progressNotSaved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Progression non enregistrée'**
+  String get progressNotSaved;
+
+  /// No description provided for @resumeAt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reprise à {time}'**
+  String resumeAt(Object time);
+
+  /// No description provided for @settingsNotSaved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages non enregistrés'**
+  String get settingsNotSaved;
+
+  /// No description provided for @settingsUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages mémorisés indisponibles'**
+  String get settingsUnavailable;
+
+  /// No description provided for @subtitleSettingsNotApplied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages de sous-titres non appliqués'**
+  String get subtitleSettingsNotApplied;
+
+  /// No description provided for @nextEpisodeUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épisode suivant indisponible'**
+  String get nextEpisodeUnavailable;
+
+  /// No description provided for @buffering.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mise en mémoire tampon'**
+  String get buffering;
+
+  /// No description provided for @chooseOtherSource.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une autre source'**
+  String get chooseOtherSource;
+
+  /// No description provided for @seekBack10.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reculer de 10 secondes'**
+  String get seekBack10;
+
+  /// No description provided for @seekForward10.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avancer de 10 secondes'**
+  String get seekForward10;
+
+  /// No description provided for @pause.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pause'**
+  String get pause;
+
+  /// No description provided for @play.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture'**
+  String get play;
+
+  /// No description provided for @tracksAndSubtitles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pistes et sous-titres'**
+  String get tracksAndSubtitles;
+
+  /// No description provided for @seekBar.
+  ///
+  /// In fr, this message translates to:
+  /// **'Position de lecture'**
+  String get seekBar;
+
+  /// No description provided for @audio.
+  ///
+  /// In fr, this message translates to:
+  /// **'Audio'**
+  String get audio;
+
+  /// No description provided for @noAudioTrack.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune piste audio disponible'**
+  String get noAudioTrack;
+
+  /// No description provided for @subtitles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sous-titres'**
+  String get subtitles;
+
+  /// No description provided for @subtitlesOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactivés'**
+  String get subtitlesOff;
+
+  /// No description provided for @addonSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addon · {lang}'**
+  String addonSubtitle(Object lang);
+
+  /// No description provided for @subtitleDelay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Décalage des sous-titres'**
+  String get subtitleDelay;
+
+  /// No description provided for @subtitleAdvance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avancer les sous-titres de 100 ms'**
+  String get subtitleAdvance;
+
+  /// No description provided for @subtitleRetard.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retarder les sous-titres de 100 ms'**
+  String get subtitleRetard;
+
+  /// No description provided for @subtitleSize.
+  ///
+  /// In fr, this message translates to:
+  /// **'Taille'**
+  String get subtitleSize;
+
+  /// No description provided for @opaqueBackground.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fond opaque'**
+  String get opaqueBackground;
+
+  /// No description provided for @subtitleUnreadable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sous-titre illisible'**
+  String get subtitleUnreadable;
+
+  /// No description provided for @trackN.
+  ///
+  /// In fr, this message translates to:
+  /// **'Piste {n}'**
+  String trackN(int n);
+
+  /// No description provided for @nextEpisodeIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épisode suivant dans {seconds} secondes : {title}'**
+  String nextEpisodeIn(int seconds, Object title);
+
+  /// No description provided for @nextEpisodeInShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épisode suivant dans {seconds} s'**
+  String nextEpisodeInShort(int seconds);
+
+  /// No description provided for @playNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lire maintenant'**
+  String get playNow;
+
+  /// No description provided for @torrentNotPlayable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce flux passe par un torrent : il n\'est pas lisible ici.'**
+  String get torrentNotPlayable;
+
+  /// No description provided for @torrentSoon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture des torrents bientôt disponible'**
+  String get torrentSoon;
+
+  /// No description provided for @failTimeout.
+  ///
+  /// In fr, this message translates to:
+  /// **'Délai dépassé : la source ne répond pas.'**
+  String get failTimeout;
+
+  /// No description provided for @failNetwork.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion impossible : vérifiez le réseau.'**
+  String get failNetwork;
+
+  /// No description provided for @failRedirect.
+  ///
+  /// In fr, this message translates to:
+  /// **'La source redirige de façon incorrecte.'**
+  String get failRedirect;
+
+  /// No description provided for @failTooLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'La réponse de la source est trop volumineuse.'**
+  String get failTooLarge;
+
+  /// No description provided for @failFormat.
+  ///
+  /// In fr, this message translates to:
+  /// **'Format non pris en charge par le lecteur.'**
+  String get failFormat;
+
+  /// No description provided for @failTls.
+  ///
+  /// In fr, this message translates to:
+  /// **'La connexion sécurisée avec la source a échoué.'**
+  String get failTls;
+
+  /// No description provided for @failGeneric.
+  ///
+  /// In fr, this message translates to:
+  /// **'La lecture a échoué.'**
+  String get failGeneric;
+
+  /// No description provided for @failRefused.
+  ///
+  /// In fr, this message translates to:
+  /// **'Source refusée pour des raisons de sécurité.'**
+  String get failRefused;
+
+  /// No description provided for @httpDenied.
+  ///
+  /// In fr, this message translates to:
+  /// **'La source a répondu {status} : accès refusé.'**
+  String httpDenied(int status);
+
+  /// No description provided for @httpGone.
+  ///
+  /// In fr, this message translates to:
+  /// **'La source a répondu {status} : le fichier n\'existe plus.'**
+  String httpGone(int status);
+
+  /// No description provided for @httpTooMany.
+  ///
+  /// In fr, this message translates to:
+  /// **'La source a répondu 429 : trop de demandes, réessayez plus tard.'**
+  String get httpTooMany;
+
+  /// No description provided for @httpServer.
+  ///
+  /// In fr, this message translates to:
+  /// **'La source a répondu {status} : elle est en panne.'**
+  String httpServer(int status);
+
+  /// No description provided for @httpOther.
+  ///
+  /// In fr, this message translates to:
+  /// **'La source a répondu {status}.'**
+  String httpOther(int status);
+
+  /// No description provided for @noStreams.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun flux trouvé. Vérifiez vos addons.'**
+  String get noStreams;
+
+  /// No description provided for @addonFallback.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addon'**
+  String get addonFallback;
+
+  /// No description provided for @noResponse.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ne répond pas'**
+  String get noResponse;
+
+  /// No description provided for @streamCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} flux'**
+  String streamCount(int count);
+
+  /// No description provided for @torrentLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Torrent'**
+  String get torrentLabel;
+
+  /// No description provided for @kindTorrent.
+  ///
+  /// In fr, this message translates to:
+  /// **'torrent'**
+  String get kindTorrent;
+
+  /// No description provided for @kindDirect.
+  ///
+  /// In fr, this message translates to:
+  /// **'lien direct'**
+  String get kindDirect;
+
+  /// No description provided for @seedersSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} sources'**
+  String seedersSemantic(int count);
+
+  /// No description provided for @recommendedSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'recommandé'**
+  String get recommendedSemantic;
+
+  /// No description provided for @recommended.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recommandé'**
+  String get recommended;
+
+  /// No description provided for @sizeGb.
+  ///
+  /// In fr, this message translates to:
+  /// **'{value} Go'**
+  String sizeGb(Object value);
+
+  /// No description provided for @sizeMb.
+  ///
+  /// In fr, this message translates to:
+  /// **'{value} Mo'**
+  String sizeMb(int value);
+
+  /// No description provided for @listUpdateFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma liste n\'a pas pu être modifiée.'**
+  String get listUpdateFailed;
+
+  /// No description provided for @detailLoadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de charger la fiche.'**
+  String get detailLoadError;
+
+  /// No description provided for @autoPlayBest.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture auto · meilleure source'**
+  String get autoPlayBest;
+
+  /// No description provided for @removeFromList.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer de ma liste'**
+  String get removeFromList;
+
+  /// No description provided for @addToList.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter à ma liste'**
+  String get addToList;
+
+  /// No description provided for @seasonEpisodes.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épisodes'**
+  String get seasonEpisodes;
+
+  /// No description provided for @seasonSpecials.
+  ///
+  /// In fr, this message translates to:
+  /// **'Spéciaux'**
+  String get seasonSpecials;
+
+  /// No description provided for @seasonN.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saison {n}'**
+  String seasonN(int n);
+
+  /// No description provided for @noEpisodes.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun épisode disponible pour cette série.'**
+  String get noEpisodes;
+
+  /// No description provided for @seasonsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisons'**
+  String get seasonsTitle;
+
+  /// No description provided for @sourcesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sources'**
+  String get sourcesTitle;
+
+  /// No description provided for @watchedSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'vu'**
+  String get watchedSemantic;
+
+  /// No description provided for @unwatchedSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'non vu'**
+  String get unwatchedSemantic;
+
+  /// No description provided for @episodeLetter.
+  ///
+  /// In fr, this message translates to:
+  /// **'É'**
+  String get episodeLetter;
+
+  /// No description provided for @watchedBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vu'**
+  String get watchedBadge;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher un titre'**
+  String get searchHint;
+
+  /// No description provided for @kbSpace.
+  ///
+  /// In fr, this message translates to:
+  /// **'Espace'**
+  String get kbSpace;
+
+  /// No description provided for @kbErase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer'**
+  String get kbErase;
+
+  /// No description provided for @kbAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout'**
+  String get kbAll;
+
+  /// No description provided for @kbClearAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout effacer'**
+  String get kbClearAll;
+
+  /// No description provided for @kbLatin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clavier latin'**
+  String get kbLatin;
+
+  /// No description provided for @kbArabic.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clavier arabe'**
+  String get kbArabic;
+
+  /// No description provided for @dictationStop.
+  ///
+  /// In fr, this message translates to:
+  /// **'Arrêter la dictée'**
+  String get dictationStop;
+
+  /// No description provided for @dictationStart.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dictée vocale'**
+  String get dictationStart;
+
+  /// No description provided for @searchPrompt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tapez un titre pour lancer la recherche'**
+  String get searchPrompt;
+
+  /// No description provided for @searchNoAddon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun addon actif ne propose la recherche'**
+  String get searchNoAddon;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun résultat'**
+  String get searchNoResults;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout'**
+  String get filterAll;
+
+  /// No description provided for @filterMovies.
+  ///
+  /// In fr, this message translates to:
+  /// **'Films'**
+  String get filterMovies;
+
+  /// No description provided for @filterSeries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Séries'**
+  String get filterSeries;
+
+  /// No description provided for @kidAllAges.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enfant · Tous publics'**
+  String get kidAllAges;
+
+  /// No description provided for @kidYears.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enfant · {years}+'**
+  String kidYears(int years);
+
+  /// No description provided for @profilesLoadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de charger les profils'**
+  String get profilesLoadError;
+
+  /// No description provided for @parentalUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contrôle parental indisponible. Réessayez.'**
+  String get parentalUnavailable;
+
+  /// No description provided for @pinFor.
+  ///
+  /// In fr, this message translates to:
+  /// **'PIN pour {name}'**
+  String pinFor(Object name);
+
+  /// No description provided for @maxProfilesReached.
+  ///
+  /// In fr, this message translates to:
+  /// **'Six profils au maximum'**
+  String get maxProfilesReached;
+
+  /// No description provided for @profileNotModified.
+  ///
+  /// In fr, this message translates to:
+  /// **'Action impossible : le profil n\'a pas été modifié'**
+  String get profileNotModified;
+
+  /// No description provided for @whoIsWatching.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qui regarde ?'**
+  String get whoIsWatching;
+
+  /// No description provided for @manageProfiles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérer les profils'**
+  String get manageProfiles;
+
+  /// No description provided for @lockedSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'verrouillé, PIN demandé'**
+  String get lockedSemantic;
+
+  /// No description provided for @editSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'modifier'**
+  String get editSemantic;
+
+  /// No description provided for @pinBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'PIN'**
+  String get pinBadge;
+
+  /// No description provided for @addProfileSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un profil'**
+  String get addProfileSemantic;
+
+  /// No description provided for @nameRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Donnez un nom au profil'**
+  String get nameRequired;
+
+  /// No description provided for @deleteProfileTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer ce profil ?'**
+  String get deleteProfileTitle;
+
+  /// No description provided for @deleteProfileBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sa progression, sa liste et ses réglages seront supprimés.'**
+  String get deleteProfileBody;
+
+  /// No description provided for @ageAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous publics'**
+  String get ageAll;
+
+  /// No description provided for @newProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau profil'**
+  String get newProfile;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier le profil'**
+  String get editProfile;
+
+  /// No description provided for @nameLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom'**
+  String get nameLabel;
+
+  /// No description provided for @kidProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil enfant'**
+  String get kidProfile;
+
+  /// No description provided for @kidProfileHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contenus filtrés selon l\'âge ; réglages et changement de profil protégés par le PIN parent.'**
+  String get kidProfileHint;
+
+  /// No description provided for @ageLimit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Limite d\'âge'**
+  String get ageLimit;
+
+  /// No description provided for @lockByPin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Verrouiller par PIN'**
+  String get lockByPin;
+
+  /// No description provided for @lockByPinHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le PIN parent est demandé pour ouvrir ce profil.'**
+  String get lockByPinHint;
+
+  /// No description provided for @profileFallback.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil'**
+  String get profileFallback;
+
+  /// No description provided for @tooManyTries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop d\'essais. Réessayez dans {min} min.'**
+  String tooManyTries(int min);
+
+  /// No description provided for @pinWrong.
+  ///
+  /// In fr, this message translates to:
+  /// **'PIN incorrect'**
+  String get pinWrong;
+
+  /// No description provided for @pinCheckFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérification impossible. Réessayez.'**
+  String get pinCheckFailed;
+
+  /// No description provided for @pinForgot.
+  ///
+  /// In fr, this message translates to:
+  /// **'PIN oublié ?'**
+  String get pinForgot;
+
+  /// No description provided for @pinDotsSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'{filled, plural, =0{0 chiffre saisi sur 4} =1{1 chiffre saisi sur 4} other{{filled} chiffres saisis sur 4}}'**
+  String pinDotsSemantic(int filled);
+
+  /// No description provided for @digitSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chiffre {digit}'**
+  String digitSemantic(Object digit);
+
+  /// No description provided for @eraseLastDigit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer le dernier chiffre'**
+  String get eraseLastDigit;
+
+  /// No description provided for @recoveryTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code de récupération'**
+  String get recoveryTitle;
+
+  /// No description provided for @recoveryBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notez ce code et gardez-le en lieu sûr : il permet de choisir un nouveau PIN si vous l\'oubliez. Il ne sera plus jamais affiché.'**
+  String get recoveryBody;
+
+  /// No description provided for @recoveryNoted.
+  ///
+  /// In fr, this message translates to:
+  /// **'J\'ai noté le code'**
+  String get recoveryNoted;
+
+  /// No description provided for @choosePin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez un PIN'**
+  String get choosePin;
+
+  /// No description provided for @pinHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'4 chiffres. Il protège les profils enfants et les réglages.'**
+  String get pinHint;
+
+  /// No description provided for @confirmPin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmez le PIN'**
+  String get confirmPin;
+
+  /// No description provided for @pinMismatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les deux PIN ne correspondent pas'**
+  String get pinMismatch;
+
+  /// No description provided for @pinSaveFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'enregistrer le PIN'**
+  String get pinSaveFailed;
+
+  /// No description provided for @recoveryWrong.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code de récupération incorrect'**
+  String get recoveryWrong;
+
+  /// No description provided for @tooManyTriesLater.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop d\'essais. Réessayez dans quelques minutes.'**
+  String get tooManyTriesLater;
+
+  /// No description provided for @recoveryFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récupération impossible'**
+  String get recoveryFailed;
+
+  /// No description provided for @parentPin.
+  ///
+  /// In fr, this message translates to:
+  /// **'PIN parent'**
+  String get parentPin;
+
+  /// No description provided for @askParent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demandez à un parent de saisir son PIN.'**
+  String get askParent;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsAddons.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addons'**
+  String get settingsAddons;
+
+  /// No description provided for @settingsAddonsHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réordonner, activer ou supprimer vos addons'**
+  String get settingsAddonsHint;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue de l\'interface'**
+  String get settingsLanguage;
+
+  /// No description provided for @langFrench.
+  ///
+  /// In fr, this message translates to:
+  /// **'Français'**
+  String get langFrench;
+
+  /// No description provided for @langEnglish.
+  ///
+  /// In fr, this message translates to:
+  /// **'English'**
+  String get langEnglish;
+
+  /// No description provided for @settingsPlayback.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture'**
+  String get settingsPlayback;
+
+  /// No description provided for @settingsAudioLang.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue audio par défaut'**
+  String get settingsAudioLang;
+
+  /// No description provided for @settingsSubtitleLang.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue des sous-titres par défaut'**
+  String get settingsSubtitleLang;
+
+  /// No description provided for @settingsQuality.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qualité préférée'**
+  String get settingsQuality;
+
+  /// No description provided for @langSpanish.
+  ///
+  /// In fr, this message translates to:
+  /// **'Español'**
+  String get langSpanish;
+
+  /// No description provided for @langGerman.
+  ///
+  /// In fr, this message translates to:
+  /// **'Deutsch'**
+  String get langGerman;
+
+  /// No description provided for @langItalian.
+  ///
+  /// In fr, this message translates to:
+  /// **'Italiano'**
+  String get langItalian;
+
+  /// No description provided for @langPortuguese.
+  ///
+  /// In fr, this message translates to:
+  /// **'Português'**
+  String get langPortuguese;
+
+  /// No description provided for @langArabic.
+  ///
+  /// In fr, this message translates to:
+  /// **'العربية'**
+  String get langArabic;
+
+  /// No description provided for @settingsDownloads.
+  ///
+  /// In fr, this message translates to:
+  /// **'Torrents'**
+  String get settingsDownloads;
+
+  /// No description provided for @settingsTorrentCache.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cache torrents'**
+  String get settingsTorrentCache;
+
+  /// No description provided for @settingsUpload.
+  ///
+  /// In fr, this message translates to:
+  /// **'Débit montant'**
+  String get settingsUpload;
+
+  /// No description provided for @unlimited.
+  ///
+  /// In fr, this message translates to:
+  /// **'Illimité'**
+  String get unlimited;
+
+  /// No description provided for @cacheGb.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} Go'**
+  String cacheGb(int n);
+
+  /// No description provided for @uploadKbps.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} Ko/s'**
+  String uploadKbps(int n);
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Version'**
+  String get settingsVersion;
+
+  /// No description provided for @versionValue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lumio {version}'**
+  String versionValue(Object version);
+
+  /// No description provided for @debugUnlocked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Menu debug activé'**
+  String get debugUnlocked;
+
+  /// No description provided for @debugMenuTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Menu debug'**
+  String get debugMenuTitle;
+
+  /// No description provided for @debugNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun écran de debug'**
+  String get debugNone;
+
+  /// No description provided for @debugTorrent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Spike torrent'**
+  String get debugTorrent;
+
+  /// No description provided for @debugPlayer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Spike lecteur'**
+  String get debugPlayer;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In fr, this message translates to:
+  /// **'À propos'**
+  String get settingsAbout;
+
+  /// No description provided for @aboutLicense.
+  ///
+  /// In fr, this message translates to:
+  /// **'Licence GPL-3.0'**
+  String get aboutLicense;
+
+  /// No description provided for @aboutCredits.
+  ///
+  /// In fr, this message translates to:
+  /// **'Crédits : libmpv, media_kit, libtorrent'**
+  String get aboutCredits;
+
+  /// No description provided for @openSourceLicenses.
+  ///
+  /// In fr, this message translates to:
+  /// **'Licences open source'**
+  String get openSourceLicenses;
+
+  /// No description provided for @settingSaveFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglage non enregistré'**
+  String get settingSaveFailed;
+
+  /// No description provided for @gplTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Licence GPL-3.0'**
+  String get gplTitle;
+
+  /// No description provided for @gplText.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lumio est un logiciel libre, distribué sous la licence publique générale GNU version 3 (GPL-3.0). Vous pouvez le copier, le modifier et le redistribuer selon les termes de cette licence. Il est fourni sans aucune garantie. Texte complet : https://www.gnu.org/licenses/gpl-3.0.html'**
+  String get gplText;
+
+  /// No description provided for @creditsLibmpv.
+  ///
+  /// In fr, this message translates to:
+  /// **'libmpv : lecteur vidéo (LGPL/GPL)'**
+  String get creditsLibmpv;
+
+  /// No description provided for @creditsMediaKit.
+  ///
+  /// In fr, this message translates to:
+  /// **'media_kit : intégration Flutter du lecteur'**
+  String get creditsMediaKit;
+
+  /// No description provided for @creditsLibtorrent.
+  ///
+  /// In fr, this message translates to:
+  /// **'libtorrent : moteur de torrents (BSD)'**
+  String get creditsLibtorrent;
+
+  /// No description provided for @settingsNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun'**
+  String get settingsNone;
+
+  /// No description provided for @subtitlesNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun sous-titre'**
+  String get subtitlesNone;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en', 'fr'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'fr':
+      return AppLocalizationsFr();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}

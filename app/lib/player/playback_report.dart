@@ -2,60 +2,59 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:lumio/l10n/app_localizations.dart';
+import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio_core/lumio_core.dart';
 
-/// Message français expliquant un échec de lecture, sans jamais citer d'URL.
+/// Message expliquant un échec de lecture (français par défaut), sans jamais
+/// citer d'URL.
 ///
 /// [err] peut être une exception ou le texte d'erreur du moteur ; [httpStatus]
 /// (réponse de la source, relevée par le proxy) prime sur le reste.
-String explainFailure(Object err, {int? httpStatus, bool refused = false}) {
-  if (refused) return _refusedMessage;
+String explainFailure(
+  Object err, {
+  int? httpStatus,
+  bool refused = false,
+  AppLocalizations? l10n,
+}) {
+  final l = l10n ?? AppLocalizationsFr();
+  if (refused) return l.failRefused;
   final status = httpStatus ?? _statusFrom(err.toString());
-  if (status != null) return _statusMessage(status);
-  if (err is TimeoutException) {
-    return 'Délai dépassé : la source ne répond pas.';
-  }
-  if (err is SocketException) {
-    return 'Connexion impossible : vérifiez le réseau.';
-  }
+  if (status != null) return _statusMessage(status, l);
+  if (err is TimeoutException) return l.failTimeout;
+  if (err is SocketException) return l.failNetwork;
   if (err is UnsafeUrlException || err is InsecureRedirectException) {
-    return _refusedMessage;
+    return l.failRefused;
   }
   if (err is TooManyRedirectsException || err is InvalidRedirectException) {
-    return 'La source redirige de façon incorrecte.';
+    return l.failRedirect;
   }
-  if (err is ResponseTooLargeException) {
-    return 'La réponse de la source est trop volumineuse.';
-  }
+  if (err is ResponseTooLargeException) return l.failTooLarge;
   final text = err.toString().toLowerCase();
   if (text.contains('timed out') || text.contains('timeout')) {
-    return 'Délai dépassé : la source ne répond pas.';
+    return l.failTimeout;
   }
   if (text.contains('failed to recognize') ||
       text.contains('unrecognized file format') ||
       text.contains('unsupported') ||
       text.contains('no video or audio')) {
-    return 'Format non pris en charge par le lecteur.';
+    return l.failFormat;
   }
-  if (text.contains('tls') || text.contains('ssl')) {
-    return 'La connexion sécurisée avec la source a échoué.';
-  }
+  if (text.contains('tls') || text.contains('ssl')) return l.failTls;
   if (text.contains('connection') ||
       text.contains('host lookup') ||
       text.contains('network')) {
-    return 'Connexion impossible : vérifiez le réseau.';
+    return l.failNetwork;
   }
-  return 'La lecture a échoué.';
+  return l.failGeneric;
 }
 
-const _refusedMessage = 'Source refusée pour des raisons de sécurité.';
-
-String _statusMessage(int s) => switch (s) {
-  401 || 403 => 'La source a répondu $s : accès refusé.',
-  404 || 410 => 'La source a répondu $s : le fichier n\'existe plus.',
-  429 => 'La source a répondu 429 : trop de demandes, réessayez plus tard.',
-  >= 500 => 'La source a répondu $s : elle est en panne.',
-  _ => 'La source a répondu $s.',
+String _statusMessage(int s, AppLocalizations l) => switch (s) {
+  401 || 403 => l.httpDenied(s),
+  404 || 410 => l.httpGone(s),
+  429 => l.httpTooMany,
+  >= 500 => l.httpServer(s),
+  _ => l.httpOther(s),
 };
 
 final _httpCode = RegExp(

@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lumio/l10n/app_localizations.dart';
+import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:media_kit/media_kit.dart';
@@ -42,15 +44,19 @@ abstract class TracksBackend {
 
 /// Implémentation media_kit / libmpv.
 class MediaKitTracksBackend implements TracksBackend {
-  MediaKitTracksBackend(this._player);
+  MediaKitTracksBackend(this._player, {AppLocalizations? l10n})
+    : l10n = l10n ?? AppLocalizationsFr();
   final Player _player;
 
-  static String _name(String id, String? title, String? lang, int i) {
+  /// Textes (pistes sans titre) ; mis à jour par l'écran selon la langue.
+  AppLocalizations l10n;
+
+  String _name(String id, String? title, String? lang, int i) {
     final parts = [
       if (title != null && title.isNotEmpty) title,
       if (lang != null && lang.isNotEmpty) lang,
     ];
-    return parts.isEmpty ? 'Piste ${i + 1}' : parts.join(' · ');
+    return parts.isEmpty ? l10n.trackN(i + 1) : parts.join(' · ');
   }
 
   bool _real(String id) => id != 'auto' && id != 'no';
@@ -210,7 +216,11 @@ class TracksController extends ChangeNotifier {
     this.tempStore,
     SubtitleStyle style = const SubtitleStyle(),
     this.onStyleChanged,
-  }) : _style = style {
+    AppLocalizations? l10n,
+    this.defaultAudioLang,
+    this.defaultSubtitleLang,
+  }) : _style = style,
+       l10n = l10n ?? AppLocalizationsFr() {
     _settings = store.forTitle(profileId, metaId);
     _delay = _settings.subtitleDelayMs;
     _sub = backend.changes.listen((_) {
@@ -220,6 +230,14 @@ class TracksController extends ChangeNotifier {
   }
 
   final TracksBackend backend;
+
+  /// Textes des messages d'erreur ; mis à jour par l'écran selon la langue.
+  AppLocalizations l10n;
+
+  /// Langues par défaut des réglages (code de langue, `off` pour aucun
+  /// sous-titre) ; utilisées quand le titre n'a pas de mémorisation.
+  final String? defaultAudioLang;
+  final String? defaultSubtitleLang;
   final TitleSettingsStore store;
   final String profileId;
   final String metaId;
@@ -272,7 +290,7 @@ class TracksController extends ChangeNotifier {
 
   void _applyPreferences() {
     if (_disposed) return;
-    final a = _settings.audioLang;
+    final a = _settings.audioLang ?? defaultAudioLang;
     final audio = backend.audioTracks;
     if (!_appliedAudio && a != null && audio.isNotEmpty) {
       _appliedAudio = true;
@@ -283,7 +301,7 @@ class TracksController extends ChangeNotifier {
         }
       }
     }
-    final s = _settings.subtitleLang;
+    final s = _settings.subtitleLang ?? defaultSubtitleLang;
     if (!_appliedSubs && s != null && _tracksKnown) {
       _appliedSubs = true;
       if (s == 'off') {
@@ -308,7 +326,9 @@ class TracksController extends ChangeNotifier {
   }
 
   static bool _sameLang(String? a, String b) =>
-      a != null && a.toLowerCase().startsWith(b.toLowerCase());
+      a != null &&
+      (a.toLowerCase().startsWith(b.toLowerCase()) ||
+          normalizeLang(a) == normalizeLang(b));
 
   /// Mémorisation d'une piste : sa langue, sinon son rang (`idx:N`).
   static String _keyOf(TrackOption t, List<TrackOption> all) =>
@@ -324,7 +344,7 @@ class TracksController extends ChangeNotifier {
     try {
       store.save(profileId, metaId, s);
     } on Object {
-      _emit('Réglages non enregistrés');
+      _emit(l10n.settingsNotSaved);
     }
   }
 
@@ -351,7 +371,7 @@ class TracksController extends ChangeNotifier {
     final dl = download;
     final tmp = tempStore;
     if (dl == null || tmp == null) {
-      _emit('Sous-titre illisible');
+      _emit(l10n.subtitleUnreadable);
       return;
     }
     try {
@@ -365,7 +385,7 @@ class TracksController extends ChangeNotifier {
       _save(_settings.copyWith(subtitleLang: item.lang));
       _notify();
     } on Object {
-      _emit('Sous-titre illisible');
+      _emit(l10n.subtitleUnreadable);
     }
   }
 

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/features/settings/settings_providers.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/player/next_episode_overlay.dart';
 import 'package:lumio/player/player_controller.dart';
@@ -175,7 +177,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     // Lu ici : `ref` n'est plus utilisable quand dispose() écrit la sortie.
     final repo = ref.read(progressRepositoryProvider);
     return ProgressRecorder(
-      onError: () => _tell('Progression non enregistrée'),
+      onError: () => _tellL((l) => l.progressNotSaved),
       save: (pos, dur) => repo.save(
         widget.profileId,
         metaId,
@@ -206,7 +208,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       }
     }
     if (_disposed) return;
-    if (start > Duration.zero) _tell('Reprise à ${formatClock(start)}');
+    if (start > Duration.zero) _tellL((l) => l.resumeAt(formatClock(start)));
     await _ctl.open(item, allowPrivate: widget.allowPrivate, start: start);
   }
 
@@ -235,6 +237,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _armHide();
   }
 
+  void _tellL(String Function(AppLocalizations l) message) {
+    if (!mounted) return;
+    _tell(message(context.l10n));
+  }
+
   void _tell(String message) {
     if (!mounted) return;
     ScaffoldMessenger.maybeOf(context)
@@ -255,19 +262,33 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     try {
       if (widget.metaId != null) {
         final drift = await ref.read(titleSettingsStoreProvider.future);
-        drift.onSaveError = (_) => _tell('Réglages non enregistrés');
+        drift.onSaveError = (_) => _tellL((l) => l.settingsNotSaved);
         store = drift;
       }
       style = await styleStore.load();
     } on Object {
-      _tell('Réglages mémorisés indisponibles');
+      _tellL((l) => l.settingsUnavailable);
+    }
+    // Langues par défaut des réglages (best-effort : sans elles, le moteur
+    // garde ses pistes par défaut).
+    String? defaultAudio;
+    String? defaultSubs;
+    try {
+      defaultAudio = await ref.read(defaultAudioLangProvider.future);
+      defaultSubs = await ref.read(defaultSubtitleLangProvider.future);
+    } on Object {
+      // Pas de langue par défaut.
     }
     if (!mounted) return;
+    final l10n = context.l10n;
     final fetcher = IoHttpFetcher();
     final c = TracksController(
       backend:
           widget.tracksBackend?.call(_ctl) ??
-          MediaKitTracksBackend(_ctl.player),
+          MediaKitTracksBackend(_ctl.player, l10n: l10n),
+      l10n: l10n,
+      defaultAudioLang: defaultAudio,
+      defaultSubtitleLang: defaultSubs,
       store: store,
       profileId: ref.read(currentProfileIdProvider),
       metaId: widget.metaId ?? '',
@@ -275,7 +296,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       style: style,
       onStyleChanged: (s) => unawaited(
         styleStore.save(s).catchError((Object _) {
-          _tell('Réglages non enregistrés');
+          _tellL((l) => l.settingsNotSaved);
         }),
       ),
       download: (item) => downloadSubtitle(
@@ -288,7 +309,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     try {
       await c.init();
     } on Object {
-      _tell('Réglages de sous-titres non appliqués');
+      _tellL((l) => l.subtitleSettingsNotApplied);
     }
     if (!mounted) {
       c.dispose();
@@ -410,7 +431,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     if (_disposed) return;
     if (item == null) {
       _switching = false;
-      _tell('Épisode suivant indisponible');
+      _tellL((l) => l.nextEpisodeUnavailable);
       _root.requestFocus();
       return;
     }
@@ -489,6 +510,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Les messages d'erreur suivent la langue courante.
+    if (widget.controller == null) _ctl.l10n = context.l10n;
+    _tracks?.l10n = context.l10n;
     final colors =
         Theme.of(context).extension<LumioColors>() ?? LumioColors.dark;
     final fade = MediaQuery.of(context).disableAnimations
@@ -517,13 +541,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     st.phase == PlayerPhase.opening)
                   Center(
                     child: Semantics(
-                      label: 'Mise en mémoire tampon',
+                      label: context.l10n.buffering,
                       child: CircularProgressIndicator(color: colors.accent),
                     ),
                   ),
                 if (failed)
                   _FailureView(
-                    message: st.error ?? 'La lecture a échoué.',
+                    message: st.error ?? context.l10n.failGeneric,
                     onRetry: _ctl.retry,
                     onOther: () =>
                         Navigator.of(context).pop(PlayerExit.pickAnother),
@@ -626,9 +650,9 @@ class _FailureView extends StatelessWidget {
               children: [
                 OutlinedButton(
                   onPressed: onOther,
-                  child: const Text('Choisir une autre source'),
+                  child: Text(context.l10n.chooseOtherSource),
                 ),
-                TextButton(onPressed: onBack, child: const Text('Retour')),
+                TextButton(onPressed: onBack, child: Text(context.l10n.back)),
               ],
             ),
           ],
@@ -703,7 +727,7 @@ class _Controls extends StatelessWidget {
                 children: [
                   _RoundButton(
                     icon: Icons.replay_10,
-                    label: 'Reculer de 10 secondes',
+                    label: context.l10n.seekBack10,
                     size: big ? 88 : 56,
                     onPressed: () => onSeekBy(-seekStep),
                   ),
@@ -711,7 +735,9 @@ class _Controls extends StatelessWidget {
                   _RoundButton(
                     focusNode: playNode,
                     icon: state.isPlaying ? Icons.pause : Icons.play_arrow,
-                    label: state.isPlaying ? 'Pause' : 'Lecture',
+                    label: state.isPlaying
+                        ? context.l10n.pause
+                        : context.l10n.play,
                     size: big ? 128 : 72,
                     primary: true,
                     onPressed: onPlayPause,
@@ -719,7 +745,7 @@ class _Controls extends StatelessWidget {
                   const SizedBox(width: LumioSpacing.lg),
                   _RoundButton(
                     icon: Icons.forward_10,
-                    label: 'Avancer de 10 secondes',
+                    label: context.l10n.seekForward10,
                     size: big ? 88 : 56,
                     onPressed: () => onSeekBy(seekStep),
                   ),
@@ -728,7 +754,7 @@ class _Controls extends StatelessWidget {
                     _RoundButton(
                       focusNode: tracksNode,
                       icon: Icons.subtitles,
-                      label: 'Pistes et sous-titres',
+                      label: context.l10n.tracksAndSubtitles,
                       size: big ? 88 : 56,
                       onPressed: onTracks!,
                     ),
@@ -870,7 +896,7 @@ class _ProgressBarState extends State<_ProgressBar> {
         Expanded(
           child: Semantics(
             slider: true,
-            label: 'Position de lecture',
+            label: context.l10n.seekBar,
             value: formatClock(st.position),
             child: Focus(
               onFocusChange: (v) => setState(() => _focused = v),

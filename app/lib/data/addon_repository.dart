@@ -143,10 +143,18 @@ class AddonRepository {
     });
   }
 
-  Future<List<InstalledAddon>> list() async {
+  /// Addons installés, par priorité. [enabledOnly] écarte les addons
+  /// désactivés : c'est la liste à utiliser pour toute requête réseau.
+  Future<List<InstalledAddon>> list({bool enabledOnly = false}) async {
     final rows =
         await (_db.select(_db.addons)
-              ..where((a) => a.profileScope.equals(profileScope))
+              ..where(
+                (a) =>
+                    a.profileScope.equals(profileScope) &
+                    (enabledOnly
+                        ? a.enabled.equals(true)
+                        : const Constant(true)),
+              )
               ..orderBy([(a) => OrderingTerm.asc(a.position)]))
             .get();
     final out = <InstalledAddon>[];

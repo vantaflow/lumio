@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/ui/theme.dart';
@@ -85,7 +86,7 @@ class _TracksPanelState extends State<TracksPanel> {
         policy: ReadingOrderTraversalPolicy(),
         child: Semantics(
           container: true,
-          label: 'Pistes et sous-titres',
+          label: context.l10n.tracksAndSubtitles,
           child: Material(
             color: colors.surface,
             borderRadius: const BorderRadiusDirectional.horizontal(
@@ -98,15 +99,14 @@ class _TracksPanelState extends State<TracksPanel> {
                   padding: const EdgeInsets.all(LumioSpacing.lg),
                   children: [
                     Text(
-                      'Pistes et sous-titres',
+                      context.l10n.tracksAndSubtitles,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: colors.text,
                       ),
                     ),
                     const SizedBox(height: LumioSpacing.md),
-                    Text('Audio', style: heading),
-                    if (audio.isEmpty)
-                      const _Hint('Aucune piste audio disponible'),
+                    Text(context.l10n.audio, style: heading),
+                    if (audio.isEmpty) _Hint(context.l10n.noAudioTrack),
                     for (final t in audio)
                       _Option(
                         key: ValueKey('audio-${t.id}'),
@@ -116,11 +116,11 @@ class _TracksPanelState extends State<TracksPanel> {
                         onPressed: () => c.selectAudio(t),
                       ),
                     const SizedBox(height: LumioSpacing.md),
-                    Text('Sous-titres', style: heading),
+                    Text(context.l10n.subtitles, style: heading),
                     _Option(
                       key: const ValueKey('sub-off'),
                       autofocus: audio.isEmpty,
-                      label: 'Désactivés',
+                      label: context.l10n.subtitlesOff,
                       selected: selSub == null && c.addonSelectedId == null,
                       onPressed: () => c.selectSubtitle(null),
                     ),
@@ -134,17 +134,17 @@ class _TracksPanelState extends State<TracksPanel> {
                     for (final s in c.addonSubtitles)
                       _Option(
                         key: ValueKey('addon-${s.id}'),
-                        label: 'Addon · ${s.lang}',
+                        label: context.l10n.addonSubtitle(s.lang),
                         selected: c.addonSelectedId == s.id,
                         onPressed: () => c.selectAddonSubtitle(s),
                       ),
                     const SizedBox(height: LumioSpacing.md),
-                    Text('Décalage des sous-titres', style: heading),
+                    Text(context.l10n.subtitleDelay, style: heading),
                     Row(
                       children: [
                         _Step(
                           key: const ValueKey('delay-minus'),
-                          label: 'Avancer les sous-titres de 100 ms',
+                          label: context.l10n.subtitleAdvance,
                           icon: Icons.remove,
                           onPressed: () => c.changeDelay(-subtitleDelayStepMs),
                         ),
@@ -163,14 +163,14 @@ class _TracksPanelState extends State<TracksPanel> {
                         ),
                         _Step(
                           key: const ValueKey('delay-plus'),
-                          label: 'Retarder les sous-titres de 100 ms',
+                          label: context.l10n.subtitleRetard,
                           icon: Icons.add,
                           onPressed: () => c.changeDelay(subtitleDelayStepMs),
                         ),
                       ],
                     ),
                     const SizedBox(height: LumioSpacing.md),
-                    Text('Taille', style: heading),
+                    Text(context.l10n.subtitleSize, style: heading),
                     Wrap(
                       spacing: LumioSpacing.sm,
                       children: [
@@ -187,7 +187,7 @@ class _TracksPanelState extends State<TracksPanel> {
                     const SizedBox(height: LumioSpacing.md),
                     _Option(
                       key: const ValueKey('bg-toggle'),
-                      label: 'Fond opaque',
+                      label: context.l10n.opaqueBackground,
                       selected: c.style.opaqueBackground,
                       toggle: true,
                       onPressed: c.toggleBackground,

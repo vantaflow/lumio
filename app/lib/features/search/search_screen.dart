@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/features/search/search_providers.dart';
@@ -191,7 +192,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   : (t) => ref.read(searchProvider.notifier).setQuery(t),
               style: Theme.of(context).textTheme.titleLarge,
               decoration: InputDecoration(
-                hintText: 'Rechercher un titre',
+                hintText: context.l10n.searchHint,
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: lumio.surface,
@@ -221,27 +222,29 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               children: [
                 _Key(
                   key: const ValueKey('key-space'),
-                  label: 'Espace',
+                  label: context.l10n.kbSpace,
                   wide: true,
-                  semantic: 'Espace',
+                  semantic: context.l10n.kbSpace,
                   onSelect: () => _type(' '),
                 ),
                 _Key(
                   key: const ValueKey('key-backspace'),
                   icon: Icons.backspace_outlined,
-                  semantic: 'Effacer',
+                  semantic: context.l10n.kbErase,
                   onSelect: _backspace,
                 ),
                 _Key(
                   key: const ValueKey('key-clear'),
-                  label: 'Tout',
-                  semantic: 'Tout effacer',
+                  label: context.l10n.kbAll,
+                  semantic: context.l10n.kbClearAll,
                   onSelect: () => _setText(''),
                 ),
                 _Key(
                   key: const ValueKey('key-layout'),
                   label: _arabic ? 'ABC' : 'ع',
-                  semantic: _arabic ? 'Clavier latin' : 'Clavier arabe',
+                  semantic: _arabic
+                      ? context.l10n.kbLatin
+                      : context.l10n.kbArabic,
                   onSelect: () => setState(() => _arabic = !_arabic),
                 ),
                 if (_micAvailable)
@@ -249,8 +252,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     key: const ValueKey('key-mic'),
                     icon: _listening ? Icons.mic : Icons.mic_none,
                     semantic: _listening
-                        ? 'Arrêter la dictée'
-                        : 'Dictée vocale',
+                        ? context.l10n.dictationStop
+                        : context.l10n.dictationStart,
                     highlighted: _listening,
                     onSelect: _toggleMic,
                   ),
@@ -310,17 +313,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     Widget body;
     if (!s.hasQuery) {
-      body = const StateView.empty(
-        message: 'Tapez un titre pour lancer la recherche',
-      );
+      body = StateView.empty(message: context.l10n.searchPrompt);
     } else if (s.noSearchAddon) {
-      body = const StateView.empty(
-        message: 'Aucun addon actif ne propose la recherche',
-      );
+      body = StateView.empty(message: context.l10n.searchNoAddon);
     } else if (visible.isEmpty && s.searching) {
       body = const StateView.loading();
     } else if (visible.isEmpty) {
-      body = const StateView.empty(message: 'Aucun résultat');
+      body = StateView.empty(message: context.l10n.searchNoResults);
     } else {
       final restoreIndex = _restoreId == null
           ? -1
@@ -384,9 +383,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               _FilterChip(
                 key: ValueKey('filter-${f.name}'),
                 label: switch (f) {
-                  _TypeFilter.all => 'Tout',
-                  _TypeFilter.movie => 'Films',
-                  _TypeFilter.series => 'Séries',
+                  _TypeFilter.all => context.l10n.filterAll,
+                  _TypeFilter.movie => context.l10n.filterMovies,
+                  _TypeFilter.series => context.l10n.filterSeries,
                 },
                 selected: _filter == f,
                 onSelect: () => setState(() => _filter = f),

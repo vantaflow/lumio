@@ -1,9 +1,10 @@
+import 'package:lumio/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 /// Composant commun des états d'écran : chargement, vide, erreur.
 ///
-/// Les textes sont fournis par l'appelant (traduits via gen-l10n) ; seul le
-/// libellé du bouton d'erreur a une valeur par défaut française.
+/// Les textes sont fournis par l'appelant (traduits via gen-l10n) ; le
+/// libellé du bouton d'erreur est par défaut « Réessayer » (traduit).
 class StateView extends StatelessWidget {
   const StateView.loading({super.key})
     : _kind = _Kind.loading,
@@ -21,7 +22,7 @@ class StateView extends StatelessWidget {
   const StateView.error({
     required String this.message,
     required VoidCallback onRetry,
-    String retryLabel = 'Réessayer',
+    String? retryLabel,
     super.key,
   }) : _kind = _Kind.error,
        actionLabel = retryLabel,
@@ -58,9 +59,12 @@ class StateView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge,
             ),
-            if (actionLabel != null && onAction != null) ...[
+            if (onAction != null) ...[
               const SizedBox(height: 16),
-              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+              FilledButton(
+                onPressed: onAction,
+                child: Text(actionLabel ?? context.l10n.retry),
+              ),
             ],
           ],
         ),

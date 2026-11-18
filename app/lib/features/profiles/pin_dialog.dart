@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
@@ -16,9 +17,9 @@ class PinEntry {
   final bool forgot;
 }
 
-String _lockMessage(Duration remaining) {
+String _lockMessage(Duration remaining, AppLocalizations l) {
   final min = (remaining.inSeconds / 60).ceil().clamp(1, 60);
-  return 'Trop d\'essais. Réessayez dans $min min.';
+  return l.tooManyTries(min);
 }
 
 /// Boîte de saisie du PIN : 4 points, clavier numérique focalisable à la
@@ -31,7 +32,7 @@ Future<PinEntry?> showPinDialog(
   String? subtitle,
   Future<PinResult> Function(String pin)? verify,
   Future<Duration> Function()? lockRemaining,
-  String wrongMessage = 'PIN incorrect',
+  String? wrongMessage,
   bool allowForgot = false,
 }) => showDialog<PinEntry>(
   context: context,
@@ -52,7 +53,7 @@ class PinDialog extends StatefulWidget {
     this.subtitle,
     this.verify,
     this.lockRemaining,
-    this.wrongMessage = 'PIN incorrect',
+    this.wrongMessage,
     this.allowForgot = false,
   });
 
@@ -60,7 +61,7 @@ class PinDialog extends StatefulWidget {
   final String? subtitle;
   final Future<PinResult> Function(String pin)? verify;
   final Future<Duration> Function()? lockRemaining;
-  final String wrongMessage;
+  final String? wrongMessage;
   final bool allowForgot;
 
   @override
@@ -84,7 +85,7 @@ class _PinDialogState extends State<PinDialog> {
     if (!mounted || remaining == null || remaining <= Duration.zero) return;
     setState(() {
       _locked = true;
-      _message = _lockMessage(remaining);
+      _message = _lockMessage(remaining, context.l10n);
     });
   }
 
@@ -125,7 +126,7 @@ class _PinDialogState extends State<PinDialog> {
       setState(() {
         _busy = false;
         _digits = '';
-        _message = 'Vérification impossible. Réessayez.';
+        _message = context.l10n.pinCheckFailed;
       });
       return;
     }
@@ -137,14 +138,14 @@ class _PinDialogState extends State<PinDialog> {
         setState(() {
           _busy = false;
           _digits = '';
-          _message = widget.wrongMessage;
+          _message = widget.wrongMessage ?? context.l10n.pinWrong;
         });
       case PinResult.locked:
         setState(() {
           _busy = false;
           _digits = '';
           _locked = true;
-          _message = _lockMessage(remaining);
+          _message = _lockMessage(remaining, context.l10n);
         });
     }
   }
@@ -227,7 +228,7 @@ class _PinDialogState extends State<PinDialog> {
                       TextButton(
                         onPressed: () =>
                             Navigator.of(context).pop(const PinEntry.forgot()),
-                        child: const Text('PIN oublié ?'),
+                        child: Text(context.l10n.pinForgot),
                       ),
                     ],
                   ],
@@ -249,9 +250,7 @@ class _Dots extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.lumio;
     return Semantics(
-      label:
-          '$filled chiffre${filled > 1 ? 's' : ''} saisi'
-          '${filled > 1 ? 's' : ''} sur 4',
+      label: context.l10n.pinDotsSemantic(filled),
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -289,17 +288,19 @@ class _Pad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     Widget key(
       String label,
       VoidCallback onTap, {
       String? semantic,
       bool autofocus = false,
+      bool alwaysEnabled = false,
     }) => Padding(
       padding: const EdgeInsets.all(LumioSpacing.sm),
       child: FocusableCard(
         autofocus: autofocus,
-        enabled: enabled || label == 'Annuler',
-        semanticLabel: semantic ?? 'Chiffre $label',
+        enabled: enabled || alwaysEnabled,
+        semanticLabel: semantic ?? l.digitSemantic(label),
         onSelect: onTap,
         borderRadius: BorderRadius.circular(LumioRadius.sm),
         child: _KeyFace(label: label),
@@ -323,9 +324,9 @@ class _Pad extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            key('Effacer', onErase, semantic: 'Effacer le dernier chiffre'),
+            key(l.kbErase, onErase, semantic: l.eraseLastDigit),
             key('0', () => onDigit('0')),
-            key('Annuler', onCancel, semantic: 'Annuler'),
+            key(l.cancel, onCancel, semantic: l.cancel, alwaysEnabled: true),
           ],
         ),
       ],
@@ -369,16 +370,12 @@ Future<void> showRecoveryCodeDialog(BuildContext context, String code) =>
       builder: (ctx) {
         final c = ctx.lumio;
         return AlertDialog(
-          title: const Text('Code de récupération'),
+          title: Text(ctx.l10n.recoveryTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Notez ce code et gardez-le en lieu sûr : il permet de '
-                'choisir un nouveau PIN si vous l\'oubliez. Il ne sera '
-                'plus jamais affiché.',
-              ),
+              Text(ctx.l10n.recoveryBody),
               const SizedBox(height: LumioSpacing.md),
               Center(
                 child: SelectableText(
@@ -398,7 +395,7 @@ Future<void> showRecoveryCodeDialog(BuildContext context, String code) =>
             FilledButton(
               autofocus: true,
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('J\'ai noté le code'),
+              child: Text(ctx.l10n.recoveryNoted),
             ),
           ],
         );
@@ -411,7 +408,7 @@ Future<String?> _askRecoveryCode(BuildContext context) {
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Code de récupération'),
+      title: Text(ctx.l10n.recoveryTitle),
       content: TextField(
         controller: controller,
         autofocus: true,
@@ -422,11 +419,11 @@ Future<String?> _askRecoveryCode(BuildContext context) {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Annuler'),
+          child: Text(ctx.l10n.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(controller.text),
-          child: const Text('Continuer'),
+          child: Text(ctx.l10n.continueAction),
         ),
       ],
     ),
@@ -443,16 +440,16 @@ void _toast(BuildContext context, String text) {
 Future<String?> askNewPin(BuildContext context) async {
   final first = await showPinDialog(
     context,
-    title: 'Choisissez un PIN',
-    subtitle: '4 chiffres. Il protège les profils enfants et les réglages.',
+    title: context.l10n.choosePin,
+    subtitle: context.l10n.pinHint,
   );
   final pin = first?.pin;
   if (pin == null || !context.mounted) return null;
   final second = await showPinDialog(
     context,
-    title: 'Confirmez le PIN',
+    title: context.l10n.confirmPin,
     verify: (p) async => p == pin ? PinResult.ok : PinResult.wrong,
-    wrongMessage: 'Les deux PIN ne correspondent pas',
+    wrongMessage: context.l10n.pinMismatch,
   );
   return second?.pin;
 }
@@ -467,7 +464,7 @@ Future<bool> createParentPinFlow(BuildContext context, WidgetRef ref) async {
     await showRecoveryCodeDialog(context, code);
     return true;
   } on Object {
-    if (context.mounted) _toast(context, 'Impossible d\'enregistrer le PIN');
+    if (context.mounted) _toast(context, context.l10n.pinSaveFailed);
     return false;
   }
 }
@@ -488,14 +485,14 @@ Future<bool> recoverParentPinFlow(BuildContext context, WidgetRef ref) async {
         await showRecoveryCodeDialog(context, r.newRecoveryCode!);
         return true;
       case PinResult.wrong:
-        _toast(context, 'Code de récupération incorrect');
+        _toast(context, context.l10n.recoveryWrong);
         return false;
       case PinResult.locked:
-        _toast(context, 'Trop d\'essais. Réessayez dans quelques minutes.');
+        _toast(context, context.l10n.tooManyTriesLater);
         return false;
     }
   } on Object {
-    if (context.mounted) _toast(context, 'Récupération impossible');
+    if (context.mounted) _toast(context, context.l10n.recoveryFailed);
     return false;
   }
 }
@@ -505,7 +502,7 @@ Future<bool> recoverParentPinFlow(BuildContext context, WidgetRef ref) async {
 Future<bool> verifyParentPinFlow(
   BuildContext context,
   WidgetRef ref, {
-  String title = 'PIN parent',
+  String? title,
   String? subtitle,
 }) async {
   final repo = ref.read(profileRepositoryProvider);
@@ -515,7 +512,7 @@ Future<bool> verifyParentPinFlow(
   } on Object {
     // Échec fermé : sans savoir si un PIN existe, on n'autorise rien.
     if (context.mounted) {
-      _toast(context, 'Contrôle parental indisponible. Réessayez.');
+      _toast(context, context.l10n.parentalUnavailable);
     }
     return false;
   }
@@ -526,7 +523,7 @@ Future<bool> verifyParentPinFlow(
   if (!context.mounted) return false;
   final entry = await showPinDialog(
     context,
-    title: title,
+    title: title ?? context.l10n.parentPin,
     subtitle: subtitle,
     verify: repo.verifyParentPin,
     lockRemaining: repo.lockRemaining,
@@ -545,9 +542,5 @@ Future<bool> verifyParentPinFlow(
 Future<bool> requireParent(BuildContext context, WidgetRef ref) async {
   final current = ref.read(currentProfileProvider);
   if (current == null || !current.isKid) return true;
-  return verifyParentPinFlow(
-    context,
-    ref,
-    subtitle: 'Demandez à un parent de saisir son PIN.',
-  );
+  return verifyParentPinFlow(context, ref, subtitle: context.l10n.askParent);
 }

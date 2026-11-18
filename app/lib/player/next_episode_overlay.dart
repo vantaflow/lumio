@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/theme.dart';
 
 /// Avance de l'invite « Épisode suivant » sur la fin de l'épisode.
@@ -145,8 +146,7 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
         child: Semantics(
           container: true,
           liveRegion: true,
-          label:
-              'Épisode suivant dans $_left secondes : ${widget.episodeTitle}',
+          label: context.l10n.nextEpisodeIn(_left, widget.episodeTitle),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 480),
             padding: const EdgeInsets.all(LumioSpacing.lg),
@@ -160,7 +160,7 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Épisode suivant dans $_left s',
+                  context.l10n.nextEpisodeInShort(_left),
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: colors.textMuted,
                   ),
@@ -183,11 +183,11 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
                       focusNode: _playNode,
                       autofocus: true,
                       onPressed: () => _fire(widget.onPlayNow),
-                      child: const Text('Lire maintenant'),
+                      child: Text(context.l10n.playNow),
                     ),
                     OutlinedButton(
                       onPressed: () => _fire(widget.onCancel),
-                      child: const Text('Annuler'),
+                      child: Text(context.l10n.cancel),
                     ),
                   ],
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
 import 'package:lumio/features/detail/playback_service.dart';
@@ -84,6 +85,7 @@ class DefaultContinuePlayback implements ContinuePlayback {
   @override
   Future<void> play(BuildContext context, ProgressEntry entry) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
+    final l = context.l10n;
     void tell(String m) => messenger
       ?..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(m)));
@@ -92,21 +94,21 @@ class DefaultContinuePlayback implements ContinuePlayback {
     try {
       meta = await _meta(entry);
     } on Object {
-      tell('Fiche indisponible. Réessayez.');
+      tell(l.sheetUnavailable);
       return;
     }
     if (!contentAllowed(_ref.read(currentProfileProvider), [
       meta.certification,
       entry.certification,
     ])) {
-      tell('Ce contenu n\'est pas autorisé pour ce profil.');
+      tell(l.notAllowedForProfile);
       return;
     }
     final type = meta.type;
     final stream = await launcher.resolvePreferred(type, entry.videoId);
     if (!context.mounted) return;
     if (stream == null) {
-      tell('Aucune source disponible. Vérifiez vos addons.');
+      tell(l.noSourceAvailable);
       return;
     }
     final exit = await launcher.play(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/features/addons/add_addon_dialog.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
@@ -18,7 +19,7 @@ class AddonsScreen extends ConsumerWidget {
     Future<void> add() => showAddAddonDialog(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Addons'),
+        title: Text(context.l10n.addonsTitle),
         actions: [
           if (addons.value?.isNotEmpty ?? false)
             Padding(
@@ -26,7 +27,7 @@ class AddonsScreen extends ConsumerWidget {
               child: FilledButton.icon(
                 onPressed: add,
                 icon: const Icon(Icons.add),
-                label: const Text('Ajouter un addon'),
+                label: Text(context.l10n.addAddon),
               ),
             ),
         ],
@@ -34,15 +35,13 @@ class AddonsScreen extends ConsumerWidget {
       body: addons.when(
         loading: () => const StateView.loading(),
         error: (_, _) => StateView.error(
-          message: 'Impossible de charger les addons',
+          message: context.l10n.addonsLoadError,
           onRetry: () => ref.read(addonsProvider.notifier).reload(),
         ),
         data: (list) => list.isEmpty
             ? StateView.empty(
-                message:
-                    'Aucun addon installé. Un addon apporte des catalogues '
-                    'et des sources : ajoutez-en un avec son lien.',
-                actionLabel: 'Ajouter un addon',
+                message: context.l10n.addonsEmpty,
+                actionLabel: context.l10n.addAddon,
                 onAction: add,
               )
             : _AddonList(list: list),
@@ -90,16 +89,13 @@ class _AddonList extends ConsumerWidget {
     Future<void> Function() op,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
+    final failed = context.l10n.addonActionFailed;
     try {
       await op();
     } catch (_) {
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Action impossible : l\'addon n\'a pas été modifié'),
-          ),
-        );
+        ..showSnackBar(SnackBar(content: Text(failed)));
       // Resynchronise l'affichage avec la base.
       await ref.read(addonsProvider.notifier).refresh().catchError((_) {});
     }
@@ -110,21 +106,18 @@ class _AddonList extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer cet addon ?'),
-        content: Text(
-          '« $name » sera retiré de Lumio. Ses catalogues et ses sources '
-          'ne seront plus proposés.',
-        ),
+        title: Text(ctx.l10n.removeAddonTitle),
+        content: Text(ctx.l10n.removeAddonBody(name)),
         actions: [
           TextButton(
             autofocus: true,
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler'),
+            child: Text(ctx.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: c.error),
-            child: const Text('Supprimer'),
+            child: Text(ctx.l10n.delete),
           ),
         ],
       ),
@@ -158,7 +151,9 @@ class _AddonTile extends StatelessWidget {
     final c = context.lumio;
     final theme = Theme.of(context);
     final m = addon.manifest;
-    final types = m?.types.map(contentTypeLabel).join(' · ') ?? '';
+    final types =
+        m?.types.map((t) => contentTypeLabel(t, context.l10n)).join(' · ') ??
+        '';
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -191,8 +186,7 @@ class _AddonTile extends StatelessWidget {
                       ),
                       Text(
                         m == null
-                            ? 'Addon illisible : supprimez-le puis '
-                                  'réinstallez-le'
+                            ? context.l10n.addonBroken
                             : '$types · v${m.version}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -202,7 +196,7 @@ class _AddonTile extends StatelessWidget {
                       ),
                       if (!addon.enabled)
                         Text(
-                          'Désactivé',
+                          context.l10n.addonDisabled,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: c.warning,
                           ),
@@ -217,22 +211,22 @@ class _AddonTile extends StatelessWidget {
               children: [
                 if (m != null) ...[
                   IconButton(
-                    tooltip: 'Monter ${addon.name}',
+                    tooltip: context.l10n.moveAddonUp(addon.name),
                     onPressed: canMoveUp ? onMoveUp : null,
                     icon: const Icon(Icons.arrow_upward),
                   ),
                   IconButton(
-                    tooltip: 'Descendre ${addon.name}',
+                    tooltip: context.l10n.moveAddonDown(addon.name),
                     onPressed: canMoveDown ? onMoveDown : null,
                     icon: const Icon(Icons.arrow_downward),
                   ),
                   Semantics(
-                    label: 'Activer ${addon.name}',
+                    label: context.l10n.enableAddon(addon.name),
                     child: Switch(value: addon.enabled, onChanged: onToggle),
                   ),
                 ],
                 IconButton(
-                  tooltip: 'Supprimer ${addon.name}',
+                  tooltip: context.l10n.deleteAddon(addon.name),
                   onPressed: onDelete,
                   icon: Icon(Icons.delete_outline, color: c.error),
                 ),

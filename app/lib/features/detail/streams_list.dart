@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/l10n/app_localizations_fr.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
@@ -16,13 +18,15 @@ String qualityLabel(Quality q) => switch (q) {
   Quality.unknown => '',
 };
 
-String sizeLabel(int bytes) {
+String sizeLabel(int bytes, [AppLocalizations? l]) {
+  l ??= AppLocalizationsFr();
   const gb = 1024 * 1024 * 1024;
   const mb = 1024 * 1024;
   if (bytes >= gb) {
-    return '${(bytes / gb).toStringAsFixed(1).replaceAll('.', ',')} Go';
+    final v = (bytes / gb).toStringAsFixed(1);
+    return l.sizeGb(l.localeName == 'fr' ? v.replaceAll('.', ',') : v);
   }
-  return '${(bytes / mb).round()} Mo';
+  return l.sizeMb((bytes / mb).round());
 }
 
 /// Icône aimant (flux torrent) : un fer à cheval aux pôles marqués.
@@ -34,7 +38,7 @@ class MagnetIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Torrent',
+    label: context.l10n.torrentLabel,
     child: CustomPaint(
       size: Size.square(size),
       painter: _MagnetPainter(color ?? context.lumio.secondary),
@@ -102,11 +106,9 @@ class StreamsList extends StatelessWidget {
       return const SizedBox(height: 160, child: StateView.loading());
     }
     if (empty && groups.every((g) => g.error == null)) {
-      return const SizedBox(
+      return SizedBox(
         height: 220,
-        child: StateView.empty(
-          message: 'Aucun flux trouvé. Vérifiez vos addons.',
-        ),
+        child: StateView.empty(message: context.l10n.noStreams),
       );
     }
     return Column(
@@ -121,7 +123,7 @@ class StreamsList extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  addonNames[g.addonId] ?? 'Addon',
+                  addonNames[g.addonId] ?? context.l10n.addonFallback,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: lumio.text,
                   ),
@@ -134,7 +136,9 @@ class StreamsList extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  g.error != null ? 'Ne répond pas' : '${g.items.length} flux',
+                  g.error != null
+                      ? context.l10n.noResponse
+                      : context.l10n.streamCount(g.items.length),
                   style: theme.textTheme.bodySmall,
                 ),
               ],
@@ -183,16 +187,18 @@ class _StreamRow extends StatelessWidget {
     final bits = [
       qualityLabel(item.quality),
       if (item.language != null) item.language!.toUpperCase(),
-      if (item.sizeBytes != null) sizeLabel(item.sizeBytes!),
+      if (item.sizeBytes != null) sizeLabel(item.sizeBytes!, context.l10n),
     ].where((e) => e.isNotEmpty).join(' · ');
-    final kind = item.isTorrent ? 'torrent' : 'lien direct';
+    final kind = item.isTorrent
+        ? context.l10n.kindTorrent
+        : context.l10n.kindDirect;
     return FocusableCard(
       scale: 1.02,
       onSelect: onSelect,
       semanticLabel:
           '${item.title}, $bits, $kind'
-          '${seeders != null ? ', $seeders sources' : ''}'
-          '${recommended ? ', recommandé' : ''}',
+          '${seeders != null ? ', ${context.l10n.seedersSemantic(seeders)}' : ''}'
+          '${recommended ? ', ${context.l10n.recommendedSemantic}' : ''}',
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: LumioSpacing.md,
@@ -246,7 +252,7 @@ class _StreamRow extends StatelessWidget {
             ],
             if (recommended)
               Text(
-                'Recommandé',
+                context.l10n.recommended,
                 style: theme.textTheme.bodySmall?.copyWith(color: lumio.accent),
               ),
           ],

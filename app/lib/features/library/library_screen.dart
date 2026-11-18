@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/providers.dart';
@@ -27,17 +28,13 @@ class LibraryScreen extends ConsumerWidget {
     final Widget body;
     if (lib.hasError) {
       body = StateView.error(
-        message: 'Impossible de lire votre liste.',
+        message: context.l10n.libraryLoadError,
         onRetry: () => ref.invalidate(libraryProvider),
       );
     } else if (!lib.hasValue) {
       body = const StateView.loading();
     } else if (items.isEmpty) {
-      body = const StateView.empty(
-        message:
-            'Votre liste est vide. Ouvrez la fiche d\'un titre puis '
-            'choisissez « Ajouter à ma liste ».',
-      );
+      body = StateView.empty(message: context.l10n.libraryEmpty);
     } else {
       body = GridView.builder(
         padding: const EdgeInsets.all(LumioSpacing.xl),
@@ -58,7 +55,7 @@ class LibraryScreen extends ConsumerWidget {
     return TvScaffold(
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Ma liste'),
+          title: Text(context.l10n.myList),
           backgroundColor: Colors.transparent,
         ),
         body: body,

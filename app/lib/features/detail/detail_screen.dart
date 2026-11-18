@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/app_localizations_fr.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/detail/streams_list.dart';
@@ -192,9 +194,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       }
     } on Object {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(content: Text('Ma liste n\'a pas pu être modifiée.')),
-      );
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(context.l10n.listUpdateFailed)));
     }
   }
 
@@ -209,11 +211,11 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         body: switch (_phase) {
           _Phase.loading => const StateView.loading(),
           _Phase.error => StateView.error(
-            message: 'Impossible de charger la fiche.',
+            message: context.l10n.detailLoadError,
             onRetry: _load,
           ),
-          _Phase.refused => const StateView.empty(
-            message: 'Ce contenu n\'est pas autorisé pour ce profil.',
+          _Phase.refused => StateView.empty(
+            message: context.l10n.notAllowedForProfile,
           ),
           _Phase.ready => _body(context, _meta!),
         },
@@ -390,13 +392,13 @@ class _Info extends StatelessWidget {
               autofocus: true,
               onPressed: canPlay ? onPlay : null,
               icon: const Icon(Icons.play_arrow),
-              label: const Text('Lecture auto · meilleure source'),
+              label: Text(context.l10n.autoPlayBest),
             ),
             OutlinedButton.icon(
               onPressed: onToggleList,
               icon: Icon(inList ? Icons.check : Icons.add),
               label: Text(
-                inList ? 'Retirer de ma liste' : 'Ajouter à ma liste',
+                inList ? context.l10n.removeFromList : context.l10n.addToList,
               ),
             ),
           ],
@@ -427,11 +429,14 @@ class _Sources extends StatelessWidget {
   final Widget streams;
   final bool noEpisodes;
 
-  static String seasonLabel(int s) => switch (s) {
-    -1 => 'Épisodes',
-    0 => 'Spéciaux',
-    _ => 'Saison $s',
-  };
+  static String seasonLabel(int s, [AppLocalizations? l]) {
+    l ??= AppLocalizationsFr();
+    return switch (s) {
+      -1 => l.seasonEpisodes,
+      0 => l.seasonSpecials,
+      _ => l.seasonN(s),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -450,13 +455,13 @@ class _Sources extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (noEpisodes)
-          const Padding(
-            padding: EdgeInsets.all(LumioSpacing.lg),
-            child: Text('Aucun épisode disponible pour cette série.'),
+          Padding(
+            padding: const EdgeInsets.all(LumioSpacing.lg),
+            child: Text(context.l10n.noEpisodes),
           ),
         if (seasons.length > 1 && meta.type != 'movie')
           TvRow(
-            title: 'Saisons',
+            title: context.l10n.seasonsTitle,
             restorationId: 'detail-seasons',
             routeKey: detailRouteKey,
             itemExtent: 150,
@@ -468,7 +473,7 @@ class _Sources extends StatelessWidget {
                   width: 150,
                   child: FocusableCard(
                     onSelect: () => onSeason(s),
-                    semanticLabel: seasonLabel(s),
+                    semanticLabel: seasonLabel(s, context.l10n),
                     child: Container(
                       height: 56,
                       alignment: Alignment.center,
@@ -477,7 +482,7 @@ class _Sources extends StatelessWidget {
                         borderRadius: BorderRadius.circular(LumioRadius.md),
                       ),
                       child: Text(
-                        seasonLabel(s),
+                        seasonLabel(s, context.l10n),
                         style: TextStyle(
                           color: s == season ? lumio.onAccent : lumio.text,
                           fontWeight: FontWeight.w600,
@@ -490,7 +495,9 @@ class _Sources extends StatelessWidget {
           ),
         if (episodes.isNotEmpty && meta.type != 'movie')
           TvRow(
-            title: season == null ? 'Épisodes' : seasonLabel(season!),
+            title: season == null
+                ? context.l10n.seasonEpisodes
+                : seasonLabel(season!, context.l10n),
             restorationId: 'detail-episodes',
             routeKey: detailRouteKey,
             itemExtent: 280,
@@ -504,8 +511,8 @@ class _Sources extends StatelessWidget {
                   child: FocusableCard(
                     onSelect: () => onEpisode(v),
                     semanticLabel:
-                        '${_episodeCode(v)} ${v.title}'
-                        '${watched.contains(v.id) ? ', vu' : ', non vu'}',
+                        '${_episodeCode(v, context.l10n)} ${v.title}'
+                        ', ${watched.contains(v.id) ? context.l10n.watchedSemantic : context.l10n.unwatchedSemantic}',
                     child: Container(
                       height: 112,
                       padding: const EdgeInsets.all(LumioSpacing.md),
@@ -523,7 +530,7 @@ class _Sources extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                _episodeCode(v),
+                                _episodeCode(v, context.l10n),
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   color: lumio.accent,
                                 ),
@@ -534,7 +541,7 @@ class _Sources extends StatelessWidget {
                                   Icons.check_circle,
                                   size: 20,
                                   color: lumio.success,
-                                  semanticLabel: 'Vu',
+                                  semanticLabel: context.l10n.watchedBadge,
                                 ),
                             ],
                           ),
@@ -564,7 +571,7 @@ class _Sources extends StatelessWidget {
                 Semantics(
                   header: true,
                   child: Text(
-                    'Sources',
+                    context.l10n.sourcesTitle,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: lumio.text,
                     ),
@@ -578,8 +585,8 @@ class _Sources extends StatelessWidget {
     );
   }
 
-  static String _episodeCode(core.Video v) =>
+  static String _episodeCode(core.Video v, AppLocalizations l) =>
       v.season != null && v.episode != null
       ? 'S${v.season}E${v.episode}'
-      : (v.episode != null ? 'É${v.episode}' : '');
+      : (v.episode != null ? '${l.episodeLetter}${v.episode}' : '');
 }

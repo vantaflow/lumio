@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/app_localizations_fr.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
@@ -18,9 +20,10 @@ bool isProfileLocked(Profile p, List<Profile> all, {required bool hasPin}) {
 }
 
 /// Mention d'âge d'un profil enfant (« Enfant · 12+ »).
-String kidLabel(Profile p) {
+String kidLabel(Profile p, [AppLocalizations? l]) {
+  l ??= AppLocalizationsFr();
   final years = AgeLimit.values[p.ageLimit].years;
-  return years == null ? 'Enfant · Tous publics' : 'Enfant · $years+';
+  return years == null ? l.kidAllAges : l.kidYears(years);
 }
 
 /// Affiche le contenu quand un profil est actif ; sinon choisit seul l'unique
@@ -39,7 +42,7 @@ class ProfileGate extends ConsumerWidget {
       loading: () => const Scaffold(body: StateView.loading()),
       error: (_, _) => Scaffold(
         body: StateView.error(
-          message: 'Impossible de charger les profils',
+          message: context.l10n.profilesLoadError,
           onRetry: () => ref.invalidate(profilesProvider),
         ),
       ),
@@ -92,7 +95,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
     } on Object {
       if (mounted) {
         setState(() => _hasPin = true);
-        _toast('Contrôle parental indisponible. Réessayez.');
+        _toast(context.l10n.parentalUnavailable);
       }
       return false;
     }
@@ -125,7 +128,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       final ok = await verifyParentPinFlow(
         context,
         ref,
-        title: 'PIN pour ${p.name}',
+        title: context.l10n.pinFor(p.name),
       );
       if (!ok || !mounted) return;
     }
@@ -181,9 +184,9 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
         );
       }
     } on ProfileLimitException {
-      _toast('Six profils au maximum');
+      if (mounted) _toast(context.l10n.maxProfilesReached);
     } on Object {
-      _toast('Action impossible : le profil n\'a pas été modifié');
+      if (mounted) _toast(context.l10n.profileNotModified);
     }
   }
 
@@ -211,7 +214,9 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _manage ? 'Gérer les profils' : 'Qui regarde ?',
+                    _manage
+                        ? context.l10n.manageProfiles
+                        : context.l10n.whoIsWatching,
                     style: theme.textTheme.displayLarge,
                   ),
                   const SizedBox(height: LumioSpacing.xl),
@@ -241,7 +246,9 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                   OutlinedButton.icon(
                     onPressed: _toggleManage,
                     icon: Icon(_manage ? Icons.check : Icons.edit_outlined),
-                    label: Text(_manage ? 'Terminé' : 'Gérer les profils'),
+                    label: Text(
+                      _manage ? context.l10n.done : context.l10n.manageProfiles,
+                    ),
                     style: OutlinedButton.styleFrom(foregroundColor: c.text),
                   ),
                 ],
@@ -288,7 +295,7 @@ class _ProfileTile extends StatelessWidget {
     final theme = Theme.of(context);
     final name = profile.name;
     final initial = name.characters.isEmpty ? '?' : name.characters.first;
-    final sub = profile.isKid ? kidLabel(profile) : null;
+    final sub = profile.isKid ? kidLabel(profile, context.l10n) : null;
     return SizedBox(
       width: 220,
       child: Column(
@@ -299,8 +306,8 @@ class _ProfileTile extends StatelessWidget {
             semanticLabel: [
               name,
               ?sub,
-              if (locked) 'verrouillé, PIN demandé',
-              if (manage) 'modifier',
+              if (locked) context.l10n.lockedSemantic,
+              if (manage) context.l10n.editSemantic,
             ].join(', '),
             borderRadius: BorderRadius.circular(LumioRadius.pill),
             onSelect: onSelect,
@@ -366,7 +373,7 @@ class _ProfileTile extends StatelessWidget {
                 ),
                 if (locked)
                   Text(
-                    'PIN',
+                    context.l10n.pinBadge,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: c.textMuted,
                     ),
@@ -401,7 +408,7 @@ class _AddTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           FocusableCard(
-            semanticLabel: 'Ajouter un profil',
+            semanticLabel: context.l10n.addProfileSemantic,
             borderRadius: BorderRadius.circular(LumioRadius.pill),
             onSelect: onSelect,
             child: Container(
@@ -421,7 +428,7 @@ class _AddTile extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(top: LumioSpacing.md),
               child: Text(
-                'Ajouter',
+                context.l10n.add,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
             ),
@@ -487,7 +494,7 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
   void _save() {
     final name = _name.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Donnez un nom au profil');
+      setState(() => _error = context.l10n.nameRequired);
       return;
     }
     Navigator.of(context).pop(
@@ -504,20 +511,18 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer ce profil ?'),
-        content: const Text(
-          'Sa progression, sa liste et ses réglages seront supprimés.',
-        ),
+        title: Text(ctx.l10n.deleteProfileTitle),
+        content: Text(ctx.l10n.deleteProfileBody),
         actions: [
           TextButton(
             autofocus: true,
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Annuler'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: ctx.lumio.error),
-            child: const Text('Supprimer'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -535,8 +540,8 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
     }
   }
 
-  static const _limits = [
-    (AgeLimit.all, 'Tous publics'),
+  static List<(AgeLimit, String)> _limits(AppLocalizations l) => [
+    (AgeLimit.all, l.ageAll),
     (AgeLimit.age7, '7+'),
     (AgeLimit.age12, '12+'),
     (AgeLimit.age16, '16+'),
@@ -546,7 +551,9 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.profile == null ? 'Nouveau profil' : 'Modifier le profil',
+        widget.profile == null
+            ? context.l10n.newProfile
+            : context.l10n.editProfile,
       ),
       content: SizedBox(
         width: 460,
@@ -561,7 +568,7 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
                 maxLength: 20,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
-                  labelText: 'Nom',
+                  labelText: context.l10n.nameLabel,
                   errorText: _error,
                 ),
                 onChanged: (_) {
@@ -572,21 +579,20 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
               SwitchListTile(
                 value: _kid,
                 onChanged: (v) => setState(() => _kid = v),
-                title: const Text('Profil enfant'),
-                subtitle: const Text(
-                  'Contenus filtrés selon l\'âge ; réglages et changement de '
-                  'profil protégés par le PIN parent.',
-                ),
+                title: Text(context.l10n.kidProfile),
+                subtitle: Text(context.l10n.kidProfileHint),
               ),
               if (_kid) ...[
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: LumioSpacing.sm),
-                  child: Text('Limite d\'âge'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: LumioSpacing.sm,
+                  ),
+                  child: Text(context.l10n.ageLimit),
                 ),
                 Wrap(
                   spacing: LumioSpacing.sm,
                   children: [
-                    for (final (limit, label) in _limits)
+                    for (final (limit, label) in _limits(context.l10n))
                       ChoiceChip(
                         label: Text(label),
                         selected: _limit == limit,
@@ -599,10 +605,8 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
                 SwitchListTile(
                   value: _locked,
                   onChanged: (v) => setState(() => _locked = v),
-                  title: const Text('Verrouiller par PIN'),
-                  subtitle: const Text(
-                    'Le PIN parent est demandé pour ouvrir ce profil.',
-                  ),
+                  title: Text(context.l10n.lockByPin),
+                  subtitle: Text(context.l10n.lockByPinHint),
                 ),
             ],
           ),
@@ -613,13 +617,13 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
           TextButton(
             onPressed: _delete,
             style: TextButton.styleFrom(foregroundColor: context.lumio.error),
-            child: const Text('Supprimer'),
+            child: Text(context.l10n.delete),
           ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Annuler'),
+          child: Text(context.l10n.cancel),
         ),
-        FilledButton(onPressed: _save, child: const Text('Enregistrer')),
+        FilledButton(onPressed: _save, child: Text(context.l10n.save)),
       ],
     );
   }
@@ -646,9 +650,7 @@ class ProfileButton extends ConsumerWidget {
           } on Object {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Contrôle parental indisponible. Réessayez.'),
-                ),
+                SnackBar(content: Text(context.l10n.parentalUnavailable)),
               );
             }
             return;
@@ -662,7 +664,7 @@ class ProfileButton extends ConsumerWidget {
         ref.read(currentProfileProvider.notifier).select(null);
       },
       icon: const Icon(Icons.account_circle_outlined),
-      label: Text(profile?.name ?? 'Profil'),
+      label: Text(profile?.name ?? context.l10n.profileFallback),
     );
   }
 }

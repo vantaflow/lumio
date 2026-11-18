@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/features/home/home_providers.dart';
@@ -258,7 +259,7 @@ class PlaybackLauncher {
     required StreamItem stream,
   }) async {
     if (stream.isTorrent) {
-      _tell(context, torrentSoonMessage);
+      _tell(context, context.l10n.torrentSoon);
       return null;
     }
     final navigator = Navigator.of(context);
