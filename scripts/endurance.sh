@@ -11,7 +11,8 @@
 #
 # Code de sortie : 0 = verdict OK ; 1 = l'application est morte, lecture figée
 # ou PSS en hausse de plus de 30 % entre la 1re et la dernière heure ;
-# 2 = box injoignable ou usage incorrect.
+# 2 = box injoignable, logcat illisible 3 relevés de suite, PSS illisible/nulle
+# (INCONNU) ou usage incorrect.
 #
 # Détaché : `nohup scripts/endurance.sh 8 > endurance.log 2>&1 &` (Mac), ou
 # `setsid nohup …` (Linux). Sur Mac, préfixer par `caffeinate -i` (veille).
@@ -21,7 +22,8 @@
 # LUMIO_ENDURANCE_OUT (fichier CSV), LUMIO_PSS_MAX_GROWTH (pour cent, 30).
 #
 # --dry-run : adb factice (scripts/testing/fake-adb.sh), temps simulé, aucun
-# sommeil, aucune box ; FAKE_ADB_SCENARIO=stable|leak|crash|stuck choisit le cas.
+# sommeil, aucune box ; FAKE_ADB_SCENARIO choisit le cas (stable, leak, crash, stuck, silent,
+# stale, error, blip, legacy, noepoch, nologcat : voir fake-adb.sh).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -92,18 +94,41 @@ parse_pss() {
 # horloge de la box), `none` (aucun battement). Tout sauf `playing` compte.
 last_state() {
   local line now ts age
-  line="$({ box logcat -d -v epoch -t 4000 2>/dev/null || true; } \
+  line="$(printf '%s\n' "$1" \
     | grep -E 'LUMIO_(PLAYER|TORRENT) .*"event":"(tick|error)"' | tail -n 1)"
   [ -n "$line" ] || { echo none; return; }
   case "$line" in *'"event":"error"'*) echo error; return ;; esac
-  now="$(box shell date +%s 2>/dev/null | tr -d '\r' || true)"
-  ts="$(echo "$line" | awk '{ sub(/\..*/, "", $1); print $1 }')"
-  case "$now$ts" in ''|*[!0-9]*) ;; *)
-    age=$((now - ts))
-    if [ "$age" -gt $((2 * INTERVAL)) ]; then echo stale; return; fi ;;
-  esac
+  # Péremption : seulement si l'heure de la box ET celle du tick sont lisibles.
+  if [ "$EPOCH" = 1 ]; then
+    now="$(box shell date +%s 2>/dev/null | tr -d '\r' || true)"
+    ts="$(echo "$line" | awk '{ sub(/\..*/, "", $1); print $1 }')"
+    case "$now" in ''|*[!0-9]*) now="" ;; esac
+    case "$ts" in ''|*[!0-9]*) ts="" ;; esac
+    if [ -n "$now" ] && [ -n "$ts" ]; then
+      age=$((now - ts))
+      if [ "$age" -gt $((2 * INTERVAL)) ]; then echo stale; return; fi
+    fi
+  fi
   echo "$line" | sed -n 's/.*"state":"\([a-z]*\)".*/\1/p'
 }
+
+# Logcat : `-v epoch` d'abord ; sinon repli sans epoch (péremption ignorée,
+# signalé une fois). Rend 1 si logcat est illisible dans les deux cas.
+EPOCH=1
+fetch_logcat() {
+  if [ "$EPOCH" = 1 ]; then
+    if LOGS="$(box logcat -d -v epoch -t 4000 2>/dev/null)"; then return 0; fi
+    if LOGS="$(box logcat -d -t 4000 2>/dev/null)"; then
+      EPOCH=0
+      echo "endurance : logcat -v epoch refusé, repli sans péremption des battements." >&2
+      return 0
+    fi
+    return 1
+  fi
+  LOGS="$(box logcat -d -t 4000 2>/dev/null)"
+}
+LOGS=""
+logcat_fail=0
 
 stuck=0
 unreachable=0
@@ -136,9 +161,23 @@ while [ "$i" -le "$SAMPLES" ]; do
       exit 1
     fi
     pss="$(box shell dumpsys meminfo "$PKG" 2>/dev/null | tr -d '\r' | parse_pss || true)"
-    state="$(last_state || true)"
+    if fetch_logcat; then
+      logcat_fail=0
+      state="$(last_state "$LOGS" || true)"
+    else
+      logcat_fail=$((logcat_fail + 1))
+      if [ "$logcat_fail" -ge 3 ]; then
+        echo "$ts,$elapsed,${pss:-},1,$pid,logcat_error,$stuck" >> "$OUT"
+        echo "endurance : logcat illisible $logcat_fail relevés de suite (pas un échec du lecteur)." >&2
+        exit 2
+      fi
+      state="logcat_error"
+    fi
     # `none` compte aussi : sans battement, le lecteur n'est pas éprouvé.
-    if [ "${state:-none}" != "playing" ]; then
+    # Logcat illisible : relevé neutre (ni figé ni lecture), voir ci-dessus.
+    if [ "$state" = logcat_error ]; then
+      :
+    elif [ "${state:-none}" != "playing" ]; then
       stuck=$((stuck + 1))
     else
       stuck=0

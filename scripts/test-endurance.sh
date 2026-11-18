@@ -30,6 +30,8 @@ check silent 1 silent
 check stale 1 stale
 check error 1 error
 check blip 0 blip
+check noepoch 0 noepoch
+check nologcat 2 nologcat
 check usage 2 stable 0
 
 grep -q "aucune activité du lecteur" "$TMP/silent.out" && echo "ok   silent : message dédié" \

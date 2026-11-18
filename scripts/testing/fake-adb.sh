@@ -3,7 +3,7 @@
 # FAKE_ADB_SCENARIO : stable (défaut) | leak (+1,5 %/relevé) | crash (l'application
 # meurt au relevé 10) | stuck (lecture bloquée en buffering dès le relevé 5)
 # | silent (aucun battement dans logcat) | stale (battements vieux) | error (dernier
-# évènement en erreur) | blip (un seul pidof raté au relevé 10) | legacy (format meminfo ancien). FAKE_ADB_STATE : fichier compteur de relevés.
+# évènement en erreur) | noepoch (logcat -v epoch refusé) | nologcat (logcat en échec) | blip (un seul pidof raté au relevé 10) | legacy (format meminfo ancien). FAKE_ADB_STATE : fichier compteur de relevés.
 set -u
 SCEN="${FAKE_ADB_SCENARIO:-stable}"
 STATE="${FAKE_ADB_STATE:?FAKE_ADB_STATE requis}"
@@ -43,12 +43,17 @@ case "$cmd" in
         fi ;;
     esac ;;
   logcat)
+    [ "$SCEN" = nologcat ] && exit 1
+    # noepoch : « -v epoch » refusé ; repli au format threadtime.
+    epoch=0; for a in "$@"; do [ "$a" = epoch ] && epoch=1; done
+    if [ "$SCEN" = noepoch ] && [ "$epoch" = 1 ]; then exit 1; fi
     i=$(n)
     st=playing
     ts=$(date +%s)
     if [ "$SCEN" = stuck ] && [ "$i" -ge 5 ]; then st=buffering; fi
     if [ "$SCEN" = stale ] && [ "$i" -ge 5 ]; then ts=$((ts - 100000)); fi
     [ "$SCEN" = silent ] && exit 0
+    if [ "$epoch" = 0 ]; then ts="11-18 10:00:00"; fi
     echo "$ts.000  4242  4242 I flutter: LUMIO_PLAYER {\"event\":\"phase_start\",\"phase\":\"direct\"}"
     echo "$ts.500  4242  4242 I flutter: LUMIO_TORRENT {\"event\":\"tick\",\"phase\":\"torrent\",\"state\":\"$st\",\"pos_s\":$i}"
     if [ "$SCEN" = error ] && [ "$i" -ge 5 ]; then
