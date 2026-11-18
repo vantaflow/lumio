@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +53,19 @@ class _SlowMetadata extends FakeTorrentEngine {
   @override
   Future<List<TorrentFile>> files(String id) async =>
       emptyReads-- > 0 ? const [] : super.files(id);
+}
+
+/// Premier `add` bloqué jusqu'à [releaseFirst].
+class _SlowAdd extends FakeTorrentEngine {
+  _SlowAdd() : super(fileList: _files);
+  final releaseFirst = Completer<void>();
+  int _n = 0;
+  @override
+  Future<String> add(String m) async {
+    final id = await super.add(m);
+    if (_n++ == 0) await releaseFirst.future;
+    return id;
+  }
 }
 
 TorrentPlayback _playback(
@@ -279,6 +293,59 @@ void main() {
       },
     );
 
+    test('add tardif d\'une préparation remplacée : aucune fuite', () async {
+      final e = _SlowAdd();
+      final p = _playback(e);
+      final first = p.prepare(_torrent());
+      final firstExpect = expectLater(
+        first,
+        throwsA(isA<TorrentCancelledException>()),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      final second = await p.prepare(
+        _torrent(),
+      ); // termine avant le premier add
+      expect(second.host, '127.0.0.1');
+      e.releaseFirst.complete();
+      await firstExpect;
+      expect(e.addedMagnets, hasLength(2));
+      // Le premier id (tardif) est arrêté ; le second reste actif jusqu'à release.
+      expect(e.stopped, ['fake-1']);
+      expect(e.stopDeleteData, [true]);
+      await p.release();
+      expect(e.stopped, ['fake-1', 'fake-2']);
+    });
+
+    test('URL du moteur non locale : refusée et torrent arrêté', () async {
+      for (final bad in [
+        'http://evil.example/stream/x',
+        'https://127.0.0.1/x',
+        'file:///etc/passwd',
+        'http://192.168.1.5:80/x',
+      ]) {
+        final e = FakeTorrentEngine(fileList: _files)
+          ..streamUrlOverride = Uri.parse(bad);
+        await expectLater(
+          _playback(e).prepare(_torrent()),
+          throwsA(isA<UntrustedEngineUrlException>()),
+          reason: bad,
+        );
+        expect(e.stopDeleteData, [true], reason: bad);
+      }
+      for (final ok in ['http://localhost:9/s', 'http://[::1]:9/s']) {
+        expect(isLoopbackEngineUrl(Uri.parse(ok)), isTrue, reason: ok);
+      }
+    });
+
+    test('fin du flux de statut : statut en erreur synthétique', () async {
+      final e = FakeTorrentEngine(fileList: _files);
+      final seen = <TorrentStatus>[];
+      await _playback(e).prepare(_torrent(), onStatus: seen.add);
+      await e.stop('fake-1'); // ferme le flux de statut
+      await Future<void>.delayed(Duration.zero);
+      expect(seen.last.error, isNotNull);
+    });
+
     test('moteur initialisé paresseusement via ready', () async {
       final e = FakeTorrentEngine(fileList: _files);
       var calls = 0;
@@ -368,6 +435,7 @@ void main() {
       WidgetTester t,
       FakeTorrentEngine e, {
       Duration timeout = const Duration(seconds: 45),
+      Future<void> Function()? ready,
     }) async {
       final ctl = RecordingPlayerController();
       final db = AppDatabase(NativeDatabase.memory());
@@ -377,7 +445,12 @@ void main() {
           overrides: [
             appDatabaseProvider.overrideWithValue(db),
             torrentPlaybackFactoryProvider.overrideWithValue(
-              () => _playback(e, timeout: timeout),
+              () => TorrentPlayback(
+                engine: e,
+                ready: ready,
+                peerTimeout: timeout,
+                pollInterval: const Duration(milliseconds: 5),
+              ),
             ),
           ],
           child: MaterialApp(
@@ -423,6 +496,23 @@ void main() {
       // Fermeture du lecteur : arrêt et suppression des données.
       expect(e.stopped, ['fake-1']);
       expect(e.stopDeleteData, [true]);
+    });
+
+    testWidgets('échec d\'initialisation du moteur : message torrentFailed', (
+      t,
+    ) async {
+      final e = FakeTorrentEngine(fileList: _files);
+      final ctl = await pumpPlayer(
+        t,
+        e,
+        ready: () async => throw StateError('init'),
+      );
+      expect(ctl.opened, isEmpty);
+      expect(
+        ctl.failures.single,
+        "Le torrent n'a pas pu démarrer. Essayez un autre flux.",
+      );
+      await t.pumpWidget(const SizedBox());
     });
 
     testWidgets('aucune source : message français, aucune ouverture', (

@@ -33,18 +33,20 @@ final torrentPlaybackFactoryProvider = Provider<TorrentPlayback Function()>((
   Future<void>? init;
   Future<void> start() async {
     final store = ref.read(appSettingsStoreProvider);
-    final cacheGb =
+    const defaults = prefs.TorrentSettings();
+    var cacheGb =
         await store.readInt(prefs.AppSettingsStore.torrentCacheKey) ??
-        const prefs.TorrentSettings().cacheGb;
+        defaults.cacheGb;
+    if (cacheGb <= 0) cacheGb = defaults.cacheGb;
     final upKbps =
         await store.readInt(prefs.AppSettingsStore.uploadKey) ??
-        const prefs.TorrentSettings().uploadKbps;
+        defaults.uploadKbps;
     await ref
         .read(torrentEngineProvider)
         .init(
           TorrentSettings(
             savePath: await ref.read(torrentSavePathProvider),
-            maxCacheBytes: (cacheGb > 0 ? cacheGb : 2) * 1024 * 1024 * 1024,
+            maxCacheBytes: cacheGb * 1024 * 1024 * 1024,
             uploadLimit: upKbps > 0 ? upKbps * 1024 : 0,
           ),
         );

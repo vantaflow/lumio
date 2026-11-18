@@ -26,12 +26,21 @@ class FakeTorrentEngine implements TorrentEngine {
   final stopDeleteData = <bool>[];
   final streamedIndexes = <int?>[];
   TorrentSettings? settings;
+
+  /// Remplace l'URL rendue par `stream` (test d'URL non locale).
+  Uri? streamUrlOverride;
+
+  /// Si renseigné, `init` échoue avec cette erreur.
+  Object? initError;
   bool disposed = false;
   final _live = <String>{};
   final _controllers = <String, StreamController<TorrentStatus>>{};
 
   @override
-  Future<void> init(TorrentSettings s) async => settings = s;
+  Future<void> init(TorrentSettings s) async {
+    if (initError != null) throw initError!;
+    settings = s;
+  }
 
   @override
   Future<String> add(String magnetOrInfoHash) async {
@@ -70,6 +79,7 @@ class FakeTorrentEngine implements TorrentEngine {
   Future<Uri> stream(String id, {int? fileIndex}) async {
     _check(id);
     streamedIndexes.add(fileIndex);
+    if (streamUrlOverride != null) return streamUrlOverride!;
     return Uri.parse('http://127.0.0.1:8080/stream/$id/${fileIndex ?? 0}');
   }
 

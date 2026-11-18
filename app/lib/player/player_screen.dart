@@ -171,6 +171,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   /// statut pour la superposition sources/débit.
   TorrentPlayback? _torrent;
   bool _torrentActive = false;
+  int _torrentToken = 0;
   StreamItem? _current;
   final _torrentStatus = ValueNotifier<TorrentStatus?>(null);
 
@@ -227,6 +228,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       await _openTorrent(item, start);
       return;
     }
+    _torrentToken++;
     _torrentActive = false;
     unawaited(_torrent?.release());
     await _ctl.open(item, allowPrivate: widget.allowPrivate, start: start);
@@ -236,6 +238,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   /// du moteur par le chemin interne `trustedLocal` (jamais une URL d'addon).
   Future<void> _openTorrent(StreamItem item, Duration start) async {
     final torrent = _torrent ??= ref.read(torrentPlaybackFactoryProvider)();
+    final token = ++_torrentToken;
     _torrentActive = true; // lu au prochain build (peut venir d'initState)
     _torrentStatus.value = null;
     _ctl.showOpening();
@@ -244,22 +247,22 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       url = await torrent.prepare(
         item,
         onStatus: (s) {
-          if (!_disposed) _torrentStatus.value = s;
+          if (!_disposed && token == _torrentToken) _torrentStatus.value = s;
         },
       );
     } on TorrentCancelledException {
       return;
     } on NoPeersException {
-      _failTorrent((l) => l.torrentNoPeers);
+      _failTorrent(token, (l) => l.torrentNoPeers);
       return;
     } on NoStreamableFileException {
-      _failTorrent((l) => l.torrentNoFile);
+      _failTorrent(token, (l) => l.torrentNoFile);
       return;
     } on Object {
-      _failTorrent((l) => l.torrentFailed);
+      _failTorrent(token, (l) => l.torrentFailed);
       return;
     }
-    if (_disposed) return;
+    if (_disposed || token != _torrentToken) return;
     await _ctl.open(
       StreamItem(
         addonId: item.addonId,
@@ -273,8 +276,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     );
   }
 
-  void _failTorrent(String Function(AppLocalizations l) message) {
-    if (_disposed || !mounted) return;
+  void _failTorrent(int token, String Function(AppLocalizations l) message) {
+    if (_disposed || !mounted || token != _torrentToken) return;
     _ctl.fail(message(context.l10n));
   }
 

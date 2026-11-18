@@ -17,6 +17,20 @@ class NoStreamableFileException implements Exception {
   String toString() => 'NoStreamableFileException: aucun fichier lisible';
 }
 
+/// L'URL rendue par le moteur n'est pas une adresse locale (http, boucle).
+class UntrustedEngineUrlException implements Exception {
+  const UntrustedEngineUrlException(this.url);
+  final Uri url;
+  @override
+  String toString() => 'UntrustedEngineUrlException: refusée';
+}
+
+/// Vrai pour `http` sur l'hôte de boucle (127.0.0.1, localhost, ::1). Le port
+/// et le chemin ne sont pas exposés par l'adaptateur libtorrent_flutter.
+bool isLoopbackEngineUrl(Uri u) =>
+    u.scheme == 'http' &&
+    (u.host == '127.0.0.1' || u.host == 'localhost' || u.host == '::1');
+
 /// La préparation a été annulée par [TorrentPlayback.release].
 class TorrentCancelledException implements Exception {
   const TorrentCancelledException();
@@ -89,22 +103,30 @@ class TorrentPlayback {
       await ready?.call();
       await _check(gen, null);
       id = await engine.add(magnetFromInfoHash(hash, trackers: s.trackers));
-      _id = id;
+      // Un `add` tardif (préparation remplacée) ne doit pas écraser `_id`.
       await _check(gen, id);
+      _id = id;
 
       final hasPeer = Completer<void>();
       _waiting = hasPeer;
-      _sub = engine.status(id).listen(
-        (st) {
-          onStatus?.call(st);
-          if ((st.peers > 0 || st.seeders > 0) && !hasPeer.isCompleted) {
-            hasPeer.complete();
-          }
-        },
-        // Perte réseau : le moteur signale l'erreur dans le statut ; une
-        // erreur de flux n'interrompt pas l'attente.
-        onError: (Object _) {},
-      );
+      void emit(TorrentStatus st) {
+        if (gen == _generation) onStatus?.call(st);
+      }
+
+      _sub = engine
+          .status(id)
+          .listen(
+            (st) {
+              emit(st);
+              if ((st.peers > 0 || st.seeders > 0) && !hasPeer.isCompleted) {
+                hasPeer.complete();
+              }
+            },
+            // Perte réseau : une erreur ou la fin du flux de statut n'interrompt
+            // pas l'attente ; elle est signalée comme statut en erreur.
+            onError: (Object e) => emit(_lost('$e')),
+            onDone: () => emit(_lost('statut interrompu')),
+          );
 
       final watch = Stopwatch()..start();
       Duration left() => peerTimeout - watch.elapsed;
@@ -127,6 +149,7 @@ class TorrentPlayback {
       if (file == null) throw const NoStreamableFileException();
       final url = await engine.stream(id, fileIndex: file.index);
       await _check(gen, id);
+      if (!isLoopbackEngineUrl(url)) throw UntrustedEngineUrlException(url);
       return url;
     } on TorrentCancelledException {
       rethrow;
@@ -135,6 +158,15 @@ class TorrentPlayback {
       rethrow;
     }
   }
+
+  static TorrentStatus _lost(String error) => TorrentStatus(
+    peers: 0,
+    seeders: 0,
+    downloadRate: 0,
+    uploadRate: 0,
+    progress: 0,
+    error: error,
+  );
 
   Future<void> _stopQuietly(String id) async {
     try {
