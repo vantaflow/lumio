@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/player/player_controller.dart';
+import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/player/tracks_panel.dart';
 import 'package:lumio/providers.dart';
@@ -83,6 +83,9 @@ class PlayerScreen extends ConsumerStatefulWidget {
     this.controller,
     this.metaId,
     this.subtitles = const [],
+    this.allowPrivateForAddon,
+    this.videoBuilder,
+    this.tracksBackend,
     super.key,
   });
 
@@ -100,6 +103,18 @@ class PlayerScreen extends ConsumerStatefulWidget {
 
   /// Sous-titres proposés par les addons pour ce flux.
   final List<SubtitleItem> subtitles;
+
+  /// Autorisation réseau privé par addon (celui du sous-titre) ; par défaut,
+  /// seul l'addon du flux hérite de [allowPrivate].
+  final bool Function(String addonId)? allowPrivateForAddon;
+
+  /// Remplace la vidéo native (tests de widget).
+  @visibleForTesting
+  final Widget Function(PlayerController controller)? videoBuilder;
+
+  /// Remplace le moteur de pistes media_kit (tests de widget).
+  @visibleForTesting
+  final TracksBackend Function(PlayerController controller)? tracksBackend;
 
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
@@ -128,48 +143,66 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _armHide();
   }
 
+  void _tell(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// Le sous-titre est téléchargé selon l'autorisation réseau privé de SON
+  /// addon, pas de celui du flux.
+  bool _allowPrivateFor(String addonId) =>
+      widget.allowPrivateForAddon?.call(addonId) ??
+      (addonId == widget.item.addonId && widget.allowPrivate);
+
   Future<void> _initTracks() async {
+    TitleSettingsStore store = InMemoryTitleSettingsStore();
+    var style = const SubtitleStyle();
+    final styleStore = ref.read(subtitleStyleStoreProvider);
     try {
-      final store = await ref.read(titleSettingsStoreProvider.future);
-      final styleStore = ref.read(subtitleStyleStoreProvider);
-      final style = await styleStore.load();
-      if (!mounted) return;
-      final allowPrivate = widget.allowPrivate;
-      final c = TracksController(
-        backend: MediaKitTracksBackend(_ctl.player),
-        store: widget.metaId == null ? InMemoryTitleSettingsStore() : store,
-        profileId: defaultProfileId,
-        metaId: widget.metaId ?? '',
-        addonSubtitles: widget.subtitles,
-        style: style,
-        onStyleChanged: (s) => unawaited(styleStore.save(s)),
-        // Téléchargement protégé : garde d'URL sur l'adresse et les
-        // redirections, 2 Mo maximum, jamais de requête brute d'addon.
-        download: (url) async {
-          final r = await IoHttpFetcher().get(
-            url,
-            maxBytes: subtitleMaxBytes,
-            guard: (u) => UrlGuard.check(u, allowPrivate: allowPrivate),
-          );
-          if (r.status != 200) throw HttpException('statut ${r.status}');
-          return r.body;
-        },
-        writeTemp: (name, content) async {
-          final dir = await getTemporaryDirectory();
-          final f = File('${dir.path}/$name');
-          await f.writeAsString(content);
-          return f.path;
-        },
-      );
-      await c.init();
-      if (!mounted) {
-        c.dispose();
-        return;
+      if (widget.metaId != null) {
+        final drift = await ref.read(titleSettingsStoreProvider.future);
+        drift.onSaveError = (_) => _tell('Réglages non enregistrés');
+        store = drift;
       }
-      setState(() => _tracks = c);
+      style = await styleStore.load();
     } on Object {
-      // Sans réglages mémorisés, le lecteur reste utilisable.
+      _tell('Réglages mémorisés indisponibles');
     }
+    if (!mounted) return;
+    final fetcher = IoHttpFetcher();
+    final c = TracksController(
+      backend:
+          widget.tracksBackend?.call(_ctl) ??
+          MediaKitTracksBackend(_ctl.player),
+      store: store,
+      profileId: defaultProfileId,
+      metaId: widget.metaId ?? '',
+      addonSubtitles: widget.subtitles,
+      style: style,
+      onStyleChanged: (s) => unawaited(
+        styleStore.save(s).catchError((Object _) {
+          _tell('Réglages non enregistrés');
+        }),
+      ),
+      download: (item) => downloadSubtitle(
+        fetcher,
+        item.url,
+        allowPrivate: _allowPrivateFor(item.addonId),
+      ),
+      tempStore: SubtitleTempStore(getTemporaryDirectory),
+    );
+    try {
+      await c.init();
+    } on Object {
+      _tell('Réglages de sous-titres non appliqués');
+    }
+    if (!mounted) {
+      c.dispose();
+      return;
+    }
+    setState(() => _tracks = c);
   }
 
   void _openPanel() {
@@ -239,6 +272,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
+    // Panneau ouvert : il gère seul les touches (flèches = navigation).
+    if (_panel) return KeyEventResult.ignored;
     final action = mapPlayerKey(event.logicalKey, controlsVisible: _controls);
     switch (action) {
       case PlayerKeyAction.none:
@@ -283,11 +318,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
             return Stack(
               fit: StackFit.expand,
               children: [
-                Video(
-                  controller: _ctl.video,
-                  controls: NoVideoControls,
-                  fill: Colors.black,
-                ),
+                widget.videoBuilder?.call(_ctl) ??
+                    Video(
+                      controller: _ctl.video,
+                      controls: NoVideoControls,
+                      fill: Colors.black,
+                    ),
                 if (st.phase == PlayerPhase.buffering ||
                     st.phase == PlayerPhase.opening)
                   Center(
@@ -309,7 +345,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     opacity: _controls ? 1 : 0,
                     duration: fade,
                     child: ExcludeFocus(
-                      excluding: !_controls,
+                      excluding: !_controls || _panel,
                       child: IgnorePointer(
                         ignoring: !_controls,
                         child: _Controls(

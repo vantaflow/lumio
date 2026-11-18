@@ -9,6 +9,10 @@ import 'package:lumio_core/lumio_core.dart';
 class DriftTitleSettingsStore implements TitleSettingsStore {
   DriftTitleSettingsStore(this._db);
 
+  /// Appelé quand une écriture en base échoue (les réglages restent valables
+  /// en mémoire pour la session).
+  void Function(Object error)? onSaveError;
+
   final AppDatabase _db;
   final _cache = <String, TitleSettings>{};
   final _pending = <Future<void>>[];
@@ -48,7 +52,7 @@ class DriftTitleSettingsStore implements TitleSettingsStore {
             json: jsonEncode(s.toJson()),
           ),
         );
-    _pending.add(f.then((_) {}, onError: (Object _) {}));
+    _pending.add(f.then((_) {}, onError: (Object e) => onSaveError?.call(e)));
   }
 
   Future<void> flush() async {

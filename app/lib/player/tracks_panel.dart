@@ -29,6 +29,11 @@ class TracksPanel extends StatefulWidget {
 class _TracksPanelState extends State<TracksPanel> {
   StreamSubscription<String>? _errSub;
 
+  /// Piège le focus : les flèches et Tab restent dans le panneau.
+  final _scope = FocusScopeNode(debugLabel: 'tracks-panel')
+    ..traversalEdgeBehavior = TraversalEdgeBehavior.closedLoop
+    ..directionalTraversalEdgeBehavior = TraversalEdgeBehavior.stop;
+
   TracksController get c => widget.controller;
 
   @override
@@ -47,6 +52,7 @@ class _TracksPanelState extends State<TracksPanel> {
   void dispose() {
     c.removeListener(_rebuild);
     _errSub?.cancel();
+    _scope.dispose();
     super.dispose();
   }
 
@@ -63,9 +69,9 @@ class _TracksPanelState extends State<TracksPanel> {
     final selAudio = c.backend.selectedAudioId;
     final selSub = c.backend.selectedSubtitleId;
     final heading = theme.textTheme.titleMedium?.copyWith(color: colors.accent);
-    return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
+    return FocusScope(
+      node: _scope,
+      autofocus: true,
       onKeyEvent: (node, e) {
         if (e is KeyDownEvent &&
             (e.logicalKey == LogicalKeyboardKey.escape ||
@@ -104,6 +110,7 @@ class _TracksPanelState extends State<TracksPanel> {
                     for (final t in audio)
                       _Option(
                         key: ValueKey('audio-${t.id}'),
+                        autofocus: t == audio.first,
                         label: t.label,
                         selected: t.id == selAudio,
                         onPressed: () => c.selectAudio(t),
@@ -112,6 +119,7 @@ class _TracksPanelState extends State<TracksPanel> {
                     Text('Sous-titres', style: heading),
                     _Option(
                       key: const ValueKey('sub-off'),
+                      autofocus: audio.isEmpty,
                       label: 'Désactivés',
                       selected: selSub == null && c.addonSelectedId == null,
                       onPressed: () => c.selectSubtitle(null),
@@ -224,9 +232,11 @@ class _Option extends StatefulWidget {
     required this.onPressed,
     this.compact = false,
     this.toggle = false,
+    this.autofocus = false,
     super.key,
   });
 
+  final bool autofocus;
   final String label;
   final bool selected;
   final bool compact;
@@ -257,6 +267,7 @@ class _OptionState extends State<_Option> {
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
+            autofocus: widget.autofocus,
             onTap: widget.onPressed,
             onFocusChange: (v) => setState(() => _focused = v),
             child: Container(

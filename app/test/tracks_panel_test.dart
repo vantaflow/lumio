@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,14 +10,42 @@ import 'package:lumio/player/tracks_panel.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
+class ThrowingStore implements TitleSettingsStore {
+  @override
+  TitleSettings forTitle(String p, String m) => const TitleSettings();
+  @override
+  void save(String p, String m, TitleSettings s) => throw StateError('disque');
+}
+
+class FakeFetcher implements HttpFetcher {
+  FakeFetcher(this.status);
+  final int status;
+  int? maxBytesSeen;
+  @override
+  Future<FetchResponse> get(
+    Uri url, {
+    Map<String, String> headers = const {},
+    int maxBytes = 5 * 1024 * 1024,
+    Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
+  }) async {
+    guard?.call(url);
+    maxBytesSeen = maxBytes;
+    return FetchResponse(status: status, body: [65]);
+  }
+}
+
+SubtitleItem addonSub(String id, String url, {String lang = 'fr'}) =>
+    SubtitleItem(id: id, url: Uri.parse(url), lang: lang, addonId: 'ad');
+
 class FakeBackend implements TracksBackend {
   @override
-  final audioTracks = const [
+  List<TrackOption> audioTracks = const [
     TrackOption(id: '1', label: 'Français', lang: 'fr'),
     TrackOption(id: '2', label: 'English', lang: 'en'),
   ];
   @override
-  final subtitleTracks = const [
+  List<TrackOption> subtitleTracks = const [
     TrackOption(id: '10', label: 'Français SDH', lang: 'fr'),
   ];
   @override
@@ -25,6 +54,7 @@ class FakeBackend implements TracksBackend {
   String? selectedSubtitleId;
   final calls = <String>[];
   final _c = StreamController<void>.broadcast();
+  void emit() => _c.add(null);
   @override
   Stream<void> get changes => _c.stream;
 
@@ -59,7 +89,8 @@ TracksController make(
   FakeBackend b,
   InMemoryTitleSettingsStore store, {
   List<SubtitleItem> addon = const [],
-  Future<List<int>> Function(Uri)? download,
+  Future<List<int>> Function(SubtitleItem)? download,
+  SubtitleTempStore? temp,
   String meta = 'tt1:1:2',
 }) => TracksController(
   backend: b,
@@ -68,7 +99,7 @@ TracksController make(
   metaId: meta,
   addonSubtitles: addon,
   download: download,
-  writeTemp: (name, content) async => '/tmp/$name',
+  tempStore: temp ?? SubtitleTempStore(() async => Directory.systemTemp),
 );
 
 Widget host(TracksController c, {VoidCallback? onClose}) => MaterialApp(
@@ -171,8 +202,7 @@ void main() {
           '1\n00:00:01,000 --> 00:00:02,000\nSalut\n'.codeUnits,
     );
     await t.pumpWidget(host(c));
-    await t.tap(find.text('Addon · fr'));
-    await t.pump();
+    await t.runAsync(() => c.selectAddonSubtitle(item));
     await t.pump();
     expect(b.calls.where((x) => x.startsWith('ext:')), hasLength(1));
     expect(c.addonSelectedId, 'a1');
@@ -203,8 +233,10 @@ void main() {
       const ValueKey('size-xl'),
       const ValueKey('bg-toggle'),
     ];
+    await t.pump();
     for (final k in order) {
-      await next();
+      // Le premier élément a le focus à l'ouverture (autofocus).
+      if (k != order.first) await next();
       final ctx = FocusManager.instance.primaryFocus!.context;
       expect(
         find.descendant(
@@ -231,5 +263,134 @@ void main() {
     await c.init();
     expect(b.calls, contains('delay:300'));
     expect(b.calls, contains('audio:2'));
+  });
+
+  group('downloadSubtitle', () {
+    final priv = Uri.parse('http://192.168.1.5/s.srt');
+    test('adresse privée refusée pour un addon non autorisé', () async {
+      expect(
+        () => downloadSubtitle(FakeFetcher(200), priv, allowPrivate: false),
+        throwsA(isA<Object>()),
+      );
+    });
+    test('adresse privée acceptée pour un addon autorisé', () async {
+      final f = FakeFetcher(200);
+      expect(await downloadSubtitle(f, priv, allowPrivate: true), [65]);
+      expect(f.maxBytesSeen, 2 * 1024 * 1024);
+    });
+    test('statut différent de 200 : erreur', () async {
+      expect(
+        () => downloadSubtitle(
+          FakeFetcher(404),
+          Uri.parse('https://x.test/s.srt'),
+          allowPrivate: false,
+        ),
+        throwsA(isA<HttpException>()),
+      );
+    });
+  });
+
+  group('fichiers temporaires', () {
+    test('noms sans collision, dossier supprimé à la fermeture', () async {
+      final base = await Directory.systemTemp.createTemp('lumio-test-');
+      addTearDown(() => base.delete(recursive: true));
+      final store = SubtitleTempStore(() async => base);
+      final a = await store.write(Uri.parse('https://x.test/a.srt'), 'a');
+      final b = await store.write(Uri.parse('https://x.test/b.srt'), 'b');
+      expect(a, isNot(b));
+      expect(File(a).readAsStringSync(), 'a');
+      expect(File(a).parent.path, File(b).parent.path);
+      expect(File(a).parent.path, isNot(base.path));
+      await store.dispose();
+      expect(File(a).existsSync(), isFalse);
+      expect(File(a).parent.existsSync(), isFalse);
+    });
+
+    test('le contrôleur supprime ses fichiers à sa fermeture', () async {
+      final base = await Directory.systemTemp.createTemp('lumio-test-');
+      addTearDown(() => base.delete(recursive: true));
+      final c = make(
+        FakeBackend(),
+        InMemoryTitleSettingsStore(),
+        addon: [addonSub('a1', 'https://x.test/a.srt')],
+        download: (_) async =>
+            '1\n00:00:01,000 --> 00:00:02,000\nX\n'.codeUnits,
+        temp: SubtitleTempStore(() async => base),
+      );
+      await c.selectAddonSubtitle(c.addonSubtitles.first);
+      expect(base.listSync(), hasLength(1));
+      c.dispose();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(base.listSync(), isEmpty);
+    });
+  });
+
+  group('contrôleur', () {
+    test('piste audio sans langue mémorisée par son rang', () async {
+      final b = FakeBackend()
+        ..audioTracks = const [
+          TrackOption(id: '1', label: 'Piste 1'),
+          TrackOption(id: '2', label: 'Piste 2'),
+        ];
+      final store = InMemoryTitleSettingsStore();
+      final c = make(b, store);
+      await c.selectAudio(b.audioTracks[1]);
+      expect(store.forTitle('p', 'tt1').audioLang, 'idx:1');
+      final b2 = FakeBackend()..audioTracks = b.audioTracks;
+      await make(b2, store, meta: 'tt1:1:3').init();
+      expect(b2.calls, contains('audio:2'));
+    });
+
+    test('sous-titre d\'addon de l\'épisode précédent rechargé', () async {
+      final store = InMemoryTitleSettingsStore();
+      final b = FakeBackend()..subtitleTracks = const [];
+      final item = addonSub('a1', 'https://x.test/a.srt');
+      final c = make(
+        b,
+        store,
+        addon: [item],
+        download: (_) async =>
+            '1\n00:00:01,000 --> 00:00:02,000\nX\n'.codeUnits,
+      );
+      await c.selectAddonSubtitle(item);
+      c.dispose();
+      final b2 = FakeBackend()..subtitleTracks = const [];
+      final next = make(
+        b2,
+        store,
+        meta: 'tt1:1:3',
+        addon: [addonSub('a2', 'https://x.test/b.srt')],
+        download: (_) async =>
+            '1\n00:00:01,000 --> 00:00:02,000\nY\n'.codeUnits,
+      );
+      await next.init();
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      expect(b2.calls.where((x) => x.startsWith('ext:')), hasLength(1));
+      next.dispose();
+    });
+
+    test('échec d\'enregistrement signalé', () async {
+      final c = TracksController(
+        backend: FakeBackend(),
+        store: ThrowingStore(),
+        profileId: 'p',
+        metaId: 'tt1',
+      );
+      final msgs = <String>[];
+      c.errors.listen(msgs.add);
+      await c.changeDelay(100);
+      await Future<void>.delayed(Duration.zero);
+      expect(msgs, ['Réglages non enregistrés']);
+      c.dispose();
+    });
+
+    test('aucun effet après fermeture', () async {
+      final b = FakeBackend();
+      final c = make(b, InMemoryTitleSettingsStore());
+      c.dispose();
+      b.emit();
+      await c.changeDelay(100);
+      await c.selectAddonSubtitle(addonSub('x', 'https://x.test/a.srt'));
+    });
   });
 }

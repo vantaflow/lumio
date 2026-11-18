@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -149,6 +152,51 @@ const subtitleDelayStepMs = 100;
 const subtitleDelayMaxMs = 10000;
 const subtitleMaxBytes = 2 * 1024 * 1024;
 
+/// Télécharge un sous-titre d'addon : garde d'URL (adresse et redirections,
+/// réseau privé seulement si l'addon du sous-titre y est autorisé), 2 Mo
+/// maximum, statut 200 exigé. Lève dans les autres cas.
+Future<List<int>> downloadSubtitle(
+  HttpFetcher fetcher,
+  Uri url, {
+  required bool allowPrivate,
+}) async {
+  final r = await fetcher.get(
+    url,
+    maxBytes: subtitleMaxBytes,
+    guard: (u) => UrlGuard.check(u, allowPrivate: allowPrivate),
+  );
+  if (r.status != 200) throw HttpException('statut ${r.status}');
+  return r.body;
+}
+
+/// Dossier temporaire de session pour les sous-titres d'addons : noms sans
+/// collision (SHA-1 de l'URL), supprimé en fin de session.
+class SubtitleTempStore {
+  SubtitleTempStore(this._base);
+
+  /// Crée le dossier de session sous [_base] à la première écriture.
+  final Future<Directory> Function() _base;
+  Directory? _dir;
+
+  Future<String> write(Uri url, String content) async {
+    final dir = _dir ??= await (await _base()).createTemp('lumio-subs-');
+    final name = sha1.convert(utf8.encode(url.toString())).toString();
+    final f = File('${dir.path}/$name.srt');
+    await f.writeAsString(content);
+    return f.path;
+  }
+
+  Future<void> dispose() async {
+    final d = _dir;
+    _dir = null;
+    try {
+      if (d != null && await d.exists()) await d.delete(recursive: true);
+    } on FileSystemException {
+      // Dossier déjà parti ou verrouillé : le système purgera le cache.
+    }
+  }
+}
+
 /// Logique du panneau : sélection, décalage, style, sous-titres d'addons,
 /// mémorisation par titre (série).
 class TracksController extends ChangeNotifier {
@@ -159,7 +207,7 @@ class TracksController extends ChangeNotifier {
     required this.metaId,
     this.addonSubtitles = const [],
     this.download,
-    this.writeTemp,
+    this.tempStore,
     SubtitleStyle style = const SubtitleStyle(),
     this.onStyleChanged,
   }) : _style = style {
@@ -167,7 +215,7 @@ class TracksController extends ChangeNotifier {
     _delay = _settings.subtitleDelayMs;
     _sub = backend.changes.listen((_) {
       _applyPreferences();
-      notifyListeners();
+      _notify();
     });
   }
 
@@ -177,11 +225,12 @@ class TracksController extends ChangeNotifier {
   final String metaId;
   final List<SubtitleItem> addonSubtitles;
 
-  /// Télécharge un sous-titre (chemin gardé, 2 Mo max) ; lève en cas d'échec.
-  final Future<List<int>> Function(Uri url)? download;
+  /// Télécharge un sous-titre (voir [downloadSubtitle] ; la garde dépend de
+  /// l'addon du sous-titre) ; lève en cas d'échec.
+  final Future<List<int>> Function(SubtitleItem item)? download;
 
-  /// Écrit le texte décodé dans un fichier temporaire et renvoie son chemin.
-  final Future<String> Function(String name, String content)? writeTemp;
+  /// Fichiers temporaires des sous-titres d'addons, supprimés à la fermeture.
+  final SubtitleTempStore? tempStore;
   final void Function(SubtitleStyle)? onStyleChanged;
 
   late TitleSettings _settings;
@@ -190,8 +239,17 @@ class TracksController extends ChangeNotifier {
   StreamSubscription<void>? _sub;
   bool _appliedAudio = false;
   bool _appliedSubs = false;
+  bool _disposed = false;
   String? _addonSelectedId;
   final _errors = StreamController<String>.broadcast();
+
+  void _emit(String m) {
+    if (!_disposed) _errors.add(m);
+  }
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
 
   /// Messages d'erreur français à afficher (SnackBar).
   Stream<String> get errors => _errors.stream;
@@ -208,28 +266,42 @@ class TracksController extends ChangeNotifier {
     _applyPreferences();
   }
 
+  /// Les pistes sont connues dès que le moteur en liste au moins une.
+  bool get _tracksKnown =>
+      backend.audioTracks.isNotEmpty || backend.subtitleTracks.isNotEmpty;
+
   void _applyPreferences() {
+    if (_disposed) return;
     final a = _settings.audioLang;
-    if (!_appliedAudio && a != null && backend.audioTracks.isNotEmpty) {
+    final audio = backend.audioTracks;
+    if (!_appliedAudio && a != null && audio.isNotEmpty) {
       _appliedAudio = true;
-      for (final t in backend.audioTracks) {
-        if (_sameLang(t.lang, a)) {
+      for (final t in audio) {
+        if (_matches(t, audio, a)) {
           unawaited(backend.selectAudio(t.id));
           break;
         }
       }
     }
     final s = _settings.subtitleLang;
-    if (!_appliedSubs && s != null && backend.subtitleTracks.isNotEmpty) {
+    if (!_appliedSubs && s != null && _tracksKnown) {
       _appliedSubs = true;
       if (s == 'off') {
         unawaited(backend.selectSubtitle(null));
-      } else {
-        for (final t in backend.subtitleTracks) {
-          if (_sameLang(t.lang, s)) {
-            unawaited(backend.selectSubtitle(t.id));
-            break;
-          }
+        return;
+      }
+      final subs = backend.subtitleTracks;
+      for (final t in subs) {
+        if (_matches(t, subs, s)) {
+          unawaited(backend.selectSubtitle(t.id));
+          return;
+        }
+      }
+      // Pas de piste interne : repli sur le sous-titre d'addon de même langue.
+      for (final item in addonSubtitles) {
+        if (_sameLang(item.lang, s)) {
+          unawaited(selectAddonSubtitle(item));
+          return;
         }
       }
     }
@@ -238,44 +310,62 @@ class TracksController extends ChangeNotifier {
   static bool _sameLang(String? a, String b) =>
       a != null && a.toLowerCase().startsWith(b.toLowerCase());
 
+  /// Mémorisation d'une piste : sa langue, sinon son rang (`idx:N`).
+  static String _keyOf(TrackOption t, List<TrackOption> all) =>
+      t.lang ?? 'idx:${all.indexOf(t)}';
+
+  static bool _matches(TrackOption t, List<TrackOption> all, String pref) =>
+      pref.startsWith('idx:')
+      ? _keyOf(t, all) == pref
+      : _sameLang(t.lang, pref);
+
   void _save(TitleSettings s) {
     _settings = s;
-    store.save(profileId, metaId, s);
+    try {
+      store.save(profileId, metaId, s);
+    } on Object {
+      _emit('Réglages non enregistrés');
+    }
   }
 
   Future<void> selectAudio(TrackOption t) async {
     _appliedAudio = true;
     await backend.selectAudio(t.id);
-    if (t.lang != null) _save(_settings.copyWith(audioLang: t.lang));
-    notifyListeners();
+    _save(_settings.copyWith(audioLang: _keyOf(t, backend.audioTracks)));
+    _notify();
   }
 
   Future<void> selectSubtitle(TrackOption? t) async {
     _appliedSubs = true;
     _addonSelectedId = null;
     await backend.selectSubtitle(t?.id);
-    _save(_settings.copyWith(subtitleLang: t == null ? 'off' : t.lang));
-    notifyListeners();
+    _save(
+      _settings.copyWith(
+        subtitleLang: t == null ? 'off' : _keyOf(t, backend.subtitleTracks),
+      ),
+    );
+    _notify();
   }
 
   Future<void> selectAddonSubtitle(SubtitleItem item) async {
     final dl = download;
-    final tmp = writeTemp;
+    final tmp = tempStore;
     if (dl == null || tmp == null) {
-      _errors.add('Sous-titre illisible');
+      _emit('Sous-titre illisible');
       return;
     }
     try {
-      final bytes = await dl(item.url);
+      final bytes = await dl(item);
       final text = decodeSubtitleBytes(bytes);
-      final path = await tmp('addon-${item.id.hashCode.abs()}.srt', text);
+      final path = await tmp.write(item.url, text);
+      if (_disposed) return;
       await backend.loadExternalSubtitle(path, title: item.lang);
       _appliedSubs = true;
       _addonSelectedId = item.id;
       _save(_settings.copyWith(subtitleLang: item.lang));
-      notifyListeners();
+      _notify();
     } on Object {
-      _errors.add('Sous-titre illisible');
+      _emit('Sous-titre illisible');
     }
   }
 
@@ -285,7 +375,7 @@ class TracksController extends ChangeNotifier {
     _delay = v;
     await backend.setSubtitleDelay(v);
     _save(_settings.copyWith(subtitleDelayMs: v));
-    notifyListeners();
+    _notify();
   }
 
   Future<void> setSize(SubtitleSize s) => _setStyle(_style.copyWith(size: s));
@@ -297,13 +387,15 @@ class TracksController extends ChangeNotifier {
     _style = s;
     await backend.applySubtitleStyle(s);
     onStyleChanged?.call(s);
-    notifyListeners();
+    _notify();
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _sub?.cancel();
     _errors.close();
+    unawaited(tempStore?.dispose());
     super.dispose();
   }
 }
