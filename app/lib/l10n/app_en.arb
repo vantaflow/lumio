@@ -834,9 +834,18 @@
   "trackingAuthStep": "On another device, open this address then enter the code:",
   "trackingAuthWaiting": "Waiting for your authorization…",
   "trackingAuthDone": "Trakt is connected.",
-  "trackingAuthDenied": "Authorization denied on Trakt.",
+  "trackingAuthDenied": "Authorization denied.",
   "trackingAuthExpired": "The code expired or is no longer valid. Request a new one.",
   "trackingAuthNewCode": "New code",
-  "trackingAuthUnavailable": "Trakt is unreachable. Try again later.",
-  "trackingQrSemantic": "QR code for the authorization address"
+  "trackingAuthUnavailable": "The tracking service is unreachable. Try again later.",
+  "trackingQrSemantic": "QR code for the authorization address",
+  "trackingSimkl": "Simkl",
+  "trackingSimklNotConfigured": "Not configured: the Simkl application ID is missing. Nothing is sent.",
+  "trackingSimklConnected": "Connected: titles you watch (80% or more) are added to your Simkl history.",
+  "trackingSimklReauth": "Sign-in required: Simkl rejected the connection. Reconnect the account to resume sending.",
+  "trackingSimklConnect": "Connect Simkl",
+  "trackingSimklDisconnect": "Disconnect Simkl",
+  "trackingSimklDisconnected": "Simkl disconnected",
+  "trackingSimklAuthTitle": "Connect Simkl",
+  "trackingSimklAuthDone": "Simkl is connected."
 }

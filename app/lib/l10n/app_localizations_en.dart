@@ -1941,7 +1941,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trackingAuthDone => 'Trakt is connected.';
 
   @override
-  String get trackingAuthDenied => 'Authorization denied on Trakt.';
+  String get trackingAuthDenied => 'Authorization denied.';
 
   @override
   String get trackingAuthExpired =>
@@ -1952,8 +1952,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingAuthUnavailable =>
-      'Trakt is unreachable. Try again later.';
+      'The tracking service is unreachable. Try again later.';
 
   @override
   String get trackingQrSemantic => 'QR code for the authorization address';
+
+  @override
+  String get trackingSimkl => 'Simkl';
+
+  @override
+  String get trackingSimklNotConfigured =>
+      'Not configured: the Simkl application ID is missing. Nothing is sent.';
+
+  @override
+  String get trackingSimklConnected =>
+      'Connected: titles you watch (80% or more) are added to your Simkl history.';
+
+  @override
+  String get trackingSimklReauth =>
+      'Sign-in required: Simkl rejected the connection. Reconnect the account to resume sending.';
+
+  @override
+  String get trackingSimklConnect => 'Connect Simkl';
+
+  @override
+  String get trackingSimklDisconnect => 'Disconnect Simkl';
+
+  @override
+  String get trackingSimklDisconnected => 'Simkl disconnected';
+
+  @override
+  String get trackingSimklAuthTitle => 'Connect Simkl';
+
+  @override
+  String get trackingSimklAuthDone => 'Simkl is connected.';
 }

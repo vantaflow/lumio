@@ -1063,9 +1063,18 @@
   "trackingAuthStep": "Sur un autre appareil, ouvrez cette adresse puis saisissez le code :",
   "trackingAuthWaiting": "En attente de votre autorisation…",
   "trackingAuthDone": "Trakt est connecté.",
-  "trackingAuthDenied": "Autorisation refusée sur Trakt.",
+  "trackingAuthDenied": "Autorisation refusée.",
   "trackingAuthExpired": "Le code a expiré ou n'est plus valable. Demandez-en un nouveau.",
   "trackingAuthNewCode": "Nouveau code",
-  "trackingAuthUnavailable": "Trakt est injoignable. Réessayez plus tard.",
-  "trackingQrSemantic": "Code QR vers l'adresse d'autorisation"
+  "trackingAuthUnavailable": "Le service de suivi est injoignable. Réessayez plus tard.",
+  "trackingQrSemantic": "Code QR vers l'adresse d'autorisation",
+  "trackingSimkl": "Simkl",
+  "trackingSimklNotConfigured": "Non configuré : l'identifiant de l'application Simkl est absent. Rien n'est envoyé.",
+  "trackingSimklConnected": "Connecté : les titres vus (80 % ou plus) sont ajoutés à votre historique Simkl.",
+  "trackingSimklReauth": "Reconnexion nécessaire : Simkl a refusé la connexion. Reconnectez le compte pour reprendre l'envoi.",
+  "trackingSimklConnect": "Connecter Simkl",
+  "trackingSimklDisconnect": "Déconnecter Simkl",
+  "trackingSimklDisconnected": "Simkl déconnecté",
+  "trackingSimklAuthTitle": "Connecter Simkl",
+  "trackingSimklAuthDone": "Simkl est connecté."
 }

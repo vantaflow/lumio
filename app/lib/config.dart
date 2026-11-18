@@ -11,3 +11,7 @@ const backendUrl = '';
 /// Vides = suivi Trakt « non configuré » : rien n'est envoyé.
 const traktClientId = '';
 const traktClientSecret = '';
+
+/// Identifiant de l'application Simkl (https://simkl.com/settings/developer/).
+/// Vide = suivi Simkl « non configuré » : rien n'est envoyé.
+const simklClientId = '';

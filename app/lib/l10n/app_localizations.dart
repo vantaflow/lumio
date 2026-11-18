@@ -3359,7 +3359,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingAuthDenied.
   ///
   /// In fr, this message translates to:
-  /// **'Autorisation refusée sur Trakt.'**
+  /// **'Autorisation refusée.'**
   String get trackingAuthDenied;
 
   /// No description provided for @trackingAuthExpired.
@@ -3377,7 +3377,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingAuthUnavailable.
   ///
   /// In fr, this message translates to:
-  /// **'Trakt est injoignable. Réessayez plus tard.'**
+  /// **'Le service de suivi est injoignable. Réessayez plus tard.'**
   String get trackingAuthUnavailable;
 
   /// No description provided for @trackingQrSemantic.
@@ -3385,6 +3385,60 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Code QR vers l\'adresse d\'autorisation'**
   String get trackingQrSemantic;
+
+  /// No description provided for @trackingSimkl.
+  ///
+  /// In fr, this message translates to:
+  /// **'Simkl'**
+  String get trackingSimkl;
+
+  /// No description provided for @trackingSimklNotConfigured.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non configuré : l\'identifiant de l\'application Simkl est absent. Rien n\'est envoyé.'**
+  String get trackingSimklNotConfigured;
+
+  /// No description provided for @trackingSimklConnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecté : les titres vus (80 % ou plus) sont ajoutés à votre historique Simkl.'**
+  String get trackingSimklConnected;
+
+  /// No description provided for @trackingSimklReauth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reconnexion nécessaire : Simkl a refusé la connexion. Reconnectez le compte pour reprendre l\'envoi.'**
+  String get trackingSimklReauth;
+
+  /// No description provided for @trackingSimklConnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter Simkl'**
+  String get trackingSimklConnect;
+
+  /// No description provided for @trackingSimklDisconnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déconnecter Simkl'**
+  String get trackingSimklDisconnect;
+
+  /// No description provided for @trackingSimklDisconnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Simkl déconnecté'**
+  String get trackingSimklDisconnected;
+
+  /// No description provided for @trackingSimklAuthTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter Simkl'**
+  String get trackingSimklAuthTitle;
+
+  /// No description provided for @trackingSimklAuthDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Simkl est connecté.'**
+  String get trackingSimklAuthDone;
 }
 
 class _AppLocalizationsDelegate

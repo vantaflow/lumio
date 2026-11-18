@@ -10,6 +10,12 @@ import 'package:lumio_core/lumio_core.dart';
 /// Identifiant du service Trakt dans la file et les réglages.
 const traktId = 'trakt';
 
+/// Identifiant du service Simkl dans la file et les réglages.
+const simklId = 'simkl';
+
+/// Services de suivi, dans l'ordre d'affichage.
+const trackerIds = [traktId, simklId];
+
 /// Jetons (SecretStore) et réglages du suivi, par profil.
 class TrackingRepository {
   TrackingRepository(this._secrets, this._settings);

@@ -33,8 +33,7 @@ class TrackingService {
   /// Services reliés à envoyer pour [profileId] (vide : rien à faire).
   Future<List<String>> activeTrackers(String profileId) async {
     final out = <String>[];
-    // Seul Trakt pour l'instant ; Simkl s'ajoute ici.
-    for (final id in const [traktId]) {
+    for (final id in trackerIds) {
       if (!configured(id)) continue;
       if (await repo.token(id, profileId) == null) continue;
       out.add(id);
@@ -72,6 +71,8 @@ class TrackingService {
     String trackerId,
     ScrobbleEvent event,
   ) async {
+    // Simkl n'a pas de lecture en direct : seul un « vu » (stop à 80 %) part.
+    if (trackerId == simklId && !SimklClient.wants(event)) return;
     await queue.submit(profileId, trackerId, event);
   }
 

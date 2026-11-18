@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumio/data/tracking_repository.dart' show traktId;
+import 'package:lumio/data/tracking_repository.dart'
+    show simklId, trackerIds, traktId;
 import 'package:lumio/features/tracking/tracking_providers.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -14,22 +15,82 @@ import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-/// Réglages « Suivi (Trakt, Simkl) » du profil actif : état du compte,
-/// connexion par code d'appareil, file d'envoi, autorisation parentale pour
-/// un profil enfant.
+/// Textes propres à un service de suivi.
+class _Names {
+  const _Names({
+    required this.title,
+    required this.notConfigured,
+    required this.connected,
+    required this.reauth,
+    required this.connect,
+    required this.disconnect,
+    required this.disconnected,
+    required this.authTitle,
+    required this.authDone,
+  });
+
+  final String title;
+  final String notConfigured;
+  final String connected;
+  final String reauth;
+  final String connect;
+  final String disconnect;
+  final String disconnected;
+  final String authTitle;
+  final String authDone;
+}
+
+_Names _namesOf(AppLocalizations l, String trackerId) => trackerId == simklId
+    ? _Names(
+        title: l.trackingSimkl,
+        notConfigured: l.trackingSimklNotConfigured,
+        connected: l.trackingSimklConnected,
+        reauth: l.trackingSimklReauth,
+        connect: l.trackingSimklConnect,
+        disconnect: l.trackingSimklDisconnect,
+        disconnected: l.trackingSimklDisconnected,
+        authTitle: l.trackingSimklAuthTitle,
+        authDone: l.trackingSimklAuthDone,
+      )
+    : _Names(
+        title: l.trackingTrakt,
+        notConfigured: l.trackingNotConfigured,
+        connected: l.trackingConnected,
+        reauth: l.trackingReauth,
+        connect: l.trackingConnect,
+        disconnect: l.trackingDisconnect,
+        disconnected: l.trackingDisconnected,
+        authTitle: l.trackingAuthTitle,
+        authDone: l.trackingAuthDone,
+      );
+
+/// Clé d'un élément : celles de Trakt sont inchangées, Simkl ajoute un suffixe.
+Key _key(String base, String trackerId) =>
+    ValueKey(trackerId == traktId ? base : '$base-$trackerId');
+
+/// Réglages « Suivi (Trakt, Simkl) » du profil actif : une carte par service
+/// (état du compte, connexion par code d'appareil), file d'envoi,
+/// autorisation parentale pour un profil enfant.
 class TrackingScreen extends ConsumerWidget {
   const TrackingScreen({super.key});
 
-  Future<void> _connect(BuildContext context, WidgetRef ref) async {
+  Future<void> _connect(
+    BuildContext context,
+    WidgetRef ref,
+    String trackerId,
+  ) async {
     final profileId = ref.read(currentProfileIdProvider);
     final ok = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => TraktDeviceAuthScreen(profileId: profileId),
+        builder: (_) =>
+            TraktDeviceAuthScreen(profileId: profileId, trackerId: trackerId),
       ),
     );
-    ref.invalidate(trackingStatusProvider(profileId));
+    ref.invalidate(
+      trackingStatusProvider((profileId: profileId, trackerId: trackerId)),
+    );
     if (ok == true && context.mounted) {
-      _tell(context, context.l10n.trackingAuthDone);
+      _tell(context, _namesOf(context.l10n, trackerId).authDone);
     }
   }
 
@@ -42,110 +103,171 @@ class TrackingScreen extends ConsumerWidget {
     final l = context.l10n;
     final profile = ref.watch(currentProfileProvider);
     final profileId = ref.watch(currentProfileIdProvider);
-    final status = ref.watch(trackingStatusProvider(profileId));
+    final statuses = {
+      for (final id in trackerIds)
+        id: ref.watch(
+          trackingStatusProvider((profileId: profileId, trackerId: id)),
+        ),
+    };
     final service = ref.read(trackingServiceProvider);
     final repo = ref.read(trackingRepositoryProvider);
     final kid = profile?.isKid ?? false;
+    void refresh() {
+      for (final id in trackerIds) {
+        ref.invalidate(
+          trackingStatusProvider((profileId: profileId, trackerId: id)),
+        );
+      }
+    }
+
     return TvScaffold(
       child: Scaffold(
         appBar: AppBar(title: Text(l.trackingTitle)),
-        body: status.when(
-          loading: () => const StateView.loading(),
-          error: (e, _) => StateView.error(
-            message: l10nForError(l, e),
-            onRetry: () => ref.invalidate(trackingStatusProvider(profileId)),
-          ),
-          data: (s) {
-            final allowed = !kid || s.kidAllowed;
-            return ListView(
-              padding: const EdgeInsets.all(LumioSpacing.md),
-              children: [
-                Text(
-                  l.trackingTrakt,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: LumioSpacing.xs),
-                Text(
-                  !s.configured
-                      ? l.trackingNotConfigured
-                      : s.reauthRequired
-                      ? l.trackingReauth
-                      : s.connected
-                      ? l.trackingConnected
-                      : l.trackingNotConnected,
-                  key: const ValueKey('tracking-state'),
-                ),
-                const SizedBox(height: LumioSpacing.md),
-                if (kid && s.configured)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: LumioSpacing.md),
-                    child: FocusRing(
-                      child: SwitchListTile(
-                        key: const ValueKey('tracking-kid'),
-                        title: Text(l.trackingKidAllow),
-                        subtitle: Text(l.trackingKidAllowHint),
-                        value: s.kidAllowed,
-                        onChanged: (v) async {
-                          await repo.setKidAllowed(profileId, v);
-                          ref.invalidate(trackingStatusProvider(profileId));
-                        },
-                      ),
+        body: () {
+          final failed = statuses.values.where((s) => s.hasError);
+          if (failed.isNotEmpty) {
+            return StateView.error(
+              message: l10nForError(l, failed.first.error!),
+              onRetry: refresh,
+            );
+          }
+          if (statuses.values.any((s) => !s.hasValue)) {
+            return const StateView.loading();
+          }
+          final all = {for (final e in statuses.entries) e.key: e.value.value!};
+          final anyConfigured = all.values.any((s) => s.configured);
+          // Réglage commun à tous les services : lu sur le premier.
+          final shared = all.values.first;
+          final allowed = !kid || shared.kidAllowed;
+          return ListView(
+            padding: const EdgeInsets.all(LumioSpacing.md),
+            children: [
+              if (kid && anyConfigured)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: LumioSpacing.md),
+                  child: FocusRing(
+                    child: SwitchListTile(
+                      key: const ValueKey('tracking-kid'),
+                      title: Text(l.trackingKidAllow),
+                      subtitle: Text(l.trackingKidAllowHint),
+                      value: shared.kidAllowed,
+                      onChanged: (v) async {
+                        await repo.setKidAllowed(profileId, v);
+                        refresh();
+                      },
                     ),
                   ),
-                if (s.configured)
-                  Wrap(
-                    spacing: LumioSpacing.sm,
-                    runSpacing: LumioSpacing.sm,
-                    children: [
-                      if (!s.connected || s.reauthRequired)
-                        FilledButton.icon(
-                          key: const ValueKey('tracking-connect'),
-                          autofocus: true,
-                          onPressed: allowed
-                              ? () => _connect(context, ref)
-                              : null,
-                          icon: const Icon(Icons.link),
-                          label: Text(l.trackingConnect),
-                        ),
-                      if (s.connected)
-                        OutlinedButton.icon(
-                          key: const ValueKey('tracking-disconnect'),
-                          onPressed: () async {
-                            await service.disconnect(profileId, traktId);
-                            ref.invalidate(trackingStatusProvider(profileId));
-                            if (context.mounted) {
-                              _tell(context, l.trackingDisconnected);
-                            }
-                          },
-                          icon: const Icon(Icons.link_off),
-                          label: Text(l.trackingDisconnect),
-                        ),
-                      if (s.pending > 0)
-                        OutlinedButton.icon(
-                          key: const ValueKey('tracking-retry'),
-                          onPressed: () async {
-                            await service.flush();
-                            ref.invalidate(trackingStatusProvider(profileId));
-                            if (context.mounted) {
-                              _tell(context, l.trackingRetried);
-                            }
-                          },
-                          icon: const Icon(Icons.sync),
-                          label: Text(l.trackingRetry),
-                        ),
-                    ],
+                ),
+              for (final id in trackerIds)
+                _TrackerCard(
+                  trackerId: id,
+                  status: all[id]!,
+                  allowed: allowed,
+                  autofocus:
+                      id == trackerIds.first ||
+                      !all[trackerIds.first]!.configured,
+                  onConnect: () => _connect(context, ref, id),
+                  onDisconnect: () async {
+                    await service.disconnect(profileId, id);
+                    refresh();
+                    if (context.mounted) {
+                      _tell(context, _namesOf(l, id).disconnected);
+                    }
+                  },
+                ),
+              if (anyConfigured) ...[
+                if (shared.pending > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: LumioSpacing.md),
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('tracking-retry'),
+                      onPressed: () async {
+                        await service.flush();
+                        refresh();
+                        if (context.mounted) _tell(context, l.trackingRetried);
+                      },
+                      icon: const Icon(Icons.sync),
+                      label: Text(l.trackingRetry),
+                    ),
                   ),
-                if (s.configured) ...[
-                  const SizedBox(height: LumioSpacing.md),
-                  Text(
-                    l.trackingPending(s.pending),
-                    key: const ValueKey('tracking-pending'),
-                  ),
-                ],
+                Text(
+                  l.trackingPending(shared.pending),
+                  key: const ValueKey('tracking-pending'),
+                ),
               ],
-            );
-          },
-        ),
+            ],
+          );
+        }(),
+      ),
+    );
+  }
+}
+
+/// Carte d'un service : état du compte et boutons connecter / déconnecter.
+class _TrackerCard extends StatelessWidget {
+  const _TrackerCard({
+    required this.trackerId,
+    required this.status,
+    required this.allowed,
+    required this.autofocus,
+    required this.onConnect,
+    required this.onDisconnect,
+  });
+
+  final String trackerId;
+  final TrackingStatus status;
+  final bool allowed;
+  final bool autofocus;
+  final VoidCallback onConnect;
+  final VoidCallback onDisconnect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final n = _namesOf(l, trackerId);
+    final s = status;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: LumioSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(n.title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: LumioSpacing.xs),
+          Text(
+            !s.configured
+                ? n.notConfigured
+                : s.reauthRequired
+                ? n.reauth
+                : s.connected
+                ? n.connected
+                : l.trackingNotConnected,
+            key: _key('tracking-state', trackerId),
+          ),
+          if (s.configured) ...[
+            const SizedBox(height: LumioSpacing.md),
+            Wrap(
+              spacing: LumioSpacing.sm,
+              runSpacing: LumioSpacing.sm,
+              children: [
+                if (!s.connected || s.reauthRequired)
+                  FilledButton.icon(
+                    key: _key('tracking-connect', trackerId),
+                    autofocus: autofocus,
+                    onPressed: allowed ? onConnect : null,
+                    icon: const Icon(Icons.link),
+                    label: Text(n.connect),
+                  ),
+                if (s.connected)
+                  OutlinedButton.icon(
+                    key: _key('tracking-disconnect', trackerId),
+                    onPressed: onDisconnect,
+                    icon: const Icon(Icons.link_off),
+                    label: Text(n.disconnect),
+                  ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -155,9 +277,14 @@ class TrackingScreen extends ConsumerWidget {
 /// à distance sur un téléviseur ; l'attente de l'accord se fait ici. Le code
 /// n'est jamais journalisé.
 class TraktDeviceAuthScreen extends ConsumerStatefulWidget {
-  const TraktDeviceAuthScreen({super.key, required this.profileId});
+  const TraktDeviceAuthScreen({
+    super.key,
+    required this.profileId,
+    this.trackerId = traktId,
+  });
 
   final String profileId;
+  final String trackerId;
 
   @override
   ConsumerState<TraktDeviceAuthScreen> createState() => _AuthState();
@@ -190,12 +317,12 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
     final service = ref.read(trackingServiceProvider);
     final sleep = ref.read(trackingSleepProvider);
     try {
-      final code = await service.beginAuth(traktId);
+      final code = await service.beginAuth(widget.trackerId);
       if (_cancelled || run != _run) return;
       setState(() => _code = code);
       await service.completeAuth(
         widget.profileId,
-        traktId,
+        widget.trackerId,
         code,
         sleep: sleep,
         isCancelled: () => _cancelled || run != _run,
@@ -220,7 +347,7 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
     final text = Theme.of(context).textTheme;
     return TvScaffold(
       child: Scaffold(
-        appBar: AppBar(title: Text(l.trackingAuthTitle)),
+        appBar: AppBar(title: Text(_namesOf(l, widget.trackerId).authTitle)),
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(LumioSpacing.lg),

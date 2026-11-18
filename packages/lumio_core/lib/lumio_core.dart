@@ -38,5 +38,6 @@ export 'src/sync/sync_models.dart';
 export 'src/local/media_name.dart';
 export 'src/jellyfin/jellyfin_client.dart';
 export 'src/tracking/tracker.dart';
+export 'src/tracking/simkl_client.dart';
 export 'src/tracking/trakt_client.dart';
 export 'src/tracking/scrobble_queue.dart';

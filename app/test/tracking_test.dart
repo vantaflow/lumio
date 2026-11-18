@@ -35,6 +35,8 @@ class _MemTrakt implements HttpPostFetcher {
   int scrobbleStatus = 201;
   int deviceTokenStatus = 400;
   int tokenCalls = 0;
+  bool pinApproved = false;
+  final gets = <(Uri, Map<String, String>)>[];
 
   FetchResponse _json(Object o, [int status = 200]) =>
       FetchResponse(status: status, body: utf8.encode(jsonEncode(o)));
@@ -83,7 +85,26 @@ class _MemTrakt implements HttpPostFetcher {
     int maxBytes = 5 * 1024 * 1024,
     Duration timeout = const Duration(seconds: 8),
     void Function(Uri target)? guard,
-  }) => throw UnimplementedError();
+  }) async {
+    gets.add((url, headers));
+    if (url.path == '/oauth/pin') {
+      return _json({
+        'result': 'OK',
+        'user_code': 'PIN99',
+        'verification_url': 'https://simkl.com/pin/',
+        'expires_in': 900,
+        'interval': 5,
+      });
+    }
+    if (url.path.startsWith('/oauth/pin/')) {
+      return _json(
+        pinApproved
+            ? {'result': 'OK', 'access_token': 'simkl-acc'}
+            : {'result': 'KO', 'message': 'Authorization pending'},
+      );
+    }
+    throw UnimplementedError();
+  }
 
   List<String> get scrobblePaths =>
       posts.map((p) => p.$1).where((p) => p.startsWith('/scrobble')).toList();
@@ -197,11 +218,25 @@ void main() {
       String id = 'cid',
       String secret = 'sec',
       bool token = true,
+      String simkl = '',
+      bool simklToken = false,
     }) {
       db = AppDatabase(NativeDatabase.memory());
       secrets = MemorySecretStore();
       net = _MemTrakt();
       now = DateTime.now().toUtc();
+      if (simklToken) {
+        secrets.write(
+          'simkl.token.default',
+          jsonEncode(
+            TrackerToken(
+              access: 'sk-0',
+              refresh: '',
+              expiresAt: now.add(const Duration(days: 36500)),
+            ).toJson(),
+          ),
+        );
+      }
       if (token) {
         secrets.write(
           'trakt.token.default',
@@ -221,6 +256,7 @@ void main() {
           trackingFetcherProvider.overrideWithValue(net),
           trackingClockProvider.overrideWithValue(() => now),
           traktCredentialsProvider.overrideWithValue((id: id, secret: secret)),
+          simklClientIdProvider.overrideWithValue(simkl),
         ],
       );
       addTearDown(() async {
@@ -397,6 +433,89 @@ void main() {
       expect(rows.single.eventJson, isNot(contains('ref-0')));
     });
 
+    test(
+      'Simkl : actif avec identifiant et jeton, Trakt en parallèle',
+      () async {
+        c = make(simkl: 'sid', simklToken: true);
+        expect(
+          await c
+              .read(trackingServiceProvider)
+              .activeTrackers(defaultProfileId),
+          [traktId, simklId],
+        );
+        c.dispose();
+        c = make(simkl: '', simklToken: true); // identifiant absent
+        expect(
+          await c
+              .read(trackingServiceProvider)
+              .activeTrackers(defaultProfileId),
+          [traktId],
+        );
+      },
+    );
+
+    test(
+      'Simkl : start/pause/stop < 80 % ignorés, stop à 80 % envoyé',
+      () async {
+        c = make(token: false, simkl: 'sid', simklToken: true);
+        final svc = c.read(trackingServiceProvider);
+        await svc.onPlayback(play(PlaybackAction.start, p: 1));
+        await svc.onPlayback(play(PlaybackAction.pause, p: 50));
+        await svc.onPlayback(play(PlaybackAction.stop, p: 79));
+        expect(net.posts, isEmpty);
+        expect(await c.read(scrobbleQueueProvider).pending(), 0);
+        await svc.onPlayback(play(PlaybackAction.stop, p: 80));
+        expect(net.posts.map((p) => p.$1), ['/sync/history']);
+        final h = net.posts.single;
+        expect(h.$3['simkl-api-key'], 'sid');
+        expect(h.$3['authorization'], 'Bearer sk-0');
+        expect(((h.$2['movies'] as List).single as Map)['ids'], {
+          'imdb': 'tt1',
+        });
+      },
+    );
+
+    test('Simkl : jeton refusé (401) → reconnexion, entrée gardée', () async {
+      c = make(token: false, simkl: 'sid', simklToken: true);
+      net.scrobbleStatus = 401;
+      await c
+          .read(trackingServiceProvider)
+          .onPlayback(play(PlaybackAction.stop, p: 95));
+      expect(
+        await c
+            .read(trackingRepositoryProvider)
+            .reauthRequired(simklId, 'default'),
+        isTrue,
+      );
+      expect(await c.read(scrobbleQueueProvider).pending(), 1);
+    });
+
+    test('Simkl : PIN puis jeton enregistré pour le profil', () async {
+      c = make(token: false, simkl: 'sid');
+      final svc = c.read(trackingServiceProvider);
+      final code = await svc.beginAuth(simklId);
+      expect(code.userCode, 'PIN99');
+      net.pinApproved = true;
+      await svc.completeAuth(
+        defaultProfileId,
+        simklId,
+        code,
+        sleep: (_) async {},
+      );
+      final t = await c
+          .read(trackingRepositoryProvider)
+          .token(simklId, defaultProfileId);
+      expect(t!.access, 'simkl-acc');
+      await svc.disconnect(defaultProfileId, simklId);
+      expect(
+        await c
+            .read(trackingRepositoryProvider)
+            .token(simklId, defaultProfileId),
+        isNull,
+      );
+      expect(net.posts, isEmpty); // pas de révocation côté Simkl
+    });
+
     test('profil enfant sans réglage ni jeton : aucun service actif', () async {
       c = make(token: false);
       expect(
@@ -519,7 +638,11 @@ void main() {
 
   group('écran', () {
     late _MemTrakt net;
-    List<Override> over({String id = 'cid', String secret = 'sec'}) {
+    List<Override> over({
+      String id = 'cid',
+      String secret = 'sec',
+      String simkl = '',
+    }) {
       net = _MemTrakt();
       return [
         trackingFetcherProvider.overrideWithValue(net),
@@ -528,6 +651,7 @@ void main() {
           (_) => Future<void>.delayed(const Duration(milliseconds: 30)),
         ),
         secretStoreProvider.overrideWithValue(MemorySecretStore()),
+        simklClientIdProvider.overrideWithValue(simkl),
       ];
     }
 
@@ -550,8 +674,12 @@ void main() {
         const TrackingScreen(),
         extra: over(id: '', secret: ''),
       );
-      expect(find.textContaining('Non configuré'), findsOneWidget);
+      expect(find.textContaining('Non configuré'), findsNWidgets(2));
       expect(find.byKey(const ValueKey('tracking-connect')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('tracking-connect-simkl')),
+        findsNothing,
+      );
       expect(net.posts, isEmpty);
       await h.close();
     });
@@ -574,6 +702,26 @@ void main() {
       expect(find.byKey(const ValueKey('tracking-auth-code')), findsNothing);
       expect(find.textContaining('Connecté'), findsWidgets);
       expect(find.byKey(const ValueKey('tracking-disconnect')), findsOneWidget);
+      await h.close();
+    });
+
+    testWidgets('carte Simkl : PIN, adresse, QR puis connecté', (t) async {
+      final h = AppHarness(t);
+      await h.pump(const TrackingScreen(), extra: over(simkl: 'sid'));
+      expect(find.text('Simkl'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('tracking-connect-simkl')));
+      await h.settle(3);
+      expect(find.text('PIN99'), findsOneWidget);
+      expect(find.text('https://simkl.com/pin/'), findsOneWidget);
+      expect(find.byType(QrImageView), findsOneWidget);
+      net.pinApproved = true;
+      await h.settle(4);
+      expect(find.byKey(const ValueKey('tracking-auth-code')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('tracking-disconnect-simkl')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('historique Simkl'), findsOneWidget);
       await h.close();
     });
 

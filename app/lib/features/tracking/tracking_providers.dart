@@ -11,6 +11,9 @@ final traktCredentialsProvider = Provider<({String id, String secret})>(
   (ref) => (id: config.traktClientId, secret: config.traktClientSecret),
 );
 
+/// Identifiant de l'application Simkl (surchargé dans les tests).
+final simklClientIdProvider = Provider<String>((ref) => config.simklClientId);
+
 final trackingFetcherProvider = Provider<HttpPostFetcher>(
   (ref) => IoHttpFetcher(redirectGuard: UrlGuard.check),
 );
@@ -35,12 +38,22 @@ final trackerFactoryProvider =
     ) {
       final repo = ref.watch(trackingRepositoryProvider);
       final creds = ref.watch(traktCredentialsProvider);
+      final simkl = ref.watch(simklClientIdProvider);
       final fetcher = ref.watch(trackingFetcherProvider);
       final clock = ref.watch(trackingClockProvider);
       return (id, profileId) async {
         final token = profileId.isEmpty
             ? null
             : await repo.token(id, profileId);
+        if (id == simklId) {
+          // Jeton Simkl sans échéance : rien à renouveler ni à persister.
+          return SimklClient(
+            fetcher,
+            clientId: simkl,
+            token: token,
+            now: clock,
+          );
+        }
         return TraktClient(
           fetcher,
           clientId: creds.id,
@@ -68,20 +81,26 @@ final scrobbleQueueProvider = Provider<ScrobbleQueue>(
   ),
 );
 
-final trackingServiceProvider = Provider<TrackingService>((ref) {
+/// Identifiants du service [id] présents ?
+bool _configured(Ref ref, String id) {
+  if (id == simklId) return ref.watch(simklClientIdProvider).isNotEmpty;
   final creds = ref.watch(traktCredentialsProvider);
+  return id == traktId && creds.id.isNotEmpty && creds.secret.isNotEmpty;
+}
+
+final trackingServiceProvider = Provider<TrackingService>((ref) {
+  final configured = {for (final id in trackerIds) id: _configured(ref, id)};
   return TrackingService(
     repo: ref.watch(trackingRepositoryProvider),
     profiles: ref.watch(profileRepositoryProvider),
     queue: ref.watch(scrobbleQueueProvider),
     now: ref.watch(trackingClockProvider),
-    configured: (id) =>
-        id == traktId && creds.id.isNotEmpty && creds.secret.isNotEmpty,
+    configured: (id) => configured[id] ?? false,
     trackerFor: ref.watch(trackerFactoryProvider),
   );
 });
 
-/// État du suivi Trakt d'un profil, pour l'écran des réglages.
+/// État du suivi d'un service pour un profil, pour l'écran des réglages.
 class TrackingStatus {
   const TrackingStatus({
     required this.configured,
@@ -98,20 +117,21 @@ class TrackingStatus {
   final bool kidAllowed;
 }
 
-final trackingStatusProvider = FutureProvider.family<TrackingStatus, String>((
-  ref,
-  profileId,
-) async {
-  final creds = ref.watch(traktCredentialsProvider);
-  final repo = ref.watch(trackingRepositoryProvider);
-  return TrackingStatus(
-    configured: creds.id.isNotEmpty && creds.secret.isNotEmpty,
-    connected: await repo.token(traktId, profileId) != null,
-    reauthRequired: await repo.reauthRequired(traktId, profileId),
-    pending: await ref.watch(scrobbleQueueProvider).pending(),
-    kidAllowed: await repo.kidAllowed(profileId),
-  );
-});
+final trackingStatusProvider =
+    FutureProvider.family<
+      TrackingStatus,
+      ({String profileId, String trackerId})
+    >((ref, key) async {
+      final repo = ref.watch(trackingRepositoryProvider);
+      final (:profileId, :trackerId) = key;
+      return TrackingStatus(
+        configured: _configured(ref, trackerId),
+        connected: await repo.token(trackerId, profileId) != null,
+        reauthRequired: await repo.reauthRequired(trackerId, profileId),
+        pending: await ref.watch(scrobbleQueueProvider).pending(),
+        kidAllowed: await repo.kidAllowed(profileId),
+      );
+    });
 
 /// Attente entre deux interrogations de l'autorisation d'appareil
 /// (surchargée dans les tests).
