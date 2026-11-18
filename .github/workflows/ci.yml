@@ -95,3 +95,9 @@ jobs:
           cache: true
       - run: bash scripts/check-licenses.sh
       - run: bash scripts/test-check-licenses.sh
+
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/test-endurance.sh

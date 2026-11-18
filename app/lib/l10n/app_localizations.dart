@@ -1520,6 +1520,12 @@ abstract class AppLocalizations {
   /// **'Spike lecteur'**
   String get debugPlayer;
 
+  /// No description provided for @debugLoop.
+  ///
+  /// In fr, this message translates to:
+  /// **'Boucle d\'endurance'**
+  String get debugLoop;
+
   /// No description provided for @settingsAbout.
   ///
   /// In fr, this message translates to:

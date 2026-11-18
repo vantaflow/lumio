@@ -438,6 +438,7 @@
   "debugNone": "Aucun écran de debug",
   "debugTorrent": "Spike torrent",
   "debugPlayer": "Spike lecteur",
+  "debugLoop": "Boucle d'endurance",
   "settingsAbout": "À propos",
   "aboutLicense": "Licence GPL-3.0",
   "aboutCredits": "Crédits : libmpv, media_kit, libtorrent",

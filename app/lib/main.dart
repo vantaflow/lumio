@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/home/home_screen.dart';
@@ -48,6 +49,7 @@ Future<void> main() async {
 
 const _debugTorrent = String.fromEnvironment('LUMIO_DEBUG_TORRENT') == '1';
 const _debugPlayer = String.fromEnvironment('LUMIO_DEBUG_PLAYER') == '1';
+const _debugLoop = String.fromEnvironment('LUMIO_DEBUG_LOOP') == '1';
 
 class LumioApp extends ConsumerWidget {
   const LumioApp({super.key});
@@ -76,7 +78,9 @@ class LumioApp extends ConsumerWidget {
         const SingleActivator(LogicalKeyboardKey.select):
             const ActivateIntent(),
       },
-      home: _debugPlayer
+      home: _debugLoop
+          ? const LoopDebugScreen()
+          : _debugPlayer
           ? const PlayerSpikeScreen()
           : _debugTorrent
           ? const TorrentSpikeScreen()

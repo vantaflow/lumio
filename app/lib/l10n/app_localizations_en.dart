@@ -806,6 +806,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debugPlayer => 'Player spike';
 
   @override
+  String get debugLoop => 'Endurance loop';
+
+  @override
   String get settingsAbout => 'About';
 
   @override

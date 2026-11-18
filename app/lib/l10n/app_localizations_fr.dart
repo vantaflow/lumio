@@ -815,6 +815,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get debugPlayer => 'Spike lecteur';
 
   @override
+  String get debugLoop => 'Boucle d\'endurance';
+
+  @override
   String get settingsAbout => 'À propos';
 
   @override

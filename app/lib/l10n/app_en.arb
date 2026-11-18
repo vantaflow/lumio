@@ -237,6 +237,7 @@
   "debugNone": "No debug screen",
   "debugTorrent": "Torrent spike",
   "debugPlayer": "Player spike",
+  "debugLoop": "Endurance loop",
   "settingsAbout": "About",
   "aboutLicense": "GPL-3.0 licence",
   "aboutCredits": "Credits: libmpv, media_kit, libtorrent",

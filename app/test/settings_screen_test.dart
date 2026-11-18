@@ -249,6 +249,7 @@ void main() {
     await h.tapTile('debug');
     expect(find.text('Spike torrent'), findsOneWidget);
     expect(find.text('Spike lecteur'), findsOneWidget);
+    expect(find.text('Boucle d\'endurance'), findsOneWidget);
     await h.dispose();
   });
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/stream_prefs.dart';
+import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
@@ -440,6 +441,15 @@ class DebugMenuScreen extends StatelessWidget {
               MaterialPageRoute<void>(
                 builder: (_) => const PlayerSpikeScreen(),
               ),
+            ),
+          ),
+          ListTile(
+            key: const ValueKey('debug:loop'),
+            leading: const Icon(Icons.loop),
+            title: Text(l.debugLoop),
+            subtitle: const Text('LUMIO_DEBUG_LOOP=1'),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const LoopDebugScreen()),
             ),
           ),
         ],
