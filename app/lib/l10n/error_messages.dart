@@ -53,6 +53,11 @@ String l10nForError(AppLocalizations l, Object error) {
   if (error is CertificateException) return l.jellyfinErrCert;
   if (error is JellyfinInsecureException) return l.jellyfinInsecureBody;
   if (error is UnsafeUrlException) return l.errAddressRefused;
+  if (error is TrackerNotConfigured) return l.trackingNotConfigured;
+  if (error is TrackerReauthRequired) return l.trackingReauth;
+  if (error is TrackerAuthDenied) return l.trackingAuthDenied;
+  if (error is TrackerAuthExpired) return l.trackingAuthExpired;
+  if (error is TrackerException) return l.trackingAuthUnavailable;
   if (error is AddonException) {
     return switch (error.code) {
       AddonErrorCode.duplicate => l.errDuplicate,

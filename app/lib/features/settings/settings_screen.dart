@@ -15,6 +15,7 @@ import 'package:lumio/features/detail/playback_service.dart'
 import 'package:lumio/features/profiles/pin_dialog.dart' show requireParent;
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
+import 'package:lumio/features/tracking/tracking_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/torrent/torrent_providers.dart' show networkProbeProvider;
 import 'package:lumio/ui/focus/focus_memory.dart';
@@ -188,6 +189,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             builder: (_) => const JellyfinServersScreen(),
           ),
         ),
+      ),
+      _Header(l.trackingTitle),
+      _Tile(
+        id: 'tracking',
+        icon: Icons.history_toggle_off,
+        title: l.trackingTitle,
+        subtitle: l.trackingHint,
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const TrackingScreen())),
       ),
       if (ref.watch(syncServiceProvider) != null) ...[
         _Header(l.settingsAccount),

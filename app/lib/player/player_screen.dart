@@ -10,6 +10,8 @@ import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/player/next_episode_overlay.dart';
 import 'package:lumio/player/play_router.dart' show LocalFileSource;
+import 'package:lumio/player/playback_events.dart';
+import 'package:lumio/player/playback_events_provider.dart';
 import 'package:lumio/player/player_controller.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
@@ -185,6 +187,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool _showNext = false;
   bool _switching = false;
   bool _disposed = false;
+
+  /// Bus d'événements de lecture (lu dans initState : `ref` est inutilisable
+  /// dans dispose) ; [_announced] = un `start` a été émis sans `stop`.
+  late final PlaybackEvents _events;
+  bool _announced = false;
 
   /// Lecture de torrent en cours (créée au premier flux torrent) et dernier
   /// statut pour la superposition sources/débit.
@@ -449,6 +456,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         widget.controller ??
         PlayerController(proxy: () => ref.read(localProxyProvider.future));
     _ctl.stateListenable.addListener(_onState);
+    _events = ref.read(playbackEventsProvider);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _recorder = _newRecorder();
     unawaited(_openFrom(widget.item, alternatives: widget.fallbacks));
@@ -554,6 +562,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   @override
   void dispose() {
     _disposed = true;
+    _announce(PlaybackAction.stop);
     final st = _ctl.state;
     _recorder?.flush(st.position, st.duration, force: true);
     _hide?.cancel();
@@ -569,6 +578,33 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _torrentStatus.dispose();
     if (widget.controller == null) unawaited(_ctl.dispose());
     super.dispose();
+  }
+
+  /// Signale le cycle de lecture aux écouteurs (suivi…). Rien sans identifiant
+  /// de titre ; `stop` seulement après un `start`.
+  void _announce(PlaybackAction a, {double? progress}) {
+    if (widget.metaId == null) return;
+    if (a == PlaybackAction.stop) {
+      if (!_announced) return;
+      _announced = false;
+    } else {
+      _announced = true;
+    }
+    final st = _ctl.state;
+    final pct =
+        progress ??
+        (st.duration > Duration.zero
+            ? st.position.inMilliseconds * 100 / st.duration.inMilliseconds
+            : 0.0);
+    _events.emit(
+      PlaybackEvent(
+        action: a,
+        profileId: widget.profileId,
+        metaId: widget.metaId,
+        videoId: _videoId,
+        progress: pct.clamp(0, 100).toDouble(),
+      ),
+    );
   }
 
   PlayerPhase? _lastPhase;
@@ -594,7 +630,17 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       setState(() {});
     }
     if (p == _lastPhase) return;
+    final before = _lastPhase;
     _lastPhase = p;
+    if (p == PlayerPhase.playing &&
+        !(before == PlayerPhase.buffering && _announced)) {
+      _announce(PlaybackAction.start);
+    } else if ((p == PlayerPhase.paused || p == PlayerPhase.failed) &&
+        _announced) {
+      _announce(PlaybackAction.pause);
+    } else if (p == PlayerPhase.ended) {
+      _announce(PlaybackAction.stop);
+    }
     if (p == PlayerPhase.paused || p == PlayerPhase.ended) {
       _recorder?.flush(st.position, st.duration);
       // Envoi rapide de la progression aux autres appareils (nul sans backend).
@@ -675,6 +721,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     // L'utilisateur passe à la suite : l'épisode est enregistré comme vu et
     // le suivant entre dans « Continuer ».
     final st = _ctl.state;
+    _announce(PlaybackAction.stop, progress: 100);
     _recorder?.flush(st.duration, st.duration, force: true);
     setState(() {
       _videoId = next.id;

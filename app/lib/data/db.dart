@@ -141,6 +141,25 @@ class LocalItems extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// File d'attente du suivi (Trakt…, v10) : événements de lecture à renvoyer.
+/// Propre à l'appareil : jamais synchronisée.
+@DataClassName('ScrobbleRow')
+class ScrobbleQueueTable extends Table {
+  @override
+  String get tableName => 'scrobble_queue';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get profileId => text()();
+  TextColumn get trackerId => text()();
+
+  /// `ScrobbleEvent.toJson` (identifiant IMDb et avancement, sans secret).
+  TextColumn get eventJson => text()();
+  IntColumn get attempts => integer().withDefault(const Constant(0))();
+
+  /// Prochain essai (ms depuis l'epoch).
+  IntColumn get nextAttemptAt => integer().withDefault(const Constant(0))();
+}
+
 @DriftDatabase(
   tables: [
     Profiles,
@@ -151,13 +170,14 @@ class LocalItems extends Table {
     TitleSettingsTable,
     LocalFolders,
     LocalItems,
+    ScrobbleQueueTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -219,6 +239,8 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(localFolders);
         await m.createTable(localItems);
       }
+      // v10 : file d'attente du suivi (Trakt).
+      if (from < 10) await m.createTable(scrobbleQueueTable);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

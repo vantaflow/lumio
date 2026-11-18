@@ -1885,4 +1885,92 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get jellyfinErrAddress => 'Adresse du serveur invalide.';
+
+  @override
+  String get trackingTitle => 'Suivi (Trakt, Simkl)';
+
+  @override
+  String get trackingHint => 'Enregistrez vos lectures sur votre compte';
+
+  @override
+  String get trackingTrakt => 'Trakt';
+
+  @override
+  String get trackingNotConfigured =>
+      'Non configuré : les identifiants de l\'application Trakt sont absents. Rien n\'est envoyé.';
+
+  @override
+  String get trackingNotConnected => 'Non connecté';
+
+  @override
+  String get trackingConnected =>
+      'Connecté : vos lectures sont enregistrées sur Trakt.';
+
+  @override
+  String get trackingReauth =>
+      'Reconnexion nécessaire : Trakt a refusé la connexion. Reconnectez le compte pour reprendre l\'envoi.';
+
+  @override
+  String get trackingConnect => 'Connecter Trakt';
+
+  @override
+  String get trackingDisconnect => 'Déconnecter Trakt';
+
+  @override
+  String get trackingDisconnected => 'Trakt déconnecté';
+
+  @override
+  String trackingPending(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count envois en attente',
+      one: '1 envoi en attente',
+      zero: 'Aucun envoi en attente',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get trackingRetry => 'Réessayer l\'envoi';
+
+  @override
+  String get trackingRetried => 'Envoi relancé';
+
+  @override
+  String get trackingKidAllow => 'Autoriser le suivi pour ce profil enfant';
+
+  @override
+  String get trackingKidAllowHint =>
+      'Seul un parent peut l\'activer. Sans cela, rien n\'est envoyé pour ce profil.';
+
+  @override
+  String get trackingAuthTitle => 'Connecter Trakt';
+
+  @override
+  String get trackingAuthStep =>
+      'Sur un autre appareil, ouvrez cette adresse puis saisissez le code :';
+
+  @override
+  String get trackingAuthWaiting => 'En attente de votre autorisation…';
+
+  @override
+  String get trackingAuthDone => 'Trakt est connecté.';
+
+  @override
+  String get trackingAuthDenied => 'Autorisation refusée sur Trakt.';
+
+  @override
+  String get trackingAuthExpired =>
+      'Le code a expiré ou n\'est plus valable. Demandez-en un nouveau.';
+
+  @override
+  String get trackingAuthNewCode => 'Nouveau code';
+
+  @override
+  String get trackingAuthUnavailable =>
+      'Trakt est injoignable. Réessayez plus tard.';
+
+  @override
+  String get trackingQrSemantic => 'Code QR vers l\'adresse d\'autorisation';
 }

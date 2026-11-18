@@ -3241,6 +3241,150 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Adresse du serveur invalide.'**
   String get jellyfinErrAddress;
+
+  /// No description provided for @trackingTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivi (Trakt, Simkl)'**
+  String get trackingTitle;
+
+  /// No description provided for @trackingHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrez vos lectures sur votre compte'**
+  String get trackingHint;
+
+  /// No description provided for @trackingTrakt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trakt'**
+  String get trackingTrakt;
+
+  /// No description provided for @trackingNotConfigured.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non configuré : les identifiants de l\'application Trakt sont absents. Rien n\'est envoyé.'**
+  String get trackingNotConfigured;
+
+  /// No description provided for @trackingNotConnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non connecté'**
+  String get trackingNotConnected;
+
+  /// No description provided for @trackingConnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecté : vos lectures sont enregistrées sur Trakt.'**
+  String get trackingConnected;
+
+  /// No description provided for @trackingReauth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reconnexion nécessaire : Trakt a refusé la connexion. Reconnectez le compte pour reprendre l\'envoi.'**
+  String get trackingReauth;
+
+  /// No description provided for @trackingConnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter Trakt'**
+  String get trackingConnect;
+
+  /// No description provided for @trackingDisconnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déconnecter Trakt'**
+  String get trackingDisconnect;
+
+  /// No description provided for @trackingDisconnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trakt déconnecté'**
+  String get trackingDisconnected;
+
+  /// No description provided for @trackingPending.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucun envoi en attente} =1{1 envoi en attente} other{{count} envois en attente}}'**
+  String trackingPending(int count);
+
+  /// No description provided for @trackingRetry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réessayer l\'envoi'**
+  String get trackingRetry;
+
+  /// No description provided for @trackingRetried.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoi relancé'**
+  String get trackingRetried;
+
+  /// No description provided for @trackingKidAllow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autoriser le suivi pour ce profil enfant'**
+  String get trackingKidAllow;
+
+  /// No description provided for @trackingKidAllowHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seul un parent peut l\'activer. Sans cela, rien n\'est envoyé pour ce profil.'**
+  String get trackingKidAllowHint;
+
+  /// No description provided for @trackingAuthTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter Trakt'**
+  String get trackingAuthTitle;
+
+  /// No description provided for @trackingAuthStep.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur un autre appareil, ouvrez cette adresse puis saisissez le code :'**
+  String get trackingAuthStep;
+
+  /// No description provided for @trackingAuthWaiting.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente de votre autorisation…'**
+  String get trackingAuthWaiting;
+
+  /// No description provided for @trackingAuthDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trakt est connecté.'**
+  String get trackingAuthDone;
+
+  /// No description provided for @trackingAuthDenied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autorisation refusée sur Trakt.'**
+  String get trackingAuthDenied;
+
+  /// No description provided for @trackingAuthExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le code a expiré ou n\'est plus valable. Demandez-en un nouveau.'**
+  String get trackingAuthExpired;
+
+  /// No description provided for @trackingAuthNewCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau code'**
+  String get trackingAuthNewCode;
+
+  /// No description provided for @trackingAuthUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trakt est injoignable. Réessayez plus tard.'**
+  String get trackingAuthUnavailable;
+
+  /// No description provided for @trackingQrSemantic.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code QR vers l\'adresse d\'autorisation'**
+  String get trackingQrSemantic;
 }
 
 class _AppLocalizationsDelegate

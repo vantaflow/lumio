@@ -3266,6 +3266,411 @@ class LocalItemsCompanion extends UpdateCompanion<LocalItem> {
   }
 }
 
+class $ScrobbleQueueTableTable extends ScrobbleQueueTable
+    with TableInfo<$ScrobbleQueueTableTable, ScrobbleRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ScrobbleQueueTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<String> profileId = GeneratedColumn<String>(
+    'profile_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _trackerIdMeta = const VerificationMeta(
+    'trackerId',
+  );
+  @override
+  late final GeneratedColumn<String> trackerId = GeneratedColumn<String>(
+    'tracker_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _eventJsonMeta = const VerificationMeta(
+    'eventJson',
+  );
+  @override
+  late final GeneratedColumn<String> eventJson = GeneratedColumn<String>(
+    'event_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _attemptsMeta = const VerificationMeta(
+    'attempts',
+  );
+  @override
+  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
+    'attempts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _nextAttemptAtMeta = const VerificationMeta(
+    'nextAttemptAt',
+  );
+  @override
+  late final GeneratedColumn<int> nextAttemptAt = GeneratedColumn<int>(
+    'next_attempt_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    profileId,
+    trackerId,
+    eventJson,
+    attempts,
+    nextAttemptAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'scrobble_queue';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ScrobbleRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_profileIdMeta);
+    }
+    if (data.containsKey('tracker_id')) {
+      context.handle(
+        _trackerIdMeta,
+        trackerId.isAcceptableOrUnknown(data['tracker_id']!, _trackerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_trackerIdMeta);
+    }
+    if (data.containsKey('event_json')) {
+      context.handle(
+        _eventJsonMeta,
+        eventJson.isAcceptableOrUnknown(data['event_json']!, _eventJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_eventJsonMeta);
+    }
+    if (data.containsKey('attempts')) {
+      context.handle(
+        _attemptsMeta,
+        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+      );
+    }
+    if (data.containsKey('next_attempt_at')) {
+      context.handle(
+        _nextAttemptAtMeta,
+        nextAttemptAt.isAcceptableOrUnknown(
+          data['next_attempt_at']!,
+          _nextAttemptAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ScrobbleRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ScrobbleRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}profile_id'],
+      )!,
+      trackerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tracker_id'],
+      )!,
+      eventJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}event_json'],
+      )!,
+      attempts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempts'],
+      )!,
+      nextAttemptAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_attempt_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ScrobbleQueueTableTable createAlias(String alias) {
+    return $ScrobbleQueueTableTable(attachedDatabase, alias);
+  }
+}
+
+class ScrobbleRow extends DataClass implements Insertable<ScrobbleRow> {
+  final int id;
+  final String profileId;
+  final String trackerId;
+
+  /// `ScrobbleEvent.toJson` (identifiant IMDb et avancement, sans secret).
+  final String eventJson;
+  final int attempts;
+
+  /// Prochain essai (ms depuis l'epoch).
+  final int nextAttemptAt;
+  const ScrobbleRow({
+    required this.id,
+    required this.profileId,
+    required this.trackerId,
+    required this.eventJson,
+    required this.attempts,
+    required this.nextAttemptAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['profile_id'] = Variable<String>(profileId);
+    map['tracker_id'] = Variable<String>(trackerId);
+    map['event_json'] = Variable<String>(eventJson);
+    map['attempts'] = Variable<int>(attempts);
+    map['next_attempt_at'] = Variable<int>(nextAttemptAt);
+    return map;
+  }
+
+  ScrobbleQueueTableCompanion toCompanion(bool nullToAbsent) {
+    return ScrobbleQueueTableCompanion(
+      id: Value(id),
+      profileId: Value(profileId),
+      trackerId: Value(trackerId),
+      eventJson: Value(eventJson),
+      attempts: Value(attempts),
+      nextAttemptAt: Value(nextAttemptAt),
+    );
+  }
+
+  factory ScrobbleRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ScrobbleRow(
+      id: serializer.fromJson<int>(json['id']),
+      profileId: serializer.fromJson<String>(json['profileId']),
+      trackerId: serializer.fromJson<String>(json['trackerId']),
+      eventJson: serializer.fromJson<String>(json['eventJson']),
+      attempts: serializer.fromJson<int>(json['attempts']),
+      nextAttemptAt: serializer.fromJson<int>(json['nextAttemptAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'profileId': serializer.toJson<String>(profileId),
+      'trackerId': serializer.toJson<String>(trackerId),
+      'eventJson': serializer.toJson<String>(eventJson),
+      'attempts': serializer.toJson<int>(attempts),
+      'nextAttemptAt': serializer.toJson<int>(nextAttemptAt),
+    };
+  }
+
+  ScrobbleRow copyWith({
+    int? id,
+    String? profileId,
+    String? trackerId,
+    String? eventJson,
+    int? attempts,
+    int? nextAttemptAt,
+  }) => ScrobbleRow(
+    id: id ?? this.id,
+    profileId: profileId ?? this.profileId,
+    trackerId: trackerId ?? this.trackerId,
+    eventJson: eventJson ?? this.eventJson,
+    attempts: attempts ?? this.attempts,
+    nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
+  );
+  ScrobbleRow copyWithCompanion(ScrobbleQueueTableCompanion data) {
+    return ScrobbleRow(
+      id: data.id.present ? data.id.value : this.id,
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      trackerId: data.trackerId.present ? data.trackerId.value : this.trackerId,
+      eventJson: data.eventJson.present ? data.eventJson.value : this.eventJson,
+      attempts: data.attempts.present ? data.attempts.value : this.attempts,
+      nextAttemptAt: data.nextAttemptAt.present
+          ? data.nextAttemptAt.value
+          : this.nextAttemptAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScrobbleRow(')
+          ..write('id: $id, ')
+          ..write('profileId: $profileId, ')
+          ..write('trackerId: $trackerId, ')
+          ..write('eventJson: $eventJson, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextAttemptAt: $nextAttemptAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, profileId, trackerId, eventJson, attempts, nextAttemptAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ScrobbleRow &&
+          other.id == this.id &&
+          other.profileId == this.profileId &&
+          other.trackerId == this.trackerId &&
+          other.eventJson == this.eventJson &&
+          other.attempts == this.attempts &&
+          other.nextAttemptAt == this.nextAttemptAt);
+}
+
+class ScrobbleQueueTableCompanion extends UpdateCompanion<ScrobbleRow> {
+  final Value<int> id;
+  final Value<String> profileId;
+  final Value<String> trackerId;
+  final Value<String> eventJson;
+  final Value<int> attempts;
+  final Value<int> nextAttemptAt;
+  const ScrobbleQueueTableCompanion({
+    this.id = const Value.absent(),
+    this.profileId = const Value.absent(),
+    this.trackerId = const Value.absent(),
+    this.eventJson = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.nextAttemptAt = const Value.absent(),
+  });
+  ScrobbleQueueTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String profileId,
+    required String trackerId,
+    required String eventJson,
+    this.attempts = const Value.absent(),
+    this.nextAttemptAt = const Value.absent(),
+  }) : profileId = Value(profileId),
+       trackerId = Value(trackerId),
+       eventJson = Value(eventJson);
+  static Insertable<ScrobbleRow> custom({
+    Expression<int>? id,
+    Expression<String>? profileId,
+    Expression<String>? trackerId,
+    Expression<String>? eventJson,
+    Expression<int>? attempts,
+    Expression<int>? nextAttemptAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (profileId != null) 'profile_id': profileId,
+      if (trackerId != null) 'tracker_id': trackerId,
+      if (eventJson != null) 'event_json': eventJson,
+      if (attempts != null) 'attempts': attempts,
+      if (nextAttemptAt != null) 'next_attempt_at': nextAttemptAt,
+    });
+  }
+
+  ScrobbleQueueTableCompanion copyWith({
+    Value<int>? id,
+    Value<String>? profileId,
+    Value<String>? trackerId,
+    Value<String>? eventJson,
+    Value<int>? attempts,
+    Value<int>? nextAttemptAt,
+  }) {
+    return ScrobbleQueueTableCompanion(
+      id: id ?? this.id,
+      profileId: profileId ?? this.profileId,
+      trackerId: trackerId ?? this.trackerId,
+      eventJson: eventJson ?? this.eventJson,
+      attempts: attempts ?? this.attempts,
+      nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (profileId.present) {
+      map['profile_id'] = Variable<String>(profileId.value);
+    }
+    if (trackerId.present) {
+      map['tracker_id'] = Variable<String>(trackerId.value);
+    }
+    if (eventJson.present) {
+      map['event_json'] = Variable<String>(eventJson.value);
+    }
+    if (attempts.present) {
+      map['attempts'] = Variable<int>(attempts.value);
+    }
+    if (nextAttemptAt.present) {
+      map['next_attempt_at'] = Variable<int>(nextAttemptAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScrobbleQueueTableCompanion(')
+          ..write('id: $id, ')
+          ..write('profileId: $profileId, ')
+          ..write('trackerId: $trackerId, ')
+          ..write('eventJson: $eventJson, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextAttemptAt: $nextAttemptAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3278,6 +3683,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $TitleSettingsTableTable(this);
   late final $LocalFoldersTable localFolders = $LocalFoldersTable(this);
   late final $LocalItemsTable localItems = $LocalItemsTable(this);
+  late final $ScrobbleQueueTableTable scrobbleQueueTable =
+      $ScrobbleQueueTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3291,6 +3698,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     titleSettingsTable,
     localFolders,
     localItems,
+    scrobbleQueueTable,
   ];
 }
 
@@ -5035,6 +5443,230 @@ typedef $$LocalItemsTableProcessedTableManager =
       LocalItem,
       PrefetchHooks Function()
     >;
+typedef $$ScrobbleQueueTableTableCreateCompanionBuilder =
+    ScrobbleQueueTableCompanion Function({
+      Value<int> id,
+      required String profileId,
+      required String trackerId,
+      required String eventJson,
+      Value<int> attempts,
+      Value<int> nextAttemptAt,
+    });
+typedef $$ScrobbleQueueTableTableUpdateCompanionBuilder =
+    ScrobbleQueueTableCompanion Function({
+      Value<int> id,
+      Value<String> profileId,
+      Value<String> trackerId,
+      Value<String> eventJson,
+      Value<int> attempts,
+      Value<int> nextAttemptAt,
+    });
+
+class $$ScrobbleQueueTableTableFilterComposer
+    extends Composer<_$AppDatabase, $ScrobbleQueueTableTable> {
+  $$ScrobbleQueueTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get profileId => $composableBuilder(
+    column: $table.profileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get trackerId => $composableBuilder(
+    column: $table.trackerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get eventJson => $composableBuilder(
+    column: $table.eventJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ScrobbleQueueTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $ScrobbleQueueTableTable> {
+  $$ScrobbleQueueTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get profileId => $composableBuilder(
+    column: $table.profileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get trackerId => $composableBuilder(
+    column: $table.trackerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get eventJson => $composableBuilder(
+    column: $table.eventJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ScrobbleQueueTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ScrobbleQueueTableTable> {
+  $$ScrobbleQueueTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get profileId =>
+      $composableBuilder(column: $table.profileId, builder: (column) => column);
+
+  GeneratedColumn<String> get trackerId =>
+      $composableBuilder(column: $table.trackerId, builder: (column) => column);
+
+  GeneratedColumn<String> get eventJson =>
+      $composableBuilder(column: $table.eventJson, builder: (column) => column);
+
+  GeneratedColumn<int> get attempts =>
+      $composableBuilder(column: $table.attempts, builder: (column) => column);
+
+  GeneratedColumn<int> get nextAttemptAt => $composableBuilder(
+    column: $table.nextAttemptAt,
+    builder: (column) => column,
+  );
+}
+
+class $$ScrobbleQueueTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ScrobbleQueueTableTable,
+          ScrobbleRow,
+          $$ScrobbleQueueTableTableFilterComposer,
+          $$ScrobbleQueueTableTableOrderingComposer,
+          $$ScrobbleQueueTableTableAnnotationComposer,
+          $$ScrobbleQueueTableTableCreateCompanionBuilder,
+          $$ScrobbleQueueTableTableUpdateCompanionBuilder,
+          (
+            ScrobbleRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ScrobbleQueueTableTable,
+              ScrobbleRow
+            >,
+          ),
+          ScrobbleRow,
+          PrefetchHooks Function()
+        > {
+  $$ScrobbleQueueTableTableTableManager(
+    _$AppDatabase db,
+    $ScrobbleQueueTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ScrobbleQueueTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ScrobbleQueueTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ScrobbleQueueTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> profileId = const Value.absent(),
+                Value<String> trackerId = const Value.absent(),
+                Value<String> eventJson = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<int> nextAttemptAt = const Value.absent(),
+              }) => ScrobbleQueueTableCompanion(
+                id: id,
+                profileId: profileId,
+                trackerId: trackerId,
+                eventJson: eventJson,
+                attempts: attempts,
+                nextAttemptAt: nextAttemptAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String profileId,
+                required String trackerId,
+                required String eventJson,
+                Value<int> attempts = const Value.absent(),
+                Value<int> nextAttemptAt = const Value.absent(),
+              }) => ScrobbleQueueTableCompanion.insert(
+                id: id,
+                profileId: profileId,
+                trackerId: trackerId,
+                eventJson: eventJson,
+                attempts: attempts,
+                nextAttemptAt: nextAttemptAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ScrobbleQueueTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ScrobbleQueueTableTable,
+      ScrobbleRow,
+      $$ScrobbleQueueTableTableFilterComposer,
+      $$ScrobbleQueueTableTableOrderingComposer,
+      $$ScrobbleQueueTableTableAnnotationComposer,
+      $$ScrobbleQueueTableTableCreateCompanionBuilder,
+      $$ScrobbleQueueTableTableUpdateCompanionBuilder,
+      (
+        ScrobbleRow,
+        BaseReferences<_$AppDatabase, $ScrobbleQueueTableTable, ScrobbleRow>,
+      ),
+      ScrobbleRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5055,4 +5687,6 @@ class $AppDatabaseManager {
       $$LocalFoldersTableTableManager(_db, _db.localFolders);
   $$LocalItemsTableTableManager get localItems =>
       $$LocalItemsTableTableManager(_db, _db.localItems);
+  $$ScrobbleQueueTableTableTableManager get scrobbleQueueTable =>
+      $$ScrobbleQueueTableTableTableManager(_db, _db.scrobbleQueueTable);
 }
