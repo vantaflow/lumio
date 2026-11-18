@@ -12,7 +12,6 @@ import 'package:lumio/features/party/party_session.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
-import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/player/next_episode_overlay.dart';
 import 'package:lumio/player/play_router.dart' show LocalFileSource;
 import 'package:lumio/player/playback_events.dart';
@@ -775,10 +774,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     }
     if (p == PlayerPhase.paused || p == PlayerPhase.ended) {
       _recorder?.flush(st.position, st.duration);
-      // Envoi rapide de la progression aux autres appareils (nul sans backend).
-      if (p == PlayerPhase.paused && mounted) {
-        ref.read(syncServiceProvider)?.syncSoon();
-      }
     }
     if (p == PlayerPhase.ended && !_switching) _offerNext();
     if (p == PlayerPhase.failed || p == PlayerPhase.paused) {

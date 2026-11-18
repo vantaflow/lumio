@@ -42,28 +42,6 @@ jobs:
       - run: flutter test
       - run: flutter build apk --release --target-platform android-arm
 
-  desktop:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            build: macos
-          - os: windows-latest
-            build: windows
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: app
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-      - run: flutter pub get
-      - run: flutter build ${{ matrix.build }} --release
-
   backend:
     runs-on: ubuntu-latest
     # Job actif dès que backend/package-lock.json existe.
@@ -81,6 +59,9 @@ jobs:
       - if: steps.has.outputs.ok == 'true'
         working-directory: backend
         run: npm ci
+      - if: steps.has.outputs.ok == 'true'
+        working-directory: backend
+        run: npx tsc --noEmit
       - if: steps.has.outputs.ok == 'true'
         working-directory: backend
         run: npx vitest run

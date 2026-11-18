@@ -945,62 +945,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get qualityAuto => 'Automatique';
 
   @override
-  String get pairPhoneButton => 'Saisir depuis mon téléphone';
-
-  @override
   String get useCopiedLink => 'Utiliser le lien copié';
 
   @override
   String get installLinkInvalid =>
       'Ce lien n\'est pas un lien d\'installation d\'addon.';
-
-  @override
-  String get pairTitle => 'Saisir depuis mon téléphone';
-
-  @override
-  String get pairStep1 => 'Scannez ce code avec votre téléphone.';
-
-  @override
-  String get pairStep2 => 'Collez le lien et touchez Envoyer.';
-
-  @override
-  String get pairStep3 =>
-      'Il arrive ici : vous confirmez ensuite l\'installation.';
-
-  @override
-  String pairOrOpen(String url) {
-    return 'Ou ouvrez $url et saisissez le code.';
-  }
-
-  @override
-  String get pairCodeLabel => 'Code';
-
-  @override
-  String pairExpiresIn(String time) {
-    return 'Expire dans $time';
-  }
-
-  @override
-  String get pairWaiting => 'En attente du téléphone…';
-
-  @override
-  String get pairExpired => 'Ce code a expiré.';
-
-  @override
-  String get pairNewCode => 'Nouveau code';
-
-  @override
-  String get pairQrLabel => 'Code QR d\'appairage';
-
-  @override
-  String get errPairInsecure => 'Adresse du serveur non sécurisée';
-
-  @override
-  String get errPairUnavailable => 'Serveur injoignable, réessayez';
-
-  @override
-  String get errPairRateLimited =>
-      'Trop de demandes, réessayez dans une minute';
 
   @override
   String onboardingStep(int n, int total) {
@@ -1161,157 +1110,17 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get settingsAccount => 'Compte et synchronisation';
-
-  @override
-  String get accountSettingsHint =>
-      'Retrouvez votre liste et votre progression sur vos autres appareils';
-
-  @override
-  String get accountTitle => 'Compte';
-
-  @override
-  String get accountIntro =>
-      'Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d\'addons ne partent que chiffrés par une phrase secrète que vous choisissez.';
-
-  @override
-  String get accountEmailLabel => 'Adresse e-mail';
-
-  @override
-  String get accountSendCode => 'Recevoir un code';
-
-  @override
-  String get accountCodeSent =>
-      'Un code de connexion vous a été envoyé par e-mail.';
-
-  @override
-  String get accountCodeLabel => 'Code reçu par e-mail';
-
-  @override
-  String get accountSignIn => 'Se connecter';
-
-  @override
-  String accountSignedInAs(Object email) {
-    return 'Connecté : $email';
-  }
-
-  @override
-  String get accountSyncIdle => 'Synchronisé';
-
-  @override
-  String get accountSyncSyncing => 'Synchronisation en cours…';
-
-  @override
-  String get accountSyncOffline => 'Hors ligne : nouvel essai automatique';
-
-  @override
-  String get accountSyncNow => 'Synchroniser maintenant';
-
-  @override
-  String get accountSignOut => 'Se déconnecter';
-
-  @override
-  String get accountSignedOutDone =>
-      'Déconnecté. Vos données restent sur cet appareil.';
-
-  @override
-  String get accountDelete => 'Supprimer mon compte';
-
-  @override
-  String get accountDeleteConfirm =>
-      'Supprimer le compte et toutes les données synchronisées sur le serveur ? Les données de cet appareil sont conservées.';
-
-  @override
-  String get accountDeleted => 'Compte supprimé';
-
-  @override
-  String get accountErrInvalidEmail => 'Adresse e-mail invalide';
-
-  @override
-  String get accountErrRejected => 'Code refusé ou expiré';
-
-  @override
-  String get accountErrRate => 'Trop de tentatives, réessayez plus tard';
-
-  @override
-  String get accountErrUnavailable =>
-      'Serveur injoignable, réessayez plus tard';
-
-  @override
   String get kidProfileNeedsPin =>
       'Ce profil enfant vient d\'un autre appareil. Créez d\'abord un PIN parent pour l\'utiliser.';
 
   @override
-  String get accountAddonsTitle => 'Addons synchronisés';
+  String get addonUrlAllow => 'Autoriser';
 
   @override
-  String get addonSyncNoPassphrase =>
-      'Pas de phrase secrète : vos addons ne sont pas synchronisés.';
+  String get addonUrlIgnore => 'Ignorer';
 
   @override
-  String get addonSyncWaiting =>
-      'En attente du premier échange avec le serveur…';
-
-  @override
-  String get addonSyncReady =>
-      'Vos addons sont synchronisés, chiffrés avec votre phrase secrète.';
-
-  @override
-  String get addonSyncWrong =>
-      'Phrase secrète incorrecte : vos addons ne sont pas synchronisés';
-
-  @override
-  String get addonSyncTooLarge =>
-      'Trop d\'addons pour être synchronisés. Retirez-en quelques-uns pour reprendre.';
-
-  @override
-  String get addonSyncResetting =>
-      'Réinitialisation en attente d\'une connexion au serveur…';
-
-  @override
-  String addonSyncFailed(int count) {
-    return '$count addon(s) reçu(s) n\'ont pas pu être installés pour l\'instant ; nouvel essai automatique.';
-  }
-
-  @override
-  String addonSyncPrivate(Object label) {
-    return 'Adresse de votre réseau local à confirmer : $label';
-  }
-
-  @override
-  String get addonSyncAllow => 'Autoriser';
-
-  @override
-  String get addonSyncIgnore => 'Ignorer';
-
-  @override
-  String get passphraseSet => 'Définir la phrase secrète';
-
-  @override
-  String get passphraseEnter => 'Saisir la phrase secrète';
-
-  @override
-  String get passphraseChange => 'Changer la phrase secrète';
-
-  @override
-  String get passphraseReset => 'Réinitialiser';
-
-  @override
-  String get passphraseResetConfirm =>
-      'Supprimer du serveur vos addons synchronisés ? Les addons de cet appareil sont conservés et le reste de vos données n\'est pas touché. Vous pourrez définir une nouvelle phrase secrète.';
-
-  @override
-  String get passphraseResetDone => 'Réinitialisation demandée';
-
-  @override
-  String get passphraseTitle => 'Phrase secrète de synchronisation';
-
-  @override
-  String get passphraseIntro =>
-      'Cette phrase chiffre vos addons avant leur envoi : le serveur ne peut pas les lire et ne reçoit jamais la phrase. Saisissez la même sur chacun de vos appareils. Si vous la perdez, vos addons devront être réajoutés ; le reste de vos données reste disponible.';
-
-  @override
-  String get passphraseLabel => 'Phrase secrète de synchronisation';
+  String get passphraseLabel => 'Phrase secrète de la sauvegarde';
 
   @override
   String get passphraseConfirmLabel => 'Confirmer la phrase secrète';
@@ -1321,19 +1130,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get passphraseErrMismatch => 'Les deux phrases sont différentes';
-
-  @override
-  String get passphraseSave => 'Enregistrer';
-
-  @override
-  String get passphraseSaved => 'Phrase secrète enregistrée';
-
-  @override
-  String get passphraseErrSave => 'Impossible d\'enregistrer la phrase secrète';
-
-  @override
-  String get addonSyncPhraseReset =>
-      'Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil.';
 
   @override
   String get settingsBackup => 'Sauvegarde';
@@ -1894,7 +1690,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get jellyfinErrAddress => 'Adresse du serveur invalide.';
 
   @override
-  String get trackingTitle => 'Suivi (Trakt, Simkl)';
+  String get trackingTitle => 'Suivi (Trakt)';
 
   @override
   String get trackingHint => 'Enregistrez vos lectures sur votre compte';
@@ -1980,36 +1776,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get trackingQrSemantic => 'Code QR vers l\'adresse d\'autorisation';
-
-  @override
-  String get trackingSimkl => 'Simkl';
-
-  @override
-  String get trackingSimklNotConfigured =>
-      'Non configuré : l\'identifiant de l\'application Simkl est absent. Rien n\'est envoyé.';
-
-  @override
-  String get trackingSimklConnected =>
-      'Connecté : les titres vus (80 % ou plus) sont ajoutés à votre historique Simkl.';
-
-  @override
-  String get trackingSimklReauth =>
-      'Reconnexion nécessaire : Simkl a refusé la connexion. Reconnectez le compte pour reprendre l\'envoi.';
-
-  @override
-  String get trackingSimklConnect => 'Connecter Simkl';
-
-  @override
-  String get trackingSimklDisconnect => 'Déconnecter Simkl';
-
-  @override
-  String get trackingSimklDisconnected => 'Simkl déconnecté';
-
-  @override
-  String get trackingSimklAuthTitle => 'Connecter Simkl';
-
-  @override
-  String get trackingSimklAuthDone => 'Simkl est connecté.';
 
   @override
   String get homeCalendar => 'Calendrier';
@@ -2189,10 +1955,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get partyRoleGuest => 'Vous suivez l\'hôte';
-
-  @override
-  String get partyErrSignedOut =>
-      'Connectez-vous à votre compte pour utiliser les salles.';
 
   @override
   String get partyErrInvalidLink => 'Ce lien d\'invitation n\'est pas valide.';

@@ -9,7 +9,6 @@ import 'package:lumio/data/backup_service.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/profile_repository.dart';
 import 'package:lumio/data/secret_store.dart';
-import 'package:lumio/data/sync_store.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart'
     show kidProfileNeedsPin;
 import 'package:lumio_core/lumio_core.dart';
@@ -97,12 +96,6 @@ class _Dev {
   }
 }
 
-Future<List<String>> _outbox(AppDatabase db) async => [
-  for (final r
-      in await db.customSelect('SELECT kind, key FROM sync_outbox').get())
-    '${r.read<String>('kind')}:${r.read<String>('key')}',
-];
-
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
@@ -132,26 +125,6 @@ void main() {
       final settings = await b.db.select(b.db.settings).get();
       expect(settings.map((s) => s.key), ['ui_locale']);
       expect(await b.db.select(b.db.titleSettingsTable).get(), hasLength(1));
-      await a.db.close();
-      await b.db.close();
-    },
-  );
-
-  test(
-    'l\'import entre dans la file de synchronisation comme une édition',
-    () async {
-      final a = _Dev();
-      await a.seed();
-      final data = await Backup.decode(utf8.encode(await a.service.export()));
-      final b = _Dev();
-      await b.service.import(data);
-      final out = await _outbox(b.db);
-      expect(out, containsAll(['library:default|tt1', 'progress:default|tt1']));
-      expect(out.where((e) => e.startsWith('profiles:')), hasLength(2));
-      expect(out, contains('settings:ui_locale'));
-      // Le magasin de synchro les voit.
-      final pending = await DriftLocalSyncStore(b.db).pending(100);
-      expect(pending, isNotEmpty);
       await a.db.close();
       await b.db.close();
     },

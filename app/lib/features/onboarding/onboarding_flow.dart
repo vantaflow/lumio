@@ -7,7 +7,6 @@ import 'package:lumio/features/jellyfin/jellyfin_screen.dart'
 import 'package:lumio/features/local/local_screen.dart' show addLocalFolderFlow;
 import 'package:lumio/features/onboarding/tv_onboarding.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
-import 'package:lumio/features/pairing/pairing_screen.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
@@ -252,12 +251,6 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
   Future<void> _addAddon({String? url}) async {
     final ok = await showAddAddonDialog(context, initialUrl: url);
     if (ok && mounted) setState(() => _installed++);
-  }
-
-  Future<void> _addFromPhone() async {
-    final payload = await showPairingScreen(context);
-    if (!mounted || payload == null) return;
-    await _addAddon(url: payload);
   }
 
   @override
@@ -630,19 +623,6 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
               ),
             ],
           ),
-          // Masqué tant que `backendUrl` est vide.
-          if (ref.watch(pairingClientProvider) != null) ...[
-            const SizedBox(height: 32),
-            TvButton(
-              key: const ValueKey('onboarding-pair'),
-              kind: TvButtonKind.secondary,
-              label: l.pairPhoneButton,
-              height: 72,
-              fontSize: 28,
-              horizontalPadding: 36,
-              onPressed: _addFromPhone,
-            ),
-          ],
           if (_installed > 0) ...[
             const SizedBox(height: 32),
             Semantics(
@@ -803,16 +783,6 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
           icon: const Icon(Icons.folder_open),
           label: Text(l.localAddFolder),
         ),
-        // Masqué tant que `backendUrl` est vide.
-        if (ref.watch(pairingClientProvider) != null) ...[
-          const SizedBox(height: LumioSpacing.sm),
-          OutlinedButton.icon(
-            key: const ValueKey('onboarding-pair'),
-            onPressed: _addFromPhone,
-            icon: const Icon(Icons.qr_code_2),
-            label: Text(l.pairPhoneButton),
-          ),
-        ],
         if (_installed > 0) ...[
           const SizedBox(height: LumioSpacing.md),
           Semantics(

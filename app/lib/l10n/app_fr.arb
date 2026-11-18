@@ -401,10 +401,22 @@
   "preferDirectOn": "Liens directs en premier",
   "preferDirectOff": "Sans préférence",
   "otherAddonsCount": "+{count, plural, =1{1 autre addon} other{{count} autres addons}}",
-  "@otherAddonsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@otherAddonsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "playerSourceFallback": "Source indisponible, essai de la suivante…",
   "playingFallback": "Lecture depuis une autre source : {title}",
-  "@playingFallback": {"placeholders": {"title": {"type": "String"}}},
+  "@playingFallback": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "langSpanish": "Español",
   "langGerman": "Deutsch",
   "langItalian": "Italiano",
@@ -491,37 +503,8 @@
   "errUnexpected": "Erreur inattendue lors du chargement",
   "errOther": "Une erreur est survenue",
   "qualityAuto": "Automatique",
-  "pairPhoneButton": "Saisir depuis mon téléphone",
   "useCopiedLink": "Utiliser le lien copié",
   "installLinkInvalid": "Ce lien n'est pas un lien d'installation d'addon.",
-  "pairTitle": "Saisir depuis mon téléphone",
-  "pairStep1": "Scannez ce code avec votre téléphone.",
-  "pairStep2": "Collez le lien et touchez Envoyer.",
-  "pairStep3": "Il arrive ici : vous confirmez ensuite l'installation.",
-  "pairOrOpen": "Ou ouvrez {url} et saisissez le code.",
-  "@pairOrOpen": {
-    "placeholders": {
-      "url": {
-        "type": "String"
-      }
-    }
-  },
-  "pairCodeLabel": "Code",
-  "pairExpiresIn": "Expire dans {time}",
-  "@pairExpiresIn": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "pairWaiting": "En attente du téléphone…",
-  "pairExpired": "Ce code a expiré.",
-  "pairNewCode": "Nouveau code",
-  "pairQrLabel": "Code QR d'appairage",
-  "errPairInsecure": "Adresse du serveur non sécurisée",
-  "errPairUnavailable": "Serveur injoignable, réessayez",
-  "errPairRateLimited": "Trop de demandes, réessayez dans une minute",
   "onboardingStep": "Étape {n} sur {total}",
   "@onboardingStep": {
     "placeholders": {
@@ -614,74 +597,13 @@
       "percent": {}
     }
   },
-  "settingsAccount": "Compte et synchronisation",
-  "accountSettingsHint": "Retrouvez votre liste et votre progression sur vos autres appareils",
-  "accountTitle": "Compte",
-  "accountIntro": "Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d'addons ne partent que chiffrés par une phrase secrète que vous choisissez.",
-  "accountEmailLabel": "Adresse e-mail",
-  "accountSendCode": "Recevoir un code",
-  "accountCodeSent": "Un code de connexion vous a été envoyé par e-mail.",
-  "accountCodeLabel": "Code reçu par e-mail",
-  "accountSignIn": "Se connecter",
-  "accountSignedInAs": "Connecté : {email}",
-  "@accountSignedInAs": {
-    "placeholders": {
-      "email": {}
-    }
-  },
-  "accountSyncIdle": "Synchronisé",
-  "accountSyncSyncing": "Synchronisation en cours…",
-  "accountSyncOffline": "Hors ligne : nouvel essai automatique",
-  "accountSyncNow": "Synchroniser maintenant",
-  "accountSignOut": "Se déconnecter",
-  "accountSignedOutDone": "Déconnecté. Vos données restent sur cet appareil.",
-  "accountDelete": "Supprimer mon compte",
-  "accountDeleteConfirm": "Supprimer le compte et toutes les données synchronisées sur le serveur ? Les données de cet appareil sont conservées.",
-  "accountDeleted": "Compte supprimé",
-  "accountErrInvalidEmail": "Adresse e-mail invalide",
-  "accountErrRejected": "Code refusé ou expiré",
-  "accountErrRate": "Trop de tentatives, réessayez plus tard",
-  "accountErrUnavailable": "Serveur injoignable, réessayez plus tard",
   "kidProfileNeedsPin": "Ce profil enfant vient d'un autre appareil. Créez d'abord un PIN parent pour l'utiliser.",
-  "accountAddonsTitle": "Addons synchronisés",
-  "addonSyncNoPassphrase": "Pas de phrase secrète : vos addons ne sont pas synchronisés.",
-  "addonSyncWaiting": "En attente du premier échange avec le serveur…",
-  "addonSyncReady": "Vos addons sont synchronisés, chiffrés avec votre phrase secrète.",
-  "addonSyncWrong": "Phrase secrète incorrecte : vos addons ne sont pas synchronisés",
-  "addonSyncTooLarge": "Trop d'addons pour être synchronisés. Retirez-en quelques-uns pour reprendre.",
-  "addonSyncResetting": "Réinitialisation en attente d'une connexion au serveur…",
-  "addonSyncFailed": "{count} addon(s) reçu(s) n'ont pas pu être installés pour l'instant ; nouvel essai automatique.",
-  "@addonSyncFailed": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "addonSyncPrivate": "Adresse de votre réseau local à confirmer : {label}",
-  "@addonSyncPrivate": {
-    "placeholders": {
-      "label": {}
-    }
-  },
-  "addonSyncAllow": "Autoriser",
-  "addonSyncIgnore": "Ignorer",
-  "passphraseSet": "Définir la phrase secrète",
-  "passphraseEnter": "Saisir la phrase secrète",
-  "passphraseChange": "Changer la phrase secrète",
-  "passphraseReset": "Réinitialiser",
-  "passphraseResetConfirm": "Supprimer du serveur vos addons synchronisés ? Les addons de cet appareil sont conservés et le reste de vos données n'est pas touché. Vous pourrez définir une nouvelle phrase secrète.",
-  "passphraseResetDone": "Réinitialisation demandée",
-  "passphraseTitle": "Phrase secrète de synchronisation",
-  "passphraseIntro": "Cette phrase chiffre vos addons avant leur envoi : le serveur ne peut pas les lire et ne reçoit jamais la phrase. Saisissez la même sur chacun de vos appareils. Si vous la perdez, vos addons devront être réajoutés ; le reste de vos données reste disponible.",
-  "passphraseLabel": "Phrase secrète de synchronisation",
+  "addonUrlAllow": "Autoriser",
+  "addonUrlIgnore": "Ignorer",
+  "passphraseLabel": "Phrase secrète de la sauvegarde",
   "passphraseConfirmLabel": "Confirmer la phrase secrète",
   "passphraseErrShort": "12 caractères au moins",
   "passphraseErrMismatch": "Les deux phrases sont différentes",
-  "passphraseSave": "Enregistrer",
-  "passphraseSaved": "Phrase secrète enregistrée",
-  "passphraseErrSave": "Impossible d'enregistrer la phrase secrète",
-  "addonSyncPhraseReset": "Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil.",
   "settingsBackup": "Sauvegarde",
   "backupExport": "Exporter mes données",
   "backupExportHint": "Profils, ma liste, progression et réglages dans un fichier",
@@ -975,13 +897,31 @@
   "localAddFolder": "Ajouter un dossier",
   "localEmpty": "Aucun dossier. Ajoutez un dossier de vidéos pour les retrouver dans Lumio.",
   "localVideoCount": "{count, plural, =0{Aucune vidéo} =1{1 vidéo} other{{count} vidéos}}",
-  "@localVideoCount": {"placeholders": {"count": {"type": "int"}}},
+  "@localVideoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "localScanNow": "Analyser maintenant",
   "localScanning": "Analyse en cours…",
   "localScanDone": "Analyse terminée : {count, plural, =0{aucune vidéo} =1{1 vidéo} other{{count} vidéos}}",
-  "@localScanDone": {"placeholders": {"count": {"type": "int"}}},
+  "@localScanDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "localRemoveFolder": "Retirer le dossier {path}",
-  "@localRemoveFolder": {"placeholders": {"path": {"type": "String"}}},
+  "@localRemoveFolder": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "localFolderRemoved": "Dossier retiré de Lumio. Vos fichiers ne sont pas touchés.",
   "localPermissionDenied": "Lumio a besoin d'accéder à vos vidéos. Autorisez l'accès dans les réglages de l'appareil.",
   "localPickerUnavailable": "Le sélecteur de dossier n'est pas disponible. Saisissez le chemin du dossier.",
@@ -995,7 +935,13 @@
   "localFolderDenied": "Accès refusé à ce dossier.",
   "localFolderOverlap": "Ce dossier recoupe un dossier déjà ajouté.",
   "localFolderAdded": "Dossier ajouté : {count, plural, =0{aucune vidéo} =1{1 vidéo} other{{count} vidéos}}",
-  "@localFolderAdded": {"placeholders": {"count": {"type": "int"}}},
+  "@localFolderAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "localScanFailed": "L'analyse du dossier a échoué.",
   "localFixTitle": "Corriger le titre",
   "localFixLabel": "Titre",
@@ -1003,7 +949,13 @@
   "localFileMissing": "Fichier introuvable : il a peut-être été déplacé. Relancez l'analyse.",
   "localPlayFailed": "Impossible de lire ce fichier.",
   "localDetected": "Détecté : {title}",
-  "@localDetected": {"placeholders": {"title": {"type": "String"}}},
+  "@localDetected": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "localScanIncomplete": "Analyse incomplète : dossier trop volumineux",
   "localFolderForbidden": "Ce dossier ne peut pas être ajouté (dossier système ou chemin non absolu).",
   "jellyfinServers": "Serveurs Jellyfin",
@@ -1017,11 +969,29 @@
   "jellyfinConnect": "Se connecter",
   "jellyfinConnecting": "Connexion…",
   "jellyfinSignedInAs": "Connecté en tant que {user}",
-  "@jellyfinSignedInAs": {"placeholders": {"user": {"type": "String"}}},
+  "@jellyfinSignedInAs": {
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
   "jellyfinRemove": "Se déconnecter de {name}",
-  "@jellyfinRemove": {"placeholders": {"name": {"type": "String"}}},
+  "@jellyfinRemove": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "jellyfinRemoveTitle": "Retirer {name} ?",
-  "@jellyfinRemoveTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@jellyfinRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "jellyfinRemoveBody": "Le jeton de connexion sera supprimé de cet appareil.",
   "jellyfinRemoved": "Serveur retiré",
   "jellyfinAdded": "Serveur ajouté",
@@ -1038,14 +1008,26 @@
   "jellyfinErrTimeout": "Délai dépassé : le serveur Jellyfin ne répond pas.",
   "jellyfinErrUnreachable": "Serveur Jellyfin injoignable.",
   "jellyfinErrServer": "Le serveur Jellyfin est en erreur (HTTP {status}).",
-  "@jellyfinErrServer": {"placeholders": {"status": {"type": "int"}}},
+  "@jellyfinErrServer": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
   "jellyfinErrRefused": "Requête refusée par le serveur Jellyfin (HTTP {status}).",
-  "@jellyfinErrRefused": {"placeholders": {"status": {"type": "int"}}},
+  "@jellyfinErrRefused": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
   "jellyfinErrInvalid": "Réponse inattendue : est-ce bien un serveur Jellyfin ?",
   "jellyfinErrTooLarge": "Réponse du serveur trop volumineuse.",
   "jellyfinErrRedirect": "Le serveur redirige vers une autre adresse : saisissez l'adresse finale.",
   "jellyfinErrAddress": "Adresse du serveur invalide.",
-  "trackingTitle": "Suivi (Trakt, Simkl)",
+  "trackingTitle": "Suivi (Trakt)",
   "trackingHint": "Enregistrez vos lectures sur votre compte",
   "trackingTrakt": "Trakt",
   "trackingNotConfigured": "Non configuré : les identifiants de l'application Trakt sont absents. Rien n'est envoyé.",
@@ -1056,7 +1038,13 @@
   "trackingDisconnect": "Déconnecter Trakt",
   "trackingDisconnected": "Trakt déconnecté",
   "trackingPending": "{count, plural, =0{Aucun envoi en attente} =1{1 envoi en attente} other{{count} envois en attente}}",
-  "@trackingPending": {"placeholders": {"count": {"type": "int"}}},
+  "@trackingPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "trackingRetry": "Réessayer l'envoi",
   "trackingRetried": "Envoi relancé",
   "trackingKidAllow": "Autoriser le suivi pour ce profil enfant",
@@ -1070,15 +1058,6 @@
   "trackingAuthNewCode": "Nouveau code",
   "trackingAuthUnavailable": "Le service de suivi est injoignable. Réessayez plus tard.",
   "trackingQrSemantic": "Code QR vers l'adresse d'autorisation",
-  "trackingSimkl": "Simkl",
-  "trackingSimklNotConfigured": "Non configuré : l'identifiant de l'application Simkl est absent. Rien n'est envoyé.",
-  "trackingSimklConnected": "Connecté : les titres vus (80 % ou plus) sont ajoutés à votre historique Simkl.",
-  "trackingSimklReauth": "Reconnexion nécessaire : Simkl a refusé la connexion. Reconnectez le compte pour reprendre l'envoi.",
-  "trackingSimklConnect": "Connecter Simkl",
-  "trackingSimklDisconnect": "Déconnecter Simkl",
-  "trackingSimklDisconnected": "Simkl déconnecté",
-  "trackingSimklAuthTitle": "Connecter Simkl",
-  "trackingSimklAuthDone": "Simkl est connecté.",
   "homeCalendar": "Calendrier",
   "calendarTitle": "Calendrier des sorties",
   "calendarEmpty": "Aucune série dans votre liste. Ajoutez une série à « Ma liste » pour suivre ses prochains épisodes.",
@@ -1089,16 +1068,37 @@
   "calendarUnknownHeader": "Date inconnue",
   "calendarUnknownEntry": "Date inconnue",
   "calendarEpisodeLabel": "S{season} · É{episode}",
-  "@calendarEpisodeLabel": {"placeholders": {"season": {"type": "int"}, "episode": {"type": "int"}}},
+  "@calendarEpisodeLabel": {
+    "placeholders": {
+      "season": {
+        "type": "int"
+      },
+      "episode": {
+        "type": "int"
+      }
+    }
+  },
   "calendarEpisodeOnly": "Épisode {episode}",
-  "@calendarEpisodeOnly": {"placeholders": {"episode": {"type": "int"}}},
+  "@calendarEpisodeOnly": {
+    "placeholders": {
+      "episode": {
+        "type": "int"
+      }
+    }
+  },
   "calendarNotify": "Me prévenir des nouveaux épisodes",
   "calendarNotifyHint": "Notification locale le jour de la sortie, sur cet appareil. Désactivé par défaut.",
   "calendarNotifyDenied": "Notifications refusées : activez-les dans les réglages du système.",
   "calendarNotifyOn": "Vous serez prévenu des prochains épisodes.",
   "calendarNotifyChannel": "Nouveaux épisodes",
   "calendarNotifyBody": "Nouvel épisode disponible : {episode}",
-  "@calendarNotifyBody": {"placeholders": {"episode": {"type": "String"}}},
+  "@calendarNotifyBody": {
+    "placeholders": {
+      "episode": {
+        "type": "String"
+      }
+    }
+  },
   "calendarNotifyError": "Notifications non programmées : une erreur est survenue. Réessayez en rouvrant le calendrier.",
   "castTooltip": "Diffuser sur un appareil",
   "castChooseDevice": "Choisir un appareil",
@@ -1106,7 +1106,13 @@
   "castNoDevice": "Aucun appareil trouvé",
   "castNoDeviceHint": "Vérifiez que le téléviseur est allumé et sur le même réseau Wi-Fi.",
   "castPlayingOn": "Lecture sur {device}",
-  "@castPlayingOn": {"placeholders": {"device": {"type": "String"}}},
+  "@castPlayingOn": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
   "castStop": "Arrêter la diffusion",
   "castFailed": "Impossible de diffuser sur cet appareil.",
   "castUnsupported": "Ce flux ne peut pas être diffusé sur un appareil.",
@@ -1141,7 +1147,6 @@
   "partyLeave": "Quitter la salle",
   "partyRoleHost": "Vous êtes l'hôte",
   "partyRoleGuest": "Vous suivez l'hôte",
-  "partyErrSignedOut": "Connectez-vous à votre compte pour utiliser les salles.",
   "partyErrInvalidLink": "Ce lien d'invitation n'est pas valide.",
   "partyErrWrongCode": "Code d'invitation refusé.",
   "partyErrFull": "La salle est pleine (8 personnes).",

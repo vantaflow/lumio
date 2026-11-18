@@ -484,7 +484,7 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
               child: FilledButton(
                 key: ValueKey('otherImport:allow:${u.host}'),
                 onPressed: () => _allow(u),
-                child: Text(l.addonSyncAllow),
+                child: Text(l.addonUrlAllow),
               ),
             ),
             const SizedBox(width: LumioSpacing.sm),
@@ -492,7 +492,7 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
               child: TextButton(
                 key: ValueKey('otherImport:ignore:${u.host}'),
                 onPressed: () => _ignore(u),
-                child: Text(l.addonSyncIgnore),
+                child: Text(l.addonUrlIgnore),
               ),
             ),
           ],

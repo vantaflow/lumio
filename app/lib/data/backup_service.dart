@@ -68,10 +68,6 @@ class BackupImportReport {
 
 /// Sauvegarde locale : lit la base pour l'export, écrit l'import par fusion
 /// (rien n'est supprimé ni remplacé, sauf une progression plus récente).
-///
-/// Les écritures passent par les tables synchronisées sans couper les
-/// déclencheurs : un import part vers le serveur comme une modification
-/// ordinaire.
 class BackupService {
   BackupService(this._db, this._addons, {DateTime Function()? now})
     : _now = now ?? DateTime.now;
@@ -150,7 +146,7 @@ class BackupService {
       ],
       settings: {
         for (final s in settings)
-          if (isSyncableSettingKey(s.key)) s.key: s.value,
+          if (isBackupSettingKey(s.key)) s.key: s.value,
       },
       titleSettings: [
         for (final t in titles)
@@ -267,7 +263,7 @@ class BackupService {
       };
       for (final e in data.settings.entries) {
         // Liste blanche revérifiée : jamais de PIN, de verrou ni de profil actif.
-        if (!isSyncableSettingKey(e.key) || !settingKeys.add(e.key)) continue;
+        if (!isBackupSettingKey(e.key) || !settingKeys.add(e.key)) continue;
         await _db
             .into(_db.settings)
             .insert(SettingsCompanion.insert(key: e.key, value: e.value));

@@ -1742,12 +1742,6 @@ abstract class AppLocalizations {
   /// **'Automatique'**
   String get qualityAuto;
 
-  /// No description provided for @pairPhoneButton.
-  ///
-  /// In fr, this message translates to:
-  /// **'Saisir depuis mon téléphone'**
-  String get pairPhoneButton;
-
   /// No description provided for @useCopiedLink.
   ///
   /// In fr, this message translates to:
@@ -1759,90 +1753,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ce lien n\'est pas un lien d\'installation d\'addon.'**
   String get installLinkInvalid;
-
-  /// No description provided for @pairTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Saisir depuis mon téléphone'**
-  String get pairTitle;
-
-  /// No description provided for @pairStep1.
-  ///
-  /// In fr, this message translates to:
-  /// **'Scannez ce code avec votre téléphone.'**
-  String get pairStep1;
-
-  /// No description provided for @pairStep2.
-  ///
-  /// In fr, this message translates to:
-  /// **'Collez le lien et touchez Envoyer.'**
-  String get pairStep2;
-
-  /// No description provided for @pairStep3.
-  ///
-  /// In fr, this message translates to:
-  /// **'Il arrive ici : vous confirmez ensuite l\'installation.'**
-  String get pairStep3;
-
-  /// No description provided for @pairOrOpen.
-  ///
-  /// In fr, this message translates to:
-  /// **'Ou ouvrez {url} et saisissez le code.'**
-  String pairOrOpen(String url);
-
-  /// No description provided for @pairCodeLabel.
-  ///
-  /// In fr, this message translates to:
-  /// **'Code'**
-  String get pairCodeLabel;
-
-  /// No description provided for @pairExpiresIn.
-  ///
-  /// In fr, this message translates to:
-  /// **'Expire dans {time}'**
-  String pairExpiresIn(String time);
-
-  /// No description provided for @pairWaiting.
-  ///
-  /// In fr, this message translates to:
-  /// **'En attente du téléphone…'**
-  String get pairWaiting;
-
-  /// No description provided for @pairExpired.
-  ///
-  /// In fr, this message translates to:
-  /// **'Ce code a expiré.'**
-  String get pairExpired;
-
-  /// No description provided for @pairNewCode.
-  ///
-  /// In fr, this message translates to:
-  /// **'Nouveau code'**
-  String get pairNewCode;
-
-  /// No description provided for @pairQrLabel.
-  ///
-  /// In fr, this message translates to:
-  /// **'Code QR d\'appairage'**
-  String get pairQrLabel;
-
-  /// No description provided for @errPairInsecure.
-  ///
-  /// In fr, this message translates to:
-  /// **'Adresse du serveur non sécurisée'**
-  String get errPairInsecure;
-
-  /// No description provided for @errPairUnavailable.
-  ///
-  /// In fr, this message translates to:
-  /// **'Serveur injoignable, réessayez'**
-  String get errPairUnavailable;
-
-  /// No description provided for @errPairRateLimited.
-  ///
-  /// In fr, this message translates to:
-  /// **'Trop de demandes, réessayez dans une minute'**
-  String get errPairRateLimited;
 
   /// No description provided for @onboardingStep.
   ///
@@ -2090,268 +2000,28 @@ abstract class AppLocalizations {
   /// **'{percent} % téléchargé'**
   String torrentBuffered(Object percent);
 
-  /// No description provided for @settingsAccount.
-  ///
-  /// In fr, this message translates to:
-  /// **'Compte et synchronisation'**
-  String get settingsAccount;
-
-  /// No description provided for @accountSettingsHint.
-  ///
-  /// In fr, this message translates to:
-  /// **'Retrouvez votre liste et votre progression sur vos autres appareils'**
-  String get accountSettingsHint;
-
-  /// No description provided for @accountTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Compte'**
-  String get accountTitle;
-
-  /// No description provided for @accountIntro.
-  ///
-  /// In fr, this message translates to:
-  /// **'Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d\'addons ne partent que chiffrés par une phrase secrète que vous choisissez.'**
-  String get accountIntro;
-
-  /// No description provided for @accountEmailLabel.
-  ///
-  /// In fr, this message translates to:
-  /// **'Adresse e-mail'**
-  String get accountEmailLabel;
-
-  /// No description provided for @accountSendCode.
-  ///
-  /// In fr, this message translates to:
-  /// **'Recevoir un code'**
-  String get accountSendCode;
-
-  /// No description provided for @accountCodeSent.
-  ///
-  /// In fr, this message translates to:
-  /// **'Un code de connexion vous a été envoyé par e-mail.'**
-  String get accountCodeSent;
-
-  /// No description provided for @accountCodeLabel.
-  ///
-  /// In fr, this message translates to:
-  /// **'Code reçu par e-mail'**
-  String get accountCodeLabel;
-
-  /// No description provided for @accountSignIn.
-  ///
-  /// In fr, this message translates to:
-  /// **'Se connecter'**
-  String get accountSignIn;
-
-  /// No description provided for @accountSignedInAs.
-  ///
-  /// In fr, this message translates to:
-  /// **'Connecté : {email}'**
-  String accountSignedInAs(Object email);
-
-  /// No description provided for @accountSyncIdle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Synchronisé'**
-  String get accountSyncIdle;
-
-  /// No description provided for @accountSyncSyncing.
-  ///
-  /// In fr, this message translates to:
-  /// **'Synchronisation en cours…'**
-  String get accountSyncSyncing;
-
-  /// No description provided for @accountSyncOffline.
-  ///
-  /// In fr, this message translates to:
-  /// **'Hors ligne : nouvel essai automatique'**
-  String get accountSyncOffline;
-
-  /// No description provided for @accountSyncNow.
-  ///
-  /// In fr, this message translates to:
-  /// **'Synchroniser maintenant'**
-  String get accountSyncNow;
-
-  /// No description provided for @accountSignOut.
-  ///
-  /// In fr, this message translates to:
-  /// **'Se déconnecter'**
-  String get accountSignOut;
-
-  /// No description provided for @accountSignedOutDone.
-  ///
-  /// In fr, this message translates to:
-  /// **'Déconnecté. Vos données restent sur cet appareil.'**
-  String get accountSignedOutDone;
-
-  /// No description provided for @accountDelete.
-  ///
-  /// In fr, this message translates to:
-  /// **'Supprimer mon compte'**
-  String get accountDelete;
-
-  /// No description provided for @accountDeleteConfirm.
-  ///
-  /// In fr, this message translates to:
-  /// **'Supprimer le compte et toutes les données synchronisées sur le serveur ? Les données de cet appareil sont conservées.'**
-  String get accountDeleteConfirm;
-
-  /// No description provided for @accountDeleted.
-  ///
-  /// In fr, this message translates to:
-  /// **'Compte supprimé'**
-  String get accountDeleted;
-
-  /// No description provided for @accountErrInvalidEmail.
-  ///
-  /// In fr, this message translates to:
-  /// **'Adresse e-mail invalide'**
-  String get accountErrInvalidEmail;
-
-  /// No description provided for @accountErrRejected.
-  ///
-  /// In fr, this message translates to:
-  /// **'Code refusé ou expiré'**
-  String get accountErrRejected;
-
-  /// No description provided for @accountErrRate.
-  ///
-  /// In fr, this message translates to:
-  /// **'Trop de tentatives, réessayez plus tard'**
-  String get accountErrRate;
-
-  /// No description provided for @accountErrUnavailable.
-  ///
-  /// In fr, this message translates to:
-  /// **'Serveur injoignable, réessayez plus tard'**
-  String get accountErrUnavailable;
-
   /// No description provided for @kidProfileNeedsPin.
   ///
   /// In fr, this message translates to:
   /// **'Ce profil enfant vient d\'un autre appareil. Créez d\'abord un PIN parent pour l\'utiliser.'**
   String get kidProfileNeedsPin;
 
-  /// No description provided for @accountAddonsTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Addons synchronisés'**
-  String get accountAddonsTitle;
-
-  /// No description provided for @addonSyncNoPassphrase.
-  ///
-  /// In fr, this message translates to:
-  /// **'Pas de phrase secrète : vos addons ne sont pas synchronisés.'**
-  String get addonSyncNoPassphrase;
-
-  /// No description provided for @addonSyncWaiting.
-  ///
-  /// In fr, this message translates to:
-  /// **'En attente du premier échange avec le serveur…'**
-  String get addonSyncWaiting;
-
-  /// No description provided for @addonSyncReady.
-  ///
-  /// In fr, this message translates to:
-  /// **'Vos addons sont synchronisés, chiffrés avec votre phrase secrète.'**
-  String get addonSyncReady;
-
-  /// No description provided for @addonSyncWrong.
-  ///
-  /// In fr, this message translates to:
-  /// **'Phrase secrète incorrecte : vos addons ne sont pas synchronisés'**
-  String get addonSyncWrong;
-
-  /// No description provided for @addonSyncTooLarge.
-  ///
-  /// In fr, this message translates to:
-  /// **'Trop d\'addons pour être synchronisés. Retirez-en quelques-uns pour reprendre.'**
-  String get addonSyncTooLarge;
-
-  /// No description provided for @addonSyncResetting.
-  ///
-  /// In fr, this message translates to:
-  /// **'Réinitialisation en attente d\'une connexion au serveur…'**
-  String get addonSyncResetting;
-
-  /// No description provided for @addonSyncFailed.
-  ///
-  /// In fr, this message translates to:
-  /// **'{count} addon(s) reçu(s) n\'ont pas pu être installés pour l\'instant ; nouvel essai automatique.'**
-  String addonSyncFailed(int count);
-
-  /// No description provided for @addonSyncPrivate.
-  ///
-  /// In fr, this message translates to:
-  /// **'Adresse de votre réseau local à confirmer : {label}'**
-  String addonSyncPrivate(Object label);
-
-  /// No description provided for @addonSyncAllow.
+  /// No description provided for @addonUrlAllow.
   ///
   /// In fr, this message translates to:
   /// **'Autoriser'**
-  String get addonSyncAllow;
+  String get addonUrlAllow;
 
-  /// No description provided for @addonSyncIgnore.
+  /// No description provided for @addonUrlIgnore.
   ///
   /// In fr, this message translates to:
   /// **'Ignorer'**
-  String get addonSyncIgnore;
-
-  /// No description provided for @passphraseSet.
-  ///
-  /// In fr, this message translates to:
-  /// **'Définir la phrase secrète'**
-  String get passphraseSet;
-
-  /// No description provided for @passphraseEnter.
-  ///
-  /// In fr, this message translates to:
-  /// **'Saisir la phrase secrète'**
-  String get passphraseEnter;
-
-  /// No description provided for @passphraseChange.
-  ///
-  /// In fr, this message translates to:
-  /// **'Changer la phrase secrète'**
-  String get passphraseChange;
-
-  /// No description provided for @passphraseReset.
-  ///
-  /// In fr, this message translates to:
-  /// **'Réinitialiser'**
-  String get passphraseReset;
-
-  /// No description provided for @passphraseResetConfirm.
-  ///
-  /// In fr, this message translates to:
-  /// **'Supprimer du serveur vos addons synchronisés ? Les addons de cet appareil sont conservés et le reste de vos données n\'est pas touché. Vous pourrez définir une nouvelle phrase secrète.'**
-  String get passphraseResetConfirm;
-
-  /// No description provided for @passphraseResetDone.
-  ///
-  /// In fr, this message translates to:
-  /// **'Réinitialisation demandée'**
-  String get passphraseResetDone;
-
-  /// No description provided for @passphraseTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Phrase secrète de synchronisation'**
-  String get passphraseTitle;
-
-  /// No description provided for @passphraseIntro.
-  ///
-  /// In fr, this message translates to:
-  /// **'Cette phrase chiffre vos addons avant leur envoi : le serveur ne peut pas les lire et ne reçoit jamais la phrase. Saisissez la même sur chacun de vos appareils. Si vous la perdez, vos addons devront être réajoutés ; le reste de vos données reste disponible.'**
-  String get passphraseIntro;
+  String get addonUrlIgnore;
 
   /// No description provided for @passphraseLabel.
   ///
   /// In fr, this message translates to:
-  /// **'Phrase secrète de synchronisation'**
+  /// **'Phrase secrète de la sauvegarde'**
   String get passphraseLabel;
 
   /// No description provided for @passphraseConfirmLabel.
@@ -2371,30 +2041,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Les deux phrases sont différentes'**
   String get passphraseErrMismatch;
-
-  /// No description provided for @passphraseSave.
-  ///
-  /// In fr, this message translates to:
-  /// **'Enregistrer'**
-  String get passphraseSave;
-
-  /// No description provided for @passphraseSaved.
-  ///
-  /// In fr, this message translates to:
-  /// **'Phrase secrète enregistrée'**
-  String get passphraseSaved;
-
-  /// No description provided for @passphraseErrSave.
-  ///
-  /// In fr, this message translates to:
-  /// **'Impossible d\'enregistrer la phrase secrète'**
-  String get passphraseErrSave;
-
-  /// No description provided for @addonSyncPhraseReset.
-  ///
-  /// In fr, this message translates to:
-  /// **'Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil.'**
-  String get addonSyncPhraseReset;
 
   /// No description provided for @settingsBackup.
   ///
@@ -3257,7 +2903,7 @@ abstract class AppLocalizations {
   /// No description provided for @trackingTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Suivi (Trakt, Simkl)'**
+  /// **'Suivi (Trakt)'**
   String get trackingTitle;
 
   /// No description provided for @trackingHint.
@@ -3397,60 +3043,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Code QR vers l\'adresse d\'autorisation'**
   String get trackingQrSemantic;
-
-  /// No description provided for @trackingSimkl.
-  ///
-  /// In fr, this message translates to:
-  /// **'Simkl'**
-  String get trackingSimkl;
-
-  /// No description provided for @trackingSimklNotConfigured.
-  ///
-  /// In fr, this message translates to:
-  /// **'Non configuré : l\'identifiant de l\'application Simkl est absent. Rien n\'est envoyé.'**
-  String get trackingSimklNotConfigured;
-
-  /// No description provided for @trackingSimklConnected.
-  ///
-  /// In fr, this message translates to:
-  /// **'Connecté : les titres vus (80 % ou plus) sont ajoutés à votre historique Simkl.'**
-  String get trackingSimklConnected;
-
-  /// No description provided for @trackingSimklReauth.
-  ///
-  /// In fr, this message translates to:
-  /// **'Reconnexion nécessaire : Simkl a refusé la connexion. Reconnectez le compte pour reprendre l\'envoi.'**
-  String get trackingSimklReauth;
-
-  /// No description provided for @trackingSimklConnect.
-  ///
-  /// In fr, this message translates to:
-  /// **'Connecter Simkl'**
-  String get trackingSimklConnect;
-
-  /// No description provided for @trackingSimklDisconnect.
-  ///
-  /// In fr, this message translates to:
-  /// **'Déconnecter Simkl'**
-  String get trackingSimklDisconnect;
-
-  /// No description provided for @trackingSimklDisconnected.
-  ///
-  /// In fr, this message translates to:
-  /// **'Simkl déconnecté'**
-  String get trackingSimklDisconnected;
-
-  /// No description provided for @trackingSimklAuthTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Connecter Simkl'**
-  String get trackingSimklAuthTitle;
-
-  /// No description provided for @trackingSimklAuthDone.
-  ///
-  /// In fr, this message translates to:
-  /// **'Simkl est connecté.'**
-  String get trackingSimklAuthDone;
 
   /// No description provided for @homeCalendar.
   ///
@@ -3757,12 +3349,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Vous suivez l\'hôte'**
   String get partyRoleGuest;
-
-  /// No description provided for @partyErrSignedOut.
-  ///
-  /// In fr, this message translates to:
-  /// **'Connectez-vous à votre compte pour utiliser les salles.'**
-  String get partyErrSignedOut;
 
   /// No description provided for @partyErrInvalidLink.
   ///

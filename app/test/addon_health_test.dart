@@ -174,17 +174,6 @@ void main() {
       expect(await store.read('addon_health:s1'), isNull);
       s.dispose();
     });
-
-    test('jamais synchronisé : aucune entrée dans la file d\'envoi', () async {
-      await store.write('ui_locale', 'fr');
-      await store.write('addon_health:s1', '{"s":[[100,1]]}');
-      final rows = await db
-          .customSelect('SELECT kind, key FROM sync_outbox')
-          .get();
-      final keys = [for (final r in rows) r.read<String>('key')];
-      expect(keys, contains('ui_locale'));
-      expect(keys.any((k) => k.contains('addon_health')), isFalse);
-    });
   });
 
   group('interface', () {

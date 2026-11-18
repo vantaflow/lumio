@@ -22,7 +22,7 @@ bool isProfileLocked(Profile p, List<Profile> all, {required bool hasPin}) {
 }
 
 /// Un profil enfant sans PIN parent sur l'appareil (typiquement reçu d'un
-/// autre appareil par la synchronisation) n'est pas sélectionnable : rien ne
+/// autre appareil par une sauvegarde importée) n'est pas sélectionnable : rien ne
 /// l'empêcherait de quitter le profil. Un PIN doit d'abord être créé.
 bool kidProfileNeedsPin(Profile p, {required bool hasPin}) =>
     p.isKid && !hasPin;

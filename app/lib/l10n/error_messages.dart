@@ -2,7 +2,6 @@ import 'dart:io' show CertificateException;
 
 import 'package:lumio/data/jellyfin_repository.dart'
     show JellyfinInsecureException;
-import 'package:lumio/data/pairing_client.dart';
 import 'package:lumio/data/profile_repository.dart' show ProfileLimitException;
 import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/torrent/network_watcher.dart' show VpnRequiredException;
@@ -26,14 +25,6 @@ String l10nForError(AppLocalizations l, Object error) {
     return l.torrentInsufficientStorage;
   }
   if (error is VpnRequiredException) return l.torrentVpnRequired;
-  if (error is PairingException) {
-    return switch (error.code) {
-      PairingErrorCode.insecureUrl => l.errPairInsecure,
-      PairingErrorCode.unavailable => l.errPairUnavailable,
-      PairingErrorCode.rateLimited => l.errPairRateLimited,
-      PairingErrorCode.expired => l.pairExpired,
-    };
-  }
   if (error is JellyfinAuthException) {
     return error.expired ? l.jellyfinErrExpired : l.jellyfinErrAuth;
   }

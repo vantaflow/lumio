@@ -324,14 +324,14 @@ class BackupFlows {
             child: TextButton(
               autofocus: true,
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.addonSyncIgnore),
+              child: Text(l.addonUrlIgnore),
             ),
           ),
           FocusRing(
             child: FilledButton(
               key: const ValueKey('backup:privateAllow'),
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.addonSyncAllow),
+              child: Text(l.addonUrlAllow),
             ),
           ),
         ],

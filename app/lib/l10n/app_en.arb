@@ -219,10 +219,22 @@
   "preferDirectOn": "Direct links first",
   "preferDirectOff": "No preference",
   "otherAddonsCount": "+{count, plural, =1{1 other addon} other{{count} other addons}}",
-  "@otherAddonsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@otherAddonsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "playerSourceFallback": "Source unavailable, trying the next one…",
   "playingFallback": "Playing from another source: {title}",
-  "@playingFallback": {"placeholders": {"title": {"type": "String"}}},
+  "@playingFallback": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "langSpanish": "Español",
   "langGerman": "Deutsch",
   "langItalian": "Italiano",
@@ -276,23 +288,8 @@
   "errUnexpected": "Unexpected error while loading",
   "errOther": "Something went wrong",
   "qualityAuto": "Automatic",
-  "pairPhoneButton": "Enter from my phone",
   "useCopiedLink": "Use the copied link",
   "installLinkInvalid": "This is not an add-on install link.",
-  "pairTitle": "Enter from my phone",
-  "pairStep1": "Scan this code with your phone.",
-  "pairStep2": "Paste the link and tap Send.",
-  "pairStep3": "It arrives here: you then confirm the installation.",
-  "pairOrOpen": "Or open {url} and enter the code.",
-  "pairCodeLabel": "Code",
-  "pairExpiresIn": "Expires in {time}",
-  "pairWaiting": "Waiting for your phone…",
-  "pairExpired": "This code has expired.",
-  "pairNewCode": "New code",
-  "pairQrLabel": "Pairing QR code",
-  "errPairInsecure": "Insecure server address",
-  "errPairUnavailable": "Server unreachable, try again",
-  "errPairRateLimited": "Too many requests, try again in a minute",
   "onboardingStep": "Step {n} of {total}",
   "@onboardingStep": {
     "placeholders": {
@@ -385,74 +382,13 @@
       "percent": {}
     }
   },
-  "settingsAccount": "Account and sync",
-  "accountSettingsHint": "Get your list and progress on your other devices",
-  "accountTitle": "Account",
-  "accountIntro": "Sign in with your e-mail to sync your list, progress, profiles and settings. Your addon links only leave encrypted with a secret phrase you choose.",
-  "accountEmailLabel": "E-mail address",
-  "accountSendCode": "Get a code",
-  "accountCodeSent": "A sign-in code was sent to your e-mail.",
-  "accountCodeLabel": "Code received by e-mail",
-  "accountSignIn": "Sign in",
-  "accountSignedInAs": "Signed in: {email}",
-  "@accountSignedInAs": {
-    "placeholders": {
-      "email": {}
-    }
-  },
-  "accountSyncIdle": "Up to date",
-  "accountSyncSyncing": "Syncing…",
-  "accountSyncOffline": "Offline: retrying automatically",
-  "accountSyncNow": "Sync now",
-  "accountSignOut": "Sign out",
-  "accountSignedOutDone": "Signed out. Your data stays on this device.",
-  "accountDelete": "Delete my account",
-  "accountDeleteConfirm": "Delete the account and all synced data on the server? Data on this device is kept.",
-  "accountDeleted": "Account deleted",
-  "accountErrInvalidEmail": "Invalid e-mail address",
-  "accountErrRejected": "Code refused or expired",
-  "accountErrRate": "Too many attempts, try again later",
-  "accountErrUnavailable": "Server unreachable, try again later",
   "kidProfileNeedsPin": "This kids profile came from another device. Create a parent PIN first to use it.",
-  "accountAddonsTitle": "Synced addons",
-  "addonSyncNoPassphrase": "No secret phrase: your addons are not synced.",
-  "addonSyncWaiting": "Waiting for the first exchange with the server…",
-  "addonSyncReady": "Your addons are synced, encrypted with your secret phrase.",
-  "addonSyncWrong": "Wrong secret phrase: your addons are not synced",
-  "addonSyncTooLarge": "Too many addons to sync. Remove a few to resume.",
-  "addonSyncResetting": "Reset waiting for a connection to the server…",
-  "addonSyncFailed": "{count} received addon(s) could not be installed for now; retrying automatically.",
-  "@addonSyncFailed": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "addonSyncPrivate": "Address on your local network needs confirmation: {label}",
-  "@addonSyncPrivate": {
-    "placeholders": {
-      "label": {}
-    }
-  },
-  "addonSyncAllow": "Allow",
-  "addonSyncIgnore": "Ignore",
-  "passphraseSet": "Set the secret phrase",
-  "passphraseEnter": "Enter the secret phrase",
-  "passphraseChange": "Change the secret phrase",
-  "passphraseReset": "Reset",
-  "passphraseResetConfirm": "Delete your synced addons from the server? The addons on this device are kept and the rest of your data is untouched. You can then set a new secret phrase.",
-  "passphraseResetDone": "Reset requested",
-  "passphraseTitle": "Sync secret phrase",
-  "passphraseIntro": "This phrase encrypts your addons before they are sent: the server cannot read them and never receives the phrase. Enter the same one on each of your devices. If you lose it, your addons must be added again; the rest of your data stays available.",
-  "passphraseLabel": "Sync secret phrase",
+  "addonUrlAllow": "Allow",
+  "addonUrlIgnore": "Ignore",
+  "passphraseLabel": "Backup secret phrase",
   "passphraseConfirmLabel": "Confirm the secret phrase",
   "passphraseErrShort": "At least 12 characters",
   "passphraseErrMismatch": "The two phrases differ",
-  "passphraseSave": "Save",
-  "passphraseSaved": "Secret phrase saved",
-  "passphraseErrSave": "Could not save the secret phrase",
-  "addonSyncPhraseReset": "Secret phrase needs to be entered again: addon sync was reset from another device.",
   "settingsBackup": "Backup",
   "backupExport": "Export my data",
   "backupExportHint": "Profiles, my list, progress and settings in one file",
@@ -746,13 +682,31 @@
   "localAddFolder": "Add a folder",
   "localEmpty": "No folders yet. Add a folder of videos to see them in Lumio.",
   "localVideoCount": "{count, plural, =0{No videos} =1{1 video} other{{count} videos}}",
-  "@localVideoCount": {"placeholders": {"count": {"type": "int"}}},
+  "@localVideoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "localScanNow": "Scan now",
   "localScanning": "Scanning…",
   "localScanDone": "Scan finished: {count, plural, =0{no videos} =1{1 video} other{{count} videos}}",
-  "@localScanDone": {"placeholders": {"count": {"type": "int"}}},
+  "@localScanDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "localRemoveFolder": "Remove folder {path}",
-  "@localRemoveFolder": {"placeholders": {"path": {"type": "String"}}},
+  "@localRemoveFolder": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "localFolderRemoved": "Folder removed from Lumio. Your files are untouched.",
   "localPermissionDenied": "Lumio needs access to your videos. Allow it in the device settings.",
   "localPickerUnavailable": "The folder picker is not available. Type the folder path.",
@@ -766,7 +720,13 @@
   "localFolderDenied": "Access to this folder was denied.",
   "localFolderOverlap": "This folder overlaps a folder already added.",
   "localFolderAdded": "Folder added: {count, plural, =0{no videos} =1{1 video} other{{count} videos}}",
-  "@localFolderAdded": {"placeholders": {"count": {"type": "int"}}},
+  "@localFolderAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "localScanFailed": "Scanning the folder failed.",
   "localFixTitle": "Fix the title",
   "localFixLabel": "Title",
@@ -774,7 +734,13 @@
   "localFileMissing": "File not found: it may have been moved. Scan again.",
   "localPlayFailed": "This file cannot be played.",
   "localDetected": "Detected: {title}",
-  "@localDetected": {"placeholders": {"title": {"type": "String"}}},
+  "@localDetected": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "localScanIncomplete": "Incomplete scan: folder too large",
   "localFolderForbidden": "This folder cannot be added (system folder or non-absolute path).",
   "jellyfinServers": "Jellyfin servers",
@@ -788,11 +754,29 @@
   "jellyfinConnect": "Sign in",
   "jellyfinConnecting": "Signing in…",
   "jellyfinSignedInAs": "Signed in as {user}",
-  "@jellyfinSignedInAs": {"placeholders": {"user": {"type": "String"}}},
+  "@jellyfinSignedInAs": {
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
   "jellyfinRemove": "Sign out of {name}",
-  "@jellyfinRemove": {"placeholders": {"name": {"type": "String"}}},
+  "@jellyfinRemove": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "jellyfinRemoveTitle": "Remove {name}?",
-  "@jellyfinRemoveTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@jellyfinRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "jellyfinRemoveBody": "The sign-in token will be deleted from this device.",
   "jellyfinRemoved": "Server removed",
   "jellyfinAdded": "Server added",
@@ -809,14 +793,26 @@
   "jellyfinErrTimeout": "Timed out: the Jellyfin server is not responding.",
   "jellyfinErrUnreachable": "Jellyfin server unreachable.",
   "jellyfinErrServer": "The Jellyfin server reported an error (HTTP {status}).",
-  "@jellyfinErrServer": {"placeholders": {"status": {"type": "int"}}},
+  "@jellyfinErrServer": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
   "jellyfinErrRefused": "Request refused by the Jellyfin server (HTTP {status}).",
-  "@jellyfinErrRefused": {"placeholders": {"status": {"type": "int"}}},
+  "@jellyfinErrRefused": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
   "jellyfinErrInvalid": "Unexpected response: is this really a Jellyfin server?",
   "jellyfinErrTooLarge": "Server response too large.",
   "jellyfinErrRedirect": "The server redirects to another address: enter the final address.",
   "jellyfinErrAddress": "Invalid server address.",
-  "trackingTitle": "Tracking (Trakt, Simkl)",
+  "trackingTitle": "Tracking (Trakt)",
   "trackingHint": "Record what you watch on your account",
   "trackingTrakt": "Trakt",
   "trackingNotConfigured": "Not configured: the Trakt application credentials are missing. Nothing is sent.",
@@ -827,7 +823,13 @@
   "trackingDisconnect": "Disconnect Trakt",
   "trackingDisconnected": "Trakt disconnected",
   "trackingPending": "{count, plural, =0{Nothing waiting to be sent} =1{1 event waiting to be sent} other{{count} events waiting to be sent}}",
-  "@trackingPending": {"placeholders": {"count": {"type": "int"}}},
+  "@trackingPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "trackingRetry": "Retry sending",
   "trackingRetried": "Sending retried",
   "trackingKidAllow": "Allow tracking for this kid profile",
@@ -841,15 +843,6 @@
   "trackingAuthNewCode": "New code",
   "trackingAuthUnavailable": "The tracking service is unreachable. Try again later.",
   "trackingQrSemantic": "QR code for the authorization address",
-  "trackingSimkl": "Simkl",
-  "trackingSimklNotConfigured": "Not configured: the Simkl application ID is missing. Nothing is sent.",
-  "trackingSimklConnected": "Connected: titles you watch (80% or more) are added to your Simkl history.",
-  "trackingSimklReauth": "Sign-in required: Simkl rejected the connection. Reconnect the account to resume sending.",
-  "trackingSimklConnect": "Connect Simkl",
-  "trackingSimklDisconnect": "Disconnect Simkl",
-  "trackingSimklDisconnected": "Simkl disconnected",
-  "trackingSimklAuthTitle": "Connect Simkl",
-  "trackingSimklAuthDone": "Simkl is connected.",
   "homeCalendar": "Calendar",
   "calendarTitle": "Release calendar",
   "calendarEmpty": "No series in your list. Add a series to \"My list\" to follow its upcoming episodes.",
@@ -860,16 +853,37 @@
   "calendarUnknownHeader": "Date unknown",
   "calendarUnknownEntry": "Date unknown",
   "calendarEpisodeLabel": "S{season} · E{episode}",
-  "@calendarEpisodeLabel": {"placeholders": {"season": {"type": "int"}, "episode": {"type": "int"}}},
+  "@calendarEpisodeLabel": {
+    "placeholders": {
+      "season": {
+        "type": "int"
+      },
+      "episode": {
+        "type": "int"
+      }
+    }
+  },
   "calendarEpisodeOnly": "Episode {episode}",
-  "@calendarEpisodeOnly": {"placeholders": {"episode": {"type": "int"}}},
+  "@calendarEpisodeOnly": {
+    "placeholders": {
+      "episode": {
+        "type": "int"
+      }
+    }
+  },
   "calendarNotify": "Notify me about new episodes",
   "calendarNotifyHint": "Local notification on release day, on this device. Off by default.",
   "calendarNotifyDenied": "Notifications denied: enable them in the system settings.",
   "calendarNotifyOn": "You will be notified about upcoming episodes.",
   "calendarNotifyChannel": "New episodes",
   "calendarNotifyBody": "New episode available: {episode}",
-  "@calendarNotifyBody": {"placeholders": {"episode": {"type": "String"}}},
+  "@calendarNotifyBody": {
+    "placeholders": {
+      "episode": {
+        "type": "String"
+      }
+    }
+  },
   "calendarNotifyError": "Notifications could not be scheduled. Try again by reopening the calendar.",
   "castTooltip": "Cast to a device",
   "castChooseDevice": "Choose a device",
@@ -877,7 +891,13 @@
   "castNoDevice": "No device found",
   "castNoDeviceHint": "Make sure the TV is on and on the same Wi-Fi network.",
   "castPlayingOn": "Playing on {device}",
-  "@castPlayingOn": {"placeholders": {"device": {"type": "String"}}},
+  "@castPlayingOn": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
   "castStop": "Stop casting",
   "castFailed": "Could not cast to this device.",
   "castUnsupported": "This stream cannot be cast to a device.",
@@ -905,7 +925,6 @@
   "partyLeave": "Leave the room",
   "partyRoleHost": "You are the host",
   "partyRoleGuest": "You follow the host",
-  "partyErrSignedOut": "Sign in to your account to use rooms.",
   "partyErrInvalidLink": "This invitation link is not valid.",
   "partyErrWrongCode": "Invitation code refused.",
   "partyErrFull": "The room is full (8 people).",

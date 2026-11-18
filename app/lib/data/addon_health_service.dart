@@ -7,7 +7,7 @@ import 'package:lumio_core/lumio_core.dart';
 /// Persistance locale des mesures de santé des addons : une ligne de
 /// `settings` par identifiant de STOCKAGE (`addon_health:<id>`), écrite au
 /// plus une fois toutes les [flushInterval] (les mesures arrivent à chaque
-/// appel réseau). Absente de la liste blanche de synchronisation : les
+/// appel réseau). Absente de la liste blanche de la sauvegarde : les
 /// mesures ne quittent jamais l'appareil.
 class AddonHealthService {
   AddonHealthService(

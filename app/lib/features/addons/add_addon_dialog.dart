@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
-import 'package:lumio/features/pairing/pairing_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
@@ -135,17 +134,6 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     }
     _controller.text = text;
     _controller.selection = TextSelection.collapsed(offset: text.length);
-    _allowPrivate = false;
-    _schedule(immediate: true);
-  }
-
-  /// Saisie depuis le téléphone : le texte reçu remplit le champ ; l'aperçu
-  /// s'affiche et l'utilisateur confirme toujours « Installer ».
-  Future<void> _pairFromPhone() async {
-    final payload = await showPairingScreen(context);
-    if (!mounted || payload == null) return;
-    _controller.text = payload;
-    _controller.selection = TextSelection.collapsed(offset: payload.length);
     _allowPrivate = false;
     _schedule(immediate: true);
   }
@@ -292,13 +280,6 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                       icon: const Icon(Icons.content_paste),
                       label: Text(context.l10n.paste),
                     ),
-                    // Masqué tant que `backendUrl` est vide.
-                    if (ref.watch(pairingClientProvider) != null)
-                      OutlinedButton.icon(
-                        onPressed: _pairFromPhone,
-                        icon: const Icon(Icons.qr_code_2),
-                        label: Text(context.l10n.pairPhoneButton),
-                      ),
                   ],
                 ),
               ),

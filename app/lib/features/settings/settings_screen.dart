@@ -4,12 +4,11 @@ import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
-import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_screen.dart';
+import 'package:lumio/features/party/party_providers.dart';
 import 'package:lumio/features/party/party_screen.dart';
-import 'package:lumio/features/settings/account_screen.dart';
 import 'package:lumio/features/settings/backup_section.dart';
 import 'package:lumio/features/detail/playback_service.dart'
     show streamPrefsProvider;
@@ -201,17 +200,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const TrackingScreen())),
       ),
-      if (ref.watch(syncServiceProvider) != null) ...[
-        _Header(l.settingsAccount),
-        _Tile(
-          id: 'account',
-          icon: Icons.sync,
-          title: l.settingsAccount,
-          subtitle: l.accountSettingsHint,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const AccountScreen()),
-          ),
-        ),
+      if (ref.watch(partyClientProvider) != null) ...[
+        _Header(l.partyTitle),
         _Tile(
           id: 'party',
           icon: Icons.groups_outlined,

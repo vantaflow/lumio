@@ -557,7 +557,7 @@ class _ContinueRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Une reprise locale dont le fichier n'est pas (ou plus) dans ce
-    // appareil (progression synchronisée d'un autre) est masquée.
+    // appareil (progression venue d'une sauvegarde) est masquée.
     final localIds = {
       for (final i in ref.watch(localItemsProvider).value ?? const []) i.id,
     };

@@ -933,59 +933,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qualityAuto => 'Automatic';
 
   @override
-  String get pairPhoneButton => 'Enter from my phone';
-
-  @override
   String get useCopiedLink => 'Use the copied link';
 
   @override
   String get installLinkInvalid => 'This is not an add-on install link.';
-
-  @override
-  String get pairTitle => 'Enter from my phone';
-
-  @override
-  String get pairStep1 => 'Scan this code with your phone.';
-
-  @override
-  String get pairStep2 => 'Paste the link and tap Send.';
-
-  @override
-  String get pairStep3 => 'It arrives here: you then confirm the installation.';
-
-  @override
-  String pairOrOpen(String url) {
-    return 'Or open $url and enter the code.';
-  }
-
-  @override
-  String get pairCodeLabel => 'Code';
-
-  @override
-  String pairExpiresIn(String time) {
-    return 'Expires in $time';
-  }
-
-  @override
-  String get pairWaiting => 'Waiting for your phone…';
-
-  @override
-  String get pairExpired => 'This code has expired.';
-
-  @override
-  String get pairNewCode => 'New code';
-
-  @override
-  String get pairQrLabel => 'Pairing QR code';
-
-  @override
-  String get errPairInsecure => 'Insecure server address';
-
-  @override
-  String get errPairUnavailable => 'Server unreachable, try again';
-
-  @override
-  String get errPairRateLimited => 'Too many requests, try again in a minute';
 
   @override
   String onboardingStep(int n, int total) {
@@ -1146,155 +1097,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsAccount => 'Account and sync';
-
-  @override
-  String get accountSettingsHint =>
-      'Get your list and progress on your other devices';
-
-  @override
-  String get accountTitle => 'Account';
-
-  @override
-  String get accountIntro =>
-      'Sign in with your e-mail to sync your list, progress, profiles and settings. Your addon links only leave encrypted with a secret phrase you choose.';
-
-  @override
-  String get accountEmailLabel => 'E-mail address';
-
-  @override
-  String get accountSendCode => 'Get a code';
-
-  @override
-  String get accountCodeSent => 'A sign-in code was sent to your e-mail.';
-
-  @override
-  String get accountCodeLabel => 'Code received by e-mail';
-
-  @override
-  String get accountSignIn => 'Sign in';
-
-  @override
-  String accountSignedInAs(Object email) {
-    return 'Signed in: $email';
-  }
-
-  @override
-  String get accountSyncIdle => 'Up to date';
-
-  @override
-  String get accountSyncSyncing => 'Syncing…';
-
-  @override
-  String get accountSyncOffline => 'Offline: retrying automatically';
-
-  @override
-  String get accountSyncNow => 'Sync now';
-
-  @override
-  String get accountSignOut => 'Sign out';
-
-  @override
-  String get accountSignedOutDone =>
-      'Signed out. Your data stays on this device.';
-
-  @override
-  String get accountDelete => 'Delete my account';
-
-  @override
-  String get accountDeleteConfirm =>
-      'Delete the account and all synced data on the server? Data on this device is kept.';
-
-  @override
-  String get accountDeleted => 'Account deleted';
-
-  @override
-  String get accountErrInvalidEmail => 'Invalid e-mail address';
-
-  @override
-  String get accountErrRejected => 'Code refused or expired';
-
-  @override
-  String get accountErrRate => 'Too many attempts, try again later';
-
-  @override
-  String get accountErrUnavailable => 'Server unreachable, try again later';
-
-  @override
   String get kidProfileNeedsPin =>
       'This kids profile came from another device. Create a parent PIN first to use it.';
 
   @override
-  String get accountAddonsTitle => 'Synced addons';
+  String get addonUrlAllow => 'Allow';
 
   @override
-  String get addonSyncNoPassphrase =>
-      'No secret phrase: your addons are not synced.';
+  String get addonUrlIgnore => 'Ignore';
 
   @override
-  String get addonSyncWaiting =>
-      'Waiting for the first exchange with the server…';
-
-  @override
-  String get addonSyncReady =>
-      'Your addons are synced, encrypted with your secret phrase.';
-
-  @override
-  String get addonSyncWrong =>
-      'Wrong secret phrase: your addons are not synced';
-
-  @override
-  String get addonSyncTooLarge =>
-      'Too many addons to sync. Remove a few to resume.';
-
-  @override
-  String get addonSyncResetting =>
-      'Reset waiting for a connection to the server…';
-
-  @override
-  String addonSyncFailed(int count) {
-    return '$count received addon(s) could not be installed for now; retrying automatically.';
-  }
-
-  @override
-  String addonSyncPrivate(Object label) {
-    return 'Address on your local network needs confirmation: $label';
-  }
-
-  @override
-  String get addonSyncAllow => 'Allow';
-
-  @override
-  String get addonSyncIgnore => 'Ignore';
-
-  @override
-  String get passphraseSet => 'Set the secret phrase';
-
-  @override
-  String get passphraseEnter => 'Enter the secret phrase';
-
-  @override
-  String get passphraseChange => 'Change the secret phrase';
-
-  @override
-  String get passphraseReset => 'Reset';
-
-  @override
-  String get passphraseResetConfirm =>
-      'Delete your synced addons from the server? The addons on this device are kept and the rest of your data is untouched. You can then set a new secret phrase.';
-
-  @override
-  String get passphraseResetDone => 'Reset requested';
-
-  @override
-  String get passphraseTitle => 'Sync secret phrase';
-
-  @override
-  String get passphraseIntro =>
-      'This phrase encrypts your addons before they are sent: the server cannot read them and never receives the phrase. Enter the same one on each of your devices. If you lose it, your addons must be added again; the rest of your data stays available.';
-
-  @override
-  String get passphraseLabel => 'Sync secret phrase';
+  String get passphraseLabel => 'Backup secret phrase';
 
   @override
   String get passphraseConfirmLabel => 'Confirm the secret phrase';
@@ -1304,19 +1117,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passphraseErrMismatch => 'The two phrases differ';
-
-  @override
-  String get passphraseSave => 'Save';
-
-  @override
-  String get passphraseSaved => 'Secret phrase saved';
-
-  @override
-  String get passphraseErrSave => 'Could not save the secret phrase';
-
-  @override
-  String get addonSyncPhraseReset =>
-      'Secret phrase needs to be entered again: addon sync was reset from another device.';
 
   @override
   String get settingsBackup => 'Backup';
@@ -1876,7 +1676,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jellyfinErrAddress => 'Invalid server address.';
 
   @override
-  String get trackingTitle => 'Tracking (Trakt, Simkl)';
+  String get trackingTitle => 'Tracking (Trakt)';
 
   @override
   String get trackingHint => 'Record what you watch on your account';
@@ -1962,36 +1762,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingQrSemantic => 'QR code for the authorization address';
-
-  @override
-  String get trackingSimkl => 'Simkl';
-
-  @override
-  String get trackingSimklNotConfigured =>
-      'Not configured: the Simkl application ID is missing. Nothing is sent.';
-
-  @override
-  String get trackingSimklConnected =>
-      'Connected: titles you watch (80% or more) are added to your Simkl history.';
-
-  @override
-  String get trackingSimklReauth =>
-      'Sign-in required: Simkl rejected the connection. Reconnect the account to resume sending.';
-
-  @override
-  String get trackingSimklConnect => 'Connect Simkl';
-
-  @override
-  String get trackingSimklDisconnect => 'Disconnect Simkl';
-
-  @override
-  String get trackingSimklDisconnected => 'Simkl disconnected';
-
-  @override
-  String get trackingSimklAuthTitle => 'Connect Simkl';
-
-  @override
-  String get trackingSimklAuthDone => 'Simkl is connected.';
 
   @override
   String get homeCalendar => 'Calendar';
@@ -2168,9 +1938,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get partyRoleGuest => 'You follow the host';
-
-  @override
-  String get partyErrSignedOut => 'Sign in to your account to use rooms.';
 
   @override
   String get partyErrInvalidLink => 'This invitation link is not valid.';

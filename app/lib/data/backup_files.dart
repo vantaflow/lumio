@@ -42,8 +42,7 @@ abstract class BackupFiles {
   Future<String> get directory;
 }
 
-/// Disque réel. Bureau : fenêtre « Enregistrer sous » / « Ouvrir ». Android :
-/// l'export va dans le dossier de données externes de l'application
+/// Disque réel (Android) : l'export va dans le dossier de données externes de l'application
 /// (`Android/data/<appli>/files`, visible depuis un gestionnaire de fichiers ou
 /// adb), l'import utilise le sélecteur du système, sauf sur TV où il n'y en a
 /// pas et où l'on choisit dans ce dossier.
@@ -51,9 +50,6 @@ class PlatformBackupFiles implements BackupFiles {
   PlatformBackupFiles({required this.tv});
 
   final bool tv;
-
-  static bool get _desktop =>
-      Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
   @override
   bool get hasPicker => !tv;
@@ -74,21 +70,9 @@ class PlatformBackupFiles implements BackupFiles {
 
   @override
   Future<String?> save(String suggestedName, String text) async {
-    String path;
-    if (_desktop) {
-      final loc = await getSaveLocation(
-        suggestedName: suggestedName,
-        acceptedTypeGroups: const [
-          XTypeGroup(label: 'Sauvegarde Lumio', extensions: ['json']),
-        ],
-      );
-      if (loc == null) return null;
-      path = loc.path;
-    } else {
-      final dir = Directory(await directory);
-      await dir.create(recursive: true);
-      path = p.join(dir.path, suggestedName);
-    }
+    final dir = Directory(await directory);
+    await dir.create(recursive: true);
+    final path = p.join(dir.path, suggestedName);
     // Écriture complète puis renommage : jamais de fichier à moitié écrit.
     final tmp = File('$path.part');
     try {
@@ -108,13 +92,9 @@ class PlatformBackupFiles implements BackupFiles {
   @override
   Future<BackupFile?> pick() async {
     final f = await openFile(
-      // Sur Android le filtre par extension écarterait des fichiers servis
-      // sans type précis : on laisse tout choisir, la validation fait foi.
-      acceptedTypeGroups: Platform.isAndroid
-          ? const []
-          : const [
-              XTypeGroup(label: 'Sauvegarde Lumio', extensions: ['json']),
-            ],
+      // Le filtre par extension écarterait des fichiers servis sans type
+      // précis : on laisse tout choisir, la validation fait foi.
+      acceptedTypeGroups: const [],
     );
     if (f == null) return null;
     return BackupFile(
