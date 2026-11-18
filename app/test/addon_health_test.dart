@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/native.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -50,6 +51,30 @@ StreamItem _stream(String addon) => StreamItem(
   url: Uri.parse('https://cdn.example.org/s.mkv'),
 );
 
+class _MemoryStore extends AppSettingsStore {
+  _MemoryStore(super.db);
+  final rows = <String, String>{};
+  int writes = 0;
+
+  @override
+  Future<String?> read(String key) async => rows[key];
+
+  @override
+  Future<void> write(String key, String value) async {
+    writes++;
+    rows[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async => rows.remove(key);
+
+  @override
+  Future<Map<String, String>> readPrefix(String prefix) async => {
+    for (final e in rows.entries)
+      if (e.key.startsWith(prefix)) e.key: e.value,
+  };
+}
+
 void main() {
   group('AddonHealthService (persistance locale)', () {
     late AppDatabase db;
@@ -61,26 +86,38 @@ void main() {
     });
     tearDown(() => db.close());
 
-    test(
-      'écrit par identifiant de stockage, une seule fois par période',
-      () async {
-        final service = AddonHealthService(
-          HealthTracker(),
-          store,
-          flushInterval: const Duration(milliseconds: 80),
-        );
-        await service.ready;
+    test('flush() écrit aussitôt, sans attendre le minuteur', () async {
+      final service = AddonHealthService(HealthTracker(), store);
+      await service.ready;
+      service.tracker.record('s1', _ms * 100, true);
+      expect(await store.read('addon_health:s1'), isNull);
+      await service.flush();
+      final saved = jsonDecode((await store.read('addon_health:s1'))!) as Map;
+      expect((saved['s'] as List).length, 1);
+      service.dispose();
+    });
+
+    test('écriture différée : une seule fois par période de 30 s', () {
+      fakeAsync((fake) {
+        final mem = _MemoryStore(db);
+        final service = AddonHealthService(HealthTracker(), mem);
+        fake.flushMicrotasks();
         for (var i = 0; i < 5; i++) {
           service.tracker.record('s1', _ms * 100, true);
         }
-        // Rien d'écrit avant la fin de la période.
-        expect(await store.read('addon_health:s1'), isNull);
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-        final saved = jsonDecode((await store.read('addon_health:s1'))!) as Map;
-        expect((saved['s'] as List).length, 5);
+        fake.elapse(const Duration(seconds: 29));
+        fake.flushMicrotasks();
+        expect(mem.writes, 0);
+        fake.elapse(const Duration(seconds: 2));
+        fake.flushMicrotasks();
+        expect(mem.writes, 1);
+        expect(
+          ((jsonDecode(mem.rows['addon_health:s1']!) as Map)['s'] as List),
+          hasLength(5),
+        );
         service.dispose();
-      },
-    );
+      });
+    });
 
     test('recharge les mesures au démarrage', () async {
       final a = AddonHealthService(HealthTracker(), store);
@@ -201,6 +238,27 @@ void main() {
         ),
         findsOneWidget,
       );
+      await done(t);
+    });
+
+    testWidgets('pas de reconstruction si l\'affichage ne change pas', (
+      t,
+    ) async {
+      await pumpAddons(t, [_addon('s1', 'alpha')]);
+      final c = ProviderScope.containerOf(t.element(find.byType(AddonsScreen)));
+      var emissions = 0;
+      c.listen(healthSnapshotProvider, (_, _) => emissions++);
+      for (var i = 0; i < 5; i++) {
+        tracker.record('s1', _ms * 100, true);
+      }
+      await t.pump();
+      final first = emissions;
+      // Même verdict, même médiane, même taux : rien de nouveau.
+      for (var i = 0; i < 5; i++) {
+        tracker.record('s1', _ms * 100, true);
+      }
+      await t.pump();
+      expect(emissions, first);
       await done(t);
     });
 

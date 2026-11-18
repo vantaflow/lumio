@@ -10,6 +10,7 @@ import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
+import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
@@ -37,6 +38,19 @@ Future<void> main() async {
       return AppExitResponse.exit;
     },
     onDetach: () => unawaited(cache.cleanOnExit()),
+  );
+  // Mesures de santé des addons : écrites sans attendre quand l'appli passe
+  // en arrière-plan ou se ferme (sinon, une session de moins de 30 s ne
+  // serait jamais enregistrée).
+  final health = container.read(addonHealthServiceProvider);
+  AppLifecycleListener(
+    onPause: () => unawaited(health.flush()),
+    onHide: () => unawaited(health.flush()),
+    onDetach: () => unawaited(health.flush()),
+    onExitRequested: () async {
+      await health.flush();
+      return AppExitResponse.exit;
+    },
   );
   // Synchronisation multi-appareils : un cycle toutes les 15 s au premier
   // plan seulement (nulle sans backend configuré).

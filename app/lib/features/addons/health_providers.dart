@@ -53,14 +53,37 @@ AddonClient withHealth(Ref ref, AddonClient client) =>
       ref.read(healthKeyProvider),
     );
 
-/// Mesures de tous les addons, ré-émises à chaque changement.
-final healthSnapshotProvider = StreamProvider<Map<String, AddonHealth>>((
-  ref,
-) async* {
+/// Mesures de tous les addons. N'émet que si ce qui s'affiche change
+/// (verdict, médiane arrondie, taux en %) : pas de reconstruction à chaque
+/// appel réseau.
+final healthSnapshotProvider = StreamProvider<Map<String, AddonHealth>>((ref) {
   final t = ref.watch(healthTrackerProvider);
-  Map<String, AddonHealth> snap() => {for (final id in t.ids) id: t.stats(id)};
-  yield snap();
-  await for (final _ in t.changes) {
-    yield snap();
+  final out = StreamController<Map<String, AddonHealth>>();
+  String? last;
+  String sig(String id, AddonHealth h) {
+    final ms = h.median.inMilliseconds;
+    final shown = ms < 1000 ? ms : (ms / 100).round() * 100;
+    return '$id:${h.level.index}:$shown:${(h.successRate * 100).round()}:'
+        '${h.samples > 0}';
   }
+
+  void emit() {
+    if (out.isClosed) return;
+    final snap = {for (final id in t.ids) id: t.stats(id)};
+    final key = ([
+      for (final e in snap.entries) sig(e.key, e.value),
+    ]..sort()).join('|');
+    if (key == last) return;
+    last = key;
+    out.add(snap);
+  }
+
+  // Abonné avant la première émission : aucun changement n'est manqué.
+  final sub = t.changes.listen((_) => emit());
+  ref.onDispose(() {
+    sub.cancel();
+    out.close();
+  });
+  emit();
+  return out.stream;
 });

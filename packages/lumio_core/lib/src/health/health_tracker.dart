@@ -114,7 +114,11 @@ class HealthTracker {
     final list = _samples.putIfAbsent(addonId, () => []);
     list.add(_Sample(d.inMilliseconds < 0 ? 0 : d.inMilliseconds, ok));
     if (list.length > window) list.removeRange(0, list.length - window);
-    _changes.add(addonId);
+    _notify(addonId);
+  }
+
+  void _notify(String id) {
+    if (!_changes.isClosed) _changes.add(id);
   }
 
   AddonHealth stats(String addonId) {
@@ -141,7 +145,7 @@ class HealthTracker {
 
   /// Efface les mesures d'un addon (action « Réinitialiser »).
   void reset(String addonId) {
-    if (_samples.remove(addonId) != null) _changes.add(addonId);
+    if (_samples.remove(addonId) != null) _notify(addonId);
   }
 
   /// Oublie un addon désinstallé.
@@ -176,7 +180,7 @@ class HealthTracker {
     final list = _samples.putIfAbsent(addonId, () => []);
     list.insertAll(0, loaded);
     if (list.length > window) list.removeRange(0, list.length - window);
-    _changes.add(addonId);
+    _notify(addonId);
   }
 
   void dispose() => _changes.close();
@@ -233,18 +237,26 @@ class HealthRecordingAddonClient extends AddonClient {
   Future<T> _measure<T>(AddonManifest a, Future<T> Function() call) async {
     final key = _keyFor(a);
     final start = _tracker.now();
+    // L'enregistrement ne doit jamais changer l'issue de l'appel.
+    void record(Duration d, bool ok) {
+      if (key == null) return;
+      try {
+        _tracker.record(key, d, ok);
+      } on Object {
+        // Mesure perdue, appel inchangé.
+      }
+    }
+
     try {
       final r = await call();
-      if (key != null) {
-        _tracker.record(key, _tracker.now().difference(start), true);
-      }
+      record(_tracker.now().difference(start), true);
       return r;
     } on AddonException catch (e) {
       if (key != null) {
         final took = _tracker.now().difference(start);
         switch (e.code) {
           case AddonErrorCode.notFound:
-            _tracker.record(key, took, true);
+            record(took, true);
           case AddonErrorCode.timeout ||
               AddonErrorCode.unreachable ||
               AddonErrorCode.tlsFailed ||
@@ -253,7 +265,7 @@ class HealthRecordingAddonClient extends AddonClient {
               AddonErrorCode.tooLarge ||
               AddonErrorCode.invalidJson ||
               AddonErrorCode.redirect:
-            _tracker.record(key, took, false);
+            record(took, false);
           default:
             break;
         }

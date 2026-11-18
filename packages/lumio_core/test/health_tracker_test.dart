@@ -231,6 +231,18 @@ void main() {
       await sub.cancel();
     });
 
+    test('utilisable après dispose : aucune exception', () {
+      final t = HealthTracker()..dispose();
+      t.record('a', _ms * 100, true);
+      t.reset('a');
+      t.loadAddon('a', {
+        's': [
+          [1, 1],
+        ],
+      });
+      expect(t.stats('a').samples, 1);
+    });
+
     test('toJsonFor / loadAddon : une seule entrée', () {
       final t = HealthTracker();
       t.record('a', _ms * 100, true);
@@ -379,6 +391,35 @@ void main() {
       expect(tracker.stats('same').samples, 0);
     });
 
+    test('un suivi qui plante ne change pas l\'issue de l\'appel', () async {
+      final bad = _ThrowingTracker();
+      final ok = HealthRecordingAddonClient(
+        _Inner(() async {}, clock),
+        bad,
+        (_) => 'k',
+      );
+      await ok.rawStreams(_manifest('a'), 'movie', 'tt1');
+      final failing = HealthRecordingAddonClient(
+        _Inner(
+          () async =>
+              throw const AddonException('x', code: AddonErrorCode.timeout),
+          clock,
+        ),
+        bad,
+        (_) => 'k',
+      );
+      await expectLater(
+        failing.rawStreams(_manifest('a'), 'movie', 'tt1'),
+        throwsA(
+          isA<AddonException>().having(
+            (e) => e.code,
+            'code',
+            AddonErrorCode.timeout,
+          ),
+        ),
+      );
+    });
+
     test('timeout réel du client : échec enregistré', () async {
       final c = HealthRecordingAddonClient(
         AddonClient(
@@ -397,6 +438,12 @@ void main() {
       expect(tracker.stats('s').successRate, 0);
     });
   });
+}
+
+class _ThrowingTracker extends HealthTracker {
+  @override
+  void record(String addonId, Duration d, bool ok) =>
+      throw StateError('suivi cassé');
 }
 
 class _TimeoutFetcher implements HttpFetcher {
