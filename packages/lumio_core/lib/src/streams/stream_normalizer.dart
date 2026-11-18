@@ -55,9 +55,15 @@ class StreamNormalizer {
     var quality = Quality.unknown;
     for (final t in texts) {
       final q = _quality(t);
-      if (q != Quality.unknown) {
-        quality = q;
-        break;
+      if (q.index > quality.index) quality = q;
+    }
+    final trackers = <String>[];
+    final sources = raw['sources'];
+    if (sources is List) {
+      for (final e in sources) {
+        if (e is String && e.startsWith('tracker:') && e.length > 8) {
+          trackers.add(e.substring(8));
+        }
       }
     }
 
@@ -88,6 +94,7 @@ class StreamNormalizer {
       seeders: _seeders(all),
       requestHeaders: headers,
       notWebReady: notWebReady,
+      trackers: trackers,
     );
   }
 
@@ -111,14 +118,18 @@ class StreamNormalizer {
   }
 
   static final _sizeRe = RegExp(
-    r'(\d+(?:[.,]\d+)?)\s*(GiB|GB|Go|MiB|MB|Mo)\b',
+    r'(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:[.,]\d+)?)\s*(GiB|GB|Go|MiB|MB|Mo)\b(?!\s*/\s*s)',
     caseSensitive: false,
   );
 
   static int? _size(String t) {
     final m = _sizeRe.firstMatch(t);
     if (m == null) return null;
-    final n = double.tryParse(m.group(1)!.replaceAll(',', '.'));
+    final raw = m.group(1)!;
+    final thousands = RegExp(r'^\d{1,3}(,\d{3})+(\.\d+)?$').hasMatch(raw);
+    final n = double.tryParse(
+      thousands ? raw.replaceAll(',', '') : raw.replaceAll(',', '.'),
+    );
     if (n == null) return null;
     final unit = m.group(2)!.toLowerCase();
     final mult = unit.startsWith('g') ? 1073741824 : 1048576;
@@ -145,7 +156,7 @@ class StreamNormalizer {
       ),
       'fr',
     ),
-    (RegExp('🇬🇧|🇺🇸|\\b(english|eng|vo)\\b', caseSensitive: false), 'en'),
+    (RegExp('🇬🇧|🇺🇸|\\b(english|eng)\\b', caseSensitive: false), 'en'),
     (
       RegExp(
         '🇪🇸|\\b(spanish|espanol|español|esp|castellano)\\b',
@@ -166,9 +177,11 @@ class StreamNormalizer {
   ];
 
   static String? _language(String t) {
+    final found = <String>{};
     for (final (re, code) in _langRules) {
-      if (re.hasMatch(t)) return code;
+      if (re.hasMatch(t)) found.add(code);
     }
-    return null;
+    if (found.contains('multi') || found.length > 1) return 'multi';
+    return found.isEmpty ? null : found.single;
   }
 }

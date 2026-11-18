@@ -75,6 +75,66 @@ void main() {
     expect(logs.join(), isNot(contains('secret-token')));
   });
 
+  test('rejet : ni chemin ni requête avec jeton dans le journal', () {
+    final logs = <String>[];
+    StreamNormalizer.normalize(
+      {'url': 'ftp://h.example.org/tok123/a?token=tok456'},
+      'a',
+      onReject: logs.add,
+    );
+    expect(logs, isNotEmpty);
+    expect(logs.join(), isNot(contains('tok123')));
+    expect(logs.join(), isNot(contains('tok456')));
+  });
+
+  test('qualité : la plus haute entre name, title, description', () {
+    final s = StreamNormalizer.normalize({
+      'url': 'https://x.example.org/a',
+      'name': '720p',
+      'title': '2160p',
+    }, 'a')!;
+    expect(s.quality, Quality.uhd2160);
+  });
+
+  test('signature : requête conservée sauf clés volatiles', () {
+    StreamItem u(String url) => StreamNormalizer.normalize({'url': url}, 'a')!;
+    expect(
+      u('https://h.example.org/resolve?file=A').signature,
+      isNot(u('https://h.example.org/resolve?file=B').signature),
+    );
+    expect(
+      u('https://h.example.org/r?file=A&token=1').signature,
+      u('https://h.example.org/r?Token=2&file=A&expires=9').signature,
+    );
+  });
+
+  test('VO : langue inconnue ; deux langues : multi', () {
+    StreamItem s(String t) => StreamNormalizer.normalize({
+      'url': 'https://x.example.org/a',
+      'name': t,
+    }, 'a')!;
+    expect(s('Film VO').language, isNull);
+    expect(s('Film 🇬🇧 🇫🇷').language, 'multi');
+  });
+
+  test('tailles : débit ignoré, 1,400 MB = 1400 MB', () {
+    int? size(String t) => StreamNormalizer.normalize({
+      'url': 'https://x.example.org/a',
+      'title': t,
+    }, 'a')!.sizeBytes;
+    expect(size('5 MB/s'), isNull);
+    expect(size('5 MB/s 700 MB'), 700 * 1048576);
+    expect(size('1,400 MB'), 1400 * 1048576);
+  });
+
+  test('trackers depuis sources', () {
+    final s = StreamNormalizer.normalize({
+      'infoHash': _hash,
+      'sources': ['tracker:udp://t.example.org:80', 'dht:$_hash'],
+    }, 'a')!;
+    expect(s.trackers, ['udp://t.example.org:80']);
+  });
+
   test('tailles : Go, GiB, MiB, virgule', () {
     int? size(String t) => StreamNormalizer.normalize({
       'url': 'https://x.example.org/a',

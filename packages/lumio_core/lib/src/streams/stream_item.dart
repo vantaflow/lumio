@@ -15,6 +15,7 @@ class StreamItem {
     this.seeders,
     this.requestHeaders = const {},
     this.notWebReady = false,
+    this.trackers = const [],
   });
 
   final String addonId;
@@ -33,18 +34,40 @@ class StreamItem {
   final Map<String, String> requestHeaders;
   final bool notWebReady;
 
+  /// Trackers issus de `sources` (`tracker:<url>`) ; `dht:` ignoré.
+  final List<String> trackers;
+
   /// Vrai quand le flux n'a pas de lien direct et passe par un torrent.
   bool get isTorrent => url == null;
 
-  /// Identité stable pour dédoublonner : infoHash+fileIdx, ou URL sans requête
-  /// + taille.
+  /// Identité stable pour dédoublonner : infoHash+fileIdx, ou URL (requête
+  /// conservée sans les clés volatiles : jeton, expiration, signature) + taille.
   String get signature {
     final u = url;
     if (u == null) return '${infoHash ?? ''}:${fileIdx ?? ''}';
     final port = u.hasPort ? ':${u.port}' : '';
     final clean = '${u.scheme}://${u.host}$port${u.path}';
-    return '$clean|${sizeBytes ?? ''}';
+    final pairs = <String>[
+      for (final e in u.queryParametersAll.entries)
+        if (!_volatileKeys.contains(e.key.toLowerCase()))
+          for (final v in e.value) '${e.key}=$v',
+    ]..sort();
+    final q = pairs.isEmpty ? '' : '?${pairs.join('&')}';
+    return '$clean$q|${sizeBytes ?? ''}';
   }
+
+  static const _volatileKeys = {
+    'token',
+    'apikey',
+    'api_key',
+    'key',
+    'expires',
+    'exp',
+    'sig',
+    'signature',
+    't',
+    'ts',
+  };
 }
 
 /// Résultat d'un addon : flux normalisés, ou [error] si l'addon a échoué.
