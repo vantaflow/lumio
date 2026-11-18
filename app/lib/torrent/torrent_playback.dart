@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:lumio/torrent/torrent_engine.dart';
 import 'package:lumio_core/lumio_core.dart' show StreamItem;
 
@@ -94,8 +95,13 @@ class TorrentPlayback {
 
   /// Nom de l'entrée du torrent dans le dossier de cache : premier segment du
   /// chemin du fichier (dossier du torrent), ou le fichier lui-même.
-  static String cacheEntryName(String fileName) =>
-      fileName.split(RegExp(r'[/\\]')).firstWhere((s) => s.isNotEmpty);
+  /// `null` si le chemin est inexploitable (aucune éviction alors).
+  static String? cacheEntryName(String filePath) {
+    for (final s in filePath.split(RegExp(r'[/\\]'))) {
+      if (s.isNotEmpty) return s;
+    }
+    return null;
+  }
 
   Future<void> _evict() async {
     final playing = _playing;
@@ -188,7 +194,13 @@ class TorrentPlayback {
       }
       final file = chooseTorrentFile(files, s.fileIdx);
       if (file == null) throw const NoStreamableFileException();
-      _playing = cacheEntryName(file.name);
+      _playing = cacheEntryName(file.path);
+      if (_playing == null) {
+        // Entrée en lecture introuvable : jamais d'éviction à l'aveugle.
+        debugPrint(
+          'TorrentPlayback : chemin du fichier inconnu, pas d\'éviction',
+        );
+      }
       await _evict();
       await _check(gen, id);
       final url = await engine.stream(id, fileIndex: file.index);

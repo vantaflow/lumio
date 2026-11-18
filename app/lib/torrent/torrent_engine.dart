@@ -21,9 +21,17 @@ class TorrentFile {
     required this.name,
     required this.size,
     required this.streamable,
-  });
+    String? path,
+  }) : path = path ?? name;
   final int index;
+
+  /// Nom de base du fichier.
   final String name;
+
+  /// Chemin relatif au dossier de cache, dossier du torrent compris
+  /// (« Dossier/video.mkv » en multi-fichiers, « video.mkv » en fichier
+  /// unique). Sert à retrouver l'entrée du torrent dans le cache.
+  final String path;
   final int size;
   final bool streamable;
 }

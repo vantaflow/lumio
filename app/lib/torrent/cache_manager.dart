@@ -61,7 +61,12 @@ class CacheManager {
     required this.isTv,
     required this.clearOnExit,
     this.fallbackFreeBytes = 10 * 1024 * 1024 * 1024,
+    this.recentGrace = const Duration(seconds: 60),
   });
+
+  /// Une entrée modifiée depuis moins de [recentGrace] (téléchargement actif)
+  /// n'est jamais évincée, même si elle n'est pas identifiée comme en lecture.
+  final Duration recentGrace;
 
   final StorageInfo storage;
   final Future<String> Function() savePath;
@@ -129,7 +134,9 @@ class CacheManager {
       final id = e.uri.pathSegments.where((s) => s.isNotEmpty).last;
       all.add(CachedTorrent(id: id, bytes: _sizeOf(e), lastUsed: _lastUsed(e)));
     }
+    final now = DateTime.now();
     for (final victim in evictionPlan(all, limit, playingId)) {
+      if (now.difference(victim.lastUsed) < recentGrace) continue;
       _deletePath('${dir.path}/${victim.id}');
     }
   }
@@ -187,13 +194,16 @@ class CacheManager {
   }
 
   static DateTime _lastUsed(FileSystemEntity e) {
-    var latest = e.statSync().modified;
-    if (e is Directory) {
-      for (final f in e.listSync(recursive: true, followLinks: false)) {
-        final m = f.statSync().modified;
-        if (m.isAfter(latest)) latest = m;
-      }
+    final own = e.statSync().modified;
+    if (e is! Directory) return own;
+    // Le dossier lui-même change à chaque création de fichier : on retient la
+    // dernière modification de son contenu (dossier vide : la sienne).
+    DateTime? latest;
+    for (final f in e.listSync(recursive: true, followLinks: false)) {
+      if (f is! File) continue;
+      final m = f.statSync().modified;
+      if (latest == null || m.isAfter(latest)) latest = m;
     }
-    return latest;
+    return latest ?? own;
   }
 }

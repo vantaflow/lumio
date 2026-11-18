@@ -67,6 +67,7 @@ class LibtorrentEngine implements TorrentEngine {
           (f) => TorrentFile(
             index: f.index,
             name: f.name,
+            path: f.path,
             size: f.size,
             streamable: f.isStreamable,
           ),

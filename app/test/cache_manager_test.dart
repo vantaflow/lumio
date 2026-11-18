@@ -34,7 +34,9 @@ void main() {
     required _FakeStorage storage,
     bool isTv = false,
     bool clearOnExit = false,
+    Duration grace = Duration.zero,
   }) => CacheManager(
+    recentGrace: grace,
     storage: storage,
     savePath: () async => root.path,
     isTv: isTv,
@@ -216,7 +218,8 @@ void main() {
         fileList: const [
           TorrentFile(
             index: 0,
-            name: 'Movie/video.mkv',
+            name: 'video.mkv',
+            path: 'Movie/video.mkv',
             size: 1,
             streamable: true,
           ),
@@ -247,6 +250,95 @@ void main() {
     });
   });
 
+  group('entrée en lecture (chemins réalistes du moteur)', () {
+    Future<void> play(CacheManager m, TorrentFile file) async {
+      final playback = TorrentPlayback(
+        engine: FakeTorrentEngine(fileList: [file]),
+        pollInterval: const Duration(milliseconds: 10),
+        enforceCache: (p) => m.enforce(playingId: p),
+        evictInterval: Duration.zero,
+      );
+      await playback.prepare(
+        const StreamItem(
+          addonId: 'a',
+          title: 't',
+          infoHash: '0123456789abcdef0123456789abcdef01234567',
+        ),
+      );
+      await playback.release();
+    }
+
+    test('multi-fichiers : le dossier du torrent survit', () async {
+      final m = manager(storage: _FakeStorage(100 * _gb));
+      await m.resolve(requestedCacheBytes: minCacheBytes);
+      torrentDir('old', 200 * _mb, ageDays: 9);
+      torrentDir('Folder', 200 * _mb, ageDays: 30);
+      await play(
+        m,
+        const TorrentFile(
+          index: 0,
+          name: 'video.mkv',
+          path: 'Folder/video.mkv',
+          size: 1,
+          streamable: true,
+        ),
+      );
+      expect(Directory('${root.path}/Folder').existsSync(), isTrue);
+      expect(Directory('${root.path}/old').existsSync(), isFalse);
+    });
+
+    test('fichier unique : le fichier survit', () async {
+      final m = manager(storage: _FakeStorage(100 * _gb));
+      await m.resolve(requestedCacheBytes: minCacheBytes);
+      torrentDir('old', 200 * _mb, ageDays: 9);
+      final f = File('${root.path}/video.mkv')
+        ..writeAsBytesSync(List.filled(200 * _mb, 1));
+      f.setLastModifiedSync(DateTime.now().subtract(const Duration(days: 30)));
+      await play(
+        m,
+        const TorrentFile(
+          index: 0,
+          name: 'video.mkv',
+          size: 1,
+          streamable: true,
+        ),
+      );
+      expect(f.existsSync(), isTrue);
+      expect(Directory('${root.path}/old').existsSync(), isFalse);
+    });
+
+    test('entrée en lecture introuvable : aucune éviction', () async {
+      final m = manager(storage: _FakeStorage(100 * _gb));
+      await m.resolve(requestedCacheBytes: minCacheBytes);
+      torrentDir('old1', 200 * _mb, ageDays: 9);
+      torrentDir('old2', 200 * _mb, ageDays: 30);
+      await play(
+        m,
+        const TorrentFile(
+          index: 0,
+          name: 'video.mkv',
+          path: '',
+          size: 1,
+          streamable: true,
+        ),
+      );
+      expect(Directory('${root.path}/old1').existsSync(), isTrue);
+      expect(Directory('${root.path}/old2').existsSync(), isTrue);
+    });
+
+    test('entrée modifiée depuis moins de 60 s : jamais évincée', () async {
+      final m = manager(
+        storage: _FakeStorage(100 * _gb),
+        grace: const Duration(seconds: 60),
+      );
+      torrentDir('active', 2 * _mb, ageDays: 0);
+      torrentDir('old', 2 * _mb, ageDays: 9);
+      await m.enforceLimit(1 * _mb);
+      expect(Directory('${root.path}/active').existsSync(), isTrue);
+      expect(Directory('${root.path}/old').existsSync(), isFalse);
+    });
+  });
+
   group('liens symboliques', () {
     test('éviction et nettoyage ne suivent pas les liens', () async {
       final outside = Directory.systemTemp.createTempSync('lumio_outside');
@@ -255,7 +347,11 @@ void main() {
       Link('${root.path}/lnk').createSync(outside.path);
       final m = manager(storage: _FakeStorage(100 * _gb), clearOnExit: true);
       await Future<void>.delayed(const Duration(milliseconds: 20));
-      torrentDir('big', 10); // plus récent que le lien : le lien passe d'abord
+      torrentDir(
+        'big',
+        10,
+        ageDays: -1,
+      ); // plus récent que le lien : le lien passe d'abord
       await m.enforceLimit(0);
       expect(File('${outside.path}/keep.txt').existsSync(), isTrue);
       expect(Link('${root.path}/lnk').existsSync(), isFalse);
