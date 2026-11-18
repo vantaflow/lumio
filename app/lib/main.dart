@@ -19,6 +19,7 @@ import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/torrent/torrent_providers.dart';
+import 'package:lumio/ui/focus/tv_canvas.dart';
 import 'package:lumio/ui/focus/tv_detection.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:media_kit/media_kit.dart';
@@ -101,8 +102,12 @@ class LumioApp extends ConsumerWidget {
       theme: LumioTheme.dark(),
       darkTheme: LumioTheme.dark(),
       themeMode: ThemeMode.dark,
-      builder: (context, child) =>
-          LumioThemeScope(tv: ref.watch(androidTvProvider), child: child!),
+      builder: (context, child) {
+        final tv = ref.watch(androidTvProvider);
+        // TV : tout est mis à l'échelle du canevas 1920 dp des maquettes.
+        final themed = LumioThemeScope(tv: tv, child: child!);
+        return tv ? TvCanvas(child: themed) : themed;
+      },
       shortcuts: {
         ...WidgetsApp.defaultShortcuts,
         // Télécommande Android TV : OK/Entrée active l'élément ciblé.

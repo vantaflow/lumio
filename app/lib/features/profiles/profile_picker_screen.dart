@@ -671,6 +671,32 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
 /// Bouton de profil de la barre haute : change de profil (PIN parent pour un
 /// profil enfant) ; avec un seul profil, ouvre la gestion des profils pour en
 /// ajouter, créer le PIN parent ou renommer « Moi ».
+/// Changement de profil depuis l'accueil : avec un seul profil, gestion
+/// protégée par le PIN s'il existe (échec fermé) ; sinon PIN parent requis.
+Future<void> switchProfileFlow(BuildContext context, WidgetRef ref) async {
+  final repo = ref.read(profileRepositoryProvider);
+  final single = (ref.read(profilesProvider).value?.length ?? 0) <= 1;
+  if (single) {
+    final bool hasPin;
+    try {
+      hasPin = await repo.hasParentPin();
+    } on Object {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.parentalUnavailable)),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
+    if (hasPin && !await verifyParentPinFlow(context, ref)) return;
+    ref.read(profileManagementRequestedProvider.notifier).set(true);
+  } else if (!await requireParent(context, ref)) {
+    return;
+  }
+  ref.read(currentProfileProvider.notifier).select(null);
+}
+
 class ProfileButton extends ConsumerWidget {
   const ProfileButton({super.key});
 
@@ -678,30 +704,7 @@ class ProfileButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(currentProfileProvider);
     return TextButton.icon(
-      onPressed: () async {
-        final repo = ref.read(profileRepositoryProvider);
-        final single = (ref.read(profilesProvider).value?.length ?? 0) <= 1;
-        if (single) {
-          // Gestion : protégée par le PIN s'il existe (échec fermé).
-          final bool hasPin;
-          try {
-            hasPin = await repo.hasParentPin();
-          } on Object {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(context.l10n.parentalUnavailable)),
-              );
-            }
-            return;
-          }
-          if (!context.mounted) return;
-          if (hasPin && !await verifyParentPinFlow(context, ref)) return;
-          ref.read(profileManagementRequestedProvider.notifier).set(true);
-        } else if (!await requireParent(context, ref)) {
-          return;
-        }
-        ref.read(currentProfileProvider.notifier).select(null);
-      },
+      onPressed: () => switchProfileFlow(context, ref),
       icon: const Icon(Icons.account_circle_outlined),
       label: Text(profile?.name ?? context.l10n.profileFallback),
     );

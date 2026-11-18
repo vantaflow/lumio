@@ -20,6 +20,10 @@ import 'package:lumio/features/settings/settings_screen.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
+import 'package:lumio/features/home/tv_home.dart';
+import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/jellyfin/jellyfin_screen.dart'
+    show JellyfinAddDialog;
 import 'package:lumio/features/home/row_editor_screen.dart';
 import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
@@ -53,7 +57,10 @@ String sourceLabel(String kind, [AppLocalizations? l]) {
 /// Accueil : barre haute, « Continuer », « Ma liste », puis les catalogues des
 /// addons actifs (story 3.1).
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key, this.onOpenItem});
+  const HomeScreen({super.key, this.onOpenItem, this.tvLayout});
+
+  /// Force la disposition TV (tests) ; sinon détectée par `isTvLayout`.
+  final bool? tvLayout;
 
   /// Ouverture d'une fiche (Task 18) ; sans elle, l'accueil ne fait rien.
   final void Function(MetaPreview item)? onOpenItem;
@@ -100,11 +107,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Future<void> _openSearch() => Navigator.of(context).push(
+  Future<void> _openSearch({String? type}) => Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (_) => SearchScreen(onOpenItem: _openFrom),
+      builder: (_) => SearchScreen(onOpenItem: _openFrom, initialType: type),
     ),
   );
+
+  Future<void> _addLocalFolder() => addLocalFolderFlow(context, ref);
+
+  Future<void> _addJellyfin() async {
+    if (!await requireParent(context, ref)) return;
+    if (!mounted) return;
+    final added = await showDialog<bool>(
+      context: context,
+      builder: (_) => const JellyfinAddDialog(),
+    );
+    if (added == true) ref.invalidate(jellyfinRowsProvider);
+  }
+
+  Future<void> _addAddon() async {
+    if (!await requireParent(context, ref)) return;
+    if (!mounted) return;
+    await showAddAddonDialog(context);
+  }
 
   Future<void> _openLibrary() => Navigator.of(context).push(
     MaterialPageRoute<void>(
@@ -130,6 +155,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tv = isTvLayout(context, override: widget.tvLayout);
     // Retour : d'abord vers la barre haute, puis seulement quitter.
     return ListenableBuilder(
       listenable: _topBarFocused,
@@ -152,19 +178,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   skipTraversal: true,
                   canRequestFocus: false,
                   onFocusChange: (f) => _topBarFocused.value = f,
-                  child: _TopBar(
-                    customizeNode: _topBarNode,
-                    onCustomize: _openEditor,
-                    onSearch: _openSearch,
-                    onLibrary: _openLibrary,
-                    onCalendar: _openCalendar,
-                    onSettings: _openSettings,
-                  ),
+                  child: tv
+                      ? TvTopBar(
+                          homeNode: _topBarNode,
+                          onMovies: () => _openSearch(type: 'movie'),
+                          onSeries: () => _openSearch(type: 'series'),
+                          onSearch: _openSearch,
+                          onSettings: _openSettings,
+                          onLibrary: _openLibrary,
+                          onCalendar: _openCalendar,
+                          onCustomize: _openEditor,
+                        )
+                      : _TopBar(
+                          customizeNode: _topBarNode,
+                          onCustomize: _openEditor,
+                          onSearch: _openSearch,
+                          onLibrary: _openLibrary,
+                          onCalendar: _openCalendar,
+                          onSettings: _openSettings,
+                        ),
                 ),
-                SourcesReminderCard(onAdd: _openAddons),
+                if (!tv) SourcesReminderCard(onAdd: _openAddons),
                 Expanded(
                   child: _HomeBody(
+                    tv: tv,
                     onOpenAddons: _openAddons,
+                    onAddAddon: _addAddon,
+                    onAddLocal: _addLocalFolder,
+                    onAddJellyfin: _addJellyfin,
                     onOpenItem: _open,
                   ),
                 ),
@@ -262,8 +303,19 @@ class _TopBar extends StatelessWidget {
 }
 
 class _HomeBody extends ConsumerWidget {
-  const _HomeBody({required this.onOpenAddons, required this.onOpenItem});
+  const _HomeBody({
+    required this.tv,
+    required this.onOpenAddons,
+    required this.onAddAddon,
+    required this.onAddLocal,
+    required this.onAddJellyfin,
+    required this.onOpenItem,
+  });
 
+  final bool tv;
+  final VoidCallback onAddAddon;
+  final VoidCallback onAddLocal;
+  final VoidCallback onAddJellyfin;
   final VoidCallback onOpenAddons;
   final void Function(MetaPreview item)? onOpenItem;
 
@@ -280,11 +332,19 @@ class _HomeBody extends ConsumerWidget {
       case HomePhase.noCatalog:
         return StateView.empty(message: context.l10n.homeNoCatalog);
       case HomePhase.noAddons:
-        final help = StateView.empty(
-          message: context.l10n.homeNoAddons,
-          actionLabel: context.l10n.homeManageAddons,
-          onAction: onOpenAddons,
-        );
+        final Widget help = tv
+            ? SingleChildScrollView(
+                child: TvEmptyHome(
+                  onAddAddon: onAddAddon,
+                  onAddLocal: onAddLocal,
+                  onAddJellyfin: onAddJellyfin,
+                ),
+              )
+            : StateView.empty(
+                message: context.l10n.homeNoAddons,
+                actionLabel: context.l10n.homeManageAddons,
+                onAction: onOpenAddons,
+              );
         // Les reprises restent accessibles même sans addon.
         return Column(
           children: [

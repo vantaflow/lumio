@@ -1148,5 +1148,18 @@
   "partyErrNotFound": "Cette salle n'existe plus.",
   "partyErrRateLimited": "Trop d'essais, réessayez dans un moment.",
   "partyErrUnavailable": "Impossible de joindre la salle.",
-  "partyHostOnly": "Seul l'hôte contrôle la lecture dans cette salle."
+  "partyHostOnly": "Seul l'hôte contrôle la lecture dans cette salle.",
+  "tvNavHome": "Accueil",
+  "tvSwitchProfile": "Changer de profil",
+  "tvEmptyEyebrow": "BIENVENUE",
+  "tvEmptyTitle": "Votre accueil attend ses sources",
+  "tvEmptyBody": "Lumio ne contient aucun contenu. Ajoutez un addon de confiance, un dossier de vos vidéos ou votre serveur Jellyfin : vos catalogues apparaîtront ici en rangées.",
+  "tvEmptyLocal": "Dossier local",
+  "tvEmptyJellyfin": "Serveur Jellyfin",
+  "tvEmptyStep1Title": "Collez un lien",
+  "tvEmptyStep1Body": "Le lien manifest.json de l'addon, ou un lien stremio://.",
+  "tvEmptyStep2Title": "Ou envoyez-le du téléphone",
+  "tvEmptyStep2Body": "Scannez le QR code affiché, collez le lien sur le téléphone.",
+  "tvEmptyStep3Title": "Regardez",
+  "tvEmptyStep3Body": "Catalogues, « Continuer » et « Ma liste » remplissent l'accueil."
 }

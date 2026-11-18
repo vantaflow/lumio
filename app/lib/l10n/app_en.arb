@@ -912,5 +912,18 @@
   "partyErrNotFound": "This room no longer exists.",
   "partyErrRateLimited": "Too many attempts, try again in a moment.",
   "partyErrUnavailable": "Cannot reach the room.",
-  "partyHostOnly": "Only the host controls playback in this room."
+  "partyHostOnly": "Only the host controls playback in this room.",
+  "tvNavHome": "Home",
+  "tvSwitchProfile": "Switch profile",
+  "tvEmptyEyebrow": "WELCOME",
+  "tvEmptyTitle": "Your home is waiting for its sources",
+  "tvEmptyBody": "Lumio contains no content. Add a trusted addon, a folder of your videos or your Jellyfin server: your catalogs will appear here in rows.",
+  "tvEmptyLocal": "Local folder",
+  "tvEmptyJellyfin": "Jellyfin server",
+  "tvEmptyStep1Title": "Paste a link",
+  "tvEmptyStep1Body": "The addon's manifest.json link, or a stremio:// link.",
+  "tvEmptyStep2Title": "Or send it from your phone",
+  "tvEmptyStep2Body": "Scan the QR code shown, paste the link on your phone.",
+  "tvEmptyStep3Title": "Watch",
+  "tvEmptyStep3Body": "Catalogs, \"Continue\" and \"My list\" fill the home screen."
 }

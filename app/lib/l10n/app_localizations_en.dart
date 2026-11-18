@@ -2192,4 +2192,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get partyHostOnly => 'Only the host controls playback in this room.';
+
+  @override
+  String get tvNavHome => 'Home';
+
+  @override
+  String get tvSwitchProfile => 'Switch profile';
+
+  @override
+  String get tvEmptyEyebrow => 'WELCOME';
+
+  @override
+  String get tvEmptyTitle => 'Your home is waiting for its sources';
+
+  @override
+  String get tvEmptyBody =>
+      'Lumio contains no content. Add a trusted addon, a folder of your videos or your Jellyfin server: your catalogs will appear here in rows.';
+
+  @override
+  String get tvEmptyLocal => 'Local folder';
+
+  @override
+  String get tvEmptyJellyfin => 'Jellyfin server';
+
+  @override
+  String get tvEmptyStep1Title => 'Paste a link';
+
+  @override
+  String get tvEmptyStep1Body =>
+      'The addon\'s manifest.json link, or a stremio:// link.';
+
+  @override
+  String get tvEmptyStep2Title => 'Or send it from your phone';
+
+  @override
+  String get tvEmptyStep2Body =>
+      'Scan the QR code shown, paste the link on your phone.';
+
+  @override
+  String get tvEmptyStep3Title => 'Watch';
+
+  @override
+  String get tvEmptyStep3Body =>
+      'Catalogs, \"Continue\" and \"My list\" fill the home screen.';
 }

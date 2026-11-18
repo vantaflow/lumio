@@ -27,7 +27,15 @@ enum _TypeFilter { all, movie, series }
 
 /// Recherche unifiée (story 3.2) : clavier D-pad à gauche, résultats à droite.
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key, this.onOpenItem, this.tvLayout});
+  const SearchScreen({
+    super.key,
+    this.onOpenItem,
+    this.tvLayout,
+    this.initialType,
+  });
+
+  /// Filtre de type de départ : `movie`, `series` ou nul (tout).
+  final String? initialType;
 
   /// Force la disposition TV (tests) ; sinon détectée par `isTvLayout`.
   final bool? tvLayout;
@@ -50,6 +58,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _filter = switch (widget.initialType) {
+      'movie' => _TypeFilter.movie,
+      'series' => _TypeFilter.series,
+      _ => _TypeFilter.all,
+    };
     _voice = ref.read(voiceInputProvider);
     _micAvailable = _voice.maySupport;
     _restoreId = ref.read(focusMemoryProvider.notifier).restore(searchRouteKey);

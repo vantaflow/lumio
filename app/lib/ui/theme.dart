@@ -397,3 +397,12 @@ class LumioThemeScope extends StatelessWidget {
     return Theme(data: theme, child: child);
   }
 }
+
+extension LumioTextStyleWeight on TextStyle {
+  /// Change la graisse en tenant compte des polices variables (le thème fixe
+  /// aussi l'axe `wght`, qu'un simple `fontWeight` ne modifie pas).
+  TextStyle weighted(FontWeight w) => copyWith(
+    fontWeight: w,
+    fontVariations: [FontVariation.weight(w.value.toDouble())],
+  );
+}

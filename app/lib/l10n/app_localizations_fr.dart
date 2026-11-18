@@ -2215,4 +2215,47 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get partyHostOnly =>
       'Seul l\'hôte contrôle la lecture dans cette salle.';
+
+  @override
+  String get tvNavHome => 'Accueil';
+
+  @override
+  String get tvSwitchProfile => 'Changer de profil';
+
+  @override
+  String get tvEmptyEyebrow => 'BIENVENUE';
+
+  @override
+  String get tvEmptyTitle => 'Votre accueil attend ses sources';
+
+  @override
+  String get tvEmptyBody =>
+      'Lumio ne contient aucun contenu. Ajoutez un addon de confiance, un dossier de vos vidéos ou votre serveur Jellyfin : vos catalogues apparaîtront ici en rangées.';
+
+  @override
+  String get tvEmptyLocal => 'Dossier local';
+
+  @override
+  String get tvEmptyJellyfin => 'Serveur Jellyfin';
+
+  @override
+  String get tvEmptyStep1Title => 'Collez un lien';
+
+  @override
+  String get tvEmptyStep1Body =>
+      'Le lien manifest.json de l\'addon, ou un lien stremio://.';
+
+  @override
+  String get tvEmptyStep2Title => 'Ou envoyez-le du téléphone';
+
+  @override
+  String get tvEmptyStep2Body =>
+      'Scannez le QR code affiché, collez le lien sur le téléphone.';
+
+  @override
+  String get tvEmptyStep3Title => 'Regardez';
+
+  @override
+  String get tvEmptyStep3Body =>
+      'Catalogues, « Continuer » et « Ma liste » remplissent l\'accueil.';
 }

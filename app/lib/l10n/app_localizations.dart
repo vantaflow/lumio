@@ -3805,6 +3805,84 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Seul l\'hôte contrôle la lecture dans cette salle.'**
   String get partyHostOnly;
+
+  /// No description provided for @tvNavHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accueil'**
+  String get tvNavHome;
+
+  /// No description provided for @tvSwitchProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer de profil'**
+  String get tvSwitchProfile;
+
+  /// No description provided for @tvEmptyEyebrow.
+  ///
+  /// In fr, this message translates to:
+  /// **'BIENVENUE'**
+  String get tvEmptyEyebrow;
+
+  /// No description provided for @tvEmptyTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre accueil attend ses sources'**
+  String get tvEmptyTitle;
+
+  /// No description provided for @tvEmptyBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lumio ne contient aucun contenu. Ajoutez un addon de confiance, un dossier de vos vidéos ou votre serveur Jellyfin : vos catalogues apparaîtront ici en rangées.'**
+  String get tvEmptyBody;
+
+  /// No description provided for @tvEmptyLocal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dossier local'**
+  String get tvEmptyLocal;
+
+  /// No description provided for @tvEmptyJellyfin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur Jellyfin'**
+  String get tvEmptyJellyfin;
+
+  /// No description provided for @tvEmptyStep1Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez un lien'**
+  String get tvEmptyStep1Title;
+
+  /// No description provided for @tvEmptyStep1Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le lien manifest.json de l\'addon, ou un lien stremio://.'**
+  String get tvEmptyStep1Body;
+
+  /// No description provided for @tvEmptyStep2Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ou envoyez-le du téléphone'**
+  String get tvEmptyStep2Title;
+
+  /// No description provided for @tvEmptyStep2Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez le QR code affiché, collez le lien sur le téléphone.'**
+  String get tvEmptyStep2Body;
+
+  /// No description provided for @tvEmptyStep3Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Regardez'**
+  String get tvEmptyStep3Title;
+
+  /// No description provided for @tvEmptyStep3Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catalogues, « Continuer » et « Ma liste » remplissent l\'accueil.'**
+  String get tvEmptyStep3Body;
 }
 
 class _AppLocalizationsDelegate
