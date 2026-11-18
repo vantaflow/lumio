@@ -2,6 +2,7 @@ library;
 
 export 'src/addons/addon_client.dart';
 export 'src/addons/addon_url.dart';
+export 'src/addons/install_link.dart';
 export 'src/addons/catalog_aggregator.dart';
 export 'src/addons/manifest.dart';
 export 'src/addons/meta.dart';
