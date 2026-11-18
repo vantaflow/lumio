@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/data/progress_repository.dart';
+import 'package:lumio/player/next_episode_overlay.dart';
 import 'package:lumio/player/player_controller.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
@@ -11,6 +13,7 @@ import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart' hide Video;
+import 'package:lumio_core/lumio_core.dart' as core show Video;
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -82,6 +85,10 @@ class PlayerScreen extends ConsumerStatefulWidget {
     this.allowPrivate = false,
     this.controller,
     this.metaId,
+    this.profileId = defaultProfileId,
+    this.videoId,
+    this.meta,
+    this.resolveNext,
     this.subtitles = const [],
     this.allowPrivateForAddon,
     this.videoBuilder,
@@ -100,6 +107,19 @@ class PlayerScreen extends ConsumerStatefulWidget {
   /// Identifiant du titre (`tt1` ou `tt1:1:2`) pour mémoriser pistes et
   /// décalage par série ; sans lui, rien n'est mémorisé.
   final String? metaId;
+
+  /// Profil dont la progression est enregistrée.
+  final String profileId;
+
+  /// Identifiant de l'épisode lu (`tt1:1:2`) ; par défaut [metaId] (film).
+  final String? videoId;
+
+  /// Fiche du titre, pour trouver l'épisode suivant.
+  final Meta? meta;
+
+  /// Résout le flux de l'épisode suivant (fournie par l'appelant) ; `null`
+  /// en retour : « Épisode suivant indisponible ».
+  final Future<StreamItem?> Function(core.Video next)? resolveNext;
 
   /// Sous-titres proposés par les addons pour ce flux.
   final List<SubtitleItem> subtitles;
@@ -129,6 +149,72 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool _panel = false;
   Timer? _hide;
   bool _controls = true;
+  late String? _videoId = widget.videoId ?? widget.metaId;
+  late String _title = widget.item.title;
+  ProgressRecorder? _recorder;
+  Duration? _credits;
+  bool _offerDone = false;
+  bool _showNext = false;
+  bool _switching = false;
+  bool _disposed = false;
+
+  core.Video? get _next {
+    final m = widget.meta;
+    final id = _videoId;
+    if (m == null || id == null || widget.resolveNext == null) return null;
+    return nextEpisode(m, id);
+  }
+
+  ProgressRecorder? _newRecorder() {
+    final metaId = widget.metaId;
+    final id = _videoId;
+    if (metaId == null || id == null) return null;
+    final nextId = _next?.id;
+    // Lu ici : `ref` n'est plus utilisable quand dispose() écrit la sortie.
+    final repo = ref.read(progressRepositoryProvider);
+    return ProgressRecorder(
+      save: (pos, dur) => repo.save(
+        widget.profileId,
+        metaId,
+        id,
+        pos,
+        dur,
+        nextVideoId: nextId,
+      ),
+    );
+  }
+
+  /// Ouvre [item] à la position de reprise enregistrée (au-delà de 2 %,
+  /// jusqu'à 90 %), sinon depuis le début.
+  Future<void> _openFrom(StreamItem item) async {
+    var start = Duration.zero;
+    final id = _videoId;
+    if (widget.metaId != null && id != null) {
+      try {
+        final e = await ref
+            .read(progressRepositoryProvider)
+            .get(widget.profileId, id);
+        if (e != null) {
+          start = ProgressRules.resumeAt(e.position, e.duration) ?? start;
+        }
+      } on Object {
+        // Progression illisible : lecture depuis le début.
+      }
+    }
+    if (_disposed) return;
+    if (start > Duration.zero) _tell('Reprise à ${formatClock(start)}');
+    await _ctl.open(item, allowPrivate: widget.allowPrivate, start: start);
+    unawaited(_loadCredits());
+  }
+
+  Future<void> _loadCredits() async {
+    if (_next == null) return;
+    try {
+      _credits = await _ctl.creditsStart();
+    } on Object {
+      _credits = null;
+    }
+  }
 
   @override
   void initState() {
@@ -138,7 +224,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         PlayerController(proxy: () => ref.read(localProxyProvider.future));
     _ctl.stateListenable.addListener(_onState);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    unawaited(_ctl.open(widget.item, allowPrivate: widget.allowPrivate));
+    _recorder = _newRecorder();
+    unawaited(_openFrom(widget.item));
     unawaited(_initTracks());
     _armHide();
   }
@@ -221,6 +308,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   void dispose() {
+    _disposed = true;
+    final st = _ctl.state;
+    _recorder?.flush(st.position, st.duration, force: true);
     _hide?.cancel();
     _ctl.stateListenable.removeListener(_onState);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -234,14 +324,88 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   PlayerPhase? _lastPhase;
   void _onState() {
-    final p = _ctl.state.phase;
+    final st = _ctl.state;
+    final p = st.phase;
+    if (p == PlayerPhase.playing) {
+      _recorder?.tick(st.position, st.duration);
+      _maybeOfferNext(st);
+    }
     if (p == _lastPhase) return;
     _lastPhase = p;
+    if (p == PlayerPhase.paused || p == PlayerPhase.ended) {
+      _recorder?.flush(st.position, st.duration);
+    }
+    if (p == PlayerPhase.ended && !_switching) _offerNext();
     if (p == PlayerPhase.failed || p == PlayerPhase.paused) {
       _showControls();
     } else {
       _armHide();
     }
+  }
+
+  /// Fin de déplacement : enregistre la position visée (la position du
+  /// moteur n'est pas encore à jour).
+  void _flushAfterSeek(Duration target) {
+    final st = _ctl.state;
+    var t = target < Duration.zero ? Duration.zero : target;
+    if (st.duration > Duration.zero && t > st.duration) t = st.duration;
+    _recorder?.flush(t, st.duration);
+  }
+
+  void _maybeOfferNext(PlayerState st) {
+    if (_offerDone || _showNext || _next == null) return;
+    if (shouldOfferNext(st.position, st.duration, creditsStart: _credits)) {
+      _offerNext();
+    }
+  }
+
+  void _offerNext() {
+    if (_next == null || _showNext || _offerDone) return;
+    _offerDone = true;
+    _hide?.cancel();
+    setState(() => _showNext = true);
+  }
+
+  void _cancelNext() {
+    setState(() => _showNext = false);
+    _root.requestFocus();
+  }
+
+  /// Marque l'épisode comme vu s'il l'est (≥ 90 %), résout et ouvre le
+  /// suivant ; sans flux, message et lecture en cours conservée.
+  Future<void> _playNext() async {
+    final next = _next;
+    final resolve = widget.resolveNext;
+    if (next == null || resolve == null || _switching) return;
+    _switching = true;
+    setState(() => _showNext = false);
+    StreamItem? item;
+    try {
+      item = await resolve(next);
+    } on Object {
+      item = null;
+    }
+    if (_disposed) return;
+    if (item == null) {
+      _switching = false;
+      _tell('Épisode suivant indisponible');
+      _root.requestFocus();
+      return;
+    }
+    // L'utilisateur passe à la suite : l'épisode est enregistré comme vu et
+    // le suivant entre dans « Continuer ».
+    final st = _ctl.state;
+    _recorder?.flush(st.duration, st.duration, force: true);
+    setState(() {
+      _videoId = next.id;
+      _title = item!.title;
+      _offerDone = false;
+      _credits = null;
+      _recorder = _newRecorder();
+    });
+    _switching = false;
+    _root.requestFocus();
+    await _openFrom(item);
   }
 
   void _armHide() {
@@ -273,7 +437,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
     // Panneau ouvert : il gère seul les touches (flèches = navigation).
-    if (_panel) return KeyEventResult.ignored;
+    if (_panel || _showNext) return KeyEventResult.ignored;
     final action = mapPlayerKey(event.logicalKey, controlsVisible: _controls);
     switch (action) {
       case PlayerKeyAction.none:
@@ -284,9 +448,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         _showControls();
       case PlayerKeyAction.seekBack:
         unawaited(_ctl.seekBy(-seekStep));
+        _flushAfterSeek(_ctl.state.position - seekStep);
         _showControls();
       case PlayerKeyAction.seekForward:
         unawaited(_ctl.seekBy(seekStep));
+        _flushAfterSeek(_ctl.state.position + seekStep);
         _showControls();
       case PlayerKeyAction.volumeUp:
         unawaited(_ctl.setVolume(_ctl.state.volume + 10));
@@ -349,7 +515,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       child: IgnorePointer(
                         ignoring: !_controls,
                         child: _Controls(
-                          title: widget.item.title,
+                          title: _title,
                           state: st,
                           playNode: _playNode,
                           tracksNode: _tracksNode,
@@ -360,16 +526,25 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           },
                           onSeekBy: (d) {
                             unawaited(_ctl.seekBy(d));
+                            _flushAfterSeek(_ctl.state.position + d);
                             _armHide();
                           },
                           onSeekTo: (t) {
                             unawaited(_ctl.seekTo(t));
+                            _flushAfterSeek(t);
                             _armHide();
                           },
                           onTouch: () => _showControls(),
                         ),
                       ),
                     ),
+                  ),
+                if (_showNext && !failed && _next != null)
+                  NextEpisodeOverlay(
+                    key: ValueKey(_videoId),
+                    episodeTitle: _next!.title,
+                    onPlayNow: () => unawaited(_playNext()),
+                    onCancel: _cancelNext,
                   ),
                 if (_panel && _tracks != null && !failed)
                   PositionedDirectional(

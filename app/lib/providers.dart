@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/db_connection.dart';
+import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/secret_store.dart';
 import 'package:lumio/data/title_settings_store.dart';
 import 'package:lumio/player/local_proxy.dart';
@@ -84,4 +85,14 @@ final titleSettingsStoreProvider = FutureProvider<DriftTitleSettingsStore>((
 
 final subtitleStyleStoreProvider = Provider<SubtitleStyleStore>(
   (ref) => SubtitleStyleStore(ref.watch(appDatabaseProvider)),
+);
+
+final progressRepositoryProvider = Provider<ProgressRepository>(
+  (ref) => ProgressRepository(ref.watch(appDatabaseProvider)),
+);
+
+/// Rangée « Continuer à regarder » du profil actif.
+final continueWatchingProvider = StreamProvider<List<ProgressEntry>>(
+  (ref) =>
+      ref.watch(progressRepositoryProvider).continueWatching(defaultProfileId),
 );

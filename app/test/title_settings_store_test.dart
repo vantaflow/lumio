@@ -15,6 +15,13 @@ void main() {
             raw.execute(
               'CREATE TABLE settings (key TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL)',
             );
+            raw.execute(
+              'CREATE TABLE progress (profile_id TEXT NOT NULL DEFAULT \'default\', '
+              'item_id TEXT NOT NULL, position_ms INTEGER NOT NULL DEFAULT 0, '
+              'duration_ms INTEGER NOT NULL DEFAULT 0, '
+              'updated_at INTEGER NOT NULL DEFAULT 0, '
+              'PRIMARY KEY (profile_id, item_id))',
+            );
             raw.execute("INSERT INTO settings VALUES ('k', 'v')");
             raw.execute('PRAGMA user_version = 1');
           },

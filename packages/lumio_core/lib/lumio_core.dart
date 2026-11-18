@@ -20,3 +20,5 @@ export 'src/subtitles/charset.dart';
 export 'src/subtitles/subtitle_item.dart';
 export 'src/subtitles/subtitle_service.dart';
 export 'src/playback/title_settings.dart';
+export 'src/playback/next_episode.dart';
+export 'src/playback/progress_rules.dart';

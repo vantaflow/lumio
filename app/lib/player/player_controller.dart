@@ -8,6 +8,8 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'package:lumio/player/next_episode_overlay.dart' show parseCreditsStart;
+
 export 'package:lumio/player/playback_report.dart'
     show PlaybackReport, explainFailure;
 
@@ -257,6 +259,18 @@ class PlayerController {
   }
 
   Future<void> seekTo(Duration t) => player.seek(t);
+
+  /// Début du chapitre « Credits » / « Générique » s'il existe ; `null` sinon
+  /// (ou si le moteur ne sait pas lister les chapitres).
+  Future<Duration?> creditsStart() async {
+    final p = player.platform;
+    if (p is! NativePlayer) return null;
+    try {
+      return parseCreditsStart(await p.getProperty('chapter-list'));
+    } on Object {
+      return null;
+    }
+  }
 
   Future<void> setVolume(double v) => player.setVolume(v.clamp(0, 100));
 

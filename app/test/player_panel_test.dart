@@ -74,6 +74,7 @@ void main() {
       await t.pumpWidget(
         ProviderScope(
           overrides: [
+            appDatabaseProvider.overrideWithValue(db),
             titleSettingsStoreProvider.overrideWith((ref) async => store),
             subtitleStyleStoreProvider.overrideWithValue(
               SubtitleStyleStore(db),

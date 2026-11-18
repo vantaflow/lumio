@@ -1154,6 +1154,31 @@ class $ProgressTable extends Progress
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _metaIdMeta = const VerificationMeta('metaId');
+  @override
+  late final GeneratedColumn<String> metaId = GeneratedColumn<String>(
+    'meta_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _watchedMeta = const VerificationMeta(
+    'watched',
+  );
+  @override
+  late final GeneratedColumn<bool> watched = GeneratedColumn<bool>(
+    'watched',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("watched" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     profileId,
@@ -1161,6 +1186,8 @@ class $ProgressTable extends Progress
     positionMs,
     durationMs,
     updatedAt,
+    metaId,
+    watched,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1206,6 +1233,18 @@ class $ProgressTable extends Progress
         updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
       );
     }
+    if (data.containsKey('meta_id')) {
+      context.handle(
+        _metaIdMeta,
+        metaId.isAcceptableOrUnknown(data['meta_id']!, _metaIdMeta),
+      );
+    }
+    if (data.containsKey('watched')) {
+      context.handle(
+        _watchedMeta,
+        watched.isAcceptableOrUnknown(data['watched']!, _watchedMeta),
+      );
+    }
     return context;
   }
 
@@ -1235,6 +1274,14 @@ class $ProgressTable extends Progress
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
+      metaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meta_id'],
+      )!,
+      watched: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}watched'],
+      )!,
     );
   }
 
@@ -1250,12 +1297,21 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
   final int positionMs;
   final int durationMs;
   final int updatedAt;
+
+  /// Titre ou série d'appartenance de [itemId] (v3) ; vide pour les lignes
+  /// antérieures.
+  final String metaId;
+
+  /// Marqué comme vu (≥ 90 %, v3).
+  final bool watched;
   const ProgressData({
     required this.profileId,
     required this.itemId,
     required this.positionMs,
     required this.durationMs,
     required this.updatedAt,
+    required this.metaId,
+    required this.watched,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1265,6 +1321,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     map['position_ms'] = Variable<int>(positionMs);
     map['duration_ms'] = Variable<int>(durationMs);
     map['updated_at'] = Variable<int>(updatedAt);
+    map['meta_id'] = Variable<String>(metaId);
+    map['watched'] = Variable<bool>(watched);
     return map;
   }
 
@@ -1275,6 +1333,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       positionMs: Value(positionMs),
       durationMs: Value(durationMs),
       updatedAt: Value(updatedAt),
+      metaId: Value(metaId),
+      watched: Value(watched),
     );
   }
 
@@ -1289,6 +1349,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       positionMs: serializer.fromJson<int>(json['positionMs']),
       durationMs: serializer.fromJson<int>(json['durationMs']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      metaId: serializer.fromJson<String>(json['metaId']),
+      watched: serializer.fromJson<bool>(json['watched']),
     );
   }
   @override
@@ -1300,6 +1362,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       'positionMs': serializer.toJson<int>(positionMs),
       'durationMs': serializer.toJson<int>(durationMs),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'metaId': serializer.toJson<String>(metaId),
+      'watched': serializer.toJson<bool>(watched),
     };
   }
 
@@ -1309,12 +1373,16 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     int? positionMs,
     int? durationMs,
     int? updatedAt,
+    String? metaId,
+    bool? watched,
   }) => ProgressData(
     profileId: profileId ?? this.profileId,
     itemId: itemId ?? this.itemId,
     positionMs: positionMs ?? this.positionMs,
     durationMs: durationMs ?? this.durationMs,
     updatedAt: updatedAt ?? this.updatedAt,
+    metaId: metaId ?? this.metaId,
+    watched: watched ?? this.watched,
   );
   ProgressData copyWithCompanion(ProgressCompanion data) {
     return ProgressData(
@@ -1327,6 +1395,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           ? data.durationMs.value
           : this.durationMs,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      metaId: data.metaId.present ? data.metaId.value : this.metaId,
+      watched: data.watched.present ? data.watched.value : this.watched,
     );
   }
 
@@ -1337,14 +1407,23 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           ..write('itemId: $itemId, ')
           ..write('positionMs: $positionMs, ')
           ..write('durationMs: $durationMs, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('metaId: $metaId, ')
+          ..write('watched: $watched')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(profileId, itemId, positionMs, durationMs, updatedAt);
+  int get hashCode => Object.hash(
+    profileId,
+    itemId,
+    positionMs,
+    durationMs,
+    updatedAt,
+    metaId,
+    watched,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1353,7 +1432,9 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           other.itemId == this.itemId &&
           other.positionMs == this.positionMs &&
           other.durationMs == this.durationMs &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.metaId == this.metaId &&
+          other.watched == this.watched);
 }
 
 class ProgressCompanion extends UpdateCompanion<ProgressData> {
@@ -1362,6 +1443,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
   final Value<int> positionMs;
   final Value<int> durationMs;
   final Value<int> updatedAt;
+  final Value<String> metaId;
+  final Value<bool> watched;
   final Value<int> rowid;
   const ProgressCompanion({
     this.profileId = const Value.absent(),
@@ -1369,6 +1452,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     this.positionMs = const Value.absent(),
     this.durationMs = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.metaId = const Value.absent(),
+    this.watched = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProgressCompanion.insert({
@@ -1377,6 +1462,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     this.positionMs = const Value.absent(),
     this.durationMs = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.metaId = const Value.absent(),
+    this.watched = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : itemId = Value(itemId);
   static Insertable<ProgressData> custom({
@@ -1385,6 +1472,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     Expression<int>? positionMs,
     Expression<int>? durationMs,
     Expression<int>? updatedAt,
+    Expression<String>? metaId,
+    Expression<bool>? watched,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1393,6 +1482,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
       if (positionMs != null) 'position_ms': positionMs,
       if (durationMs != null) 'duration_ms': durationMs,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (metaId != null) 'meta_id': metaId,
+      if (watched != null) 'watched': watched,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1403,6 +1494,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     Value<int>? positionMs,
     Value<int>? durationMs,
     Value<int>? updatedAt,
+    Value<String>? metaId,
+    Value<bool>? watched,
     Value<int>? rowid,
   }) {
     return ProgressCompanion(
@@ -1411,6 +1504,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
       positionMs: positionMs ?? this.positionMs,
       durationMs: durationMs ?? this.durationMs,
       updatedAt: updatedAt ?? this.updatedAt,
+      metaId: metaId ?? this.metaId,
+      watched: watched ?? this.watched,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1433,6 +1528,12 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
+    if (metaId.present) {
+      map['meta_id'] = Variable<String>(metaId.value);
+    }
+    if (watched.present) {
+      map['watched'] = Variable<bool>(watched.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1447,6 +1548,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
           ..write('positionMs: $positionMs, ')
           ..write('durationMs: $durationMs, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('metaId: $metaId, ')
+          ..write('watched: $watched, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2547,6 +2650,8 @@ typedef $$ProgressTableCreateCompanionBuilder =
       Value<int> positionMs,
       Value<int> durationMs,
       Value<int> updatedAt,
+      Value<String> metaId,
+      Value<bool> watched,
       Value<int> rowid,
     });
 typedef $$ProgressTableUpdateCompanionBuilder =
@@ -2556,6 +2661,8 @@ typedef $$ProgressTableUpdateCompanionBuilder =
       Value<int> positionMs,
       Value<int> durationMs,
       Value<int> updatedAt,
+      Value<String> metaId,
+      Value<bool> watched,
       Value<int> rowid,
     });
 
@@ -2590,6 +2697,16 @@ class $$ProgressTableFilterComposer
 
   ColumnFilters<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metaId => $composableBuilder(
+    column: $table.metaId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get watched => $composableBuilder(
+    column: $table.watched,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2627,6 +2744,16 @@ class $$ProgressTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get metaId => $composableBuilder(
+    column: $table.metaId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get watched => $composableBuilder(
+    column: $table.watched,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProgressTableAnnotationComposer
@@ -2656,6 +2783,12 @@ class $$ProgressTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get metaId =>
+      $composableBuilder(column: $table.metaId, builder: (column) => column);
+
+  GeneratedColumn<bool> get watched =>
+      $composableBuilder(column: $table.watched, builder: (column) => column);
 }
 
 class $$ProgressTableTableManager
@@ -2694,6 +2827,8 @@ class $$ProgressTableTableManager
                 Value<int> positionMs = const Value.absent(),
                 Value<int> durationMs = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<String> metaId = const Value.absent(),
+                Value<bool> watched = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProgressCompanion(
                 profileId: profileId,
@@ -2701,6 +2836,8 @@ class $$ProgressTableTableManager
                 positionMs: positionMs,
                 durationMs: durationMs,
                 updatedAt: updatedAt,
+                metaId: metaId,
+                watched: watched,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2710,6 +2847,8 @@ class $$ProgressTableTableManager
                 Value<int> positionMs = const Value.absent(),
                 Value<int> durationMs = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<String> metaId = const Value.absent(),
+                Value<bool> watched = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProgressCompanion.insert(
                 profileId: profileId,
@@ -2717,6 +2856,8 @@ class $$ProgressTableTableManager
                 positionMs: positionMs,
                 durationMs: durationMs,
                 updatedAt: updatedAt,
+                metaId: metaId,
+                watched: watched,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

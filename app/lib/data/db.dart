@@ -55,6 +55,13 @@ class Progress extends Table {
   IntColumn get durationMs => integer().withDefault(const Constant(0))();
   IntColumn get updatedAt => integer().withDefault(const Constant(0))();
 
+  /// Titre ou série d'appartenance de [itemId] (v3) ; vide pour les lignes
+  /// antérieures.
+  TextColumn get metaId => text().withDefault(const Constant(''))();
+
+  /// Marqué comme vu (≥ 90 %, v3).
+  BoolColumn get watched => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column<Object>> get primaryKey => {profileId, itemId};
 }
@@ -96,13 +103,17 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.createTable(titleSettingsTable);
+      if (from < 3) {
+        await m.addColumn(progress, progress.metaId);
+        await m.addColumn(progress, progress.watched);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
