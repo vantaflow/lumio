@@ -1252,4 +1252,154 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get addonSyncPhraseReset =>
       'Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil.';
+
+  @override
+  String get settingsBackup => 'Sauvegarde';
+
+  @override
+  String get backupExport => 'Exporter mes données';
+
+  @override
+  String get backupExportHint =>
+      'Profils, ma liste, progression et réglages dans un fichier';
+
+  @override
+  String get backupImport => 'Importer une sauvegarde';
+
+  @override
+  String get backupImportHint =>
+      'Ajoute le contenu du fichier à vos données ; rien n\'est supprimé';
+
+  @override
+  String get backupSecretsTitle => 'Inclure les adresses d\'addons ?';
+
+  @override
+  String get backupSecretsWarning =>
+      'Ce fichier contiendra vos adresses d\'addons. Il sera chiffré avec une phrase secrète que vous choisissez : sans elle, personne ne pourra le lire, vous non plus. Sans les adresses, le fichier ne contient aucun secret.';
+
+  @override
+  String get backupWithoutSecrets => 'Sans les adresses';
+
+  @override
+  String get backupWithSecrets => 'Inclure (chiffré)';
+
+  @override
+  String get backupPassphraseTitle => 'Phrase secrète de la sauvegarde';
+
+  @override
+  String get backupPassphraseHint =>
+      'Choisissez une phrase d\'au moins 12 caractères. Elle n\'est pas enregistrée : notez-la.';
+
+  @override
+  String get backupImportPassphraseTitle => 'Sauvegarde chiffrée';
+
+  @override
+  String get backupImportPassphraseHint =>
+      'Saisissez la phrase secrète choisie lors de l\'export.';
+
+  @override
+  String get backupWrongPassphrase =>
+      'Phrase secrète incorrecte, ou fichier abîmé.';
+
+  @override
+  String get backupContinue => 'Continuer';
+
+  @override
+  String get backupErrUnknown => 'Ce fichier n\'est pas une sauvegarde Lumio.';
+
+  @override
+  String get backupErrVersion =>
+      'Cette sauvegarde vient d\'une version plus récente de Lumio. Mettez l\'application à jour.';
+
+  @override
+  String get backupErrMalformed => 'Cette sauvegarde est illisible ou abîmée.';
+
+  @override
+  String get backupErrTooLarge =>
+      'Cette sauvegarde est trop volumineuse (10 Mo au maximum).';
+
+  @override
+  String get backupErrFile => 'Impossible de lire ou d\'écrire le fichier.';
+
+  @override
+  String backupExported(String path) {
+    return 'Sauvegarde enregistrée : $path';
+  }
+
+  @override
+  String get backupPickTitle => 'Choisir une sauvegarde';
+
+  @override
+  String backupNoFiles(String dir) {
+    return 'Aucune sauvegarde trouvée. Copiez un fichier .lumio.json dans ce dossier : $dir';
+  }
+
+  @override
+  String get backupConfirmTitle => 'Importer cette sauvegarde ?';
+
+  @override
+  String get backupConfirmBody =>
+      'Le contenu du fichier est ajouté à vos données. Rien n\'est supprimé ni remplacé, sauf une progression moins récente que celle du fichier.';
+
+  @override
+  String get backupImportBusy => 'Import en cours…';
+
+  @override
+  String get backupDoneTitle => 'Import terminé';
+
+  @override
+  String backupSumProfiles(int n) {
+    return '$n profil(s) ajouté(s)';
+  }
+
+  @override
+  String backupSumLibrary(int n) {
+    return '$n titre(s) ajouté(s) à la liste';
+  }
+
+  @override
+  String backupSumProgress(int n) {
+    return '$n progression(s) importée(s)';
+  }
+
+  @override
+  String backupSumAddons(int n) {
+    return '$n addon(s) installé(s)';
+  }
+
+  @override
+  String get backupSumNothing =>
+      'Rien de nouveau : vos données contenaient déjà tout.';
+
+  @override
+  String backupSumNameOnly(int n) {
+    return '$n addon(s) à réinstaller à la main : le fichier ne contient pas leurs adresses.';
+  }
+
+  @override
+  String backupSumFailed(int n) {
+    return '$n addon(s) n\'ont pas pu être installés.';
+  }
+
+  @override
+  String backupSumSkipped(int n) {
+    return '$n entrée(s) invalide(s) ignorée(s).';
+  }
+
+  @override
+  String backupSumProfilesSkipped(int n) {
+    return '$n profil(s) non ajouté(s) : six profils au maximum.';
+  }
+
+  @override
+  String get backupKidNeedsPin =>
+      'Un profil enfant a été ajouté : créez d\'abord un PIN parent pour l\'utiliser.';
+
+  @override
+  String get backupPrivateTitle => 'Adresse locale';
+
+  @override
+  String backupPrivateBody(String name) {
+    return '« $name » pointe vers votre réseau local. L\'installer quand même ?';
+  }
 }

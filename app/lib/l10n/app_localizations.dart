@@ -2269,6 +2269,240 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil.'**
   String get addonSyncPhraseReset;
+
+  /// No description provided for @settingsBackup.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarde'**
+  String get settingsBackup;
+
+  /// No description provided for @backupExport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Exporter mes données'**
+  String get backupExport;
+
+  /// No description provided for @backupExportHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profils, ma liste, progression et réglages dans un fichier'**
+  String get backupExportHint;
+
+  /// No description provided for @backupImport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Importer une sauvegarde'**
+  String get backupImport;
+
+  /// No description provided for @backupImportHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoute le contenu du fichier à vos données ; rien n\'est supprimé'**
+  String get backupImportHint;
+
+  /// No description provided for @backupSecretsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inclure les adresses d\'addons ?'**
+  String get backupSecretsTitle;
+
+  /// No description provided for @backupSecretsWarning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce fichier contiendra vos adresses d\'addons. Il sera chiffré avec une phrase secrète que vous choisissez : sans elle, personne ne pourra le lire, vous non plus. Sans les adresses, le fichier ne contient aucun secret.'**
+  String get backupSecretsWarning;
+
+  /// No description provided for @backupWithoutSecrets.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sans les adresses'**
+  String get backupWithoutSecrets;
+
+  /// No description provided for @backupWithSecrets.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inclure (chiffré)'**
+  String get backupWithSecrets;
+
+  /// No description provided for @backupPassphraseTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Phrase secrète de la sauvegarde'**
+  String get backupPassphraseTitle;
+
+  /// No description provided for @backupPassphraseHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez une phrase d\'au moins 12 caractères. Elle n\'est pas enregistrée : notez-la.'**
+  String get backupPassphraseHint;
+
+  /// No description provided for @backupImportPassphraseTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarde chiffrée'**
+  String get backupImportPassphraseTitle;
+
+  /// No description provided for @backupImportPassphraseHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez la phrase secrète choisie lors de l\'export.'**
+  String get backupImportPassphraseHint;
+
+  /// No description provided for @backupWrongPassphrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Phrase secrète incorrecte, ou fichier abîmé.'**
+  String get backupWrongPassphrase;
+
+  /// No description provided for @backupContinue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get backupContinue;
+
+  /// No description provided for @backupErrUnknown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce fichier n\'est pas une sauvegarde Lumio.'**
+  String get backupErrUnknown;
+
+  /// No description provided for @backupErrVersion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette sauvegarde vient d\'une version plus récente de Lumio. Mettez l\'application à jour.'**
+  String get backupErrVersion;
+
+  /// No description provided for @backupErrMalformed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette sauvegarde est illisible ou abîmée.'**
+  String get backupErrMalformed;
+
+  /// No description provided for @backupErrTooLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette sauvegarde est trop volumineuse (10 Mo au maximum).'**
+  String get backupErrTooLarge;
+
+  /// No description provided for @backupErrFile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de lire ou d\'écrire le fichier.'**
+  String get backupErrFile;
+
+  /// No description provided for @backupExported.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarde enregistrée : {path}'**
+  String backupExported(String path);
+
+  /// No description provided for @backupPickTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une sauvegarde'**
+  String get backupPickTitle;
+
+  /// No description provided for @backupNoFiles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune sauvegarde trouvée. Copiez un fichier .lumio.json dans ce dossier : {dir}'**
+  String backupNoFiles(String dir);
+
+  /// No description provided for @backupConfirmTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Importer cette sauvegarde ?'**
+  String get backupConfirmTitle;
+
+  /// No description provided for @backupConfirmBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le contenu du fichier est ajouté à vos données. Rien n\'est supprimé ni remplacé, sauf une progression moins récente que celle du fichier.'**
+  String get backupConfirmBody;
+
+  /// No description provided for @backupImportBusy.
+  ///
+  /// In fr, this message translates to:
+  /// **'Import en cours…'**
+  String get backupImportBusy;
+
+  /// No description provided for @backupDoneTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Import terminé'**
+  String get backupDoneTitle;
+
+  /// No description provided for @backupSumProfiles.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} profil(s) ajouté(s)'**
+  String backupSumProfiles(int n);
+
+  /// No description provided for @backupSumLibrary.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} titre(s) ajouté(s) à la liste'**
+  String backupSumLibrary(int n);
+
+  /// No description provided for @backupSumProgress.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} progression(s) importée(s)'**
+  String backupSumProgress(int n);
+
+  /// No description provided for @backupSumAddons.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) installé(s)'**
+  String backupSumAddons(int n);
+
+  /// No description provided for @backupSumNothing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien de nouveau : vos données contenaient déjà tout.'**
+  String get backupSumNothing;
+
+  /// No description provided for @backupSumNameOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) à réinstaller à la main : le fichier ne contient pas leurs adresses.'**
+  String backupSumNameOnly(int n);
+
+  /// No description provided for @backupSumFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) n\'ont pas pu être installés.'**
+  String backupSumFailed(int n);
+
+  /// No description provided for @backupSumSkipped.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} entrée(s) invalide(s) ignorée(s).'**
+  String backupSumSkipped(int n);
+
+  /// No description provided for @backupSumProfilesSkipped.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} profil(s) non ajouté(s) : six profils au maximum.'**
+  String backupSumProfilesSkipped(int n);
+
+  /// No description provided for @backupKidNeedsPin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un profil enfant a été ajouté : créez d\'abord un PIN parent pour l\'utiliser.'**
+  String get backupKidNeedsPin;
+
+  /// No description provided for @backupPrivateTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse locale'**
+  String get backupPrivateTitle;
+
+  /// No description provided for @backupPrivateBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'« {name} » pointe vers votre réseau local. L\'installer quand même ?'**
+  String backupPrivateBody(String name);
 }
 
 class _AppLocalizationsDelegate

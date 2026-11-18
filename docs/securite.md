@@ -74,6 +74,28 @@ texte opaque et ne reçoit jamais la phrase secrète.
   sur deux appareils, la dernière envoyée l'emporte (comme pour les autres
   éléments).
 
+## Sauvegarde locale (export / import)
+
+- Format `{"format":"lumio-backup","version":1}` : profils (nom, enfant, limite
+  d'âge), ma liste, progression, réglages de la liste blanche de la synchro,
+  réglages par titre, noms des addons. Jamais de PIN, de verrou, de code de
+  récupération, de jeton ni de phrase secrète.
+- Par défaut le fichier ne contient aucune adresse d'addon. Avec l'option
+  explicite « Inclure les adresses », le fichier entier est chiffré
+  (`SecretBox`, phrase de 12 caractères au moins choisie à l'export, données
+  associées `backup`) : une adresse n'est jamais écrite en clair sur le disque.
+- Import strict : format et version vérifiés (version future refusée), 10 Mo au
+  maximum, bornes par champ, réglages revalidés par la liste blanche. Fusion :
+  rien n'est supprimé ; les profils déjà présents ne sont pas modifiés (une
+  sauvegarde ne lève pas les limites d'un profil enfant) ; la progression la
+  plus récente l'emporte. Un profil enfant sans PIN parent sur l'appareil reste
+  inutilisable tant que le PIN n'est pas créé.
+- Les adresses d'un fichier chiffré passent par l'installation normale
+  (validation, garde SSRF) ; une adresse locale attend une confirmation.
+- Android : l'export va dans `Android/data/<appli>/files/backups` ; sur TV
+  (pas de sélecteur de fichiers) l'import liste les `*.lumio.json` de ce
+  dossier.
+
 ## Backend
 
 - Jetons de connexion et de rafraîchissement stockés hachés (SHA-256), jeton de

@@ -651,5 +651,121 @@
   "passphraseSave": "Enregistrer",
   "passphraseSaved": "Phrase secrète enregistrée",
   "passphraseErrSave": "Impossible d'enregistrer la phrase secrète",
-  "addonSyncPhraseReset": "Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil."
+  "addonSyncPhraseReset": "Phrase secrète à ressaisir : la synchronisation des addons a été réinitialisée depuis un autre appareil.",
+  "settingsBackup": "Sauvegarde",
+  "backupExport": "Exporter mes données",
+  "backupExportHint": "Profils, ma liste, progression et réglages dans un fichier",
+  "backupImport": "Importer une sauvegarde",
+  "backupImportHint": "Ajoute le contenu du fichier à vos données ; rien n'est supprimé",
+  "backupSecretsTitle": "Inclure les adresses d'addons ?",
+  "backupSecretsWarning": "Ce fichier contiendra vos adresses d'addons. Il sera chiffré avec une phrase secrète que vous choisissez : sans elle, personne ne pourra le lire, vous non plus. Sans les adresses, le fichier ne contient aucun secret.",
+  "backupWithoutSecrets": "Sans les adresses",
+  "backupWithSecrets": "Inclure (chiffré)",
+  "backupPassphraseTitle": "Phrase secrète de la sauvegarde",
+  "backupPassphraseHint": "Choisissez une phrase d'au moins 12 caractères. Elle n'est pas enregistrée : notez-la.",
+  "backupImportPassphraseTitle": "Sauvegarde chiffrée",
+  "backupImportPassphraseHint": "Saisissez la phrase secrète choisie lors de l'export.",
+  "backupWrongPassphrase": "Phrase secrète incorrecte, ou fichier abîmé.",
+  "backupContinue": "Continuer",
+  "backupErrUnknown": "Ce fichier n'est pas une sauvegarde Lumio.",
+  "backupErrVersion": "Cette sauvegarde vient d'une version plus récente de Lumio. Mettez l'application à jour.",
+  "backupErrMalformed": "Cette sauvegarde est illisible ou abîmée.",
+  "backupErrTooLarge": "Cette sauvegarde est trop volumineuse (10 Mo au maximum).",
+  "backupErrFile": "Impossible de lire ou d'écrire le fichier.",
+  "backupExported": "Sauvegarde enregistrée : {path}",
+  "@backupExported": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupPickTitle": "Choisir une sauvegarde",
+  "backupNoFiles": "Aucune sauvegarde trouvée. Copiez un fichier .lumio.json dans ce dossier : {dir}",
+  "@backupNoFiles": {
+    "placeholders": {
+      "dir": {
+        "type": "String"
+      }
+    }
+  },
+  "backupConfirmTitle": "Importer cette sauvegarde ?",
+  "backupConfirmBody": "Le contenu du fichier est ajouté à vos données. Rien n'est supprimé ni remplacé, sauf une progression moins récente que celle du fichier.",
+  "backupImportBusy": "Import en cours…",
+  "backupDoneTitle": "Import terminé",
+  "backupSumProfiles": "{n} profil(s) ajouté(s)",
+  "@backupSumProfiles": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumLibrary": "{n} titre(s) ajouté(s) à la liste",
+  "@backupSumLibrary": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumProgress": "{n} progression(s) importée(s)",
+  "@backupSumProgress": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumAddons": "{n} addon(s) installé(s)",
+  "@backupSumAddons": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumNothing": "Rien de nouveau : vos données contenaient déjà tout.",
+  "backupSumNameOnly": "{n} addon(s) à réinstaller à la main : le fichier ne contient pas leurs adresses.",
+  "@backupSumNameOnly": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumFailed": "{n} addon(s) n'ont pas pu être installés.",
+  "@backupSumFailed": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumSkipped": "{n} entrée(s) invalide(s) ignorée(s).",
+  "@backupSumSkipped": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumProfilesSkipped": "{n} profil(s) non ajouté(s) : six profils au maximum.",
+  "@backupSumProfilesSkipped": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupKidNeedsPin": "Un profil enfant a été ajouté : créez d'abord un PIN parent pour l'utiliser.",
+  "backupPrivateTitle": "Adresse locale",
+  "backupPrivateBody": "« {name} » pointe vers votre réseau local. L'installer quand même ?",
+  "@backupPrivateBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

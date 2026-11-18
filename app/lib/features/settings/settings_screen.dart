@@ -8,6 +8,7 @@ import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/settings/account_screen.dart';
+import 'package:lumio/features/settings/backup_section.dart';
 import 'package:lumio/features/detail/playback_service.dart'
     show streamPrefsProvider;
 import 'package:lumio/features/profiles/pin_dialog.dart' show requireParent;
@@ -174,6 +175,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
       ],
+      _Header(l.settingsBackup),
+      _Tile(
+        id: 'backupExport',
+        icon: Icons.file_upload_outlined,
+        title: l.backupExport,
+        subtitle: l.backupExportHint,
+        onTap: () => BackupFlows(context, ref).export(),
+      ),
+      _Tile(
+        id: 'backupImport',
+        icon: Icons.file_download_outlined,
+        title: l.backupImport,
+        subtitle: l.backupImportHint,
+        onTap: () => BackupFlows(context, ref).import(),
+      ),
       _Header(l.settingsLanguage),
       _Tile(
         id: 'locale',

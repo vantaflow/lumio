@@ -1237,4 +1237,152 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get addonSyncPhraseReset =>
       'Secret phrase needs to be entered again: addon sync was reset from another device.';
+
+  @override
+  String get settingsBackup => 'Backup';
+
+  @override
+  String get backupExport => 'Export my data';
+
+  @override
+  String get backupExportHint =>
+      'Profiles, my list, progress and settings in one file';
+
+  @override
+  String get backupImport => 'Import a backup';
+
+  @override
+  String get backupImportHint =>
+      'Adds the file\'s content to your data; nothing is deleted';
+
+  @override
+  String get backupSecretsTitle => 'Include addon addresses?';
+
+  @override
+  String get backupSecretsWarning =>
+      'This file will contain your addon addresses. It will be encrypted with a passphrase you choose: without it nobody can read it, you included. Without the addresses, the file contains no secret.';
+
+  @override
+  String get backupWithoutSecrets => 'Without addresses';
+
+  @override
+  String get backupWithSecrets => 'Include (encrypted)';
+
+  @override
+  String get backupPassphraseTitle => 'Backup passphrase';
+
+  @override
+  String get backupPassphraseHint =>
+      'Choose a passphrase of at least 12 characters. It is not saved: write it down.';
+
+  @override
+  String get backupImportPassphraseTitle => 'Encrypted backup';
+
+  @override
+  String get backupImportPassphraseHint =>
+      'Enter the passphrase chosen when exporting.';
+
+  @override
+  String get backupWrongPassphrase => 'Wrong passphrase, or damaged file.';
+
+  @override
+  String get backupContinue => 'Continue';
+
+  @override
+  String get backupErrUnknown => 'This file is not a Lumio backup.';
+
+  @override
+  String get backupErrVersion =>
+      'This backup comes from a newer version of Lumio. Update the app.';
+
+  @override
+  String get backupErrMalformed => 'This backup is unreadable or damaged.';
+
+  @override
+  String get backupErrTooLarge => 'This backup is too large (10 MB maximum).';
+
+  @override
+  String get backupErrFile => 'Could not read or write the file.';
+
+  @override
+  String backupExported(String path) {
+    return 'Backup saved: $path';
+  }
+
+  @override
+  String get backupPickTitle => 'Choose a backup';
+
+  @override
+  String backupNoFiles(String dir) {
+    return 'No backup found. Copy a .lumio.json file into this folder: $dir';
+  }
+
+  @override
+  String get backupConfirmTitle => 'Import this backup?';
+
+  @override
+  String get backupConfirmBody =>
+      'The file\'s content is added to your data. Nothing is deleted or replaced, except progress older than the file\'s.';
+
+  @override
+  String get backupImportBusy => 'Importing…';
+
+  @override
+  String get backupDoneTitle => 'Import finished';
+
+  @override
+  String backupSumProfiles(int n) {
+    return '$n profile(s) added';
+  }
+
+  @override
+  String backupSumLibrary(int n) {
+    return '$n title(s) added to the list';
+  }
+
+  @override
+  String backupSumProgress(int n) {
+    return '$n progress entr(ies) imported';
+  }
+
+  @override
+  String backupSumAddons(int n) {
+    return '$n addon(s) installed';
+  }
+
+  @override
+  String get backupSumNothing =>
+      'Nothing new: your data already had everything.';
+
+  @override
+  String backupSumNameOnly(int n) {
+    return '$n addon(s) to reinstall by hand: the file has no addresses.';
+  }
+
+  @override
+  String backupSumFailed(int n) {
+    return '$n addon(s) could not be installed.';
+  }
+
+  @override
+  String backupSumSkipped(int n) {
+    return '$n invalid entr(ies) ignored.';
+  }
+
+  @override
+  String backupSumProfilesSkipped(int n) {
+    return '$n profile(s) not added: six profiles at most.';
+  }
+
+  @override
+  String get backupKidNeedsPin =>
+      'A kids profile was added: create a parent PIN first to use it.';
+
+  @override
+  String get backupPrivateTitle => 'Local address';
+
+  @override
+  String backupPrivateBody(String name) {
+    return '\"$name\" points to your local network. Install it anyway?';
+  }
 }

@@ -422,5 +422,121 @@
   "passphraseSave": "Save",
   "passphraseSaved": "Secret phrase saved",
   "passphraseErrSave": "Could not save the secret phrase",
-  "addonSyncPhraseReset": "Secret phrase needs to be entered again: addon sync was reset from another device."
+  "addonSyncPhraseReset": "Secret phrase needs to be entered again: addon sync was reset from another device.",
+  "settingsBackup": "Backup",
+  "backupExport": "Export my data",
+  "backupExportHint": "Profiles, my list, progress and settings in one file",
+  "backupImport": "Import a backup",
+  "backupImportHint": "Adds the file's content to your data; nothing is deleted",
+  "backupSecretsTitle": "Include addon addresses?",
+  "backupSecretsWarning": "This file will contain your addon addresses. It will be encrypted with a passphrase you choose: without it nobody can read it, you included. Without the addresses, the file contains no secret.",
+  "backupWithoutSecrets": "Without addresses",
+  "backupWithSecrets": "Include (encrypted)",
+  "backupPassphraseTitle": "Backup passphrase",
+  "backupPassphraseHint": "Choose a passphrase of at least 12 characters. It is not saved: write it down.",
+  "backupImportPassphraseTitle": "Encrypted backup",
+  "backupImportPassphraseHint": "Enter the passphrase chosen when exporting.",
+  "backupWrongPassphrase": "Wrong passphrase, or damaged file.",
+  "backupContinue": "Continue",
+  "backupErrUnknown": "This file is not a Lumio backup.",
+  "backupErrVersion": "This backup comes from a newer version of Lumio. Update the app.",
+  "backupErrMalformed": "This backup is unreadable or damaged.",
+  "backupErrTooLarge": "This backup is too large (10 MB maximum).",
+  "backupErrFile": "Could not read or write the file.",
+  "backupExported": "Backup saved: {path}",
+  "@backupExported": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupPickTitle": "Choose a backup",
+  "backupNoFiles": "No backup found. Copy a .lumio.json file into this folder: {dir}",
+  "@backupNoFiles": {
+    "placeholders": {
+      "dir": {
+        "type": "String"
+      }
+    }
+  },
+  "backupConfirmTitle": "Import this backup?",
+  "backupConfirmBody": "The file's content is added to your data. Nothing is deleted or replaced, except progress older than the file's.",
+  "backupImportBusy": "Importing…",
+  "backupDoneTitle": "Import finished",
+  "backupSumProfiles": "{n} profile(s) added",
+  "@backupSumProfiles": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumLibrary": "{n} title(s) added to the list",
+  "@backupSumLibrary": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumProgress": "{n} progress entr(ies) imported",
+  "@backupSumProgress": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumAddons": "{n} addon(s) installed",
+  "@backupSumAddons": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumNothing": "Nothing new: your data already had everything.",
+  "backupSumNameOnly": "{n} addon(s) to reinstall by hand: the file has no addresses.",
+  "@backupSumNameOnly": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumFailed": "{n} addon(s) could not be installed.",
+  "@backupSumFailed": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumSkipped": "{n} invalid entr(ies) ignored.",
+  "@backupSumSkipped": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSumProfilesSkipped": "{n} profile(s) not added: six profiles at most.",
+  "@backupSumProfilesSkipped": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "backupKidNeedsPin": "A kids profile was added: create a parent PIN first to use it.",
+  "backupPrivateTitle": "Local address",
+  "backupPrivateBody": "\"{name}\" points to your local network. Install it anyway?",
+  "@backupPrivateBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

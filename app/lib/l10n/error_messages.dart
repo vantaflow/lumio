@@ -7,6 +7,16 @@ import 'package:lumio_core/lumio_core.dart';
 /// français reste réservé aux journaux.
 String l10nForError(AppLocalizations l, Object error) {
   if (error is ProfileLimitException) return l.maxProfilesReached;
+  if (error is BackupFormatException) {
+    return switch (error.error) {
+      BackupFormatError.unknownFormat => l.backupErrUnknown,
+      BackupFormatError.unsupportedVersion => l.backupErrVersion,
+      BackupFormatError.malformed => l.backupErrMalformed,
+      BackupFormatError.tooLarge => l.backupErrTooLarge,
+      BackupFormatError.passphraseRequired => l.backupWrongPassphrase,
+    };
+  }
+  if (error is WrongPassphraseException) return l.backupWrongPassphrase;
   if (error is InsufficientStorageException) {
     return l.torrentInsufficientStorage;
   }
