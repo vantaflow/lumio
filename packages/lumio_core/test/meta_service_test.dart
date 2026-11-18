@@ -121,7 +121,7 @@ void main() {
         '/slow/meta/movie/tt1.json',
         FakeResponse.json({
           'meta': {'id': 'tt1', 'description': 'lent'},
-        }, delay: const Duration(seconds: 3)),
+        }, delay: const Duration(milliseconds: 800)),
       );
       server.route(
         '/fast/meta/movie/tt1.json',
@@ -136,6 +136,30 @@ void main() {
       expect(sw.elapsed, lessThan(const Duration(seconds: 2)));
       expect(m.name, 'Rapide');
       expect(m.description, isNull);
+    },
+  );
+
+  test(
+    'ordre des manifestes : l\'addon lent mais dans le budget gagne',
+    () async {
+      server.route(
+        '/a/meta/movie/tt1.json',
+        FakeResponse.json({
+          'meta': {'id': 'tt1', 'name': 'A', 'description': 'desc A'},
+        }, delay: const Duration(milliseconds: 150)),
+      );
+      server.route(
+        '/b/meta/movie/tt1.json',
+        FakeResponse.json({
+          'meta': {'id': 'tt1', 'name': 'B', 'description': 'desc B'},
+        }),
+      );
+      final m = await _service().load([
+        _addon(server, '/a'),
+        _addon(server, '/b'),
+      ], _movie);
+      expect(m.name, 'A');
+      expect(m.description, 'desc A');
     },
   );
 
@@ -157,6 +181,7 @@ void main() {
               'released': '2020-05-01T00:00:00.000Z',
             },
             {'id': 'tt9:1:y', 'season': 1, 'released': 'pas une date'},
+            {'id': 'tt9:1:z', 'season': 1, 'released': '2020-05-01'},
             {'season': 1, 'episode': 9},
           ],
         },
@@ -173,13 +198,15 @@ void main() {
       'tt9:1:1',
       'tt9:1:2',
       'tt9:1:x',
+      'tt9:1:z',
       'tt9:1:y',
       'tt9:2:1',
       'tt9:0:1',
     ]);
     expect(m.videos[2].released, DateTime.utc(2020, 5, 1));
-    expect(m.videos[3].released, isNull);
-    expect(m.videos[4].title, 'Épisode 1');
+    expect(m.videos[3].released, DateTime.utc(2020, 5, 1));
+    expect(m.videos[4].released, isNull);
+    expect(m.videos[5].title, 'Épisode 1');
   });
 
   test('videos : premier addon non vide gagne', () async {

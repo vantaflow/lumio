@@ -20,16 +20,16 @@ class Video {
   /// Lit une entrée `videos` ; `null` si elle est inexploitable (sans id).
   static Video? tryParse(Object? json) {
     if (json is! Map) return null;
-    final id = _text(json['id']);
+    final id = metaText(json['id']);
     if (id == null) return null;
     final season = _int(json['season']);
     final episode = _int(json['episode'] ?? json['number']);
     final title =
-        _text(json['title']) ??
-        _text(json['name']) ??
+        metaText(json['title']) ??
+        metaText(json['name']) ??
         (episode != null ? 'Épisode $episode' : id);
     final r = json['released'];
-    final released = r is String ? DateTime.tryParse(r)?.toUtc() : null;
+    final released = r is String ? parseUtc(r) : null;
     return Video(
       id: id,
       title: title,
@@ -67,10 +67,22 @@ class Meta {
   final List<Video> videos;
 }
 
-String? _text(Object? v) {
+/// Texte non vide (les nombres sont convertis) ; `null` sinon.
+String? metaText(Object? v) {
   if (v is String) return v.trim().isEmpty ? null : v;
   if (v is num) return v.toString();
   return null;
+}
+
+/// Date en UTC ; sans fuseau explicite (`2020-05-01`), la valeur est lue comme
+/// UTC et non comme heure locale. `null` si illisible.
+DateTime? parseUtc(String s) {
+  final t = s.trim();
+  final hasZone = RegExp(
+    r'(Z|[+-]\d{2}(:?\d{2})?)$',
+    caseSensitive: false,
+  ).hasMatch(t.contains('T') || t.contains(' ') ? t : '');
+  return DateTime.tryParse(hasZone ? t : '${t}Z')?.toUtc();
 }
 
 int? _int(Object? v) {

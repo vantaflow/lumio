@@ -28,17 +28,13 @@ void main() {
 
   test('fichiers « JSON valide » décodent, « malformés » non', () {
     for (final name in ['valid_minimal.json', 'valid_full.json']) {
-      expect(
-        () => jsonDecode(File('${dir.path}/$name').readAsStringSync()),
-        returnsNormally,
-      );
+      expect(() => jsonDecode(File('${dir.path}/$name').readAsStringSync()),
+          returnsNormally);
     }
     for (final name in ['truncated.json', 'html_instead_of_json.json']) {
-      expect(
-        () => jsonDecode(File('${dir.path}/$name').readAsStringSync()),
-        throwsFormatException,
-        reason: name,
-      );
+      expect(() => jsonDecode(File('${dir.path}/$name').readAsStringSync()),
+          throwsFormatException,
+          reason: name);
     }
   });
 

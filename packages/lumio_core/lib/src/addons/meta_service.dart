@@ -42,7 +42,7 @@ class MetaService {
   }
 
   static Meta _merge(List<Map<String, dynamic>> raws, MetaPreview p) {
-    String? text(String key) => _first(raws, (m) => _str(m[key]));
+    String? text(String key) => _first(raws, (m) => metaText(m[key]));
     Uri? uri(String key) => _first(raws, (m) => _httpUri(m[key]));
 
     List<String> genres() =>
@@ -51,7 +51,7 @@ class MetaService {
           if (g is! List) return null;
           final l = [
             for (final e in g)
-              if (_str(e) != null) _str(e)!,
+              if (metaText(e) != null) metaText(e)!,
           ];
           return l.isEmpty ? null : l;
         }) ??
@@ -114,12 +114,6 @@ T? _first<T>(List<Map<String, dynamic>> raws, T? Function(Map m) pick) {
     final v = pick(m);
     if (v != null) return v;
   }
-  return null;
-}
-
-String? _str(Object? v) {
-  if (v is String) return v.trim().isEmpty ? null : v;
-  if (v is num) return v.toString();
   return null;
 }
 
