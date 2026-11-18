@@ -1748,6 +1748,18 @@ abstract class AppLocalizations {
   /// **'Saisir depuis mon téléphone'**
   String get pairPhoneButton;
 
+  /// No description provided for @useCopiedLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utiliser le lien copié'**
+  String get useCopiedLink;
+
+  /// No description provided for @installLinkInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce lien n\'est pas un lien d\'installation d\'addon.'**
+  String get installLinkInvalid;
+
   /// No description provided for @pairTitle.
   ///
   /// In fr, this message translates to:

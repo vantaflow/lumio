@@ -277,6 +277,8 @@
   "errOther": "Something went wrong",
   "qualityAuto": "Automatic",
   "pairPhoneButton": "Enter from my phone",
+  "useCopiedLink": "Use the copied link",
+  "installLinkInvalid": "This is not an add-on install link.",
   "pairTitle": "Enter from my phone",
   "pairStep1": "Scan this code with your phone.",
   "pairStep2": "Paste the link and tap Send.",

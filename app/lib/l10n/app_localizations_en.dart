@@ -936,6 +936,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairPhoneButton => 'Enter from my phone';
 
   @override
+  String get useCopiedLink => 'Use the copied link';
+
+  @override
+  String get installLinkInvalid => 'This is not an add-on install link.';
+
+  @override
   String get pairTitle => 'Enter from my phone';
 
   @override

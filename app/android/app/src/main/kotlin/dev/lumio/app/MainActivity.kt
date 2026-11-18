@@ -1,6 +1,7 @@
 package dev.lumio.app
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.StatFs
@@ -9,8 +10,47 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    // Lien reçu (VIEW stremio:// / lumio://, ou texte partagé) : transmis à
+    // Dart, qui ouvre l'écran d'ajout prérempli. Rien n'est installé ici.
+    private var pendingLink: String? = null
+    private var linksChannel: MethodChannel? = null
+
+    private fun extractLink(intent: Intent?): String? = when (intent?.action) {
+        Intent.ACTION_VIEW -> intent.dataString
+        Intent.ACTION_SEND ->
+            if (intent.type == "text/plain") intent.getStringExtra(Intent.EXTRA_TEXT) else null
+        else -> null
+    }
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        pendingLink = extractLink(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val link = extractLink(intent) ?: return
+        // Si Dart n'écoute pas encore (profil pas choisi), le lien reste en
+        // attente et sera repris par takeLink.
+        pendingLink = link
+        linksChannel?.invokeMethod("link", link, object : MethodChannel.Result {
+            override fun success(r: Any?) { if (pendingLink == link) pendingLink = null }
+            override fun error(c: String, m: String?, d: Any?) {}
+            override fun notImplemented() {}
+        })
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        linksChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "dev.lumio.app/links")
+        linksChannel!!.setMethodCallHandler { call, result ->
+            if (call.method == "takeLink") {
+                result.success(pendingLink)
+                pendingLink = null
+            } else {
+                result.notImplemented()
+            }
+        }
         // Espace libre du volume qui porte un dossier (politique de cache torrents).
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "dev.lumio.app/storage")
             .setMethodCallHandler { call, result ->

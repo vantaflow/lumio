@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
+import 'package:lumio/features/addons/install_link_handler.dart'
+    show isPlausibleInstallLink;
 import 'package:lumio/features/pairing/pairing_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/data/addon_repository.dart';
@@ -53,6 +55,34 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
   AddonManifest? _preview;
   bool _already = false;
   String? _error;
+  String? _copiedLink;
+
+  /// Lien d'installation (stremio://, texte avec URL) converti en URL http(s).
+  String get _effectiveUrl {
+    final text = _controller.text;
+    return parseInstallLink(text)?.toString() ?? text;
+  }
+
+  Future<void> _checkClipboard() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final text = data?.text?.trim();
+      if (!mounted || !isPlausibleInstallLink(text)) return;
+      setState(() => _copiedLink = text);
+    } catch (_) {
+      // Presse-papiers illisible : rien n'est proposé.
+    }
+  }
+
+  void _useCopied() {
+    final text = _copiedLink;
+    if (text == null) return;
+    _controller.text = text;
+    _controller.selection = TextSelection.collapsed(offset: text.length);
+    _allowPrivate = false;
+    setState(() => _copiedLink = null);
+    _schedule(immediate: true);
+  }
 
   @override
   void initState() {
@@ -62,6 +92,8 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _schedule(immediate: true);
       });
+    } else {
+      unawaited(_checkClipboard());
     }
   }
 
@@ -122,7 +154,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
 
   Future<void> _fetchPreview() async {
     final gen = ++_generation;
-    final text = _controller.text;
+    final text = _effectiveUrl;
     setState(() {
       _loading = true;
       _error = null;
@@ -194,7 +226,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     try {
       await ref
           .read(addonRepositoryProvider)
-          .install(_controller.text, allowPrivate: _allowPrivate);
+          .install(_effectiveUrl, allowPrivate: _allowPrivate);
       await ref.read(addonsProvider.notifier).refresh();
       if (mounted) Navigator.pop(context, true);
     } on AddonException catch (e) {
@@ -251,6 +283,12 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                   spacing: LumioSpacing.sm,
                   runSpacing: LumioSpacing.sm,
                   children: [
+                    if (_copiedLink != null)
+                      FilledButton.tonalIcon(
+                        onPressed: _useCopied,
+                        icon: const Icon(Icons.link),
+                        label: Text(context.l10n.useCopiedLink),
+                      ),
                     OutlinedButton.icon(
                       onPressed: _paste,
                       icon: const Icon(Icons.content_paste),

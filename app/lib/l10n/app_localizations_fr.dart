@@ -948,6 +948,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pairPhoneButton => 'Saisir depuis mon téléphone';
 
   @override
+  String get useCopiedLink => 'Utiliser le lien copié';
+
+  @override
+  String get installLinkInvalid =>
+      'Ce lien n\'est pas un lien d\'installation d\'addon.';
+
+  @override
   String get pairTitle => 'Saisir depuis mon téléphone';
 
   @override

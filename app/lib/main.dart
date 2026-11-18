@@ -11,6 +11,7 @@ import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/health_providers.dart';
+import 'package:lumio/features/addons/install_link_handler.dart';
 import 'package:lumio/features/calendar/release_sync.dart';
 import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/features/onboarding/onboarding_flow.dart';
@@ -124,5 +125,6 @@ class RootScreen extends StatelessWidget {
   const RootScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const HomeScreen();
+  Widget build(BuildContext context) =>
+      const InstallLinkHandler(child: HomeScreen());
 }
