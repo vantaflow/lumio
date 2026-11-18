@@ -20,10 +20,8 @@ void main() {
   tearDown(() async => server.close());
 
   test('répond 200 après le délai configuré', () async {
-    server.route(
-      '/manifest.json',
-      FakeResponse.json({'id': 'x'}, delay: const Duration(milliseconds: 300)),
-    );
+    server.route('/manifest.json',
+        FakeResponse.json({'id': 'x'}, delay: const Duration(milliseconds: 300)));
     final sw = Stopwatch()..start();
     final res = await _get(server.baseUrl.resolve('/manifest.json'));
     final body = await res.transform(utf8.decoder).join();
@@ -49,13 +47,9 @@ void main() {
 
   test('réponse brute : octets, type de contenu et statut', () async {
     server.route(
-      '/raw',
-      FakeResponse.raw(
-        utf8.encode('<html>oops'),
-        contentType: 'text/html',
-        status: 200,
-      ),
-    );
+        '/raw',
+        FakeResponse.raw(utf8.encode('<html>oops'),
+            contentType: 'text/html', status: 200));
     final res = await _get(server.baseUrl.resolve('/raw'));
     final body = await res.transform(utf8.decoder).join();
     expect(res.headers.contentType?.mimeType, 'text/html');

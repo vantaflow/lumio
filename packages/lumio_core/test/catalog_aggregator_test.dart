@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:lumio_core/lumio_core.dart';
 import 'package:lumio_core/testing.dart';
 import 'package:test/test.dart';
@@ -155,9 +158,9 @@ void main() {
     expect(rows.single.items.map((m) => m.id), ['a', 'b', 'c']);
     final next = await agg.page(addon, addon.catalogs.first, skip: 100);
     expect(next.map((m) => m.id), ['d', 'e']);
-    // Un nouvel appel de la même page ne renvoie plus rien de nouveau.
+    // Redemander la même page (réessai, reconstruction) donne le même résultat.
     final again = await agg.page(addon, addon.catalogs.first, skip: 100);
-    expect(again, isEmpty);
+    expect(again.map((m) => m.id), ['d', 'e']);
   });
 
   test('page(skip) lève AddonException si l\'addon est en erreur', () async {
@@ -191,26 +194,38 @@ void main() {
     expect(after.single.failed, isTrue);
   });
 
-  test('au plus 4 requêtes simultanées', () async {
+  test('au plus 4 requêtes simultanées (pic mesuré)', () async {
     final catalogs = [
-      for (var i = 0; i < 10; i++)
+      for (var i = 0; i < 8; i++)
         CatalogDecl(type: 'movie', id: 'c$i', name: 'C$i'),
     ];
-    for (final c in catalogs) {
-      server.route(
-        '/a/catalog/movie/${c.id}.json',
-        FakeResponse.json(
-          _metas([c.id]),
-          delay: const Duration(milliseconds: 100),
-        ),
-      );
-    }
-    final addon = _addon(server, '/a', 'a', catalogs: catalogs);
-    final agg = CatalogAggregator(_client(), TtlCache());
-    final sw = Stopwatch()..start();
-    final rows = await agg.rows([addon]).toList();
-    expect(rows, hasLength(10));
-    // 10 requêtes de 100 ms par lots de 4 : au moins 3 vagues.
-    expect(sw.elapsed, greaterThan(const Duration(milliseconds: 290)));
+    var current = 0, peak = 0;
+    final raw = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => raw.close(force: true));
+    raw.listen((req) async {
+      peak = ++current > peak ? current : peak;
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      current--;
+      req.response
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode(_metas([req.uri.pathSegments.last])));
+      await req.response.close();
+    });
+    final addon = AddonManifest(
+      id: 'a',
+      version: '1.0.0',
+      name: 'a',
+      types: const ['movie'],
+      resources: const [AddonResource('catalog')],
+      catalogs: catalogs,
+      transportUrl: Uri.parse('http://127.0.0.1:${raw.port}/manifest.json'),
+    );
+    final rows = await CatalogAggregator(
+      _client(),
+      TtlCache(),
+    ).rows([addon]).toList();
+    expect(rows, hasLength(8));
+    expect(rows.every((r) => !r.failed), isTrue);
+    expect(peak, 4);
   });
 }

@@ -23,7 +23,9 @@ class TtlCache {
   }
 
   void put(String k, Object v) {
-    _entries[k] = _Entry(v, _now().add(ttl));
+    final t = _now();
+    _entries.removeWhere((_, e) => !t.isBefore(e.expires));
+    _entries[k] = _Entry(v, t.add(ttl));
   }
 
   void clear() => _entries.clear();

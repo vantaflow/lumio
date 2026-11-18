@@ -40,7 +40,8 @@ class CatalogAggregator {
 
   final Queue<Completer<void>> _waiting = Queue();
   var _running = 0;
-  final Map<String, Set<String>> _seen = {};
+  // Par catalogue : skip -> éléments livrés (skip 0 = rangée d'accueil).
+  final Map<String, Map<int, List<MetaPreview>>> _delivered = {};
 
   /// Émet une rangée par catalogue (hors catalogues à extra obligatoire,
   /// comme la recherche), dans l'ordre d'arrivée.
@@ -50,12 +51,18 @@ class CatalogAggregator {
     out.onCancel = () => cancelled = true;
 
     Future<void> one(AddonManifest a, CatalogDecl c) async {
+      if (cancelled) return;
       CatalogRow row;
       try {
-        final items = await _fetch(a, c, const {});
-        _seenFor(a, c)
+        final items = await _fetch(
+          a,
+          c,
+          const {},
+          isCancelled: () => cancelled,
+        );
+        _deliveredFor(a, c)
           ..clear()
-          ..addAll(items.map((m) => m.id));
+          ..[0] = items;
         row = CatalogRow(
           addonId: a.id,
           catalogId: c.id,
@@ -93,27 +100,40 @@ class CatalogAggregator {
     CatalogDecl c, {
     required int skip,
   }) async {
+    final delivered = _deliveredFor(a, c);
+    final known = delivered[skip];
+    if (known != null) return known; // même page : même résultat
     final items = await _fetch(a, c, {if (skip > 0) 'skip': '$skip'});
-    final seen = _seenFor(a, c);
-    return [
+    final again = delivered[skip];
+    if (again != null) return again;
+    // Dédoublonne seulement contre les pages de skip inférieur déjà livrées.
+    final seen = <String>{
+      for (final e in delivered.entries)
+        if (e.key < skip) ...e.value.map((m) => m.id),
+    };
+    final page = List<MetaPreview>.unmodifiable([
       for (final m in items)
         if (seen.add(m.id)) m,
-    ];
+    ]);
+    delivered[skip] = page;
+    return page;
   }
 
-  Set<String> _seenFor(AddonManifest a, CatalogDecl c) =>
-      _seen.putIfAbsent('${a.transportUrl}|${c.type}|${c.id}', () => {});
+  Map<int, List<MetaPreview>> _deliveredFor(AddonManifest a, CatalogDecl c) =>
+      _delivered.putIfAbsent('${a.transportUrl}|${c.type}|${c.id}', () => {});
 
   Future<List<MetaPreview>> _fetch(
     AddonManifest a,
     CatalogDecl c,
-    Map<String, String> extra,
-  ) async {
+    Map<String, String> extra, {
+    bool Function()? isCancelled,
+  }) async {
     final key = _key(a, c, extra);
     final hit = _cache.get<List<MetaPreview>>(key);
     if (hit != null) return hit;
     await _acquire();
     try {
+      if (isCancelled?.call() ?? false) return const [];
       final items = await _client.catalog(a, c.type, c.id, extra: extra);
       final frozen = List<MetaPreview>.unmodifiable(items);
       _cache.put(key, frozen);
