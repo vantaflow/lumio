@@ -5,6 +5,14 @@ Aucune version n'est encore publiée.
 
 ## [Non publié]
 
+### Modifié (2026-11-18)
+- Android uniquement : cibles macOS, Windows et jobs CI desktop retirés.
+- Plus de synchronisation ni de compte : écrans Compte et phrase secrète,
+  client de synchro, appairage par le serveur retirés ; migration de base v11
+  (suppression de la file d'envoi et de ses déclencheurs).
+- Suivi Trakt seul (Simkl retiré), sans client_secret obligatoire.
+- `backend/` réduit au serveur des salles de watch-party, sans compte.
+
 ### Ajouté
 - Tâche 1 : monorepo (`app`, `packages/lumio_core`, `backend`), application
   Flutter, intégration continue, garde-fous (`disk-guard`, `check-licenses`,

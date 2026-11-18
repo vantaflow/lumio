@@ -91,3 +91,10 @@ Le détail des écrans, l'ordre fin des tâches (suivant l'ordre de développeme
 
 ## Amendement du 2026-11-18 — retrait de l'IPTV
 Décision de l'utilisateur : **Lumio n'a pas d'IPTV**. Retirés du périmètre : listes M3U/Xtream, chaînes en direct, guide EPG/XMLTV (EF-10, stories 5.1 et 5.2), le badge de source « IPTV », l'entrée « liste M3U » de l'assistant et l'écran « TV en direct ». Le proxy HTTP local reste (flux HLS et en-têtes imposés par les addons).
+
+## Amendement du 2026-11-18 — Android seul, sans synchronisation, Trakt seul
+Décisions de l'utilisateur, qui l'emportent sur le reste de ce document :
+- **Android uniquement** (Android TV et téléphone) : plus de cibles macOS, Windows ni Linux.
+- **Pas de synchronisation ni de compte** : retirés le serveur de comptes (lien magique, `EmailSender`, D1 `users`/`sessions`/`sync_items`/`pair_codes`), `GET/POST /sync`, la phrase secrète de synchronisation et l'appairage par le serveur. Les adresses d'addons restent chiffrées localement (`SecretStore`) ; la sauvegarde/import de fichier reste. L'ajout d'addons depuis un téléphone sera refait plus tard par une page web servie par la box.
+- **Suivi avec Trakt seul** : Simkl retiré. L'application Trakt est publique : le flux par code d'appareil n'exige pas de `client_secret`.
+- **Watch-party conservée**, mais sans compte : `backend/` ne garde que le Worker et le Durable Object des salles (salle anonyme : identifiant de 128 bits, code de 8 caractères, clé d'hôte, expiration 6 h, limites de taille et de débit conservées). Adresse du serveur configurable (`PARTY_SERVER_URL`), watch-party masquée si elle est vide.

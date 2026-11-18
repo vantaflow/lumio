@@ -14,7 +14,7 @@ réponse n'est garanti, mais chaque rapport sera lu.
 
 ## Périmètre
 
-Concerne : le code de ce dépôt (cœur, application, backend, scripts). Ne
+Concerne : le code de ce dépôt (cœur, application, serveur des salles de watch-party, scripts). Ne
 concerne pas les addons tiers ni les contenus auxquels ils donnent accès.
 
 Voir aussi [docs/securite.md](docs/securite.md).

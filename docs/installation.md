@@ -42,11 +42,6 @@ Le script `scripts/box-smoke.sh` construit, installe et vérifie que
 l'application démarre (voir [developpement.md](developpement.md)). L'application
 déclare l'entrée de lanceur TV (Leanback).
 
-## macOS et Windows
-
-Le code est partagé et l'intégration continue compile les deux cibles, mais
-aucune version desktop n'est publiée ni testée sur machine réelle à ce stade.
-
 ## Mises à jour
 
 Un vérificateur de mises à jour existe dans le cœur (manifeste de version avec

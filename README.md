@@ -1,14 +1,14 @@
 # Lumio
 
 Client média libre, multi-plateformes, compatible avec le protocole d'addons
-de Stremio. Lumio vise Android TV et Android en priorité, puis macOS et
-Windows, avec le même code Flutter.
+de Stremio. Lumio est **Android uniquement** (Android TV et téléphone),
+sans synchronisation ni compte.
 
 > **Statut : toutes les phases du plan sont réalisées, la validation sur
 > appareil reste à faire.** Les suites automatiques sont vertes (voir
 > [le rapport de vérification](docs/rapports/2026-11-18-verification-finale.md)),
-> mais les essais sur la box Android TV, les constructions macOS et Windows et
-> les services réels (Trakt, Simkl, Jellyfin, DLNA, backend déployé) n'ont pas
+> mais les essais sur la box Android TV et les services réels (Trakt, Jellyfin,
+> DLNA, serveur des salles de watch-party déployé) n'ont pas
 > encore été vérifiés. Aucune version publiée n'est disponible pour l'instant.
 
 Lumio est un projet indépendant, **non affilié à Stremio**. « Compatible avec
@@ -17,19 +17,20 @@ le protocole d'addons » décrit uniquement l'interopérabilité technique.
 ## Fonctionnalités
 
 - **Addons** : protocole d'addons (catalogues, fiches, flux, sous-titres),
-  agrégation de plusieurs addons, appairage depuis un téléphone.
+  agrégation de plusieurs addons. L'ajout depuis un téléphone sera fait plus
+  tard par une page web servie par la box.
 - **Lecture** : lecteur plein écran pensé pour la télécommande (D-pad) et la
   souris, pistes, sous-titres, reprise, épisode suivant.
 - **Torrents** : moteur intégré (libtorrent), lecture de magnets en streaming,
   cache disque, confidentialité réseau (VPN requis ou avertissement).
 - **Sources locales** : dossiers locaux et Jellyfin.
 - **Profils** : profils avec code PIN et contrôle parental.
-- **Synchronisation** : serveur auto-hébergeable, secrets (addons) chiffrés de
-  bout en bout côté client ; sauvegarde et restauration locales ; import depuis
-  Stremio.
+- **Sauvegarde** : export et import locaux d'un fichier (adresses d'addons
+  chiffrées par phrase secrète) ; import depuis Stremio. Pas de synchronisation
+  ni de compte.
 - **Qualité des sources** : santé des addons, tri et dédoublonnage des flux,
   basculement automatique vers une autre source.
-- **Suivi** : Trakt, Simkl, calendrier des sorties.
+- **Suivi** : Trakt (seul), calendrier des sorties.
 - **Partage** : cast DLNA, watch-party.
 
 Lumio **ne fournit, ne suggère et ne recherche aucune source** : aucun addon
@@ -76,21 +77,20 @@ désactivée ou masquée et que rien n'est envoyé.
 
 | Constante | Rôle |
 |---|---|
-| `backendUrl` | URL https du backend (appairage mobile, synchronisation, salons de watch-party) |
-| `traktClientId`, `traktClientSecret` | Application Trakt (suivi) |
-| `simklClientId` | Application Simkl (suivi) |
+| `partyServerUrl` (`--dart-define=PARTY_SERVER_URL=…`) | URL https du serveur des salles de watch-party ; vide = watch-party masquée |
+| `traktClientId` (`--dart-define=TRAKT_CLIENT_ID=…`) | Application Trakt publique (identifiant par défaut fourni, pas de secret requis) |
+| `traktClientSecret` (`--dart-define=TRAKT_CLIENT_SECRET=…`) | Facultatif ; n'est envoyé que s'il est renseigné |
 | `updateManifestUrl` | Manifeste de mise à jour `{version, apk, sha256}` ; vide = pas de bannière |
 
-## Déploiement du backend
+## Serveur des salles de watch-party
 
-Le backend est optionnel. Étapes (détail dans [docs/backend.md](docs/backend.md)) :
+`backend/` ne contient que le Worker des salles (Durable Object), sans compte.
+Il est optionnel (détail dans [docs/backend.md](docs/backend.md)) :
 
-1. Créer la base D1, le KV et déclarer le Durable Object ; remplacer les
-   identifiants factices de `backend/wrangler.jsonc`.
-2. `cd backend && npx wrangler d1 migrations apply lumio --remote`
-3. Brancher un expéditeur d'e-mail (implémentation de `EmailSender`, passée à
-   `createApp`) : sans lui, personne ne reçoit de jeton de connexion.
-4. `npx wrangler deploy`, puis renseigner `backendUrl` dans `config.dart`.
+1. Créer le KV `RATE` et remplacer l'identifiant factice de
+   `backend/wrangler.jsonc`.
+2. `cd backend && npx wrangler deploy`.
+3. Compiler l'application avec `--dart-define=PARTY_SERVER_URL=https://…`.
 
 ## Limites connues
 
@@ -109,7 +109,7 @@ Le backend est optionnel. Étapes (détail dans [docs/backend.md](docs/backend.m
 - [Compatibilité avec les addons](docs/compatibilite-addons.md)
 - [Installation](docs/installation.md)
 - [Développement](docs/developpement.md)
-- [Backend](docs/backend.md)
+- [Serveur des salles](docs/backend.md)
 - [Sécurité](docs/securite.md) et [SECURITY.md](SECURITY.md)
 - [Torrents et confidentialité](docs/torrents-et-confidentialite.md)
 - [Feuille de route](docs/feuille-de-route.md)
@@ -133,15 +133,15 @@ votre pays. Voir [docs/AVERTISSEMENT.md](docs/AVERTISSEMENT.md).
 ## English summary
 
 Lumio is a free (GPL-3.0), cross-platform media client compatible with the
-Stremio addon protocol, aimed at Android TV, Android, macOS and Windows
-(Flutter). Features: addon aggregation, built-in torrent streaming
+Stremio addon protocol, Android only (Android TV and phone), no sync and no
+account (Flutter). Features: addon aggregation, built-in torrent streaming
 (libtorrent), local folders, Jellyfin, profiles with PIN and parental control,
-self-hostable end-to-end-encrypted sync, backup, Stremio import, torrent
-privacy (VPN), addon health and source ranking with fallback, Trakt/Simkl,
+local backup, Stremio import, torrent
+privacy (VPN), addon health and source ranking with fallback, Trakt,
 release calendar, DLNA cast, watch-party.
 
 **Status: all planned phases are done; device validation is pending** (Android
-TV box runs, desktop builds, real third-party services). No release yet.
+TV box runs, real third-party services). No release yet.
 
 Lumio ships no addon and no content, includes no scraper, and is not affiliated
 with Stremio. You are responsible for the sources you add and for complying

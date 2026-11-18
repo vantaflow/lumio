@@ -69,6 +69,6 @@ LUMIO_BOX=<IP-de-la-box>:5555 bash scripts/box-smoke.sh
 `.github/workflows/ci.yml` s'exécute à chaque push et pull request :
 - `core` : analyse et tests de `lumio_core` ;
 - `app` : format, analyse, tests et build APK release 32 bits ;
-- `desktop` : build release macOS et Windows ;
-- `backend` : tests vitest (actif dès que `backend/package-lock.json` existe) ;
+- `backend` : typecheck et tests vitest du serveur des salles (actif dès que
+  `backend/package-lock.json` existe) ;
 - `licenses` : contrôle des licences.

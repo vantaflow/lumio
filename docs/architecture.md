@@ -7,8 +7,8 @@ encore construits sont signalés « prévu ».
 
 ```
 packages/lumio_core/   Dart pur, testable sans Flutter
-app/                   Application Flutter (Android, macOS, Windows)
-backend/               Cloudflare Worker (Hono, D1, KV)
+app/                   Application Flutter (Android seul)
+backend/               Cloudflare Worker des salles de watch-party (Hono, KV, Durable Object)
 scripts/               Garde-fous (disque, licences, essai sur la box)
 docs/                  Documentation, spécification, plan, rapports
 ```
@@ -28,7 +28,7 @@ Existant :
 - serveur d'addons simulé pour les tests.
 
 Prévu : agrégation de catalogues, fiches fusionnées, normalisation des flux,
-sous-titres, tri et dédoublonnage des sources, santé des addons, règles de progression, profils, modèles de synchro,
+sous-titres, tri et dédoublonnage des sources, santé des addons, règles de progression, profils, sauvegarde locale,
 chiffrement, import.
 
 ### `app`
@@ -45,8 +45,8 @@ intégrations.
 
 ### `backend`
 
-Worker Cloudflare optionnel, nécessaire seulement pour la synchronisation et
-les comptes. Voir [backend.md](backend.md).
+Worker Cloudflare optionnel, nécessaire seulement pour la watch-party (salles
+anonymes, sans compte). Voir [backend.md](backend.md).
 
 ## Flux de données
 
@@ -62,7 +62,7 @@ flowchart LR
   end
   Addon[Addons de l'utilisateur]
   Swarm[Essaim BitTorrent]
-  Sync[Backend de synchro, optionnel]
+  Party[Serveur des salles, optionnel]
 
   UI --> Core
   Core -->|manifest, catalog, meta, stream| Addon
@@ -72,7 +72,7 @@ flowchart LR
   Proxy -->|HTTPS| Addon
   Player -->|flux magnet| Eng
   Eng <-->|pairs| Swarm
-  Core -.->|données chiffrées, prévu| Sync
+  UI -.->|position et état de lecture| Party
 ```
 
 Parcours typique (prévu) : l'utilisateur ajoute l'URL d'un addon, Lumio lit son
@@ -98,9 +98,9 @@ données). L'implémentation actuelle utilise `libtorrent_flutter` 1.7.5
 autre moteur si nécessaire. Voir
 [torrents-et-confidentialite.md](torrents-et-confidentialite.md).
 
-## Synchronisation (prévu)
+## Pas de synchronisation
 
-Le backend stocke des éléments versionnés (version attribuée par le serveur,
-suppressions conservées comme tombstones). Les secrets, notamment les URL
-d'addons, sont chiffrés par le client avant l'envoi : le serveur ne les lit
-pas. Aujourd'hui seuls les comptes et sessions existent côté serveur.
+Décision du 2026-11-18 : Lumio ne synchronise rien entre appareils et n'a pas de
+compte. Les données (profils, ma liste, progression, addons) restent sur
+l'appareil ; les adresses d'addons sont dans le stockage sécurisé local. La
+sauvegarde se fait par fichier (export et import locaux).

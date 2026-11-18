@@ -23,63 +23,29 @@ L'URL d'un addon contient souvent une clé personnelle. Règles du projet :
 - stockage prévu dans le stockage sécurisé du système, jamais en clair dans
   SQLite ;
 - jamais dans les journaux : `redactUrl` ne conserve que le schéma et l'hôte ;
-- jamais en clair sur le serveur de synchronisation.
+- jamais envoyées à un serveur (Lumio n'a pas de synchronisation).
 
-## Chiffrement côté client
+## Chiffrement local
 
-Les adresses d'addons sont synchronisées sous la forme d'un seul élément
-`addons/all`, chiffré par le client avant l'envoi : le serveur ne voit qu'un
-texte opaque et ne reçoit jamais la phrase secrète.
+Les adresses d'addons restent dans le stockage sécurisé de l'appareil
+(`SecretStore`), jamais en clair dans SQLite. Il n'y a plus de synchronisation :
+rien n'est envoyé à un serveur. `SecretBox` ne sert plus qu'à chiffrer une
+sauvegarde exportée avec les adresses.
 
 - Format : `v1.<sel>.<nonce>.<texte chiffré + tag>` (base64url). Clé :
   PBKDF2-HMAC-SHA256, 210 000 itérations, sel aléatoire de 16 octets, 256 bits.
   Chiffrement : AES-256-GCM, nonce aléatoire de 12 octets. Les données
-  associées sont le type d'élément (`addons`) : un blob ne peut pas être
-  rejoué sous un autre type. Toute altération, ou une mauvaise phrase, donne
-  la même erreur.
-- La phrase (12 caractères au moins) est saisie une fois par appareil, reste
-  dans le stockage sécurisé de l'appareil et sert à synchroniser sans
-  intervention. La dérivation s'exécute hors du fil d'interface. La phrase
-  n'est pas normalisée en Unicode (NFC) : aucun paquet maintenu n'est
-  disponible hors ligne, deux claviers produisant des formes différentes d'un
-  même accent donneraient des clés différentes.
-- Rien n'est envoyé tant que le blob du serveur n'a pas été lu avec la phrase
-  courante : un nouvel appareil n'écrase jamais les addons existants. Avec une
-  mauvaise phrase, les addons locaux ne sont pas modifiés.
-- À la réception, les addons manquants sont installés par le chemin normal
-  (garde d'URL, récupération du manifeste). Une adresse du réseau local n'est
-  jamais autorisée automatiquement : elle attend la confirmation de
-  l'utilisateur. Le clair chiffré porte un numéro de génération croissant, un
-  identifiant d'appareil et la liste des suppressions explicites (90 jours,
-  100 au plus) : un blob de génération plus ancienne (rejeu du serveur,
-  appareil en retard) est ignoré et remplacé par un envoi à jour. Un addon
-  n'est retiré localement que par une suppression explicite et seulement s'il
-  venait du dernier blob ; son absence d'un blob ne supprime jamais rien, et
-  un addon ajouté sur l'appareil n'est jamais touché.
-- Phrase perdue : « Réinitialiser » supprime le blob distant (pierre
-  tombale) ; les addons doivent être réajoutés ou renvoyés depuis un appareil
-  qui les a encore, le reste des données reste disponible. Une phrase perdue
-  ne se récupère pas.
-- La génération la plus élevée vue, l'origine et les suppressions survivent à
-  l'oubli de la phrase (réinitialisation venue d'un autre appareil, oubli
-  seul) ; la déconnexion du compte les efface avec les métadonnées de
-  synchronisation, et la suppression du compte efface aussi l'empreinte et son
-  sel. Une empreinte de la phrase (PBKDF2 avec un sel local) permet de
-  reconnaître la même phrase ressaisie : elle garde alors ces repères et un
-  ancien blob rejoué reste ignoré ; seule une phrase réellement nouvelle ouvre
-  une nouvelle époque. Une génération au-delà de 2^53 rend le blob illisible.
-- Limites de confiance : un appareil tout neuf (aucun repère) fait confiance
-  au premier blob qu'il reçoit ; deux envois de même génération par deux
-  appareils se départagent par le dernier arrivé, sans suppression.
-- Limite : environ 11 Ko de clair (une quarantaine d'addons) ; au-delà, un
-  message l'indique et rien n'est envoyé. En cas de modifications simultanées
-  sur deux appareils, la dernière envoyée l'emporte (comme pour les autres
-  éléments).
+  associées (`backup`) identifient l'usage : un blob ne peut pas être rejoué
+  sous un autre usage. Toute altération, ou une mauvaise phrase, donne la même
+  erreur.
+- La phrase (12 caractères au moins) est choisie à l'export et n'est jamais
+  conservée. La dérivation s'exécute hors du fil d'interface. La phrase n'est
+  pas normalisée en Unicode (NFC).
 
 ## Sauvegarde locale (export / import)
 
 - Format `{"format":"lumio-backup","version":1}` : profils (nom, enfant, limite
-  d'âge), ma liste, progression, réglages de la liste blanche de la synchro,
+  d'âge), ma liste, progression, réglages de la liste blanche de la sauvegarde,
   réglages par titre, noms des addons. Jamais de PIN, de verrou, de code de
   récupération, de jeton ni de phrase secrète.
 - Par défaut le fichier ne contient aucune adresse d'addon. Avec l'option
@@ -98,14 +64,14 @@ texte opaque et ne reçoit jamais la phrase secrète.
   (pas de sélecteur de fichiers) l'import liste les `*.lumio.json` de ce
   dossier.
 
-## Backend
+## Serveur des salles de watch-party
 
-- Jetons de connexion et de rafraîchissement stockés hachés (SHA-256), jeton de
-  connexion à usage unique et expirant au bout de 15 minutes.
-- Rotation du jeton de rafraîchissement à chaque usage.
-- Limitation de débit des demandes de connexion.
-- Réponse identique que le compte existe ou non ; adresses e-mail masquées dans
-  les journaux.
+- Aucun compte : salle anonyme protégée par un identifiant de 128 bits et un
+  code de 8 caractères ; seuls leurs hachages sont stockés. La clé de l'hôte
+  (128 bits) ne figure jamais dans le lien d'invitation ni dans une URL.
+- Limitation de débit : créations par IP, codes invalides par IP et par salle
+  (salle détruite au plafond), 20 messages par seconde et par client.
+- Seuls position et état de lecture circulent ; aucune URL ni titre.
 
 ## Dépendances
 

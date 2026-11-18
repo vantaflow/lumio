@@ -1,79 +1,46 @@
-# Backend
+# Serveur des salles de watch-party
 
-Le backend est un Worker Cloudflare (Hono, TypeScript) dans `backend/`. Il est
-optionnel : l'application doit fonctionner sans lui. Il sert aux
-comptes, à la synchronisation, à l'appairage et aux watch-parties.
+`backend/` est un Worker Cloudflare (Hono, TypeScript) réduit au strict
+nécessaire pour la watch-party. Il est optionnel : l'application fonctionne sans
+lui (la watch-party est alors masquée). Il n'y a **aucun compte, aucune
+synchronisation, aucun appairage** : une salle est anonyme.
 
-## Routes existantes
+## Routes
 
 | Méthode | Route | Rôle |
 |---|---|---|
 | GET | `/health` | `{ "ok": true }` |
-| POST | `/auth/request` | `{email}` : génère un jeton à usage unique valable 15 minutes et l'envoie par e-mail. Répond 202 que le compte existe ou non. Limité par adresse (429 au-delà de 5 demandes par minute). |
-| POST | `/auth/verify` | `{token}` : échange le jeton contre une session et un jeton de rafraîchissement (`expiresIn` 3600 s). Le jeton ne sert qu'une fois. |
-| POST | `/auth/refresh` | `{refresh}` : rotation du jeton de rafraîchissement, nouvelle session. |
-| GET | `/me` | Identifiant de l'utilisateur, avec `Authorization: Bearer <session>`. |
+| POST | `/rooms` | Crée une salle (10 par heure et par IP). Corps facultatif `{metaId, type}`. Renvoie `{roomId, inviteCode, hostKey, expiresAt}`. |
+| GET | `/room/{id}?code=…` | WebSocket de la salle. |
+| POST | `/room/{id}/control` | `{allControl}` ; `Authorization: Bearer <hostKey>` (hôte seulement). |
 
-## Salles de watch-party (`/rooms`, `/room/{id}`)
+## Salles (`Room`, Durable Object, binding `ROOMS`)
 
-Un Durable Object (`Room`, binding `ROOMS`, API d'hibernation) par salle.
-
-- `POST /rooms` (session requise, 10 par heure et par utilisateur) renvoie
-  `{roomId, inviteCode, expiresAt}` : identifiant de 128 bits, code de 8
-  caractères (même alphabet que l'appairage, seul son hachage est stocké),
-  expiration à 6 h.
-- `GET /room/{id}?code=…` (WebSocket) : session **et** code requis, validés avant
-  d'accepter. Le jeton de session ne passe jamais dans l'URL : en-tête
-  `Sec-WebSocket-Protocol: lumio.v1, <jeton>`, ou à défaut premier message
-  `{"type":"auth","token":"…"}` dans les 5 s (sinon fermeture 1008).
+- Identifiant de 128 bits, code d'invitation de 8 caractères (alphabet sans
+  caractères ambigus), clé d'hôte de 128 bits. Seuls les hachages du code et de
+  la clé sont stockés. Expiration à 6 h.
+- Le lien d'invitation (`lumio://party?room=…&code=…`) contient l'identifiant et
+  le code, jamais la clé de l'hôte. Celle-ci reste sur l'appareil qui a créé la
+  salle et part dans l'en-tête `Sec-WebSocket-Protocol: lumio.v1, <clé>` (jamais
+  dans l'URL) ; un invité n'envoie que le code. Chaque connexion est anonyme.
 - 8 participants au plus (9e : 409). Codes invalides : 20 par minute et par IP,
-  50 par salle (la salle est alors détruite).
-- Messages `{type: state|join|leave|ping, positionMs, playing, sentAt}` seulement,
-  1 Ko max, clés inconnues refusées ; 20 messages/s par client (1008 au-delà).
-  Hôte seul en contrôle, sauf `POST /room/{id}/control {allControl}` (hôte).
-- La salle se ferme quand elle se vide ou à l'expiration. Aucune URL, aucun
-  flux ni titre ne circule : seul le `metaId` est annoncé aux invités.
-
-Les routes de synchronisation (`/sync`) et d'appairage (`/pair`) sont décrites
-plus haut.
+  200 par fenêtre de 10 minutes pour une salle (elle est alors détruite).
+- Messages `{type: state|join|leave|ping, positionMs, playing, sentAt}`
+  seulement, 1 Ko max, clés inconnues refusées ; 20 messages/s par client
+  (1008 au-delà). L'hôte seul contrôle, sauf `allControl`.
+- La salle se ferme quand elle se vide ou à l'expiration. Aucune URL, aucun flux
+  ni titre ne circule : seul le `metaId` est annoncé aux invités.
 
 ## Données
 
-- D1 (`DB`) : tables `users`, `login_tokens`, `sessions` (voir
-  `backend/migrations/0001_init.sql`). Les jetons sont stockés hachés
-  (SHA-256).
-- KV (`RATE`) : compteurs de limitation de débit.
-- Durable Objects : `Room` (binding `ROOMS`), une salle de watch-party par objet.
-
-L'envoi d'e-mails passe par l'interface `EmailSender`. L'implémentation
-actuelle (`LogEmailSender`) ne fait que journaliser un message masqué : aucun
-e-mail réel n'est envoyé tant qu'un fournisseur n'est pas branché.
+- KV (`RATE`) : compteurs de limitation de débit (clés hachées).
+- Durable Objects : une salle par objet.
 
 ## Tests
 
 ```sh
-cd backend && npm ci && npx vitest run
+cd backend && npm ci && npx vitest run && npm run typecheck
 ```
 
 Les tests utilisent Miniflare (`@cloudflare/vitest-pool-workers`) et ne
 nécessitent aucun compte Cloudflare.
-
-## Déploiement (à faire par le mainteneur)
-
-`wrangler.jsonc` contient des identifiants factices (`00000000-…`). Avant tout
-déploiement :
-
-1. Se connecter : `npx wrangler login`.
-2. Créer la base : `npx wrangler d1 create lumio`, puis remplacer
-   `database_id` dans `wrangler.jsonc`.
-3. Créer le KV : `npx wrangler kv namespace create RATE`, puis remplacer `id`.
-   Le Durable Object `Room` est déclaré dans `wrangler.jsonc` (migration
-   `v1-rooms`) et créé au déploiement.
-4. Appliquer les migrations : `npx wrangler d1 migrations apply lumio --remote`.
-5. Configurer l'envoi d'e-mail : écrire une implémentation de `EmailSender`
-   (par exemple avec Cloudflare Email Service, après vérification du domaine
-   d'envoi) et la passer à `createApp` dans `src/index.ts`. Sans cela, personne
-   ne reçoit de jeton de connexion.
-6. Déployer : `npx wrangler deploy`.
-
-Ces étapes ne sont pas encore réalisées : aucun backend de production n'existe.
