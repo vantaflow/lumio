@@ -631,9 +631,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     }
     if (!mounted) return;
     final l10n = context.l10n;
-    final fetcher = IoHttpFetcher(
-      connectionFactory: guardedConnectionFactory(),
-    );
+    final fetchers = {
+      for (final p in const [false, true]) p: subtitleFetcher(allowPrivate: p),
+    };
     final c = TracksController(
       backend:
           widget.tracksBackend?.call(_ctl) ??
@@ -651,11 +651,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
           _tellL((l) => l.settingsNotSaved);
         }),
       ),
-      download: (item) => downloadSubtitle(
-        fetcher,
-        item.url,
-        allowPrivate: _allowPrivateFor(item.addonId),
-      ),
+      download: (item) {
+        final priv = _allowPrivateFor(item.addonId);
+        return downloadSubtitle(fetchers[priv]!, item.url, allowPrivate: priv);
+      },
       tempStore: SubtitleTempStore(getTemporaryDirectory),
     );
     try {

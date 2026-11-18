@@ -158,6 +158,17 @@ const subtitleDelayStepMs = 100;
 const subtitleDelayMaxMs = 10000;
 const subtitleMaxBytes = 2 * 1024 * 1024;
 
+/// Fetcher des sous-titres : la connexion applique le même [allowPrivate] que
+/// la garde de [downloadSubtitle] (un nom public résolvant vers une adresse
+/// privée est refusé sauf addon approuvé sur le réseau privé).
+HttpFetcher subtitleFetcher({required bool allowPrivate, HostLookup? lookup}) =>
+    IoHttpFetcher(
+      connectionFactory: guardedConnectionFactory(
+        allowPrivate: allowPrivate,
+        lookup: lookup,
+      ),
+    );
+
 /// Télécharge un sous-titre d'addon : garde d'URL (adresse et redirections,
 /// réseau privé seulement si l'addon du sous-titre y est autorisé), 2 Mo
 /// maximum, statut 200 exigé. Lève dans les autres cas.
