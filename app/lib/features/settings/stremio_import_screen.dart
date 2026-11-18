@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/backup_files.dart';
@@ -375,7 +376,7 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
           ],
         )
       else ...[
-        TextField(
+        TvTextField(
           key: ValueKey('otherImport:$key:text'),
           controller: addons ? _addonsCtl : _libraryCtl,
           minLines: 2,

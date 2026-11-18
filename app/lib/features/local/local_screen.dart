@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/local_library.dart';
@@ -169,7 +170,7 @@ class _TextPromptState extends State<_TextPrompt> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(widget.title),
-    content: TextField(
+    content: TvTextField(
       key: widget.fieldKey,
       controller: _ctl,
       autofocus: true,

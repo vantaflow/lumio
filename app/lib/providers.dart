@@ -169,6 +169,20 @@ class CurrentProfileController extends Notifier<Profile?> {
   }
 }
 
+/// Profil actif juste avant l'ouverture du sélecteur depuis l'accueil :
+/// Retour dans le sélecteur le rétablit (audit D2) au lieu de quitter l'app.
+final previousProfileProvider = NotifierProvider<_PreviousProfile, Profile?>(
+  _PreviousProfile.new,
+);
+
+class _PreviousProfile extends Notifier<Profile?> {
+  @override
+  Profile? build() => null;
+
+  // ignore: use_setters_to_change_properties
+  void set(Profile? p) => state = p;
+}
+
 /// Vrai quand l'utilisateur a demandé la gestion des profils : le sélecteur
 /// s'affiche même avec un seul profil (sinon il serait choisi seul et la
 /// création de profils serait inaccessible).

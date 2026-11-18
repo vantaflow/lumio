@@ -6,8 +6,7 @@ import 'package:lumio/features/calendar/release_sync.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
-import 'package:lumio/ui/focus/focus_ring.dart';
-import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -133,44 +132,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       );
     }
 
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l.calendarTitle),
-          backgroundColor: Colors.transparent,
-        ),
-        body: Column(
-          children: [
-            FocusRing(
-              child: SwitchListTile(
-                key: const ValueKey('calendar-notify'),
-                autofocus: remembered == null || remembered == 'notify',
-                title: Text(l.calendarNotify),
-                subtitle: syncFailed
-                    ? Text(
-                        l.calendarNotifyError,
-                        key: const ValueKey('calendar-notify-error'),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      )
-                    : Text(l.calendarNotifyHint),
-                value: notify,
-                onChanged: _toggle,
-                onFocusChange: (f) {
-                  if (f) memory.remember(calendarRouteKey, 'notify');
-                },
-              ),
-            ),
-            Expanded(child: body),
-          ],
-        ),
+    return TvScreen(
+      title: l.calendarTitle,
+      child: Column(
+        children: [
+          TvSwitchTile(
+            key: const ValueKey('calendar-notify'),
+            autofocus: remembered == null || remembered == 'notify',
+            title: l.calendarNotify,
+            subtitle: syncFailed ? l.calendarNotifyError : l.calendarNotifyHint,
+            subtitleKey: syncFailed
+                ? const ValueKey('calendar-notify-error')
+                : null,
+            subtitleColor: syncFailed
+                ? Theme.of(context).colorScheme.error
+                : null,
+            value: notify,
+            onChanged: _toggle,
+            onFocusChange: (f) {
+              if (f) memory.remember(calendarRouteKey, 'notify');
+            },
+          ),
+          Expanded(child: body),
+        ],
       ),
     );
   }
 }
 
-class _EntryList extends StatelessWidget {
+class _EntryList extends ConsumerWidget {
   const _EntryList({
     required this.data,
     required this.onOpenItem,
@@ -184,30 +174,26 @@ class _EntryList extends StatelessWidget {
   final void Function(String id) onFocused;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
     final locale = Localizations.localeOf(context);
-    final now = DateTime.now();
+    final now = ref.read(calendarClockProvider)();
     final rows = <Widget>[];
     for (final g in groupByDay(data.entries)) {
       final day = g.day;
       rows.add(
         Padding(
-          padding: const EdgeInsets.fromLTRB(
-            LumioSpacing.xl,
-            LumioSpacing.lg,
-            LumioSpacing.xl,
-            LumioSpacing.xs,
-          ),
+          padding: const EdgeInsets.fromLTRB(0, 28, 0, 10),
           child: Semantics(
             header: true,
             child: Text(
               day == null
                   ? l.calendarUnknownHeader
                   : dayLabel(l, locale, day, now),
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: context.lumio.accent),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: 34,
+                color: context.lumio.accent,
+              ),
             ),
           ),
         ),
@@ -216,28 +202,45 @@ class _EntryList extends StatelessWidget {
         final id = 'e:${e.series.id}|${e.video?.id ?? ''}';
         final preview = data.previews[e.series.id];
         rows.add(
-          FocusRing(
-            child: ListTile(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: TvTile(
               key: ValueKey(id),
+              minHeight: 92,
               autofocus: remembered == id,
-              title: Text(e.series.name),
-              subtitle: Text(
-                e.video == null
-                    ? l.calendarUnknownEntry
-                    : episodeLabel(l, e.video!),
-              ),
-              trailing: const Icon(Icons.chevron_right),
+              semanticLabel: e.series.name,
               onFocusChange: (f) {
                 if (f) onFocused(id);
               },
-              onTap: preview == null ? null : () => onOpenItem?.call(preview),
+              onSelect: preview == null
+                  ? null
+                  : () => onOpenItem?.call(preview),
+              child: Row(
+                children: [
+                  Expanded(child: TvTileText(title: e.series.name)),
+                  Text(
+                    e.video == null
+                        ? l.calendarUnknownEntry
+                        : episodeLabel(l, e.video!),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: context.lumio.textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 36,
+                    color: context.lumio.textMuted,
+                  ),
+                ],
+              ),
             ),
           ),
         );
       }
     }
     return ListView(
-      padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
+      padding: const EdgeInsets.only(bottom: 24, top: 4),
       children: rows,
     );
   }

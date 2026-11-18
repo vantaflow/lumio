@@ -1181,5 +1181,70 @@
   "tvOnbLocalTitle": "Un dossier local",
   "tvOnbLocalBody": "Fichiers de cet appareil ou du réseau",
   "tvOnbKidTitle": "Profil enfant",
-  "tvOnbKidBody": "Filtre par âge et PIN pour quitter"
+  "tvOnbKidBody": "Filtre par âge et PIN pour quitter",
+  "quitTitle": "Quitter Lumio ?",
+  "quitBody": "Vous reviendrez à l'écran d'accueil de la box.",
+  "quitAction": "Quitter",
+  "libraryCount": "{count, plural, =1{1 titre} other{{count} titres}}",
+  "@libraryCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "customizeHomeHint": "Masquez ou réordonnez les rangées de l'accueil.",
+  "settingsCatSources": "Sources",
+  "settingsCatPlayback": "Lecture",
+  "settingsCatTorrents": "Torrents et VPN",
+  "settingsCatProfiles": "Profils et contrôle parental",
+  "settingsCatTracking": "Suivi Trakt",
+  "settingsCatBackup": "Sauvegarde et import",
+  "settingsCatGeneral": "Général",
+  "settingsSourcesHint": "D'où viennent vos films et séries.",
+  "secAddons": "Addons",
+  "secPersonalSources": "Mes sources personnelles",
+  "secSourceChoice": "Choix de la source",
+  "secLanguages": "Langues",
+  "secProtection": "Protection",
+  "secStorage": "Stockage et débit",
+  "secInterfaceLanguage": "Langue de l'interface",
+  "secProfiles": "Profils",
+  "settingsForProfile": "Pour le profil {name}.",
+  "@settingsForProfile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "addonsInstalledCount": "{count, plural, =0{Aucun addon installé} =1{1 addon installé} other{{count} addons installés}}",
+  "@addonsInstalledCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsProfilesHint": "Ajouter, modifier ou supprimer des profils ; le PIN parent protège les profils enfants.",
+  "settingsProfilesCount": "{count, plural, =1{1 profil} other{{count} profils}}",
+  "@settingsProfilesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchResultsHeader": "{what} · {count, plural, =1{1 résultat} other{{count} résultats}}",
+  "@searchResultsHeader": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchMoviesAndSeries": "Films et séries"
 }

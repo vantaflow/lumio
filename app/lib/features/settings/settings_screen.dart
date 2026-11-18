@@ -7,6 +7,8 @@ import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_screen.dart';
+import 'package:lumio/features/profiles/profile_picker_screen.dart'
+    show switchProfileFlow;
 import 'package:lumio/features/party/party_providers.dart';
 import 'package:lumio/features/party/party_screen.dart';
 import 'package:lumio/features/settings/backup_section.dart';
@@ -19,8 +21,12 @@ import 'package:lumio/features/tracking/tracking_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/torrent/torrent_providers.dart' show networkProbeProvider;
 import 'package:lumio/ui/focus/focus_memory.dart';
-import 'package:lumio/ui/focus/focus_ring.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/providers.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart'
     show NetInterface, Quality, StreamPrefs;
@@ -76,9 +82,21 @@ const _qualityChoices = [
   Quality.uhd2160,
 ];
 
-/// Réglages (story 3.7) : addons, langues, qualité, torrents, version et
-/// à-propos. Les profils enfants passent par le PIN parent avant d'arriver
-/// ici (voir `openSettings`).
+/// Catégories du rail des réglages (maquette TV10).
+enum SettingsCategory {
+  sources,
+  playback,
+  torrents,
+  profiles,
+  tracking,
+  party,
+  backup,
+  general,
+}
+
+/// Réglages (maquettes TV10, TV14, TV15, TV47) : rail de catégories à gauche,
+/// page de la catégorie à droite. Les profils enfants passent par le PIN
+/// parent avant d'arriver ici (voir `openSettings`).
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -88,6 +106,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   int _versionPresses = 0;
+  SettingsCategory _cat = SettingsCategory.sources;
 
   void _tellFailure() {
     if (!mounted) return;
@@ -110,28 +129,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required String title,
     required List<(T, String)> options,
     required T? current,
-  }) => showDialog<T>(
-    context: context,
-    builder: (ctx) => SimpleDialog(
-      title: Text(title),
-      children: [
-        for (final (i, (value, label)) in options.indexed)
-          FocusRing(
-            child: ListTile(
-              key: ValueKey('choice:$label'),
-              autofocus: value == current || (current == null && i == 0),
-              selected: value == current,
-              leading: Icon(
-                value == current
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off,
-              ),
-              title: Text(label),
-              onTap: () => Navigator.pop(ctx, value),
-            ),
-          ),
-      ],
-    ),
+  }) => showTvChoice<T>(
+    context,
+    title: title,
+    options: options,
+    current: current,
   );
 
   void _onVersionTap() {
@@ -145,460 +147,831 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _push(Widget screen) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute<void>(builder: (_) => screen));
+
+  List<SettingsCategory> get _cats => [
+    SettingsCategory.sources,
+    SettingsCategory.playback,
+    SettingsCategory.torrents,
+    SettingsCategory.profiles,
+    SettingsCategory.tracking,
+    if (ref.watch(partyClientProvider) != null) SettingsCategory.party,
+    SettingsCategory.backup,
+    SettingsCategory.general,
+  ];
+
+  String _catLabel(AppLocalizations l, SettingsCategory c) => switch (c) {
+    SettingsCategory.sources => l.settingsCatSources,
+    SettingsCategory.playback => l.settingsCatPlayback,
+    SettingsCategory.torrents => l.settingsCatTorrents,
+    SettingsCategory.profiles => l.settingsCatProfiles,
+    SettingsCategory.tracking => l.settingsCatTracking,
+    SettingsCategory.party => l.partyTitle,
+    SettingsCategory.backup => l.settingsCatBackup,
+    SettingsCategory.general => l.settingsCatGeneral,
+  };
+
+  IconData _catIcon(SettingsCategory c) => switch (c) {
+    SettingsCategory.sources => Icons.add_circle_outline,
+    SettingsCategory.playback => Icons.play_arrow_outlined,
+    SettingsCategory.torrents => Icons.vpn_lock_outlined,
+    SettingsCategory.profiles => Icons.person_outline,
+    SettingsCategory.tracking => Icons.history_toggle_off,
+    SettingsCategory.party => Icons.groups_outlined,
+    SettingsCategory.backup => Icons.download_outlined,
+    SettingsCategory.general => Icons.tune,
+  };
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final locale = ref.watch(localeProvider);
-    final prefs = ref.watch(streamPrefsProvider).value ?? const StreamPrefs();
-    final subLang = ref.watch(defaultSubtitleLangProvider).value;
-    final torrents = ref.watch(torrentSettingsProvider);
-    final version = ref.watch(appVersionProvider).value ?? '';
-    final unlocked = ref.watch(debugMenuUnlockedProvider);
-    final editor = ref.read(profilePrefsEditorProvider);
-    final audio = prefs.languages.isEmpty ? null : prefs.languages.first;
-
-    final tiles = <Widget>[
-      _Header(l.settingsAddons),
-      _Tile(
-        id: 'addons',
-        icon: Icons.extension_outlined,
-        title: l.settingsAddons,
-        subtitle: l.settingsAddonsHint,
-        onTap: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const AddonsScreen())),
-      ),
-      _Header(l.localFolders),
-      _Tile(
-        id: 'localFolders',
-        icon: Icons.folder_outlined,
-        title: l.localFolders,
-        subtitle: l.localFoldersHint,
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const LocalFoldersScreen()),
+    final c = context.lumio;
+    final cats = _cats;
+    final memory = ref.read(focusMemoryProvider.notifier);
+    final rememberedCat = memory.restore(settingsRouteKey, row: 'rail');
+    final narrow = MediaQuery.sizeOf(context).width < 960;
+    final current = cats.contains(_cat) ? _cat : cats.first;
+    Widget railItem(SettingsCategory cat) => _RailItem(
+      key: ValueKey('rail:${cat.name}'),
+      icon: _catIcon(cat),
+      label: _catLabel(l, cat),
+      selected: _cat == cat,
+      autofocus: rememberedCat == null
+          ? cat == SettingsCategory.sources
+          : rememberedCat == cat.name,
+      onFocus: () {
+        memory.remember(settingsRouteKey, cat.name, row: 'rail');
+        if (_cat != cat) setState(() => _cat = cat);
+      },
+      onSelect: () => setState(() => _cat = cat),
+    );
+    final title = Semantics(
+      header: true,
+      child: Text(
+        l.settingsTitle,
+        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+          fontSize: narrow ? 28 : 56,
+          height: 1.1,
         ),
       ),
-      _Header(l.jellyfinServers),
-      _Tile(
-        id: 'jellyfin',
-        icon: Icons.dns_outlined,
-        title: l.jellyfinServers,
-        subtitle: l.jellyfinServersHint,
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const JellyfinServersScreen(),
-          ),
-        ),
-      ),
-      _Header(l.trackingTitle),
-      _Tile(
-        id: 'tracking',
-        icon: Icons.history_toggle_off,
-        title: l.trackingTitle,
-        subtitle: l.trackingHint,
-        onTap: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const TrackingScreen())),
-      ),
-      if (ref.watch(partyClientProvider) != null) ...[
-        _Header(l.partyTitle),
-        _Tile(
-          id: 'party',
-          icon: Icons.groups_outlined,
-          title: l.partyTitle,
-          subtitle: l.partyHint,
-          onTap: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute<void>(builder: (_) => const PartyScreen())),
-        ),
-      ],
-      _Header(l.settingsBackup),
-      _Tile(
-        id: 'backupExport',
-        icon: Icons.file_upload_outlined,
-        title: l.backupExport,
-        subtitle: l.backupExportHint,
-        onTap: () => BackupFlows(context, ref).export(),
-      ),
-      _Tile(
-        id: 'backupImport',
-        icon: Icons.file_download_outlined,
-        title: l.backupImport,
-        subtitle: l.backupImportHint,
-        onTap: () => BackupFlows(context, ref).import(),
-      ),
-      _Tile(
-        id: 'otherImport',
-        icon: Icons.swap_horiz,
-        title: l.otherImportTitle,
-        subtitle: l.otherImportHint,
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const StremioImportScreen()),
-        ),
-      ),
-      _Header(l.settingsLanguage),
-      _Tile(
-        id: 'locale',
-        icon: Icons.language,
-        title: l.settingsLanguage,
-        subtitle: locale.languageCode == 'en' ? l.langEnglish : l.langFrench,
-        onTap: () async {
-          final picked = await _choose<Locale>(
-            title: l.settingsLanguage,
-            options: [
-              for (final loc in supportedUiLocales)
-                (loc, loc.languageCode == 'en' ? l.langEnglish : l.langFrench),
-            ],
-            current: locale,
-          );
-          if (picked != null) {
-            await _save(() => ref.read(localeProvider.notifier).set(picked));
-          }
-        },
-      ),
-      _Header(l.settingsPlayback),
-      _Tile(
-        id: 'audio',
-        icon: Icons.record_voice_over_outlined,
-        title: l.settingsAudioLang,
-        subtitle: _langName(l, audio),
-        onTap: () async {
-          final picked = await _choose<String>(
-            title: l.settingsAudioLang,
-            options: [for (final (c, n) in languageChoices(l)) (c, n)],
-            current: audio,
-          );
-          if (picked != null) await _save(() => editor.setAudioLang(picked));
-        },
-      ),
-      _Tile(
-        id: 'subtitles',
-        icon: Icons.subtitles_outlined,
-        title: l.settingsSubtitleLang,
-        subtitle: subLang == null || subLang == 'off'
-            ? l.subtitlesNone
-            : _langName(l, subLang),
-        onTap: () async {
-          final picked = await _choose<String>(
-            title: l.settingsSubtitleLang,
-            options: [
-              ('off', l.subtitlesNone),
-              for (final (c, n) in languageChoices(l)) (c, n),
-            ],
-            current: subLang ?? 'off',
-          );
-          if (picked != null) {
-            await _save(() => editor.setSubtitleLang(picked));
-          }
-        },
-      ),
-      _Tile(
-        id: 'quality',
-        icon: Icons.high_quality_outlined,
-        title: l.settingsQuality,
-        subtitle: _qualityName(l, prefs.maxQuality),
-        onTap: () async {
-          final picked = await _choose<Quality>(
-            title: l.settingsQuality,
-            options: [for (final q in _qualityChoices) (q, _qualityName(l, q))],
-            current: prefs.maxQuality,
-          );
-          if (picked != null) await _save(() => editor.setQuality(picked));
-        },
-      ),
-      _Tile(
-        id: 'preferDirect',
-        icon: Icons.link,
-        title: l.settingsPreferDirect,
-        subtitle: prefs.preferDirect ? l.preferDirectOn : l.preferDirectOff,
-        onTap: () async {
-          final picked = await _choose<bool>(
-            title: l.settingsPreferDirect,
-            options: [(true, l.preferDirectOn), (false, l.preferDirectOff)],
-            current: prefs.preferDirect,
-          );
-          if (picked != null) {
-            await _save(() => editor.setPreferDirect(picked));
-          }
-        },
-      ),
-      _Header(l.settingsDownloads),
-      _Tile(
-        id: 'cache',
-        icon: Icons.storage_outlined,
-        title: l.settingsTorrentCache,
-        subtitle: l.cacheGb(torrents.cacheGb),
-        onTap: () async {
-          final picked = await _choose<int>(
-            title: l.settingsTorrentCache,
-            options: [
-              for (final g in TorrentSettings.cacheChoicesGb) (g, l.cacheGb(g)),
-            ],
-            current: torrents.cacheGb,
-          );
-          if (picked != null) {
-            await _save(
-              () =>
-                  ref.read(torrentSettingsProvider.notifier).setCacheGb(picked),
-            );
-          }
-        },
-      ),
-      _Tile(
-        id: 'upload',
-        icon: Icons.upload_outlined,
-        title: l.settingsUpload,
-        subtitle: torrents.uploadKbps == 0
-            ? l.uploadOff
-            : l.uploadKbps(torrents.uploadKbps),
-        onTap: () async {
-          final picked = await _choose<int>(
-            title: l.settingsUpload,
-            options: [
-              for (final k in TorrentSettings.uploadChoicesKbps)
-                (k, k == 0 ? l.uploadOff : l.uploadKbps(k)),
-            ],
-            current: torrents.uploadKbps,
-          );
-          if (picked != null) {
-            await _save(
-              () => ref
-                  .read(torrentSettingsProvider.notifier)
-                  .setUploadKbps(picked),
-            );
-          }
-        },
-      ),
-      _Tile(
-        id: 'clearCache',
-        icon: Icons.cleaning_services_outlined,
-        title: l.settingsClearCacheOnExit,
-        subtitle: torrents.clearCacheOnExit ? l.optionYes : l.optionNo,
-        onTap: () async {
-          final picked = await _choose<bool>(
-            title: l.settingsClearCacheOnExit,
-            options: [(true, l.optionYes), (false, l.optionNo)],
-            current: torrents.clearCacheOnExit,
-          );
-          if (picked != null) {
-            await _save(
-              () => ref
-                  .read(torrentSettingsProvider.notifier)
-                  .setClearCacheOnExit(picked),
-            );
-          }
-        },
-      ),
-      _Tile(
-        id: 'requireVpn',
-        icon: Icons.vpn_lock_outlined,
-        title: l.settingsRequireVpn,
-        subtitle: torrents.requireVpn ? l.optionYes : l.optionNo,
-        onTap: () async {
-          final picked = await _choose<bool>(
-            title: l.settingsRequireVpn,
-            options: [(true, l.optionYes), (false, l.optionNo)],
-            current: torrents.requireVpn,
-          );
-          if (picked != null) {
-            await _save(
-              () => ref
-                  .read(torrentSettingsProvider.notifier)
-                  .setRequireVpn(picked),
-            );
-          }
-        },
-      ),
-      _Tile(
-        id: 'vpnInterface',
-        icon: Icons.lan_outlined,
-        title: l.settingsVpnInterface,
-        subtitle: torrents.vpnInterface == null
-            ? l.vpnAny
-            : l.vpnInterfaceRequired(torrents.vpnInterface!),
-        onTap: () async {
-          List<NetInterface> up;
-          try {
-            up = await ref.read(networkProbeProvider).upInterfaces();
-          } on Object {
-            up = const [];
-          }
-          if (!mounted) return;
-          // Interfaces VPN nommées actuellement actives, plus celle déjà
-          // choisie (même si elle est éteinte) ; « n'importe quel VPN » en tête.
-          final names = <String>{
-            for (final i in up)
-              if (i.isVpn && !i.anonymousVpn) i.name,
-            ?torrents.vpnInterface,
-          };
-          final picked = await _choose<String>(
-            title: l.settingsVpnInterface,
-            options: [('', l.vpnAny), for (final n in names) (n, n)],
-            current: torrents.vpnInterface ?? '',
-          );
-          if (picked != null) {
-            await _save(
-              () => ref
-                  .read(torrentSettingsProvider.notifier)
-                  .setVpnInterface(picked.isEmpty ? null : picked),
-            );
-          }
-        },
-      ),
-      _Header(l.settingsVersion),
-      _Tile(
-        id: 'version',
-        icon: Icons.info_outline,
-        title: l.settingsVersion,
-        subtitle: l.versionValue(version),
-        onTap: _onVersionTap,
-      ),
-      if (unlocked)
-        _Tile(
-          id: 'debug',
-          icon: Icons.bug_report_outlined,
-          title: l.debugMenuTitle,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const DebugMenuScreen()),
-          ),
-        ),
-      _Header(l.settingsAbout),
-      _Tile(
-        id: 'about',
-        icon: Icons.gavel_outlined,
-        title: l.settingsAbout,
-        subtitle: l.aboutLicense,
-        onTap: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const AboutScreen())),
-      ),
-    ];
-
+    );
     return TvScaffold(
       onBack: () => Navigator.maybeOf(context)?.maybePop(),
       child: Scaffold(
-        appBar: AppBar(title: Text(l.settingsTitle)),
-        body: Align(
-          alignment: AlignmentDirectional.topStart,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: ListView(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: LumioSpacing.xl,
-                vertical: LumioSpacing.md,
+        body: narrow
+            ? SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      child: title,
+                    ),
+                    SizedBox(
+                      height: 84,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: [
+                          for (final cat in cats)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: SizedBox(width: 240, child: railItem(cat)),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: _page(context, current),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Row(
+                children: [
+                  Container(
+                    width: 480,
+                    color: c.bgAlt,
+                    padding: const EdgeInsets.fromLTRB(72, 72, 32, 0),
+                    child: SingleChildScrollView(
+                      clipBehavior: Clip.none,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 28),
+                            child: title,
+                          ),
+                          for (final cat in cats)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: railItem(cat),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(72, 72, 96, 0),
+                      child: _page(context, current),
+                    ),
+                  ),
+                ],
               ),
-              children: tiles,
-            ),
+      ),
+    );
+  }
+
+  Widget _page(BuildContext context, SettingsCategory cat) {
+    return switch (cat) {
+      SettingsCategory.sources => _sourcesPage(context),
+      SettingsCategory.playback => _playbackPage(context),
+      SettingsCategory.torrents => _torrentsPage(context),
+      SettingsCategory.profiles => _profilesPage(context),
+      SettingsCategory.tracking => _trackingPage(context),
+      SettingsCategory.party => _partyPage(context),
+      SettingsCategory.backup => _backupPage(context),
+      SettingsCategory.general => _generalPage(context),
+    };
+  }
+
+  // --- pages ---
+
+  Widget _sourcesPage(BuildContext context) {
+    final l = context.l10n;
+    final addons = ref.watch(addonsProvider).value ?? const [];
+    return _Page(
+      key: const ValueKey('page:sources'),
+      title: l.settingsCatSources,
+      subtitle: l.settingsSourcesHint,
+      action: TvButton(
+        key: const ValueKey('setting:addAddon'),
+        label: '+ ${l.addAddon}',
+        height: 72,
+        fontSize: 28,
+        onPressed: () => _push(const AddonsScreen()),
+      ),
+      children: [
+        _Section(l.secAddons),
+        _Tile(
+          id: 'addons',
+          title: l.settingsAddons,
+          subtitle:
+              '${l.addonsInstalledCount(addons.length)} · '
+              '${l.settingsAddonsHint}',
+          onTap: () => _push(const AddonsScreen()),
+        ),
+        _Section(l.secPersonalSources),
+        _Tile(
+          id: 'localFolders',
+          title: l.localFolders,
+          subtitle: l.localFoldersHint,
+          onTap: () => _push(const LocalFoldersScreen()),
+        ),
+        _Tile(
+          id: 'jellyfin',
+          title: l.jellyfinServers,
+          subtitle: l.jellyfinServersHint,
+          onTap: () => _push(const JellyfinServersScreen()),
+        ),
+      ],
+    );
+  }
+
+  Widget _playbackPage(BuildContext context) {
+    final l = context.l10n;
+    final prefs = ref.watch(streamPrefsProvider).value ?? const StreamPrefs();
+    final subLang = ref.watch(defaultSubtitleLangProvider).value;
+    final editor = ref.read(profilePrefsEditorProvider);
+    final audio = prefs.languages.isEmpty ? null : prefs.languages.first;
+    final name = ref.watch(currentProfileProvider)?.name;
+    return _Page(
+      key: const ValueKey('page:playback'),
+      title: l.settingsCatPlayback,
+      subtitle: name == null ? null : l.settingsForProfile(name),
+      children: [
+        _Section(l.secSourceChoice, top: 8),
+        _Tile(
+          id: 'quality',
+          title: l.settingsQuality,
+          value: _qualityName(l, prefs.maxQuality),
+          onTap: () async {
+            final picked = await _choose<Quality>(
+              title: l.settingsQuality,
+              options: [
+                for (final q in _qualityChoices) (q, _qualityName(l, q)),
+              ],
+              current: prefs.maxQuality,
+            );
+            if (picked != null) await _save(() => editor.setQuality(picked));
+          },
+        ),
+        _SwitchTile(
+          id: 'preferDirect',
+          title: l.settingsPreferDirect,
+          subtitle: l.preferDirectOn,
+          value: prefs.preferDirect,
+          onChanged: (v) => _save(() => editor.setPreferDirect(v)),
+        ),
+        _Section(l.secLanguages),
+        _Tile(
+          id: 'audio',
+          title: l.settingsAudioLang,
+          value: _langName(l, audio),
+          onTap: () async {
+            final picked = await _choose<String>(
+              title: l.settingsAudioLang,
+              options: [for (final (c, n) in languageChoices(l)) (c, n)],
+              current: audio,
+            );
+            if (picked != null) await _save(() => editor.setAudioLang(picked));
+          },
+        ),
+        _Tile(
+          id: 'subtitles',
+          title: l.settingsSubtitleLang,
+          value: subLang == null || subLang == 'off'
+              ? l.subtitlesNone
+              : _langName(l, subLang),
+          onTap: () async {
+            final picked = await _choose<String>(
+              title: l.settingsSubtitleLang,
+              options: [
+                ('off', l.subtitlesNone),
+                for (final (c, n) in languageChoices(l)) (c, n),
+              ],
+              current: subLang ?? 'off',
+            );
+            if (picked != null) {
+              await _save(() => editor.setSubtitleLang(picked));
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _torrentsPage(BuildContext context) {
+    final l = context.l10n;
+    final torrents = ref.watch(torrentSettingsProvider);
+    final ctl = ref.read(torrentSettingsProvider.notifier);
+    return _Page(
+      key: const ValueKey('page:torrents'),
+      title: l.settingsCatTorrents,
+      children: [
+        _Section(l.secProtection, top: 8),
+        _SwitchTile(
+          id: 'requireVpn',
+          title: l.settingsRequireVpn,
+          value: torrents.requireVpn,
+          onChanged: (v) => _save(() => ctl.setRequireVpn(v)),
+        ),
+        _Tile(
+          id: 'vpnInterface',
+          title: l.settingsVpnInterface,
+          value: torrents.vpnInterface == null
+              ? l.vpnAny
+              : l.vpnInterfaceRequired(torrents.vpnInterface!),
+          onTap: () async {
+            List<NetInterface> up;
+            try {
+              up = await ref.read(networkProbeProvider).upInterfaces();
+            } on Object {
+              up = const [];
+            }
+            if (!mounted) return;
+            // Interfaces VPN nommées actuellement actives, plus celle déjà
+            // choisie (même si elle est éteinte) ; « n'importe quel VPN » en tête.
+            final names = <String>{
+              for (final i in up)
+                if (i.isVpn && !i.anonymousVpn) i.name,
+              ?torrents.vpnInterface,
+            };
+            final picked = await _choose<String>(
+              title: l.settingsVpnInterface,
+              options: [('', l.vpnAny), for (final n in names) (n, n)],
+              current: torrents.vpnInterface ?? '',
+            );
+            if (picked != null) {
+              await _save(
+                () => ctl.setVpnInterface(picked.isEmpty ? null : picked),
+              );
+            }
+          },
+        ),
+        _Section(l.secStorage),
+        _Tile(
+          id: 'cache',
+          title: l.settingsTorrentCache,
+          value: l.cacheGb(torrents.cacheGb),
+          onTap: () async {
+            final picked = await _choose<int>(
+              title: l.settingsTorrentCache,
+              options: [
+                for (final g in TorrentSettings.cacheChoicesGb)
+                  (g, l.cacheGb(g)),
+              ],
+              current: torrents.cacheGb,
+            );
+            if (picked != null) await _save(() => ctl.setCacheGb(picked));
+          },
+        ),
+        _Tile(
+          id: 'upload',
+          title: l.settingsUpload,
+          value: torrents.uploadKbps == 0
+              ? l.uploadOff
+              : l.uploadKbps(torrents.uploadKbps),
+          onTap: () async {
+            final picked = await _choose<int>(
+              title: l.settingsUpload,
+              options: [
+                for (final k in TorrentSettings.uploadChoicesKbps)
+                  (k, k == 0 ? l.uploadOff : l.uploadKbps(k)),
+              ],
+              current: torrents.uploadKbps,
+            );
+            if (picked != null) await _save(() => ctl.setUploadKbps(picked));
+          },
+        ),
+        _SwitchTile(
+          id: 'clearCache',
+          title: l.settingsClearCacheOnExit,
+          value: torrents.clearCacheOnExit,
+          onChanged: (v) => _save(() => ctl.setClearCacheOnExit(v)),
+        ),
+      ],
+    );
+  }
+
+  Widget _profilesPage(BuildContext context) {
+    final l = context.l10n;
+    final profiles = ref.watch(profilesProvider).value ?? const [];
+    final name = ref.watch(currentProfileProvider)?.name;
+    return _Page(
+      key: const ValueKey('page:profiles'),
+      title: l.settingsCatProfiles,
+      subtitle: l.settingsProfilesHint,
+      children: [
+        _Section(l.secProfiles, top: 8),
+        _Tile(
+          id: 'profiles',
+          title: l.manageProfiles,
+          subtitle: [
+            l.settingsProfilesCount(profiles.length),
+            ?name,
+          ].join(' · '),
+          onTap: () => switchProfileFlow(
+            context,
+            ref,
+            beforeSelect: () =>
+                Navigator.of(context).popUntil((r) => r.isFirst),
+            manage: true,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _trackingPage(BuildContext context) {
+    final l = context.l10n;
+    return _Page(
+      key: const ValueKey('page:tracking'),
+      title: l.settingsCatTracking,
+      subtitle: l.trackingHint,
+      children: [
+        _Tile(
+          id: 'tracking',
+          title: l.trackingTitle,
+          subtitle: l.trackingHint,
+          onTap: () => _push(const TrackingScreen()),
+        ),
+      ],
+    );
+  }
+
+  Widget _partyPage(BuildContext context) {
+    final l = context.l10n;
+    return _Page(
+      key: const ValueKey('page:party'),
+      title: l.partyTitle,
+      subtitle: l.partyHint,
+      children: [
+        _Tile(
+          id: 'party',
+          title: l.partyTitle,
+          subtitle: l.partyHint,
+          onTap: () => _push(const PartyScreen()),
+        ),
+      ],
+    );
+  }
+
+  Widget _backupPage(BuildContext context) {
+    final l = context.l10n;
+    return _Page(
+      key: const ValueKey('page:backup'),
+      title: l.settingsCatBackup,
+      children: [
+        _Section(l.settingsBackup, top: 8),
+        _Tile(
+          id: 'backupExport',
+          title: l.backupExport,
+          subtitle: l.backupExportHint,
+          onTap: () => BackupFlows(context, ref).export(),
+        ),
+        _Tile(
+          id: 'backupImport',
+          title: l.backupImport,
+          subtitle: l.backupImportHint,
+          onTap: () => BackupFlows(context, ref).import(),
+        ),
+        _Tile(
+          id: 'otherImport',
+          title: l.otherImportTitle,
+          subtitle: l.otherImportHint,
+          onTap: () => _push(const StremioImportScreen()),
+        ),
+      ],
+    );
+  }
+
+  Widget _generalPage(BuildContext context) {
+    final l = context.l10n;
+    final locale = ref.watch(localeProvider);
+    final version = ref.watch(appVersionProvider).value ?? '';
+    final unlocked = ref.watch(debugMenuUnlockedProvider);
+    return _Page(
+      key: const ValueKey('page:general'),
+      title: l.settingsCatGeneral,
+      children: [
+        _Section(l.secInterfaceLanguage, top: 8),
+        _Tile(
+          id: 'locale',
+          title: l.settingsLanguage,
+          subtitle: locale.languageCode == 'en' ? l.langEnglish : l.langFrench,
+          onTap: () async {
+            final picked = await _choose<Locale>(
+              title: l.settingsLanguage,
+              options: [
+                for (final loc in supportedUiLocales)
+                  (
+                    loc,
+                    loc.languageCode == 'en' ? l.langEnglish : l.langFrench,
+                  ),
+              ],
+              current: locale,
+            );
+            if (picked != null) {
+              await _save(() => ref.read(localeProvider.notifier).set(picked));
+            }
+          },
+        ),
+        _Section(l.settingsVersion),
+        _Tile(
+          id: 'version',
+          title: l.settingsVersion,
+          subtitle: l.versionValue(version),
+          onTap: _onVersionTap,
+        ),
+        if (unlocked)
+          _Tile(
+            id: 'debug',
+            title: l.debugMenuTitle,
+            onTap: () => _push(const DebugMenuScreen()),
+          ),
+        _Section(l.settingsAbout),
+        _Tile(
+          id: 'about',
+          title: l.settingsAbout,
+          subtitle: l.aboutLicense,
+          onTap: () => _push(const AboutScreen()),
+        ),
+      ],
+    );
+  }
+}
+
+/// Entrée du rail : prend le focus = affiche sa page (maquette `.mi`).
+class _RailItem extends StatelessWidget {
+  const _RailItem({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.autofocus,
+    required this.onFocus,
+    required this.onSelect,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final bool autofocus;
+  final VoidCallback onFocus;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.lumio;
+    return FocusableCard(
+      autofocus: autofocus,
+      scale: 1.02,
+      borderRadius: BorderRadius.circular(18),
+      semanticLabel: label,
+      onFocusChange: (f) {
+        if (f) onFocus();
+      },
+      onSelect: onSelect,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 76),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? c.surfaceFocus : Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 32, color: selected ? c.accent : c.textMuted),
+            const SizedBox(width: 24),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  fontVariations: const [FontVariation.weight(600)],
+                  height: 1.2,
+                  color: selected ? c.text : c.textMuted,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header(this.text);
-  final String text;
+/// Page de catégorie : titre 56, sous-titre, action à droite, lignes.
+class _Page extends StatelessWidget {
+  const _Page({
+    super.key,
+    required this.title,
+    required this.children,
+    this.subtitle,
+    this.action,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? action;
+  final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.only(
-      top: LumioSpacing.lg,
-      bottom: LumioSpacing.xs,
-    ),
-    child: Semantics(
-      header: true,
-      child: Text(
-        text,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(color: context.lumio.secondary),
-      ),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final c = context.lumio;
+    final t = Theme.of(context).textTheme;
+    final narrow = MediaQuery.sizeOf(context).width < 960;
+    final head = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          header: true,
+          child: Text(
+            title,
+            style: t.headlineLarge?.copyWith(
+              fontSize: narrow ? 32 : 56,
+              height: 1.1,
+            ),
+          ),
+        ),
+        if (subtitle != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              subtitle!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: t.bodySmall?.copyWith(fontSize: 24, color: c.textMuted),
+            ),
+          ),
+      ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (narrow) ...[
+          head,
+          if (action != null)
+            Padding(padding: const EdgeInsets.only(top: 8), child: action),
+        ] else
+          Row(
+            children: [
+              Expanded(child: head),
+              if (action != null) ...[const SizedBox(width: 24), action!],
+            ],
+          ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 48, left: 6, right: 6),
+            children: children,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-/// Ligne de réglage focalisable à la télécommande ; le dernier élément
-/// focalisé est mémorisé (route `settings`) et rendu au retour d'un sous-écran.
+class _Section extends StatelessWidget {
+  const _Section(this.text, {this.top = 28});
+  final String text;
+  final double top;
+
+  @override
+  Widget build(BuildContext context) => TvSectionLabel(text, top: top);
+}
+
+/// Ligne de réglage (maquettes `.r`) : titre, description, valeur en pastille
+/// ou chevron ; le dernier élément focalisé est mémorisé et rendu au retour
+/// d'un sous-écran.
 class _Tile extends ConsumerWidget {
   const _Tile({
     required this.id,
-    required this.icon,
     required this.title,
     required this.onTap,
     this.subtitle,
+    this.value,
   });
 
   final String id;
-  final IconData icon;
   final String title;
   final String? subtitle;
+  final String? value;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final memory = ref.read(focusMemoryProvider.notifier);
     final remembered = memory.restore(settingsRouteKey);
-    return FocusRing(
-      child: ListTile(
+    final c = context.lumio;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TvTile(
         key: ValueKey('setting:$id'),
-        autofocus: remembered == id || (remembered == null && id == 'addons'),
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: subtitle == null ? null : Text(subtitle!),
-        trailing: const Icon(Icons.chevron_right),
+        autofocus: remembered == id,
+        semanticLabel: [title, ?subtitle, ?value].join(', '),
         onFocusChange: (f) {
           if (f) memory.remember(settingsRouteKey, id);
         },
-        onTap: onTap,
+        onSelect: onTap,
+        child: Row(
+          children: [
+            Expanded(
+              child: TvTileText(title: title, subtitle: subtitle),
+            ),
+            const SizedBox(width: 24),
+            if (value != null)
+              Flexible(
+                child: Container(
+                  height: 56,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: BoxDecoration(
+                    color: c.surfaceFocus,
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          value!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 26,
+                            fontWeight: FontWeight.w600,
+                            fontVariations: [FontVariation.weight(600)],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.expand_more, size: 30, color: c.textMuted),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Icon(Icons.chevron_right, size: 40, color: c.textMuted),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Écrans de debug sélectionnables par `--dart-define` ; ici accessibles
-/// après 7 appuis sur la version.
+class _SwitchTile extends ConsumerWidget {
+  const _SwitchTile({
+    required this.id,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+  });
+
+  final String id;
+  final String title;
+  final String? subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final memory = ref.read(focusMemoryProvider.notifier);
+    final remembered = memory.restore(settingsRouteKey);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TvSwitchTile(
+        key: ValueKey('setting:$id'),
+        autofocus: remembered == id,
+        color: context.lumio.surface,
+        title: title,
+        subtitle: subtitle,
+        value: value,
+        onChanged: onChanged,
+        onFocusChange: (f) {
+          if (f) memory.remember(settingsRouteKey, id);
+        },
+      ),
+    );
+  }
+}
+
+/// Menu de debug (réservé au développement), après 7 appuis sur la version.
 class DebugMenuScreen extends StatelessWidget {
   const DebugMenuScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return Scaffold(
-      appBar: AppBar(title: Text(l.debugMenuTitle)),
-      body: ListView(
+    Widget item(
+      String key,
+      String title,
+      String sub,
+      Widget screen, {
+      bool first = false,
+    }) => Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TvTile(
+        key: ValueKey(key),
+        autofocus: first,
+        onSelect: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => screen)),
+        child: Row(
+          children: [
+            Expanded(
+              child: TvTileText(title: title, subtitle: sub),
+            ),
+            Icon(Icons.chevron_right, size: 40, color: context.lumio.textMuted),
+          ],
+        ),
+      ),
+    );
+    return TvScreen(
+      title: l.debugMenuTitle,
+      child: ListView(
+        padding: const EdgeInsets.only(top: 8, left: 6, right: 6),
         children: [
-          ListTile(
-            key: const ValueKey('debug:torrent'),
-            autofocus: true,
-            leading: const Icon(Icons.downloading),
-            title: Text(l.debugTorrent),
-            subtitle: const Text('LUMIO_DEBUG_TORRENT=1'),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const TorrentSpikeScreen(),
-              ),
-            ),
+          item(
+            'debug:torrent',
+            l.debugTorrent,
+            'LUMIO_DEBUG_TORRENT=1',
+            const TorrentSpikeScreen(),
+            first: true,
           ),
-          ListTile(
-            key: const ValueKey('debug:player'),
-            leading: const Icon(Icons.play_circle_outline),
-            title: Text(l.debugPlayer),
-            subtitle: const Text('LUMIO_DEBUG_PLAYER=1'),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const PlayerSpikeScreen(),
-              ),
-            ),
+          item(
+            'debug:player',
+            l.debugPlayer,
+            'LUMIO_DEBUG_PLAYER=1',
+            const PlayerSpikeScreen(),
           ),
-          ListTile(
-            key: const ValueKey('debug:loop'),
-            leading: const Icon(Icons.loop),
-            title: Text(l.debugLoop),
-            subtitle: const Text('LUMIO_DEBUG_LOOP=1'),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const LoopDebugScreen()),
-            ),
+          item(
+            'debug:loop',
+            l.debugLoop,
+            'LUMIO_DEBUG_LOOP=1',
+            const LoopDebugScreen(),
           ),
         ],
       ),
@@ -606,7 +979,8 @@ class DebugMenuScreen extends StatelessWidget {
   }
 }
 
-/// À propos : licence GPL-3.0, crédits, licences des dépendances.
+/// À propos (maquette TV34) : licence GPL-3.0, crédits, licences des
+/// dépendances.
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
@@ -614,30 +988,51 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(l.settingsAbout)),
-      body: ListView(
-        padding: const EdgeInsets.all(LumioSpacing.xl),
+    final c = context.lumio;
+    TextStyle md() => theme.textTheme.bodyLarge!.copyWith(
+      fontSize: 28,
+      color: const Color(0xFFC9D0DA),
+      height: 1.4,
+    );
+    return TvScreen(
+      title: l.settingsAbout,
+      child: ListView(
+        padding: const EdgeInsets.only(top: 8, bottom: 24, left: 6, right: 6),
         children: [
-          Text(l.gplTitle, style: theme.textTheme.headlineSmall),
-          const SizedBox(height: LumioSpacing.sm),
-          Text(l.gplText, style: theme.textTheme.bodyLarge),
-          const SizedBox(height: LumioSpacing.lg),
-          Text(l.aboutCredits, style: theme.textTheme.titleMedium),
-          const SizedBox(height: LumioSpacing.xs),
-          Text(l.creditsLibmpv),
-          Text(l.creditsMediaKit),
-          Text(l.creditsLibtorrent),
-          Text(l.creditsFonts),
-          const SizedBox(height: LumioSpacing.lg),
+          Text(
+            l.gplTitle,
+            style: theme.textTheme.headlineMedium?.copyWith(fontSize: 44),
+          ),
+          const SizedBox(height: 12),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1500),
+            child: Text(l.gplText, style: md()),
+          ),
+          const SizedBox(height: 36),
+          Text(
+            l.aboutCredits,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontSize: 34,
+              color: c.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(l.creditsLibmpv, style: md()),
+          Text(l.creditsMediaKit, style: md()),
+          Text(l.creditsLibtorrent, style: md()),
+          Text(l.creditsFonts, style: md()),
+          const SizedBox(height: 36),
           Align(
             alignment: AlignmentDirectional.centerStart,
-            child: FilledButton(
+            child: TvButton(
               key: const ValueKey('about:licenses'),
               autofocus: true,
+              kind: TvButtonKind.secondary,
+              height: 76,
+              fontSize: 28,
+              label: l.openSourceLicenses,
               onPressed: () =>
                   showLicensePage(context: context, applicationName: 'Lumio'),
-              child: Text(l.openSourceLicenses),
             ),
           ),
         ],

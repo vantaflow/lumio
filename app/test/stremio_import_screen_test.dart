@@ -168,6 +168,8 @@ void main() {
   testWidgets('tuile dans les réglages, texte neutre', (tester) async {
     final h = _H(tester);
     await h.pump(home: const SettingsScreen());
+    await tester.tap(find.byKey(const ValueKey('rail:backup')));
+    await h.settle();
     final tile = find.byKey(const ValueKey('setting:otherImport'));
     await tester.ensureVisible(tile);
     expect(find.text('Importer depuis un autre client'), findsOneWidget);

@@ -3559,6 +3559,168 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Filtre par âge et PIN pour quitter'**
   String get tvOnbKidBody;
+
+  /// No description provided for @quitTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter Lumio ?'**
+  String get quitTitle;
+
+  /// No description provided for @quitBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous reviendrez à l\'écran d\'accueil de la box.'**
+  String get quitBody;
+
+  /// No description provided for @quitAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter'**
+  String get quitAction;
+
+  /// No description provided for @libraryCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 titre} other{{count} titres}}'**
+  String libraryCount(int count);
+
+  /// No description provided for @customizeHomeHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquez ou réordonnez les rangées de l\'accueil.'**
+  String get customizeHomeHint;
+
+  /// No description provided for @settingsCatSources.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sources'**
+  String get settingsCatSources;
+
+  /// No description provided for @settingsCatPlayback.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture'**
+  String get settingsCatPlayback;
+
+  /// No description provided for @settingsCatTorrents.
+  ///
+  /// In fr, this message translates to:
+  /// **'Torrents et VPN'**
+  String get settingsCatTorrents;
+
+  /// No description provided for @settingsCatProfiles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profils et contrôle parental'**
+  String get settingsCatProfiles;
+
+  /// No description provided for @settingsCatTracking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivi Trakt'**
+  String get settingsCatTracking;
+
+  /// No description provided for @settingsCatBackup.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sauvegarde et import'**
+  String get settingsCatBackup;
+
+  /// No description provided for @settingsCatGeneral.
+  ///
+  /// In fr, this message translates to:
+  /// **'Général'**
+  String get settingsCatGeneral;
+
+  /// No description provided for @settingsSourcesHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'D\'où viennent vos films et séries.'**
+  String get settingsSourcesHint;
+
+  /// No description provided for @secAddons.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addons'**
+  String get secAddons;
+
+  /// No description provided for @secPersonalSources.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes sources personnelles'**
+  String get secPersonalSources;
+
+  /// No description provided for @secSourceChoice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choix de la source'**
+  String get secSourceChoice;
+
+  /// No description provided for @secLanguages.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langues'**
+  String get secLanguages;
+
+  /// No description provided for @secProtection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Protection'**
+  String get secProtection;
+
+  /// No description provided for @secStorage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Stockage et débit'**
+  String get secStorage;
+
+  /// No description provided for @secInterfaceLanguage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue de l\'interface'**
+  String get secInterfaceLanguage;
+
+  /// No description provided for @secProfiles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profils'**
+  String get secProfiles;
+
+  /// No description provided for @settingsForProfile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour le profil {name}.'**
+  String settingsForProfile(String name);
+
+  /// No description provided for @addonsInstalledCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucun addon installé} =1{1 addon installé} other{{count} addons installés}}'**
+  String addonsInstalledCount(int count);
+
+  /// No description provided for @settingsProfilesHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter, modifier ou supprimer des profils ; le PIN parent protège les profils enfants.'**
+  String get settingsProfilesHint;
+
+  /// No description provided for @settingsProfilesCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 profil} other{{count} profils}}'**
+  String settingsProfilesCount(int count);
+
+  /// No description provided for @searchResultsHeader.
+  ///
+  /// In fr, this message translates to:
+  /// **'{what} · {count, plural, =1{1 résultat} other{{count} résultats}}'**
+  String searchResultsHeader(String what, int count);
+
+  /// No description provided for @searchMoviesAndSeries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Films et séries'**
+  String get searchMoviesAndSeries;
 }
 
 class _AppLocalizationsDelegate

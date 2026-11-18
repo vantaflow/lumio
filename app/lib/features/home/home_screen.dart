@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -8,6 +9,7 @@ import 'package:lumio/data/jellyfin_repository.dart'
     show JellyfinServer, isJellyfinId, jellyfinSourceKind, parseJellyfinId;
 import 'package:lumio/data/local_library.dart' show isLocalId;
 import 'package:lumio/data/progress_repository.dart';
+import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/calendar/calendar_screen.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
@@ -34,15 +36,17 @@ import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_row.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 const homeRouteKey = 'home';
-const _posterWidth = 180.0;
-const _posterHeight = 270.0;
+const _posterWidth = 200.0;
+const _posterHeight = 300.0;
 const _continueWidth = 320.0;
+const _rowPad = 28.0;
 const _continueHeight = 180.0;
 
 String sourceLabel(String kind, [AppLocalizations? l]) {
@@ -72,6 +76,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _topBarNode = FocusNode(debugLabel: 'Home.customize');
   final _topBarFocused = ValueNotifier<bool>(false);
+  final _scroll = ScrollController();
+  bool _confirmingExit = false;
 
   @override
   void initState() {
@@ -87,6 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void dispose() {
     _topBarNode.dispose();
     _topBarFocused.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -153,23 +160,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     context,
   ).push(MaterialPageRoute<void>(builder: (_) => const RowEditorScreen()));
 
+  /// Remonte la page puis donne le focus à « Accueil » (audit D2/D5).
+  void _backToTop() {
+    if (_scroll.hasClients && _scroll.offset > 0) {
+      _scroll.animateTo(0, duration: LumioMotion.screen, curve: Curves.easeOut);
+    }
+    _topBarNode.requestFocus();
+  }
+
+  /// Retour télécommande : contenu -> barre haute (page remontée) ; barre
+  /// haute -> « Accueil » ; « Accueil » -> confirmation « Quitter Lumio ? ».
+  Future<void> _handleBack() async {
+    if (!_topBarFocused.value) {
+      _backToTop();
+      return;
+    }
+    if (!_topBarNode.hasFocus) {
+      _topBarNode.requestFocus();
+      return;
+    }
+    if (_confirmingExit) return;
+    _confirmingExit = true;
+    try {
+      final quit = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => const _QuitDialog(),
+      );
+      if (quit == true) await SystemNavigator.pop();
+    } finally {
+      _confirmingExit = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tv = isTvLayout(context, override: widget.tvLayout);
-    // Retour : d'abord vers la barre haute, puis seulement quitter.
     return ListenableBuilder(
       listenable: _topBarFocused,
-      builder: (context, _) => BackGuard(
-        isOpen: !_topBarFocused.value,
-        onClose: _topBarNode.requestFocus,
+      builder: (context, _) => PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _handleBack();
+        },
         child: TvScaffold(
-          onBack: () {
-            if (_topBarFocused.value) {
-              Navigator.maybeOf(context)?.maybePop();
-            } else {
-              _topBarNode.requestFocus();
-            }
-          },
+          onBack: _handleBack,
           child: Scaffold(
             body: Column(
               children: [
@@ -177,7 +211,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Focus(
                   skipTraversal: true,
                   canRequestFocus: false,
-                  onFocusChange: (f) => _topBarFocused.value = f,
+                  onFocusChange: (f) {
+                    _topBarFocused.value = f;
+                    if (f && _scroll.hasClients && _scroll.offset > 0) {
+                      _scroll.animateTo(
+                        0,
+                        duration: LumioMotion.screen,
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  },
                   child: tv
                       ? TvTopBar(
                           homeNode: _topBarNode,
@@ -202,6 +245,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Expanded(
                   child: _HomeBody(
                     tv: tv,
+                    scroll: _scroll,
                     onOpenAddons: _openAddons,
                     onAddAddon: _addAddon,
                     onAddLocal: _addLocalFolder,
@@ -305,6 +349,7 @@ class _TopBar extends StatelessWidget {
 class _HomeBody extends ConsumerWidget {
   const _HomeBody({
     required this.tv,
+    required this.scroll,
     required this.onOpenAddons,
     required this.onAddAddon,
     required this.onAddLocal,
@@ -313,6 +358,7 @@ class _HomeBody extends ConsumerWidget {
   });
 
   final bool tv;
+  final ScrollController scroll;
   final VoidCallback onAddAddon;
   final VoidCallback onAddLocal;
   final VoidCallback onAddJellyfin;
@@ -371,6 +417,7 @@ class _HomeBody extends ConsumerWidget {
     ];
     final ids = layout.requireValue.visible(natural);
     return ListView.builder(
+      controller: scroll,
       cacheExtent: 1500,
       padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
       itemCount: ids.length,
@@ -412,10 +459,14 @@ class _CatalogRowView extends ConsumerWidget {
       ),
     );
     if (spec == null) return const SizedBox.shrink();
-    if (row == null) return _SkeletonRow(title: spec.title);
+    if (row == null) {
+      return _SkeletonRow(
+        title: catalogRowTitle(spec.catalog.type, spec.title, context.l10n),
+      );
+    }
     if (row.failed) {
       return _ErrorRow(
-        title: spec.title,
+        title: catalogRowTitle(spec.catalog.type, spec.title, context.l10n),
         message: row.error is AddonException
             ? l10nForError(context.l10n, row.error!)
             : context.l10n.homeRowFailed,
@@ -427,7 +478,7 @@ class _CatalogRowView extends ConsumerWidget {
     if (items.isEmpty) return const SizedBox.shrink();
     return _PosterRow(
       rowId: rowId,
-      title: spec.title,
+      title: catalogRowTitle(spec.catalog.type, spec.title, context.l10n),
       items: items,
       onOpenItem: onOpenItem,
       allowPrivate: spec.allowPrivate,
@@ -537,7 +588,8 @@ class _PosterRow extends ConsumerWidget {
       routeKey: homeRouteKey,
       autofocusFirst: true,
       itemExtent: _posterWidth,
-      height: _posterHeight + 80 + lumioTextGrowth(context, 2, 0),
+      verticalPadding: _rowPad,
+      height: _posterHeight + 12 + 2 * 26 * 1.25 + 2 * _rowPad,
       items: [
         for (final m in items)
           PosterCard(
@@ -586,7 +638,8 @@ class _ContinueRow extends ConsumerWidget {
       routeKey: homeRouteKey,
       autofocusFirst: true,
       itemExtent: _continueWidth,
-      height: _continueHeight + 72 + lumioTextGrowth(context, 1, 1),
+      verticalPadding: _rowPad,
+      height: _continueHeight + 12 + 26 * 1.25 + 24 * 1.3 + 2 * _rowPad,
       items: [
         for (final e in entries)
           _ContinueCard(key: ValueKey(e.videoId), entry: e, playback: playback),
@@ -608,18 +661,22 @@ class PosterCard extends StatelessWidget {
     required this.item,
     required this.onSelect,
     this.allowPrivate = false,
+    this.width = _posterWidth,
+    this.height = _posterHeight,
   });
 
   final MetaPreview item;
   final bool allowPrivate;
   final VoidCallback onSelect;
+  final double width;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
     final source = sourceLabel(item.sourceKind, context.l10n);
     return SizedBox(
-      width: _posterWidth,
+      width: width,
       child: FocusableCard(
         onSelect: onSelect,
         semanticLabel: _year(item.releaseInfo) == null
@@ -634,8 +691,8 @@ class PosterCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              height: _posterHeight,
-              width: _posterWidth,
+              height: height,
+              width: width,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -649,14 +706,19 @@ class PosterCard extends StatelessWidget {
                           : null,
                       url: item.poster,
                       allowPrivate: allowPrivate,
-                      width: _posterWidth,
+                      width: width,
                     ),
                   ),
-                  PositionedDirectional(
-                    start: LumioSpacing.sm,
-                    top: LumioSpacing.sm,
-                    child: SourceBadge(label: source),
-                  ),
+                  // Badge réel (Local / Jellyfin) ; un titre de catalogue n'a pas
+                  // de source connue avant la recherche de flux (Direct /
+                  // Torrent y sont affichés), donc plus de badge « addon ».
+                  if (item.sourceKind == 'local' ||
+                      item.sourceKind == jellyfinSourceKind)
+                    PositionedDirectional(
+                      start: 10,
+                      top: 10,
+                      child: SourceBadge(label: source),
+                    ),
                 ],
               ),
             ),
@@ -665,9 +727,11 @@ class PosterCard extends StatelessWidget {
               item.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: lumio.text),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: lumio.text,
+                fontSize: 26,
+                height: 1.25,
+              ),
             ),
           ],
         ),
@@ -961,6 +1025,60 @@ class _ErrorRow extends StatelessWidget {
           const SizedBox(height: LumioSpacing.sm),
           FilledButton(onPressed: onRetry, child: Text(context.l10n.retry)),
         ],
+      ),
+    );
+  }
+}
+
+/// Confirmation de sortie (Retour depuis « Accueil »).
+class _QuitDialog extends StatelessWidget {
+  const _QuitDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final c = context.lumio;
+    final t = Theme.of(context).textTheme;
+    return Dialog(
+      key: const ValueKey('quit-dialog'),
+      backgroundColor: c.surfaceRaised,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: Padding(
+        padding: const EdgeInsets.all(48),
+        child: SizedBox(
+          width: 720,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.quitTitle,
+                style: t.headlineMedium?.copyWith(fontSize: 44),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l.quitBody,
+                style: t.bodyLarge?.copyWith(color: c.textMuted, fontSize: 30),
+              ),
+              const SizedBox(height: 40),
+              Row(
+                children: [
+                  TvButton(
+                    autofocus: true,
+                    label: l.cancel,
+                    kind: TvButtonKind.secondary,
+                    onPressed: () => Navigator.of(context).pop(false),
+                  ),
+                  const SizedBox(width: 24),
+                  TvButton(
+                    label: l.quitAction,
+                    onPressed: () => Navigator.of(context).pop(true),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

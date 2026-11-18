@@ -444,7 +444,7 @@ void main() {
           progress: [_progress()],
         );
         final cont = t.getTopLeft(find.text('Continuer à regarder')).dy;
-        final cat = t.getTopLeft(find.text('Cat top')).dy;
+        final cat = t.getTopLeft(find.text('Films · Cat top')).dy;
         expect(cont, lessThan(cat));
         expect(find.text('Film 1'), findsOneWidget);
 
@@ -469,7 +469,9 @@ void main() {
           ],
         ]),
       );
-      expect(find.text('addon'), findsOneWidget);
+      // Plus de badge générique « addon » : la source d'un titre de catalogue
+      // n'est connue qu'à la recherche de flux (Direct / Torrent).
+      expect(find.text('addon'), findsNothing);
       expect(find.text('Local'), findsOneWidget);
       expect(find.text('Jellyfin'), findsOneWidget);
       expect(find.text('IPTV'), findsNothing);
@@ -619,7 +621,7 @@ void main() {
           ],
         ]),
       );
-      expect(find.text('Cat new'), findsOneWidget);
+      expect(find.text('Films · Cat new'), findsOneWidget);
       await t.tap(find.text('Personnaliser'));
       await h.settle();
       await t.tap(
@@ -627,10 +629,10 @@ void main() {
       );
       await h.settle();
       expect(find.text('Afficher'), findsOneWidget);
-      await t.pageBack();
+      await t.tap(find.byKey(const ValueKey('tv-back')));
       await h.settle();
-      expect(find.text('Cat new'), findsNothing);
-      expect(find.text('Cat top'), findsOneWidget);
+      expect(find.text('Films · Cat new'), findsNothing);
+      expect(find.text('Films · Cat top'), findsOneWidget);
       final row = await t.runAsync(
         () => (h.db.select(
           h.db.settings,

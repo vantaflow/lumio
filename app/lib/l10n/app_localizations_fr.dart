@@ -2067,4 +2067,122 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tvOnbKidBody => 'Filtre par âge et PIN pour quitter';
+
+  @override
+  String get quitTitle => 'Quitter Lumio ?';
+
+  @override
+  String get quitBody => 'Vous reviendrez à l\'écran d\'accueil de la box.';
+
+  @override
+  String get quitAction => 'Quitter';
+
+  @override
+  String libraryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count titres',
+      one: '1 titre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get customizeHomeHint =>
+      'Masquez ou réordonnez les rangées de l\'accueil.';
+
+  @override
+  String get settingsCatSources => 'Sources';
+
+  @override
+  String get settingsCatPlayback => 'Lecture';
+
+  @override
+  String get settingsCatTorrents => 'Torrents et VPN';
+
+  @override
+  String get settingsCatProfiles => 'Profils et contrôle parental';
+
+  @override
+  String get settingsCatTracking => 'Suivi Trakt';
+
+  @override
+  String get settingsCatBackup => 'Sauvegarde et import';
+
+  @override
+  String get settingsCatGeneral => 'Général';
+
+  @override
+  String get settingsSourcesHint => 'D\'où viennent vos films et séries.';
+
+  @override
+  String get secAddons => 'Addons';
+
+  @override
+  String get secPersonalSources => 'Mes sources personnelles';
+
+  @override
+  String get secSourceChoice => 'Choix de la source';
+
+  @override
+  String get secLanguages => 'Langues';
+
+  @override
+  String get secProtection => 'Protection';
+
+  @override
+  String get secStorage => 'Stockage et débit';
+
+  @override
+  String get secInterfaceLanguage => 'Langue de l\'interface';
+
+  @override
+  String get secProfiles => 'Profils';
+
+  @override
+  String settingsForProfile(String name) {
+    return 'Pour le profil $name.';
+  }
+
+  @override
+  String addonsInstalledCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count addons installés',
+      one: '1 addon installé',
+      zero: 'Aucun addon installé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsProfilesHint =>
+      'Ajouter, modifier ou supprimer des profils ; le PIN parent protège les profils enfants.';
+
+  @override
+  String settingsProfilesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count profils',
+      one: '1 profil',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String searchResultsHeader(String what, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count résultats',
+      one: '1 résultat',
+    );
+    return '$what · $_temp0';
+  }
+
+  @override
+  String get searchMoviesAndSeries => 'Films et séries';
 }

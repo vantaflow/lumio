@@ -9,15 +9,19 @@ import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/features/search/search_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/common/tv_screen.dart' show tvMargin;
 import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 const searchRouteKey = 'search';
 
-final _latinKeys = 'abcdefghijklmnopqrstuvwxyz0123456789'.split('');
+/// Clavier AZERTY (maquette TV12) : lignes de 10, puis chiffres.
+const _latinRows = ['azertyuiop', 'qsdfghjklm', 'wxcvbn', '1234567890'];
+final _latinKeys = _latinRows.expand((r) => r.split('')).toList();
 final _arabicKeys =
     'ابتثجحخدذرزسشصضطظعغفقكلمنهوي'
             'ءأإآةى0123456789'
@@ -146,9 +150,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           backgroundColor: lumio.bg,
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: LumioSpacing.xl,
-                vertical: LumioSpacing.lg,
+              padding: EdgeInsets.symmetric(
+                horizontal: _narrow(context) ? LumioSpacing.md : tvMargin,
+                vertical: _narrow(context) ? LumioSpacing.md : 48,
               ),
               child: _narrow(context)
                   // Téléphone : champ en haut (clavier du système), résultats
@@ -163,8 +167,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(width: 520, child: _keyboardPane(context)),
-                        const SizedBox(width: LumioSpacing.xl),
+                        SizedBox(width: 880, child: _keyboardPane(context)),
+                        const SizedBox(width: 48),
                         Expanded(child: _resultsPane(context)),
                       ],
                     ),
@@ -217,22 +221,47 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onChanged: tv
                   ? null
                   : (t) => ref.read(searchProvider.notifier).setQuery(t),
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontSize: tv ? 36 : null),
               decoration: InputDecoration(
                 hintText: context.l10n.searchHint,
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: lumio.surface,
+                contentPadding: tv
+                    ? const EdgeInsets.symmetric(horizontal: 24, vertical: 26)
+                    : null,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(LumioRadius.md),
+                  borderRadius: BorderRadius.circular(tv ? 22 : LumioRadius.md),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
             const SizedBox(height: LumioSpacing.md),
-            if (showKeys)
+            if (showKeys && !_arabic)
+              for (var r = 0; r < _latinRows.length; r++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      for (final ch in _latinRows[r].split(''))
+                        _Key(
+                          key: ValueKey('key-$ch'),
+                          label: ch.toUpperCase(),
+                          semantic: ch,
+                          autofocus: r == 0 && ch == 'a',
+                          onSelect: () => _type(ch),
+                        ),
+                    ],
+                  ),
+                ),
+            if (showKeys && _arabic)
               Wrap(
-                spacing: LumioSpacing.sm,
-                runSpacing: LumioSpacing.sm,
+                spacing: 12,
+                runSpacing: 12,
                 children: [
                   for (var i = 0; i < keys.length; i++)
                     _Key(
@@ -245,8 +274,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             if (showKeys) const SizedBox(height: LumioSpacing.md),
             Wrap(
-              spacing: LumioSpacing.sm,
-              runSpacing: LumioSpacing.sm,
+              spacing: 12,
+              runSpacing: 12,
               children: [
                 if (showKeys) ...[
                   _Key(
@@ -258,13 +287,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                   _Key(
                     key: const ValueKey('key-backspace'),
-                    icon: Icons.backspace_outlined,
+                    label: context.l10n.kbErase,
+                    medium: true,
                     semantic: context.l10n.kbErase,
                     onSelect: _backspace,
                   ),
                   _Key(
                     key: const ValueKey('key-clear'),
-                    label: context.l10n.kbAll,
+                    label: context.l10n.kbClearAll,
+                    medium: true,
                     semantic: context.l10n.kbClearAll,
                     onSelect: () => _setText(''),
                   ),
@@ -312,9 +343,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         }
         if (left > 1) {
           if (_grid.hasClients && _restoreNode.context == null) {
-            const per = 4; // colonnes estimées (écran TV 1920)
+            const per = 3; // colonnes estimées (écran TV 1920)
             _grid.jumpTo(
-              (index ~/ per * 364.0).clamp(0, _grid.position.maxScrollExtent),
+              (index ~/ per * 456.0).clamp(0, _grid.position.maxScrollExtent),
             );
           }
           step(left - 1);
@@ -359,10 +390,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         controller: _grid,
         padding: const EdgeInsets.all(LumioSpacing.md),
         gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 220,
-          mainAxisExtent: 340 + lumioTextGrowth(context, 2, 0),
-          crossAxisSpacing: LumioSpacing.lg,
-          mainAxisSpacing: LumioSpacing.lg,
+          maxCrossAxisExtent: 240,
+          mainAxisExtent: 440,
+          crossAxisSpacing: 28,
+          mainAxisSpacing: 16,
         ),
         itemCount: visible.length,
         itemBuilder: (context, i) {
@@ -435,6 +466,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
           ],
         ),
+        if (s.hasQuery && visible.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: Text(
+              context.l10n.searchResultsHeader(switch (_filter) {
+                _TypeFilter.all => context.l10n.searchMoviesAndSeries,
+                _TypeFilter.movie => context.l10n.filterMovies,
+                _TypeFilter.series => context.l10n.filterSeries,
+              }, visible.length),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontSize: 34),
+            ),
+          ),
         const SizedBox(height: LumioSpacing.md),
         Expanded(child: body),
       ],
@@ -450,6 +495,7 @@ class _Key extends StatelessWidget {
     this.semantic,
     this.autofocus = false,
     this.wide = false,
+    this.medium = false,
     this.highlighted = false,
     required this.onSelect,
   });
@@ -459,6 +505,7 @@ class _Key extends StatelessWidget {
   final String? semantic;
   final bool autofocus;
   final bool wide;
+  final bool medium;
   final bool highlighted;
   final VoidCallback onSelect;
 
@@ -467,27 +514,31 @@ class _Key extends StatelessWidget {
     final lumio = context.lumio;
     final fg = highlighted ? lumio.onAccent : lumio.text;
     return SizedBox(
-      width: wide ? 180 : 64,
-      height: 56,
+      width: wide ? 200 : (medium ? 220 : 72),
+      height: 72,
       child: FocusableCard(
         autofocus: autofocus,
         scale: 1.06,
-        borderRadius: BorderRadius.circular(LumioRadius.sm),
+        borderRadius: BorderRadius.circular(18),
         semanticLabel: semantic ?? label,
         onSelect: onSelect,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: highlighted ? lumio.accent : lumio.surfaceRaised,
-            borderRadius: BorderRadius.circular(LumioRadius.sm),
+            color: highlighted ? lumio.accent : lumio.surfaceFocus,
+            borderRadius: BorderRadius.circular(18),
           ),
           child: Center(
             child: icon != null
-                ? Icon(icon, color: fg)
+                ? Icon(icon, color: fg, size: 36)
                 : Text(
                     label!,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: fg),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: fg,
+                      fontSize: wide || medium ? 26 : 30,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
           ),
         ),
@@ -509,34 +560,13 @@ class _FilterChip extends StatelessWidget {
   final VoidCallback onSelect;
 
   @override
-  Widget build(BuildContext context) {
-    final lumio = context.lumio;
-    return FocusableCard(
-      scale: 1.04,
-      borderRadius: BorderRadius.circular(LumioRadius.pill),
-      semanticLabel: label,
-      onSelect: onSelect,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: selected ? lumio.accent : lumio.surfaceRaised,
-          borderRadius: BorderRadius.circular(LumioRadius.pill),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: lumioTouchMin - 16),
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: selected ? lumio.onAccent : lumio.text,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => TvButton(
+    label: label,
+    kind: selected ? TvButtonKind.primary : TvButtonKind.secondary,
+    height: 64,
+    horizontalPadding: 36,
+    fontSize: 28,
+    scale: 1.04,
+    onPressed: onSelect,
+  );
 }

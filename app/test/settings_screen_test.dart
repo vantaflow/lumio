@@ -29,6 +29,7 @@ import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+import 'support/settings_nav.dart';
 import 'support/fake_network.dart';
 import 'tracks_panel_test.dart' show FakeBackend;
 
@@ -116,6 +117,7 @@ class _H {
   }
 
   Future<void> tapTile(String id) async {
+    await openSettingsPageFor(tester, id, settle);
     final f = find.byKey(ValueKey('setting:$id'));
     await tester.ensureVisible(f);
     await tester.tap(f);
@@ -140,9 +142,9 @@ void main() {
       final h = _H(tester)..start();
       await h.pump(const SettingsScreen());
       expect(find.text('Réglages'), findsOneWidget);
-      expect(find.text('Langue de l\'interface'), findsWidgets);
 
       await h.tapTile('locale');
+      expect(find.text('Langue de l\'interface'), findsWidgets);
       await h.tapText('English');
 
       expect(find.text('Settings'), findsOneWidget);
@@ -191,6 +193,7 @@ void main() {
   ) async {
     final h = _H(tester)..start();
     await h.pump(const SettingsScreen());
+    await openSettingsPageFor(tester, 'quality', h.settle);
     expect(find.text('Qualité préférée'), findsOneWidget);
 
     await h.tapTile('audio');
@@ -221,6 +224,7 @@ void main() {
   ) async {
     final h = _H(tester)..start();
     await h.pump(const SettingsScreen());
+    await openSettingsPageFor(tester, 'preferDirect', h.settle);
     expect(
       find.text('Préférer les liens directs aux torrents'),
       findsOneWidget,
@@ -231,8 +235,8 @@ void main() {
       )).preferDirect,
       isTrue,
     );
+    // Interrupteur : un appui bascule.
     await h.tapTile('preferDirect');
-    await h.tapText('Sans préférence');
     final prefs = await h.run(
       () => StreamPrefsStore(h.db).load(defaultProfileId),
     );
@@ -263,11 +267,11 @@ void main() {
   ) async {
     final h = _H(tester)..start();
     await h.pump(const SettingsScreen());
+    await openSettingsPageFor(tester, 'requireVpn', h.settle);
     expect(h.container.read(torrentSettingsProvider).requireVpn, isFalse);
     expect(find.text('Exiger un VPN pour les torrents'), findsOneWidget);
 
-    await h.tapTile('requireVpn');
-    await h.tapText('Oui');
+    await h.tapTile('requireVpn'); // interrupteur
     expect(h.container.read(torrentSettingsProvider).requireVpn, isTrue);
     expect(await h.stored(AppSettingsStore.requireVpnKey), '1');
 
@@ -292,13 +296,13 @@ void main() {
   ) async {
     final h = _H(tester)..start();
     await h.pump(const SettingsScreen());
+    await openSettingsPageFor(tester, 'clearCache', h.settle);
 
     // Débit montant 0 = ensemencement désactivé, valeur par défaut.
     expect(find.text('Désactivé (pas d\'ensemencement)'), findsOneWidget);
     expect(h.container.read(torrentSettingsProvider).clearCacheOnExit, isFalse);
 
-    await h.tapTile('clearCache');
-    await h.tapText('Oui');
+    await h.tapTile('clearCache'); // interrupteur
 
     expect(h.container.read(torrentSettingsProvider).clearCacheOnExit, isTrue);
     expect(await h.stored(AppSettingsStore.clearCacheOnExitKey), '1');
@@ -310,6 +314,7 @@ void main() {
   ) async {
     final h = _H(tester)..start();
     await h.pump(const SettingsScreen());
+    await openSettingsPageFor(tester, 'version', h.settle);
     expect(find.text('Lumio 1.2.3'), findsOneWidget);
     expect(find.text('Menu debug'), findsNothing);
 

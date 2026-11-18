@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/features/calendar/calendar_providers.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/features/calendar/calendar_screen.dart';
 import 'package:lumio/features/calendar/release_notifier.dart';
 import 'package:lumio/features/calendar/release_sync.dart';
@@ -81,6 +82,9 @@ const _kid = Profile(
   locked: false,
 );
 
+/// Heure fixée du calendrier (voir `main`).
+final _fixedNow = DateTime(2030, 6, 15, 14);
+
 class _H {
   _H(this.tester);
   final WidgetTester tester;
@@ -96,7 +100,7 @@ class _H {
     Profile? profile,
     Locale locale = const Locale('fr'),
   }) async {
-    tester.view.physicalSize = const Size(1280, 1400);
+    tester.view.physicalSize = const Size(1280, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     db = AppDatabase(NativeDatabase.memory());
@@ -110,6 +114,7 @@ class _H {
           (ref) => _FakeLauncher(ref, meta),
         ),
         releaseNotifierProvider.overrideWithValue(notifier ?? _FakeNotifier()),
+        calendarClockProvider.overrideWithValue(() => _fixedNow),
       ],
     );
     addTearDown(container.dispose);
@@ -154,7 +159,8 @@ class _H {
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-  final now = DateTime.now();
+  // Horloge fixe : le test ne dépend plus de l'heure courante.
+  final now = DateTime(2030, 6, 15, 14);
   DateTime inDays(int d, [int hour = 20]) =>
       DateTime(now.year, now.month, now.day + d, hour);
 
@@ -400,7 +406,7 @@ void main() {
         ),
       );
       expect(
-        tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+        tester.widget<TvSwitchTile>(find.byType(TvSwitchTile)).value,
         isFalse,
       );
       expect(n.permissionCalls, 0);
@@ -423,18 +429,18 @@ void main() {
             videos: [_ep('a:1:1', 1, 1, inDays(2))],
           ),
         );
-        await tester.tap(find.byType(SwitchListTile));
+        await tester.tap(find.byType(TvSwitchTile));
         await h.settle();
         expect(n.permissionCalls, 1);
         expect(n.scheduled, isNotEmpty);
         expect(n.scheduled.last.single.title, 'Série a');
         expect(
-          tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          tester.widget<TvSwitchTile>(find.byType(TvSwitchTile)).value,
           isTrue,
         );
         // Désactiver : annulation.
         final before = n.cancelCalls;
-        await tester.tap(find.byType(SwitchListTile));
+        await tester.tap(find.byType(TvSwitchTile));
         await h.settle();
         expect(n.cancelCalls, greaterThan(before));
         await h.close();
@@ -456,12 +462,12 @@ void main() {
           videos: [_ep('a:1:1', 1, 1, inDays(2))],
         ),
       );
-      await tester.tap(find.byType(SwitchListTile));
+      await tester.tap(find.byType(TvSwitchTile));
       await h.settle();
       expect(n.permissionCalls, 1);
       expect(n.scheduled, isEmpty);
       expect(
-        tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+        tester.widget<TvSwitchTile>(find.byType(TvSwitchTile)).value,
         isFalse,
       );
       expect(find.textContaining('Notifications refusées'), findsOneWidget);
@@ -487,7 +493,7 @@ void main() {
       addTearDown(lib.close);
       lib.add([_p('a'), _p('b')]);
       await h.start(notifier: n, libraryStream: lib.stream, meta: meta);
-      await tester.tap(find.byType(SwitchListTile));
+      await tester.tap(find.byType(TvSwitchTile));
       await h.settle();
       expect(n.scheduled.last.map((r) => r.title), ['Série a', 'Série b']);
       lib.add([_p('b')]); // retirée ailleurs (écran fermé ou autre écran)
@@ -512,7 +518,7 @@ void main() {
           ],
           meta: meta,
         );
-        await tester.tap(find.byType(SwitchListTile));
+        await tester.tap(find.byType(TvSwitchTile));
         await h.settle();
         expect(n.scheduled.last.length, 2);
         final before = n.cancelCalls;
@@ -521,11 +527,11 @@ void main() {
         expect(n.cancelCalls, greaterThan(before));
         // Réglage du profil enfant : désactivé par défaut.
         expect(
-          tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          tester.widget<TvSwitchTile>(find.byType(TvSwitchTile)).value,
           isFalse,
         );
         // Activé pour l'enfant : seule la série autorisée est programmée.
-        await tester.tap(find.byType(SwitchListTile));
+        await tester.tap(find.byType(TvSwitchTile));
         await h.settle();
         expect(n.scheduled.last.map((r) => r.title), ['Série ok']);
         await h.close();
@@ -538,7 +544,7 @@ void main() {
       final h = _H(tester);
       final n = _FakeNotifier()..replaceOk = false;
       await h.start(notifier: n, library: [_p('a')], meta: meta);
-      await tester.tap(find.byType(SwitchListTile));
+      await tester.tap(find.byType(TvSwitchTile));
       await h.settle();
       expect(
         find.byKey(const ValueKey('calendar-notify-error')),

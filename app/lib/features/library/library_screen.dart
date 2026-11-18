@@ -5,8 +5,7 @@ import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
-import 'package:lumio/ui/focus/tv_scaffold.dart';
-import 'package:lumio/ui/theme.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 const libraryRouteKey = 'library';
@@ -36,30 +35,29 @@ class LibraryScreen extends ConsumerWidget {
     } else if (items.isEmpty) {
       body = StateView.empty(message: context.l10n.libraryEmpty);
     } else {
+      // Maquette TV20 : 7 colonnes de 220, titres sous les affiches.
       body = GridView.builder(
-        padding: const EdgeInsets.all(LumioSpacing.xl),
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 220,
-          mainAxisExtent: 360,
-          crossAxisSpacing: LumioSpacing.lg,
-          mainAxisSpacing: LumioSpacing.lg,
+          maxCrossAxisExtent: 256,
+          mainAxisExtent: 450,
+          crossAxisSpacing: 28,
+          mainAxisSpacing: 16,
         ),
         itemCount: items.length,
         itemBuilder: (context, i) => PosterCard(
           key: ValueKey('${items[i].sourceAddonId}|${items[i].id}'),
           item: items[i],
+          width: 220,
+          height: 330,
           onSelect: () => onOpenItem?.call(items[i]),
         ),
       );
     }
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(context.l10n.myList),
-          backgroundColor: Colors.transparent,
-        ),
-        body: body,
-      ),
+    return TvScreen(
+      title: context.l10n.myList,
+      subtitle: items.isEmpty ? null : context.l10n.libraryCount(items.length),
+      child: body,
     );
   }
 }

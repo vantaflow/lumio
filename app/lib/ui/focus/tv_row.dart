@@ -21,6 +21,7 @@ class TvRow extends ConsumerStatefulWidget {
     this.height = 194,
     this.gap = LumioSpacing.lg,
     this.horizontalPadding = 96,
+    this.verticalPadding = 12,
     this.autofocusFirst = false,
   });
 
@@ -43,6 +44,7 @@ class TvRow extends ConsumerStatefulWidget {
   final double height;
   final double gap;
   final double horizontalPadding;
+  final double verticalPadding;
 
   /// Sans focus mémorisé, donne le focus à la première carte si rien d'autre
   /// n'est focalisé (première rangée affichée : le focus initial de l'écran).
@@ -131,12 +133,31 @@ class _TvRowState extends ConsumerState<TvRow> {
         .read(focusMemoryProvider.notifier)
         .remember(_route, '$index', row: widget.restorationId);
     final reduce = MediaQuery.maybeDisableAnimationsOf(itemContext) ?? false;
-    Scrollable.ensureVisible(
-      itemContext,
-      alignment: 0.5,
-      duration: reduce ? Duration.zero : LumioMotion.focus,
-      curve: Curves.easeOut,
-    );
+    final duration = reduce ? Duration.zero : LumioMotion.focus;
+    // Horizontal : centre la carte dans CETTE rangée seulement. (Un
+    // `Scrollable.ensureVisible` remonte tous les défilements parents et
+    // centrait aussi la page : rangées qui se chevauchent, audit D5.)
+    final h = _controller;
+    final ro = itemContext.findRenderObject();
+    if (h != null && h.hasClients && ro != null) {
+      h.position.ensureVisible(
+        ro,
+        alignment: 0.5,
+        duration: duration,
+        curve: Curves.easeOut,
+      );
+    }
+    // Vertical : la rangée entière (titre compris) reste visible.
+    final outer = Scrollable.maybeOf(context, axis: Axis.vertical);
+    final rowRo = context.findRenderObject();
+    if (outer != null && rowRo != null) {
+      outer.position.ensureVisible(
+        rowRo,
+        alignment: 0.02,
+        duration: duration,
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   /// Marge latérale : réduite sur téléphone (largeur < 720 dp).
@@ -163,7 +184,7 @@ class _TvRowState extends ConsumerState<TvRow> {
             ),
           ),
         ),
-        const SizedBox(height: LumioSpacing.sm),
+        const SizedBox(height: LumioSpacing.xs),
         // 12 de marge verticale : l'anneau et l'échelle ne sont jamais rognés.
         SizedBox(
           height: widget.height,
@@ -177,7 +198,7 @@ class _TvRowState extends ConsumerState<TvRow> {
                 : widget.itemExtent! + widget.gap,
             padding: EdgeInsets.symmetric(
               horizontal: _hPad(context),
-              vertical: 12,
+              vertical: widget.verticalPadding,
             ),
             itemBuilder: (context, i) {
               Widget item = Builder(

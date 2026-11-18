@@ -55,7 +55,7 @@ final releaseSyncProvider = Provider<void>((ref) {
     final ok = await notifier.replaceAll(
       planReleases(
         data.entries,
-        DateTime.now(),
+        ref.read(calendarClockProvider)(),
         body: (e) => l.calendarNotifyBody(episodeLabel(l, e.video!)),
       ),
       l.calendarNotifyChannel,

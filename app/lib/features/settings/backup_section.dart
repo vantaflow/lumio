@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/backup_files.dart';
 import 'package:lumio/data/backup_service.dart';
@@ -392,7 +393,7 @@ class _NewPassphraseDialogState extends State<_NewPassphraseDialog> {
           children: [
             Text(l.backupPassphraseHint),
             const SizedBox(height: 12),
-            TextField(
+            TvTextField(
               key: const ValueKey('backup:phrase'),
               controller: _phrase,
               autofocus: true,
@@ -402,7 +403,7 @@ class _NewPassphraseDialogState extends State<_NewPassphraseDialog> {
               decoration: InputDecoration(labelText: l.passphraseLabel),
             ),
             const SizedBox(height: 8),
-            TextField(
+            TvTextField(
               key: const ValueKey('backup:phraseConfirm'),
               controller: _confirm,
               obscureText: true,
@@ -466,7 +467,7 @@ class _ImportPassphraseDialogState extends State<_ImportPassphraseDialog> {
         children: [
           Text(l.backupImportPassphraseHint),
           const SizedBox(height: 12),
-          TextField(
+          TvTextField(
             key: const ValueKey('backup:importPhrase'),
             controller: _phrase,
             autofocus: true,

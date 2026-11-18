@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/jellyfin_repository.dart';
 import 'package:lumio/features/detail/playback_service.dart'
@@ -668,7 +669,7 @@ class _AddState extends ConsumerState<JellyfinAddDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
+            TvTextField(
               key: const ValueKey('jellyfin-url'),
               controller: _url,
               autofocus: true,
@@ -679,13 +680,13 @@ class _AddState extends ConsumerState<JellyfinAddDialog> {
                 hintText: l.jellyfinServerUrlHint,
               ),
             ),
-            TextField(
+            TvTextField(
               key: const ValueKey('jellyfin-user'),
               controller: _user,
               autocorrect: false,
               decoration: InputDecoration(labelText: l.jellyfinUser),
             ),
-            TextField(
+            TvTextField(
               key: const ValueKey('jellyfin-pass'),
               controller: _pass,
               obscureText: true,

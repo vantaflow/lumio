@@ -21,6 +21,7 @@ import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+import 'support/settings_nav.dart';
 
 const _urlA = 'https://a.example.com/tok-secret-a/manifest.json';
 const _lan = 'http://192.168.1.20:7000/lan-secret/manifest.json';
@@ -141,6 +142,9 @@ class _H {
   }
 
   Future<void> tapKey(String key) async {
+    if (key.startsWith('setting:')) {
+      await openSettingsPageFor(tester, key.substring(8), settle);
+    }
     final f = find.byKey(ValueKey(key));
     await tester.ensureVisible(f);
     await tester.tap(f);
@@ -162,7 +166,9 @@ void main() {
     final h = _H(tester);
     await h.run(() => h.repo.install(_urlA));
     await h.pump();
-    expect(find.text('Sauvegarde'), findsOneWidget);
+    await h.tester.tap(find.byKey(const ValueKey('rail:backup')));
+    await h.settle();
+    expect(find.text('SAUVEGARDE'), findsOneWidget);
 
     await h.tapKey('setting:backupExport');
     expect(

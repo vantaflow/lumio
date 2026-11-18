@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -218,7 +219,7 @@ class _PinDialogState extends State<PinDialog> {
                       ),
                     ),
                     _Pad(
-                      enabled: !_locked && !_busy,
+                      enabled: true,
                       onDigit: _add,
                       onErase: _erase,
                       onCancel: _cancel,
@@ -409,7 +410,7 @@ Future<String?> _askRecoveryCode(BuildContext context) {
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(ctx.l10n.recoveryTitle),
-      content: TextField(
+      content: TvTextField(
         controller: controller,
         autofocus: true,
         textCapitalization: TextCapitalization.characters,

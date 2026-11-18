@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -150,8 +151,22 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       if (!ok || !mounted) return;
     }
     ref.read(profileManagementRequestedProvider.notifier).set(false);
+    ref.read(previousProfileProvider.notifier).set(null);
     ref.read(currentProfileProvider.notifier).select(p);
   });
+
+  /// Retour : quitte la gestion, puis revient à l'accueil (profil précédent).
+  void _back() {
+    if (_manage) {
+      setState(() => _manage = false);
+      return;
+    }
+    final prev = ref.read(previousProfileProvider);
+    if (prev == null) return;
+    ref.read(previousProfileProvider.notifier).set(null);
+    ref.read(profileManagementRequestedProvider.notifier).set(false);
+    ref.read(currentProfileProvider.notifier).select(prev);
+  }
 
   Future<void> _toggleManage() => _guard(() async {
     if (_manage) {
@@ -223,59 +238,67 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
     final memory = ref.read(focusMemoryProvider.notifier);
     var remembered = memory.restore(profilesRouteKey);
     if (!list.any((p) => p.id == remembered)) remembered = null;
-    return Scaffold(
-      body: TvScaffold(
-        onBack: _manage ? () => setState(() => _manage = false) : () {},
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(LumioSpacing.xl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _manage
-                        ? context.l10n.manageProfiles
-                        : context.l10n.whoIsWatching,
-                    style: theme.textTheme.displayLarge,
-                  ),
-                  const SizedBox(height: LumioSpacing.xl),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: LumioSpacing.xl,
-                    runSpacing: LumioSpacing.xl,
-                    children: [
-                      for (var i = 0; i < list.length; i++)
-                        _ProfileTile(
-                          key: ValueKey('profile-${list[i].id}'),
-                          profile: list[i],
-                          color: _avatarColors[i % _avatarColors.length],
-                          locked: isProfileLocked(
-                            list[i],
-                            list,
-                            hasPin: _hasPin,
-                          ),
-                          manage: _manage,
-                          autofocus: remembered == null
-                              ? i == 0
-                              : list[i].id == remembered,
-                          onFocus: () =>
-                              memory.remember(profilesRouteKey, list[i].id),
-                          onSelect: () => _open(list[i], list),
-                        ),
-                      if (list.length < maxProfiles) _AddTile(onSelect: _add),
-                    ],
-                  ),
-                  const SizedBox(height: LumioSpacing.xl),
-                  OutlinedButton.icon(
-                    onPressed: _toggleManage,
-                    icon: Icon(_manage ? Icons.check : Icons.edit_outlined),
-                    label: Text(
-                      _manage ? context.l10n.done : context.l10n.manageProfiles,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
+      child: Scaffold(
+        body: TvScaffold(
+          onBack: _back,
+          child: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(LumioSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _manage
+                          ? context.l10n.manageProfiles
+                          : context.l10n.whoIsWatching,
+                      style: theme.textTheme.displayLarge,
                     ),
-                    style: OutlinedButton.styleFrom(foregroundColor: c.text),
-                  ),
-                ],
+                    const SizedBox(height: LumioSpacing.xl),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: LumioSpacing.xl,
+                      runSpacing: LumioSpacing.xl,
+                      children: [
+                        for (var i = 0; i < list.length; i++)
+                          _ProfileTile(
+                            key: ValueKey('profile-${list[i].id}'),
+                            profile: list[i],
+                            color: _avatarColors[i % _avatarColors.length],
+                            locked: isProfileLocked(
+                              list[i],
+                              list,
+                              hasPin: _hasPin,
+                            ),
+                            manage: _manage,
+                            autofocus: remembered == null
+                                ? i == 0
+                                : list[i].id == remembered,
+                            onFocus: () =>
+                                memory.remember(profilesRouteKey, list[i].id),
+                            onSelect: () => _open(list[i], list),
+                          ),
+                        if (list.length < maxProfiles) _AddTile(onSelect: _add),
+                      ],
+                    ),
+                    const SizedBox(height: LumioSpacing.xl),
+                    OutlinedButton.icon(
+                      onPressed: _toggleManage,
+                      icon: Icon(_manage ? Icons.check : Icons.edit_outlined),
+                      label: Text(
+                        _manage
+                            ? context.l10n.done
+                            : context.l10n.manageProfiles,
+                      ),
+                      style: OutlinedButton.styleFrom(foregroundColor: c.text),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -594,7 +617,7 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
+              TvTextField(
                 controller: _name,
                 autofocus: true,
                 maxLength: 20,
@@ -673,10 +696,31 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
 /// ajouter, créer le PIN parent ou renommer « Moi ».
 /// Changement de profil depuis l'accueil : avec un seul profil, gestion
 /// protégée par le PIN s'il existe (échec fermé) ; sinon PIN parent requis.
-Future<void> switchProfileFlow(BuildContext context, WidgetRef ref) async {
+Future<void> switchProfileFlow(
+  BuildContext context,
+  WidgetRef ref, {
+  VoidCallback? beforeSelect,
+  bool manage = false,
+}) async {
   final repo = ref.read(profileRepositoryProvider);
   final single = (ref.read(profilesProvider).value?.length ?? 0) <= 1;
-  if (single) {
+  if (manage && !single) {
+    // Gestion demandée depuis les réglages : le PIN parent est exigé s'il existe.
+    final bool hasPin;
+    try {
+      hasPin = await repo.hasParentPin();
+    } on Object {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.parentalUnavailable)),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
+    if (hasPin && !await verifyParentPinFlow(context, ref)) return;
+    ref.read(profileManagementRequestedProvider.notifier).set(true);
+  } else if (single) {
     final bool hasPin;
     try {
       hasPin = await repo.hasParentPin();
@@ -694,6 +738,9 @@ Future<void> switchProfileFlow(BuildContext context, WidgetRef ref) async {
   } else if (!await requireParent(context, ref)) {
     return;
   }
+  ref
+      .read(previousProfileProvider.notifier)
+      .set(ref.read(currentProfileProvider));
   ref.read(currentProfileProvider.notifier).select(null);
 }
 

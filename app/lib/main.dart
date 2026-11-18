@@ -18,6 +18,7 @@ import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/torrent/torrent_providers.dart';
+import 'package:lumio/ui/focus/focus_rescue.dart';
 import 'package:lumio/ui/focus/tv_canvas.dart';
 import 'package:lumio/ui/focus/tv_detection.dart';
 import 'package:lumio/ui/theme.dart';
@@ -86,6 +87,7 @@ class LumioApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [FocusRescueObserver()],
       theme: LumioTheme.dark(),
       darkTheme: LumioTheme.dark(),
       themeMode: ThemeMode.dark,

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/party_client.dart';
@@ -191,7 +192,7 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
         const SizedBox(height: LumioSpacing.xl),
         Text(l.partyJoinTitle, style: theme.textTheme.titleMedium),
         const SizedBox(height: LumioSpacing.sm),
-        TextField(
+        TvTextField(
           key: const ValueKey('party:link'),
           controller: _link,
           maxLength: 300,

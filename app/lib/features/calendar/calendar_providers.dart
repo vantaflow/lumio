@@ -57,6 +57,12 @@ Future<List<R>> mapLimited<T, R>(
   return [for (final r in out) r as R];
 }
 
+/// Horloge du calendrier (remplacée par les tests pour ne pas dépendre de
+/// l'heure courante).
+final calendarClockProvider = Provider<DateTime Function()>(
+  (ref) => DateTime.now,
+);
+
 final calendarProvider = FutureProvider.autoDispose<CalendarData>((ref) async {
   final profile = ref.watch(currentProfileProvider);
   final library = await ref.watch(libraryProvider.future);
@@ -66,7 +72,7 @@ final calendarProvider = FutureProvider.autoDispose<CalendarData>((ref) async {
   ];
   final cache = ref.read(calendarMetaCacheProvider);
   final launcher = ref.read(playbackLauncherProvider);
-  final now = DateTime.now();
+  final now = ref.read(calendarClockProvider)();
 
   Future<Meta?> load(MetaPreview p) async {
     final key = '${p.sourceAddonId}|${p.id}';

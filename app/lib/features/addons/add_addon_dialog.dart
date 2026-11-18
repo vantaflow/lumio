@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/error_messages.dart';
@@ -248,7 +249,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
                 style: theme.textTheme.headlineMedium,
               ),
               const SizedBox(height: LumioSpacing.md),
-              TextField(
+              TvTextField(
                 controller: _controller,
                 autofocus: true,
                 keyboardType: TextInputType.url,

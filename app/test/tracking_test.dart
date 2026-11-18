@@ -538,6 +538,8 @@ void main() {
     testWidgets('réglages : section Suivi (Trakt)', (t) async {
       final h = AppHarness(t);
       await h.pump(const SettingsScreen(), extra: over());
+      await t.tap(find.byKey(const ValueKey('rail:tracking')));
+      await t.pump(const Duration(milliseconds: 100));
       expect(find.text('Suivi (Trakt)'), findsWidgets);
       expect(
         find.byKey(const ValueKey('setting:tracking'), skipOffstage: false),

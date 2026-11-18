@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/features/addons/add_addon_dialog.dart';
@@ -494,7 +495,7 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
           const SizedBox(height: 12),
           SizedBox(
             width: 900,
-            child: TextField(
+            child: TvTextField(
               key: const ValueKey('onboarding-name'),
               controller: _name,
               maxLength: 30,
@@ -729,7 +730,7 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _title(context, l.onboardingProfileTitle, l.onboardingProfileBody),
-        TextField(
+        TvTextField(
           key: const ValueKey('onboarding-name'),
           controller: _name,
           maxLength: 30,

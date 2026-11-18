@@ -194,12 +194,20 @@ class _FocusableCardState extends State<FocusableCard> {
             setState(() => _focused = f);
             widget.onFocusChange?.call(f);
           },
-          child: GestureDetector(
-            excludeFromSemantics: true,
-            behavior: HitTestBehavior.opaque,
-            onTap: widget.enabled ? widget.onSelect : null,
-            onLongPress: widget.enabled ? widget.onLongPress : null,
-            child: body,
+          child: Builder(
+            builder: (ctx) => GestureDetector(
+              excludeFromSemantics: true,
+              behavior: HitTestBehavior.opaque,
+              // Un toucher ou un clic déplace aussi le focus sur la carte.
+              onTap: widget.enabled
+                  ? () {
+                      Focus.maybeOf(ctx)?.requestFocus();
+                      widget.onSelect();
+                    }
+                  : null,
+              onLongPress: widget.enabled ? widget.onLongPress : null,
+              child: body,
+            ),
           ),
         ),
       ),
