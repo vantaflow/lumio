@@ -365,9 +365,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce flux passe par un torrent : il n\'est pas lisible ici.';
 
   @override
-  String get torrentSoon => 'Lecture des torrents bientôt disponible';
-
-  @override
   String get failTimeout => 'Délai dépassé : la source ne répond pas.';
 
   @override
@@ -1023,4 +1020,42 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sourcesReminderDismiss => 'Masquer';
+
+  @override
+  String get torrentNoPeers =>
+      'Aucune source disponible pour ce torrent. Essayez un autre flux.';
+
+  @override
+  String get torrentNoFile =>
+      'Ce torrent ne contient aucun fichier lisible. Essayez un autre flux.';
+
+  @override
+  String get torrentFailed =>
+      'Le torrent n\'a pas pu démarrer. Essayez un autre flux.';
+
+  @override
+  String get torrentConnecting => 'Connexion aux sources…';
+
+  @override
+  String get torrentConnectionLost => 'Connexion perdue, nouvelle tentative…';
+
+  @override
+  String torrentPeers(Object count) {
+    return '$count sources';
+  }
+
+  @override
+  String torrentRateKb(Object value) {
+    return '$value Ko/s';
+  }
+
+  @override
+  String torrentRateMb(Object value) {
+    return '$value Mo/s';
+  }
+
+  @override
+  String torrentBuffered(Object percent) {
+    return '$percent % téléchargé';
+  }
 }

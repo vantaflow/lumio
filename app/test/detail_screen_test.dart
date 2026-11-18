@@ -15,11 +15,16 @@ import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/library/library_screen.dart';
 import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/torrent/torrent_engine.dart';
+import 'package:lumio/torrent/torrent_playback.dart';
+import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+import 'support/fake_torrent_engine.dart';
+import 'support/recording_player.dart';
 
 AddonManifest _manifest(
   String id, {
@@ -170,6 +175,7 @@ class _H {
     StreamPrefs? prefs,
     Widget? home,
     Future<void> Function(ProviderContainer c)? seed,
+    List<Override> overrides = const [],
   }) async {
     t.view.physicalSize = const Size(1920, 1080);
     t.view.devicePixelRatio = 1;
@@ -186,6 +192,7 @@ class _H {
           players.add(screen);
           return const Scaffold(body: Text('PLAYER'));
         }),
+        ...overrides,
       ],
     );
     addTearDown(container.dispose);
@@ -367,23 +374,57 @@ void main() {
     final next = await t.runAsync(() => p.resolveNext!(p.meta!.videos[1]));
     expect(next!.url.toString(), 'http://192.168.1.5:7000/n.mp4');
     expect(h.client.streamCalls.last.endsWith('tt9:1:2'), isTrue);
+    // Un torrent seul est désormais lisible : il est proposé comme suivant.
     h.client.streams['org.priv'] = [_torrent('t')];
+    final nextTorrent = await t.runAsync(
+      () => p.resolveNext!(p.meta!.videos[1]),
+    );
+    expect(nextTorrent!.isTorrent, isTrue);
+    h.client.streams['org.priv'] = [];
     expect(await t.runAsync(() => p.resolveNext!(p.meta!.videos[1])), isNull);
     await h.close();
   });
 
-  testWidgets('flux torrent : listé, message « bientôt disponible »', (
+  testWidgets('flux torrent : lu via le moteur, URL locale en trustedLocal', (
     t,
   ) async {
     final h = _H(t);
+    final engine = FakeTorrentEngine(
+      fileList: const [
+        TorrentFile(index: 0, name: 'a.mkv', size: 10, streamable: true),
+        TorrentFile(index: 1, name: 'b.mkv', size: 900, streamable: true),
+      ],
+    );
+    final ctl = RecordingPlayerController();
     h.client.streams['org.a'] = [_torrent('T', desc: 'Film 1080p 👤 80')];
-    await h.pump(preview: _preview());
+    await h.pump(
+      preview: _preview(),
+      overrides: [
+        torrentPlaybackFactoryProvider.overrideWithValue(
+          () => TorrentPlayback(engine: engine),
+        ),
+        playerBuilderProvider.overrideWithValue(
+          (screen) => PlayerScreen(
+            item: screen.item,
+            allowPrivate: screen.allowPrivate,
+            controller: ctl,
+            videoBuilder: (_) => const ColoredBox(color: Colors.black),
+            tracksBackend: (_) => NoTracksBackend(),
+          ),
+        ),
+      ],
+    );
     expect(find.byType(MagnetIcon), findsOneWidget);
     await t.tap(find.textContaining('Film 1080p').first);
     await h.settle();
-    expect(find.text(torrentSoonMessage), findsOneWidget);
-    expect(h.players, isEmpty);
+    expect(find.textContaining('bientôt'), findsNothing);
+    expect(ctl.opened, hasLength(1));
+    expect(ctl.opened.single.url.toString(), startsWith('http://127.0.0.1'));
+    expect(ctl.trusted.single, isTrue);
+    expect(engine.streamedIndexes, [1]); // plus grand fichier lisible
+    expect(ctl.failures, isEmpty);
     await h.close();
+    expect(engine.stopDeleteData, [true]); // sortie du lecteur : nettoyage
   });
 
   testWidgets('série : saisons, épisodes, coche « vu », flux par épisode', (
@@ -677,13 +718,13 @@ void main() {
     });
   });
 
-  testWidgets('« Lecture auto » préfère un lien direct à un torrent', (
+  testWidgets('« Lecture auto » : à égalité de préférences, lien direct', (
     t,
   ) async {
     final h = _H(t);
     h.client.streams['org.a'] = [
       _torrent('T', desc: 'Film VF 1080p 👤 500'),
-      _direct('d', 'https://cdn.example.com/d.mp4', desc: 'Film VF 720p'),
+      _direct('d', 'https://cdn.example.com/d.mp4', desc: 'Film VF 1080p'),
     ];
     await h.pump(preview: _preview());
     await t.tap(find.textContaining('Lecture auto'));
@@ -692,6 +733,29 @@ void main() {
       h.players.single.item.url.toString(),
       'https://cdn.example.com/d.mp4',
     );
+    await h.close();
+  });
+
+  testWidgets('« Lecture auto » : le classement des préférences décide', (
+    t,
+  ) async {
+    // Meilleure qualité côté torrent : il est choisi (aucune règle spéciale).
+    final h = _H(t);
+    h.client.streams['org.a'] = [
+      _torrent('T', desc: 'Film VF 1080p 👤 500'),
+      _direct('d', 'https://cdn.example.com/d.mp4', desc: 'Film VF 720p'),
+    ];
+    await h.pump(
+      preview: _preview(),
+      overrides: [
+        torrentPlaybackFactoryProvider.overrideWithValue(
+          () => TorrentPlayback(engine: FakeTorrentEngine()),
+        ),
+      ],
+    );
+    await t.tap(find.textContaining('Lecture auto'));
+    await h.settle();
+    expect(h.players.single.item.isTorrent, isTrue);
     await h.close();
   });
 

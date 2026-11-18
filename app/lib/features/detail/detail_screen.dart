@@ -232,7 +232,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       ..sort(
         (a, b) => order.indexOf(a.addonId).compareTo(order.indexOf(b.addonId)),
       );
-    final preferred = preferredPlayable([
+    final preferred = preferredStream([
       for (final g in groups) ...g.items,
     ], prefs);
     final inList =

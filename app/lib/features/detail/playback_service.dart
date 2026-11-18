@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/features/home/home_providers.dart';
@@ -10,9 +9,6 @@ import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio_core/lumio_core.dart' hide Video;
 import 'package:lumio_core/lumio_core.dart' as core show Video;
-
-/// Message affiché pour un flux torrent tant que la tâche 24 n'est pas livrée.
-const torrentSoonMessage = 'Lecture des torrents bientôt disponible';
 
 /// Client qui choisit, pour CHAQUE addon, le niveau de confiance réseau
 /// dérivé de l'URL installée (jamais de l'identifiant du manifeste). Un seul
@@ -230,20 +226,15 @@ class PlaybackLauncher {
   }
 
   /// Meilleur flux de [id] selon les préférences du profil ; `null` si aucun.
-  /// [directOnly] écarte les torrents (suivant automatique).
-  Future<StreamItem?> resolvePreferred(
-    String type,
-    String id, {
-    bool directOnly = false,
-  }) async {
+  /// Le classement des préférences (langue, qualité, lien direct avant torrent
+  /// à égalité) décide seul : un torrent est lu comme un autre flux.
+  Future<StreamItem?> resolvePreferred(String type, String id) async {
     final prefs = await _ref.read(streamPrefsProvider.future);
     final all = <StreamItem>[];
     await for (final g in loadStreams(type, id)) {
       all.addAll(g.items);
     }
-    return directOnly
-        ? preferredStream(all.where((s) => !s.isTorrent), prefs)
-        : preferredPlayable(all, prefs);
+    return preferredStream(all, prefs);
   }
 
   bool allowPrivateFor(String storageId) => _ref
@@ -251,17 +242,13 @@ class PlaybackLauncher {
       .any((a) => a.storageId == storageId && a.allowPrivate);
 
   /// Ouvre le lecteur sur [stream] (déjà rattaché à un identifiant de
-  /// stockage). Un flux torrent est refusé avec un message.
+  /// stockage). Un flux torrent est préparé par le lecteur lui-même.
   Future<PlayerExit?> play(
     BuildContext context, {
     required Meta meta,
     required String videoId,
     required StreamItem stream,
   }) async {
-    if (stream.isTorrent) {
-      _tell(context, context.l10n.torrentSoon);
-      return null;
-    }
     final navigator = Navigator.of(context);
     final profileId = _ref.read(currentProfileIdProvider);
     final subtitles = await loadSubtitles(
@@ -277,19 +264,12 @@ class PlaybackLauncher {
       videoId: videoId,
       meta: meta,
       subtitles: subtitles,
-      resolveNext: (core.Video next) =>
-          resolvePreferred(meta.type, next.id, directOnly: true),
+      resolveNext: (core.Video next) => resolvePreferred(meta.type, next.id),
     );
     final build = _ref.read(playerBuilderProvider);
     return navigator.push<PlayerExit>(
       MaterialPageRoute(builder: (_) => build(screen)),
     );
-  }
-
-  void _tell(BuildContext context, String message) {
-    ScaffoldMessenger.maybeOf(context)
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

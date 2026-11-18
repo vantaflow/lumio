@@ -360,9 +360,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'This stream uses a torrent: it cannot be played here.';
 
   @override
-  String get torrentSoon => 'Torrent playback coming soon';
-
-  @override
   String get failTimeout => 'Timed out: the source is not responding.';
 
   @override
@@ -1010,4 +1007,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sourcesReminderDismiss => 'Hide';
+
+  @override
+  String get torrentNoPeers =>
+      'No source available for this torrent. Try another stream.';
+
+  @override
+  String get torrentNoFile =>
+      'This torrent has no playable file. Try another stream.';
+
+  @override
+  String get torrentFailed =>
+      'The torrent could not start. Try another stream.';
+
+  @override
+  String get torrentConnecting => 'Connecting to sources…';
+
+  @override
+  String get torrentConnectionLost => 'Connection lost, retrying…';
+
+  @override
+  String torrentPeers(Object count) {
+    return '$count sources';
+  }
+
+  @override
+  String torrentRateKb(Object value) {
+    return '$value KB/s';
+  }
+
+  @override
+  String torrentRateMb(Object value) {
+    return '$value MB/s';
+  }
+
+  @override
+  String torrentBuffered(Object percent) {
+    return '$percent% downloaded';
+  }
 }

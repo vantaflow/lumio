@@ -232,6 +232,16 @@ class PlayerController {
     );
   }
 
+  /// Affiche une erreur sans ouvrir de média (échec avant l'ouverture, par
+  /// exemple la préparation d'un torrent).
+  void fail(String message) => _fail(message);
+
+  /// Repasse en phase d'ouverture (préparation d'un torrent en cours).
+  void showOpening() {
+    _stall?.cancel();
+    _set(PlayerState(phase: PlayerPhase.opening, volume: state.volume));
+  }
+
   void _fail(String message) {
     _stall?.cancel();
     _set(state.copyWith(phase: PlayerPhase.failed, error: message));

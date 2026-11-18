@@ -722,12 +722,6 @@ abstract class AppLocalizations {
   /// **'Ce flux passe par un torrent : il n\'est pas lisible ici.'**
   String get torrentNotPlayable;
 
-  /// No description provided for @torrentSoon.
-  ///
-  /// In fr, this message translates to:
-  /// **'Lecture des torrents bientôt disponible'**
-  String get torrentSoon;
-
   /// No description provided for @failTimeout.
   ///
   /// In fr, this message translates to:
@@ -1879,6 +1873,60 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Masquer'**
   String get sourcesReminderDismiss;
+
+  /// No description provided for @torrentNoPeers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune source disponible pour ce torrent. Essayez un autre flux.'**
+  String get torrentNoPeers;
+
+  /// No description provided for @torrentNoFile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce torrent ne contient aucun fichier lisible. Essayez un autre flux.'**
+  String get torrentNoFile;
+
+  /// No description provided for @torrentFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le torrent n\'a pas pu démarrer. Essayez un autre flux.'**
+  String get torrentFailed;
+
+  /// No description provided for @torrentConnecting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion aux sources…'**
+  String get torrentConnecting;
+
+  /// No description provided for @torrentConnectionLost.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion perdue, nouvelle tentative…'**
+  String get torrentConnectionLost;
+
+  /// No description provided for @torrentPeers.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} sources'**
+  String torrentPeers(Object count);
+
+  /// No description provided for @torrentRateKb.
+  ///
+  /// In fr, this message translates to:
+  /// **'{value} Ko/s'**
+  String torrentRateKb(Object value);
+
+  /// No description provided for @torrentRateMb.
+  ///
+  /// In fr, this message translates to:
+  /// **'{value} Mo/s'**
+  String torrentRateMb(Object value);
+
+  /// No description provided for @torrentBuffered.
+  ///
+  /// In fr, this message translates to:
+  /// **'{percent} % téléchargé'**
+  String torrentBuffered(Object percent);
 }
 
 class _AppLocalizationsDelegate

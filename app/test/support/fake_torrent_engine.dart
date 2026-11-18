@@ -23,6 +23,8 @@ class FakeTorrentEngine implements TorrentEngine {
   TorrentStatus statusValue;
   final addedMagnets = <String>[];
   final stopped = <String>[];
+  final stopDeleteData = <bool>[];
+  final streamedIndexes = <int?>[];
   TorrentSettings? settings;
   bool disposed = false;
   final _live = <String>{};
@@ -67,6 +69,7 @@ class FakeTorrentEngine implements TorrentEngine {
   @override
   Future<Uri> stream(String id, {int? fileIndex}) async {
     _check(id);
+    streamedIndexes.add(fileIndex);
     return Uri.parse('http://127.0.0.1:8080/stream/$id/${fileIndex ?? 0}');
   }
 
@@ -87,6 +90,7 @@ class FakeTorrentEngine implements TorrentEngine {
     _check(id);
     _live.remove(id);
     stopped.add(id);
+    stopDeleteData.add(deleteData);
     await _controllers.remove(id)?.close();
   }
 

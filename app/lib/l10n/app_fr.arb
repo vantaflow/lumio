@@ -194,7 +194,6 @@
   },
   "playNow": "Lire maintenant",
   "torrentNotPlayable": "Ce flux passe par un torrent : il n'est pas lisible ici.",
-  "torrentSoon": "Lecture des torrents bientôt disponible",
   "failTimeout": "Délai dépassé : la source ne répond pas.",
   "failNetwork": "Connexion impossible : vérifiez le réseau.",
   "failRedirect": "La source redirige de façon incorrecte.",
@@ -549,5 +548,34 @@
   "onboardingSaveError": "Enregistrement impossible, réessayez",
   "sourcesReminderTitle": "Ajoutez vos sources",
   "sourcesReminderBody": "Votre accueil est vide tant qu'aucune source n'est ajoutée.",
-  "sourcesReminderDismiss": "Masquer"
+  "sourcesReminderDismiss": "Masquer",
+  "torrentNoPeers": "Aucune source disponible pour ce torrent. Essayez un autre flux.",
+  "torrentNoFile": "Ce torrent ne contient aucun fichier lisible. Essayez un autre flux.",
+  "torrentFailed": "Le torrent n'a pas pu démarrer. Essayez un autre flux.",
+  "torrentConnecting": "Connexion aux sources…",
+  "torrentConnectionLost": "Connexion perdue, nouvelle tentative…",
+  "torrentPeers": "{count} sources",
+  "@torrentPeers": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "torrentRateKb": "{value} Ko/s",
+  "@torrentRateKb": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "torrentRateMb": "{value} Mo/s",
+  "@torrentRateMb": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "torrentBuffered": "{percent} % téléchargé",
+  "@torrentBuffered": {
+    "placeholders": {
+      "percent": {}
+    }
+  }
 }

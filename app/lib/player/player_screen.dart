@@ -13,6 +13,10 @@ import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/player/tracks_panel.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/torrent/torrent_engine.dart' show TorrentStatus;
+import 'package:lumio/torrent/torrent_overlay.dart';
+import 'package:lumio/torrent/torrent_playback.dart';
+import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
@@ -163,6 +167,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   bool _switching = false;
   bool _disposed = false;
 
+  /// Lecture de torrent en cours (créée au premier flux torrent) et dernier
+  /// statut pour la superposition sources/débit.
+  TorrentPlayback? _torrent;
+  bool _torrentActive = false;
+  StreamItem? _current;
+  final _torrentStatus = ValueNotifier<TorrentStatus?>(null);
+
   core.Video? get _next {
     final m = widget.meta;
     final id = _videoId;
@@ -211,7 +222,71 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     }
     if (_disposed) return;
     if (start > Duration.zero) _tellL((l) => l.resumeAt(formatClock(start)));
+    _current = item;
+    if (item.isTorrent) {
+      await _openTorrent(item, start);
+      return;
+    }
+    _torrentActive = false;
+    unawaited(_torrent?.release());
     await _ctl.open(item, allowPrivate: widget.allowPrivate, start: start);
+  }
+
+  /// Torrent : démarre le moteur, attend une source, puis ouvre l'URL locale
+  /// du moteur par le chemin interne `trustedLocal` (jamais une URL d'addon).
+  Future<void> _openTorrent(StreamItem item, Duration start) async {
+    final torrent = _torrent ??= ref.read(torrentPlaybackFactoryProvider)();
+    _torrentActive = true; // lu au prochain build (peut venir d'initState)
+    _torrentStatus.value = null;
+    _ctl.showOpening();
+    final Uri url;
+    try {
+      url = await torrent.prepare(
+        item,
+        onStatus: (s) {
+          if (!_disposed) _torrentStatus.value = s;
+        },
+      );
+    } on TorrentCancelledException {
+      return;
+    } on NoPeersException {
+      _failTorrent((l) => l.torrentNoPeers);
+      return;
+    } on NoStreamableFileException {
+      _failTorrent((l) => l.torrentNoFile);
+      return;
+    } on Object {
+      _failTorrent((l) => l.torrentFailed);
+      return;
+    }
+    if (_disposed) return;
+    await _ctl.open(
+      StreamItem(
+        addonId: item.addonId,
+        title: item.title,
+        url: url,
+        language: item.language,
+        sizeBytes: item.sizeBytes,
+      ),
+      trustedLocal: true,
+      start: start,
+    );
+  }
+
+  void _failTorrent(String Function(AppLocalizations l) message) {
+    if (_disposed || !mounted) return;
+    _ctl.fail(message(context.l10n));
+  }
+
+  /// « Réessayer » : un torrent repart de la préparation, un lien direct
+  /// rouvre à la dernière position.
+  Future<void> _retry() async {
+    final item = _current;
+    if (item != null && item.isTorrent) {
+      await _openTorrent(item, _ctl.state.position);
+    } else {
+      await _ctl.retry();
+    }
   }
 
   /// Lit les chapitres une fois la durée connue (pas avant : le filtre des
@@ -346,6 +421,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _playNode.dispose();
     _tracksNode.dispose();
     _tracks?.dispose();
+    // Arrêt du torrent et suppression de ses données à la sortie.
+    unawaited(_torrent?.release());
+    _torrentStatus.dispose();
     if (widget.controller == null) unawaited(_ctl.dispose());
     super.dispose();
   }
@@ -555,7 +633,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                   if (failed)
                     _FailureView(
                       message: st.error ?? context.l10n.failGeneric,
-                      onRetry: _ctl.retry,
+                      onRetry: _retry,
                       onOther: () =>
                           Navigator.of(context).pop(PlayerExit.pickAnother),
                       onBack: () => Navigator.of(context).pop(PlayerExit.back),
@@ -591,6 +669,23 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                             onTouch: () => _showControls(),
                           ),
                         ),
+                      ),
+                    ),
+                  if (_torrentActive && !failed)
+                    PositionedDirectional(
+                      top: LumioSpacing.lg,
+                      end: LumioSpacing.lg,
+                      child: ValueListenableBuilder<TorrentStatus?>(
+                        valueListenable: _torrentStatus,
+                        builder: (context, ts, child) {
+                          final show =
+                              _controls ||
+                              st.phase == PlayerPhase.opening ||
+                              st.phase == PlayerPhase.buffering ||
+                              ts?.error != null;
+                          return show ? child! : const SizedBox.shrink();
+                        },
+                        child: TorrentOverlay(status: _torrentStatus),
                       ),
                     ),
                   if (_showNext && !failed && _next != null)

@@ -104,7 +104,6 @@
   "nextEpisodeInShort": "Next episode in {seconds} s",
   "playNow": "Play now",
   "torrentNotPlayable": "This stream uses a torrent: it cannot be played here.",
-  "torrentSoon": "Torrent playback coming soon",
   "failTimeout": "Timed out: the source is not responding.",
   "failNetwork": "Can't connect: check the network.",
   "failRedirect": "The source redirects incorrectly.",
@@ -320,5 +319,34 @@
   "onboardingSaveError": "Could not save, please try again",
   "sourcesReminderTitle": "Add your sources",
   "sourcesReminderBody": "Your home stays empty until you add a source.",
-  "sourcesReminderDismiss": "Hide"
+  "sourcesReminderDismiss": "Hide",
+  "torrentNoPeers": "No source available for this torrent. Try another stream.",
+  "torrentNoFile": "This torrent has no playable file. Try another stream.",
+  "torrentFailed": "The torrent could not start. Try another stream.",
+  "torrentConnecting": "Connecting to sources…",
+  "torrentConnectionLost": "Connection lost, retrying…",
+  "torrentPeers": "{count} sources",
+  "@torrentPeers": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "torrentRateKb": "{value} KB/s",
+  "@torrentRateKb": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "torrentRateMb": "{value} MB/s",
+  "@torrentRateMb": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "torrentBuffered": "{percent}% downloaded",
+  "@torrentBuffered": {
+    "placeholders": {
+      "percent": {}
+    }
+  }
 }

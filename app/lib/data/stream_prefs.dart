@@ -111,11 +111,3 @@ StreamItem? preferredStream(Iterable<StreamItem> items, StreamPrefs p) {
   final sorted = sortStreams(items.toList(), p);
   return sorted.isEmpty ? null : sorted.first;
 }
-
-/// Flux à présélectionner tant que la lecture des torrents est indisponible :
-/// le meilleur lien direct, à défaut le meilleur torrent.
-StreamItem? preferredPlayable(Iterable<StreamItem> items, StreamPrefs p) {
-  final list = items.toList();
-  return preferredStream(list.where((s) => !s.isTorrent), p) ??
-      preferredStream(list, p);
-}
