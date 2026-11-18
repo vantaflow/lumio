@@ -945,6 +945,17 @@ class $LibraryItemsTable extends LibraryItems
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _certificationMeta = const VerificationMeta(
+    'certification',
+  );
+  @override
+  late final GeneratedColumn<String> certification = GeneratedColumn<String>(
+    'certification',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     profileId,
@@ -952,6 +963,7 @@ class $LibraryItemsTable extends LibraryItems
     type,
     metaJson,
     addedAt,
+    certification,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -999,6 +1011,15 @@ class $LibraryItemsTable extends LibraryItems
         addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
       );
     }
+    if (data.containsKey('certification')) {
+      context.handle(
+        _certificationMeta,
+        certification.isAcceptableOrUnknown(
+          data['certification']!,
+          _certificationMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1028,6 +1049,10 @@ class $LibraryItemsTable extends LibraryItems
         DriftSqlType.int,
         data['${effectivePrefix}added_at'],
       )!,
+      certification: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}certification'],
+      ),
     );
   }
 
@@ -1043,12 +1068,17 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
   final String type;
   final String metaJson;
   final int addedAt;
+
+  /// Certification d'âge du titre (v6), pour le filtre des profils enfants ;
+  /// nulle si inconnue.
+  final String? certification;
   const LibraryItem({
     required this.profileId,
     required this.itemId,
     required this.type,
     required this.metaJson,
     required this.addedAt,
+    this.certification,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1058,6 +1088,9 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
     map['type'] = Variable<String>(type);
     map['meta_json'] = Variable<String>(metaJson);
     map['added_at'] = Variable<int>(addedAt);
+    if (!nullToAbsent || certification != null) {
+      map['certification'] = Variable<String>(certification);
+    }
     return map;
   }
 
@@ -1068,6 +1101,9 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
       type: Value(type),
       metaJson: Value(metaJson),
       addedAt: Value(addedAt),
+      certification: certification == null && nullToAbsent
+          ? const Value.absent()
+          : Value(certification),
     );
   }
 
@@ -1082,6 +1118,7 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
       type: serializer.fromJson<String>(json['type']),
       metaJson: serializer.fromJson<String>(json['metaJson']),
       addedAt: serializer.fromJson<int>(json['addedAt']),
+      certification: serializer.fromJson<String?>(json['certification']),
     );
   }
   @override
@@ -1093,6 +1130,7 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
       'type': serializer.toJson<String>(type),
       'metaJson': serializer.toJson<String>(metaJson),
       'addedAt': serializer.toJson<int>(addedAt),
+      'certification': serializer.toJson<String?>(certification),
     };
   }
 
@@ -1102,12 +1140,16 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
     String? type,
     String? metaJson,
     int? addedAt,
+    Value<String?> certification = const Value.absent(),
   }) => LibraryItem(
     profileId: profileId ?? this.profileId,
     itemId: itemId ?? this.itemId,
     type: type ?? this.type,
     metaJson: metaJson ?? this.metaJson,
     addedAt: addedAt ?? this.addedAt,
+    certification: certification.present
+        ? certification.value
+        : this.certification,
   );
   LibraryItem copyWithCompanion(LibraryItemsCompanion data) {
     return LibraryItem(
@@ -1116,6 +1158,9 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
       type: data.type.present ? data.type.value : this.type,
       metaJson: data.metaJson.present ? data.metaJson.value : this.metaJson,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      certification: data.certification.present
+          ? data.certification.value
+          : this.certification,
     );
   }
 
@@ -1126,13 +1171,15 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
           ..write('itemId: $itemId, ')
           ..write('type: $type, ')
           ..write('metaJson: $metaJson, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('certification: $certification')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(profileId, itemId, type, metaJson, addedAt);
+  int get hashCode =>
+      Object.hash(profileId, itemId, type, metaJson, addedAt, certification);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1141,7 +1188,8 @@ class LibraryItem extends DataClass implements Insertable<LibraryItem> {
           other.itemId == this.itemId &&
           other.type == this.type &&
           other.metaJson == this.metaJson &&
-          other.addedAt == this.addedAt);
+          other.addedAt == this.addedAt &&
+          other.certification == this.certification);
 }
 
 class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
@@ -1150,6 +1198,7 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
   final Value<String> type;
   final Value<String> metaJson;
   final Value<int> addedAt;
+  final Value<String?> certification;
   final Value<int> rowid;
   const LibraryItemsCompanion({
     this.profileId = const Value.absent(),
@@ -1157,6 +1206,7 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
     this.type = const Value.absent(),
     this.metaJson = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.certification = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LibraryItemsCompanion.insert({
@@ -1165,6 +1215,7 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
     required String type,
     this.metaJson = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.certification = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : itemId = Value(itemId),
        type = Value(type);
@@ -1174,6 +1225,7 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
     Expression<String>? type,
     Expression<String>? metaJson,
     Expression<int>? addedAt,
+    Expression<String>? certification,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1182,6 +1234,7 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
       if (type != null) 'type': type,
       if (metaJson != null) 'meta_json': metaJson,
       if (addedAt != null) 'added_at': addedAt,
+      if (certification != null) 'certification': certification,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1192,6 +1245,7 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
     Value<String>? type,
     Value<String>? metaJson,
     Value<int>? addedAt,
+    Value<String?>? certification,
     Value<int>? rowid,
   }) {
     return LibraryItemsCompanion(
@@ -1200,6 +1254,7 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
       type: type ?? this.type,
       metaJson: metaJson ?? this.metaJson,
       addedAt: addedAt ?? this.addedAt,
+      certification: certification ?? this.certification,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1222,6 +1277,9 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
     if (addedAt.present) {
       map['added_at'] = Variable<int>(addedAt.value);
     }
+    if (certification.present) {
+      map['certification'] = Variable<String>(certification.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1236,6 +1294,7 @@ class LibraryItemsCompanion extends UpdateCompanion<LibraryItem> {
           ..write('type: $type, ')
           ..write('metaJson: $metaJson, ')
           ..write('addedAt: $addedAt, ')
+          ..write('certification: $certification, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2717,6 +2776,7 @@ typedef $$LibraryItemsTableCreateCompanionBuilder =
       required String type,
       Value<String> metaJson,
       Value<int> addedAt,
+      Value<String?> certification,
       Value<int> rowid,
     });
 typedef $$LibraryItemsTableUpdateCompanionBuilder =
@@ -2726,6 +2786,7 @@ typedef $$LibraryItemsTableUpdateCompanionBuilder =
       Value<String> type,
       Value<String> metaJson,
       Value<int> addedAt,
+      Value<String?> certification,
       Value<int> rowid,
     });
 
@@ -2760,6 +2821,11 @@ class $$LibraryItemsTableFilterComposer
 
   ColumnFilters<int> get addedAt => $composableBuilder(
     column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get certification => $composableBuilder(
+    column: $table.certification,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2797,6 +2863,11 @@ class $$LibraryItemsTableOrderingComposer
     column: $table.addedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get certification => $composableBuilder(
+    column: $table.certification,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LibraryItemsTableAnnotationComposer
@@ -2822,6 +2893,11 @@ class $$LibraryItemsTableAnnotationComposer
 
   GeneratedColumn<int> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get certification => $composableBuilder(
+    column: $table.certification,
+    builder: (column) => column,
+  );
 }
 
 class $$LibraryItemsTableTableManager
@@ -2860,6 +2936,7 @@ class $$LibraryItemsTableTableManager
                 Value<String> type = const Value.absent(),
                 Value<String> metaJson = const Value.absent(),
                 Value<int> addedAt = const Value.absent(),
+                Value<String?> certification = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LibraryItemsCompanion(
                 profileId: profileId,
@@ -2867,6 +2944,7 @@ class $$LibraryItemsTableTableManager
                 type: type,
                 metaJson: metaJson,
                 addedAt: addedAt,
+                certification: certification,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2876,6 +2954,7 @@ class $$LibraryItemsTableTableManager
                 required String type,
                 Value<String> metaJson = const Value.absent(),
                 Value<int> addedAt = const Value.absent(),
+                Value<String?> certification = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LibraryItemsCompanion.insert(
                 profileId: profileId,
@@ -2883,6 +2962,7 @@ class $$LibraryItemsTableTableManager
                 type: type,
                 metaJson: metaJson,
                 addedAt: addedAt,
+                certification: certification,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

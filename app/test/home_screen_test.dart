@@ -9,8 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/db.dart';
-import 'package:lumio/data/library_repository.dart';
 import 'package:lumio/data/progress_repository.dart';
+import 'package:lumio/features/detail/detail_screen.dart';
+import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
@@ -121,6 +122,25 @@ class _FakeAddons extends AddonsController {
   Future<List<InstalledAddon>> build() async => list;
 }
 
+class _OfflineClient extends AddonClient {
+  _OfflineClient() : super(_NoNet());
+
+  @override
+  Future<Map<String, dynamic>?> rawMeta(AddonManifest a, String t, String i) =>
+      Future.error(StateError('hors ligne'));
+}
+
+class _NoNet implements HttpFetcher {
+  @override
+  Future<FetchResponse> get(
+    Uri url, {
+    Map<String, String> headers = const {},
+    int maxBytes = 5 * 1024 * 1024,
+    Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
+  }) => Future.error(StateError('hors ligne'));
+}
+
 class _RecordingPlayback implements ContinuePlayback {
   final played = <String>[];
 
@@ -175,6 +195,8 @@ class _H {
         ),
         continueWatchingProvider.overrideWith((ref) => Stream.value(progress)),
         continuePlaybackProvider.overrideWithValue(playback),
+        // La fiche ouverte par un clic ne doit jamais toucher au réseau.
+        addonClientProvider.overrideWithValue(_OfflineClient()),
         if (library != null)
           libraryProvider.overrideWith((ref) => Stream.value(library)),
       ],
@@ -199,6 +221,15 @@ class _H {
       );
       await tester.pump(const Duration(milliseconds: 300));
     }
+  }
+
+  /// Fermeture après une navigation vers la fiche : les abonnements de la
+  /// fiche à SQLite doivent être résiliés (minuteurs) avant la fermeture.
+  Future<void> closeDeep() async {
+    await tester.pumpWidget(const SizedBox());
+    container.dispose();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.runAsync(db.close);
   }
 
   Future<void> close() async {
@@ -497,16 +528,29 @@ void main() {
       );
       expect(find.text('Ma liste'), findsNothing); // vide : pas de rangée
       final lib = h.container.read(libraryRepositoryProvider);
-      await t.runAsync(
-        () => (lib as InMemoryLibraryRepository).add(
-          defaultProfileId,
-          _meta('9'),
-        ),
-      );
+      await t.runAsync(() => lib.add(defaultProfileId, _meta('9')));
       await h.settle();
       expect(find.text('Ma liste'), findsOneWidget);
       expect(find.text('Film 9'), findsOneWidget);
       await h.close();
+    });
+
+    testWidgets('sélection d\'une affiche : la fiche du titre s\'ouvre', (
+      t,
+    ) async {
+      final h = _H(t);
+      await h.pump(
+        addons: [_installed(_manifest('a'))],
+        aggregator: _FakeAggregator([
+          [
+            _row('a', 'top', [_meta('1')]),
+          ],
+        ]),
+      );
+      await t.tap(find.text('Film 1'));
+      await h.settle();
+      expect(find.byType(DetailScreen), findsOneWidget);
+      await h.closeDeep();
     });
 
     testWidgets('masquer une rangée dans l\'éditeur la retire', (t) async {

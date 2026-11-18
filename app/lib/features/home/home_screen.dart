@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
+import 'package:lumio/features/detail/detail_screen.dart';
+import 'package:lumio/features/library/library_screen.dart';
+import 'package:lumio/features/search/search_screen.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
@@ -61,6 +64,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).push(MaterialPageRoute<void>(builder: (_) => const AddonsScreen()));
   }
 
+  void _open(MetaPreview item) {
+    final custom = widget.onOpenItem;
+    if (custom != null) {
+      custom(item);
+    } else {
+      openDetail(context, item);
+    }
+  }
+
+  Future<void> _openSearch() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => SearchScreen(onOpenItem: _openFrom),
+    ),
+  );
+
+  Future<void> _openLibrary() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => LibraryScreen(onOpenItem: _openFrom),
+    ),
+  );
+
+  /// Depuis un écran poussé : la fiche s'ouvre par-dessus cet écran.
+  void _openFrom(MetaPreview item) => _open(item);
+
   Future<void> _openEditor() => Navigator.of(
     context,
   ).push(MaterialPageRoute<void>(builder: (_) => const RowEditorScreen()));
@@ -92,12 +119,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: _TopBar(
                     customizeNode: _topBarNode,
                     onCustomize: _openEditor,
+                    onSearch: _openSearch,
+                    onLibrary: _openLibrary,
                   ),
                 ),
                 Expanded(
                   child: _HomeBody(
                     onOpenAddons: _openAddons,
-                    onOpenItem: widget.onOpenItem,
+                    onOpenItem: _open,
                   ),
                 ),
               ],
@@ -110,10 +139,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.customizeNode, required this.onCustomize});
+  const _TopBar({
+    required this.customizeNode,
+    required this.onCustomize,
+    required this.onSearch,
+    required this.onLibrary,
+  });
 
   final FocusNode customizeNode;
   final VoidCallback onCustomize;
+  final VoidCallback onSearch;
+  final VoidCallback onLibrary;
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +173,18 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
+          TextButton.icon(
+            onPressed: onSearch,
+            icon: const Icon(Icons.search),
+            label: const Text('Recherche'),
+          ),
+          const SizedBox(width: LumioSpacing.sm),
+          TextButton.icon(
+            onPressed: onLibrary,
+            icon: const Icon(Icons.bookmark_border),
+            label: const Text('Gérer ma liste'),
+          ),
+          const SizedBox(width: LumioSpacing.sm),
           TextButton.icon(
             focusNode: customizeNode,
             onPressed: onCustomize,

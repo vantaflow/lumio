@@ -121,6 +121,18 @@ class ProgressRepository {
     return row == null ? null : _entry(row);
   }
 
+  /// Identifiants des épisodes (ou du film) vus du titre [metaId].
+  Stream<Set<String>> watchWatched(String profileId, String metaId) {
+    final q = _db.select(_db.progress)
+      ..where(
+        (t) =>
+            t.profileId.equals(profileId) &
+            t.metaId.equals(metaId) &
+            t.watched.equals(true),
+      );
+    return q.watch().map((rows) => {for (final r in rows) r.itemId});
+  }
+
   /// Rangée « Continuer » : une entrée par série (la plus récente), ni vue ni
   /// sous 2 %, de la plus récente à la plus ancienne, 20 au plus. Un épisode
   /// suivant ajouté à 0 s (durée inconnue) est conservé.

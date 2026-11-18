@@ -32,11 +32,11 @@ final aggregatorFactoryProvider = Provider<AggregatorFactory>((ref) {
 });
 
 final continuePlaybackProvider = Provider<ContinuePlayback>(
-  (ref) => const StubContinuePlayback(),
+  (ref) => DefaultContinuePlayback(ref),
 );
 
 final libraryRepositoryProvider = Provider<LibraryRepository>(
-  (ref) => InMemoryLibraryRepository(),
+  (ref) => LibraryRepository(ref.watch(appDatabaseProvider)),
 );
 
 final libraryProvider = StreamProvider<List<MetaPreview>>(
@@ -252,6 +252,13 @@ AgeLimit _limitOf(Profile p) =>
     p.ageLimit >= 0 && p.ageLimit < AgeLimit.values.length
     ? AgeLimit.values[p.ageLimit]
     : AgeLimit.all;
+
+/// Vrai si [profile] peut voir un contenu de [certification] (profil enfant :
+/// certification inconnue refusée).
+bool profileAllows(Profile? profile, String? certification) =>
+    profile == null ||
+    !profile.isKid ||
+    ratingAllows(certification, _limitOf(profile));
 
 /// Éléments visibles par le profil actif (filtre d'âge : certification
 /// inconnue masquée pour un profil enfant).

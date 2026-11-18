@@ -52,6 +52,10 @@ class LibraryItems extends Table {
   TextColumn get metaJson => text().withDefault(const Constant('{}'))();
   IntColumn get addedAt => integer().withDefault(const Constant(0))();
 
+  /// Certification d'âge du titre (v6), pour le filtre des profils enfants ;
+  /// nulle si inconnue.
+  TextColumn get certification => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {profileId, itemId};
 }
@@ -116,7 +120,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -138,6 +142,17 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(profiles, profiles.locked);
       }
       if (from < 5) await m.addColumn(progress, progress.certification);
+      if (from < 6) {
+        final has = await customSelect(
+          "SELECT 1 FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'library_items'",
+        ).get();
+        if (has.isEmpty) {
+          await m.createTable(libraryItems);
+        } else {
+          await m.addColumn(libraryItems, libraryItems.certification);
+        }
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
