@@ -1466,11 +1466,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String otherImportSumFailed(int n) {
-    return '$n addon(s) could not be installed';
-  }
-
-  @override
   String otherImportSumSkipped(int n, String names) {
     return '$n item(s) skipped: $names';
   }
@@ -1498,4 +1493,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get otherImportWhatLibrary => 'library';
+
+  @override
+  String otherImportSumFailedInvalid(int n) {
+    return '$n addon(s) rejected: invalid manifest';
+  }
+
+  @override
+  String otherImportSumFailedUnreachable(int n) {
+    return '$n addon(s) unreachable';
+  }
+
+  @override
+  String otherImportSumFailedOther(int n) {
+    return '$n addon(s) could not be installed (other cause)';
+  }
+
+  @override
+  String otherImportSumLibraryFailed(int n) {
+    return '$n title(s) could not be added to the list';
+  }
 }

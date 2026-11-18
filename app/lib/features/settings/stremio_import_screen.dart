@@ -59,8 +59,10 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
   // Progression et bilan.
   int _done = 0, _total = 0;
   bool _libraryStep = false;
-  int _installed = 0, _already = 0, _failed = 0;
-  int _libAdded = 0, _libAlready = 0;
+  int _installed = 0, _already = 0;
+  int _failedInvalid = 0, _failedUnreachable = 0, _failedOther = 0;
+  int _libAdded = 0, _libAlready = 0, _libFailed = 0;
+  int _libDone = 0, _libTotal = 0;
   final _skipped = <String>[];
   final _pending = <Uri>[];
   bool _nothing = false;
@@ -123,7 +125,13 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
         setState(() => _error = l.otherImportErrTooLarge);
         return;
       }
-      final text = utf8.decode(await file.read());
+      final bytes = await file.read();
+      // La taille annoncée peut mentir : on revérifie ce qui a été lu.
+      if (bytes.length > Backup.maxBytes) {
+        setState(() => _error = l.otherImportErrTooLarge);
+        return;
+      }
+      final text = utf8.decode(bytes);
       if (!mounted) return;
       setState(() {
         if (addons) {
@@ -186,7 +194,9 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
         return;
       }
 
-      _installed = _already = _failed = _libAdded = _libAlready = 0;
+      _installed = _already = 0;
+      _failedInvalid = _failedUnreachable = _failedOther = 0;
+      _libAdded = _libAlready = _libFailed = _libDone = _libTotal = 0;
       _skipped
         ..clear()
         ..addAll(addons.skipped)
@@ -211,25 +221,60 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
           _pending.add(url);
         } on DuplicateAddonException {
           _already++;
+        } on AddonException catch (e) {
+          switch (e.code) {
+            case AddonErrorCode.manifestInvalid ||
+                AddonErrorCode.invalidJson ||
+                AddonErrorCode.tooLarge ||
+                AddonErrorCode.invalidAddress ||
+                AddonErrorCode.addressRefused:
+              _failedInvalid++;
+            case AddonErrorCode.timeout ||
+                AddonErrorCode.unreachable ||
+                AddonErrorCode.tlsFailed ||
+                AddonErrorCode.notFound ||
+                AddonErrorCode.serverError ||
+                AddonErrorCode.refused ||
+                AddonErrorCode.redirect:
+              _failedUnreachable++;
+            default:
+              _failedOther++;
+          }
         } on Object {
-          _failed++;
+          _failedOther++;
         }
         if (mounted) setState(() => _done++);
       }
       if (!mounted) return;
-      if (_installed > 0) await ref.read(addonsProvider.notifier).refresh();
+      if (_installed > 0) {
+        try {
+          await ref.read(addonsProvider.notifier).refresh();
+        } on Object {
+          // Le rapport prime : la liste se rafraîchira à la prochaine lecture.
+        }
+      }
 
       if (library.library.isNotEmpty) {
-        setState(() => _libraryStep = true);
+        setState(() {
+          _libraryStep = true;
+          _libTotal = library.library.length;
+        });
         final lib = ref.read(libraryRepositoryProvider);
         final profileId = ref.read(currentProfileIdProvider);
         for (final m in library.library) {
-          if (await lib.contains(profileId, m.id)) {
-            _libAlready++;
-          } else {
-            await lib.add(profileId, m);
-            _libAdded++;
+          if (!mounted) return;
+          // Un titre en échec ne perd pas le bilan des autres.
+          try {
+            if (await lib.contains(profileId, m.id)) {
+              _libAlready++;
+            } else {
+              await lib.add(profileId, m);
+              _libAdded++;
+            }
+          } on Object {
+            _libFailed++;
           }
+          if (mounted) setState(() => _libDone++);
         }
       }
       if (mounted) setState(() => _phase = _Phase.done);
@@ -385,14 +430,16 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
     const SizedBox(height: LumioSpacing.xl),
     Text(
       _libraryStep
-          ? l.otherImportProgressLibrary
+          ? '${l.otherImportProgressLibrary} $_libDone/$_libTotal'
           : l.otherImportProgressAddons(_done, _total),
       key: const ValueKey('otherImport:progress'),
       style: Theme.of(context).textTheme.titleMedium,
     ),
     const SizedBox(height: LumioSpacing.md),
     LinearProgressIndicator(
-      value: !_libraryStep && _total > 0 ? _done / _total : null,
+      value: _libraryStep
+          ? (_libTotal > 0 ? _libDone / _libTotal : null)
+          : (_total > 0 ? _done / _total : null),
     ),
   ];
 
@@ -401,7 +448,11 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
       if (_installed > 0) l.otherImportSumInstalled(_installed),
       if (_already > 0) l.otherImportSumAlready(_already),
       if (_pending.isNotEmpty) l.otherImportSumPending(_pending.length),
-      if (_failed > 0) l.otherImportSumFailed(_failed),
+      if (_failedInvalid > 0) l.otherImportSumFailedInvalid(_failedInvalid),
+      if (_failedUnreachable > 0)
+        l.otherImportSumFailedUnreachable(_failedUnreachable),
+      if (_failedOther > 0) l.otherImportSumFailedOther(_failedOther),
+      if (_libFailed > 0) l.otherImportSumLibraryFailed(_libFailed),
       if (_libAdded > 0) l.otherImportSumLibrary(_libAdded),
       if (_libAlready > 0) l.otherImportSumLibraryAlready(_libAlready),
       if (_skipped.isNotEmpty)

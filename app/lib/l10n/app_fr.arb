@@ -844,14 +844,6 @@
       }
     }
   },
-  "otherImportSumFailed": "{n} addon(s) n'ont pas pu être installés",
-  "@otherImportSumFailed": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
   "otherImportSumSkipped": "{n} élément(s) ignoré(s) : {names}",
   "@otherImportSumSkipped": {
     "placeholders": {
@@ -889,5 +881,37 @@
     }
   },
   "otherImportWhatAddons": "addons",
-  "otherImportWhatLibrary": "bibliothèque"
+  "otherImportWhatLibrary": "bibliothèque",
+  "otherImportSumFailedInvalid": "{n} addon(s) refusé(s) : manifeste invalide",
+  "@otherImportSumFailedInvalid": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumFailedUnreachable": "{n} addon(s) injoignable(s)",
+  "@otherImportSumFailedUnreachable": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumFailedOther": "{n} addon(s) n'ont pas pu être installés (autre cause)",
+  "@otherImportSumFailedOther": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumLibraryFailed": "{n} titre(s) n'ont pas pu être ajoutés à la liste",
+  "@otherImportSumLibraryFailed": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

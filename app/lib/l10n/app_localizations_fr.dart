@@ -1483,11 +1483,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String otherImportSumFailed(int n) {
-    return '$n addon(s) n\'ont pas pu être installés';
-  }
-
-  @override
   String otherImportSumSkipped(int n, String names) {
     return '$n élément(s) ignoré(s) : $names';
   }
@@ -1515,4 +1510,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get otherImportWhatLibrary => 'bibliothèque';
+
+  @override
+  String otherImportSumFailedInvalid(int n) {
+    return '$n addon(s) refusé(s) : manifeste invalide';
+  }
+
+  @override
+  String otherImportSumFailedUnreachable(int n) {
+    return '$n addon(s) injoignable(s)';
+  }
+
+  @override
+  String otherImportSumFailedOther(int n) {
+    return '$n addon(s) n\'ont pas pu être installés (autre cause)';
+  }
+
+  @override
+  String otherImportSumLibraryFailed(int n) {
+    return '$n titre(s) n\'ont pas pu être ajoutés à la liste';
+  }
 }

@@ -272,6 +272,32 @@ void main() {
     await h.close();
   });
 
+  testWidgets(
+    'titre importé (sourceAddonId vide) : fiche résolue par les addons '
+    'activés',
+    (t) async {
+      final h = _H(t);
+      h.client.metas['org.a'] = {
+        'name': 'Big Buck Bunny',
+        'description': 'Un lapin géant.',
+      };
+      h.client.streams['org.a'] = [
+        _direct('1080p', 'https://cdn.example.com/a.mp4'),
+      ];
+      await h.pump(
+        preview: const MetaPreview(
+          id: 'tt1',
+          type: 'movie',
+          name: 'Importé',
+          sourceAddonId: '',
+        ),
+      );
+      expect(find.text('Un lapin géant.'), findsOneWidget);
+      expect(find.text('Addon org.a'), findsOneWidget);
+      await h.close();
+    },
+  );
+
   testWidgets('aucun flux : « Vérifiez vos addons »', (t) async {
     final h = _H(t);
     await h.pump(preview: _preview());

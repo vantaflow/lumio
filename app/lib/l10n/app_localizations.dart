@@ -2630,12 +2630,6 @@ abstract class AppLocalizations {
   /// **'{n} addon(s) en attente (adresse locale)'**
   String otherImportSumPending(int n);
 
-  /// No description provided for @otherImportSumFailed.
-  ///
-  /// In fr, this message translates to:
-  /// **'{n} addon(s) n\'ont pas pu être installés'**
-  String otherImportSumFailed(int n);
-
   /// No description provided for @otherImportSumSkipped.
   ///
   /// In fr, this message translates to:
@@ -2677,6 +2671,30 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'bibliothèque'**
   String get otherImportWhatLibrary;
+
+  /// No description provided for @otherImportSumFailedInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) refusé(s) : manifeste invalide'**
+  String otherImportSumFailedInvalid(int n);
+
+  /// No description provided for @otherImportSumFailedUnreachable.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) injoignable(s)'**
+  String otherImportSumFailedUnreachable(int n);
+
+  /// No description provided for @otherImportSumFailedOther.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) n\'ont pas pu être installés (autre cause)'**
+  String otherImportSumFailedOther(int n);
+
+  /// No description provided for @otherImportSumLibraryFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} titre(s) n\'ont pas pu être ajoutés à la liste'**
+  String otherImportSumLibraryFailed(int n);
 }
 
 class _AppLocalizationsDelegate

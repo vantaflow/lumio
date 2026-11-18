@@ -11,6 +11,8 @@ import 'package:lumio/data/backup_files.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/profile_repository.dart';
 import 'package:lumio/data/secret_store.dart';
+import 'package:lumio/data/library_repository.dart';
+import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/settings/backup_section.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/features/settings/settings_screen.dart';
@@ -63,7 +65,12 @@ String _addons(List<Map<String, Object?>> list) => jsonEncode({
 });
 
 class _H {
-  _H(this.tester, {bool picker = true}) : files = _FakeFiles(picker: picker) {
+  _H(
+    this.tester, {
+    bool picker = true,
+    List<Override> overrides = const [],
+    Map<String, Map<String, Object?>> manifests = const {},
+  }) : files = _FakeFiles(picker: picker) {
     db = AppDatabase(NativeDatabase.memory());
     repo = AddonRepository(
       db,
@@ -73,6 +80,7 @@ class _H {
           _urlA: sampleManifest(id: 'a', name: 'Alpha'),
           _urlB: sampleManifest(id: 'b', name: 'Bravo'),
           _lan: sampleManifest(id: 'lan', name: 'Maison'),
+          ...manifests,
         }),
         allowPrivate: allowPrivate,
         retries: 0,
@@ -84,6 +92,7 @@ class _H {
         addonRepositoryProvider.overrideWithValue(repo),
         appVersionProvider.overrideWith((ref) async => '1.0.0'),
         backupFilesProvider.overrideWithValue(files),
+        ...overrides,
       ],
     );
     addTearDown(container.dispose);
@@ -361,4 +370,125 @@ void main() {
     expect(find.text('Rien à importer dans ces fichiers.'), findsOneWidget);
     await h.dispose();
   });
+
+  testWidgets('échec en base pendant la liste : le bilan complet reste', (
+    tester,
+  ) async {
+    final h = _H(
+      tester,
+      overrides: [
+        libraryRepositoryProvider.overrideWith(
+          (ref) => _FlakyLibrary(ref.watch(appDatabaseProvider), {'tt2'}),
+        ),
+      ],
+    );
+    await h.pump();
+    await h.paste(
+      'otherImport:addons:text',
+      _addons([
+        {
+          'transportUrl': _urlB,
+          'manifest': {'id': 'b', 'name': 'Bravo'},
+        },
+      ]),
+    );
+    await h.paste(
+      'otherImport:library:text',
+      jsonEncode([
+        {'_id': 'tt1', 'name': 'Un', 'type': 'movie'},
+        {'_id': 'tt2', 'name': 'Deux', 'type': 'movie'},
+        {'_id': 'tt3', 'name': 'Trois', 'type': 'movie'},
+      ]),
+    );
+    await h.tapKey('otherImport:run');
+    expect(find.text('Import terminé'), findsOneWidget);
+    expect(find.text('1 addon(s) installé(s)'), findsOneWidget);
+    expect(find.text('2 titre(s) ajouté(s) à la liste'), findsOneWidget);
+    expect(
+      find.text("1 titre(s) n'ont pas pu être ajoutés à la liste"),
+      findsOneWidget,
+    );
+    await h.dispose();
+  });
+
+  testWidgets('échecs d\'addons ventilés par cause', (tester) async {
+    const bad = 'https://bad.example.com/manifest.json';
+    const down = 'https://down.example.com/manifest.json';
+    final h = _H(
+      tester,
+      manifests: {
+        bad: {'id': 'bad'},
+      },
+    );
+    await h.pump();
+    await h.paste(
+      'otherImport:addons:text',
+      _addons([
+        {'transportUrl': bad},
+        {'transportUrl': down},
+      ]),
+    );
+    await h.tapKey('otherImport:run');
+    expect(
+      find.text('1 addon(s) refusé(s) : manifeste invalide'),
+      findsOneWidget,
+    );
+    expect(find.text('1 addon(s) injoignable(s)'), findsOneWidget);
+    await h.dispose();
+  });
+
+  test('titres importés : masqués pour un profil enfant, visibles sinon', () {
+    final items = parseStremioLibrary([
+      {'_id': 'tt1', 'name': 'Un', 'type': 'movie'},
+    ]).library;
+    const kid = Profile(
+      id: 'kid',
+      name: 'Enfant',
+      ageLimit: 1,
+      isKid: true,
+      locked: false,
+      createdAt: 0,
+    );
+    const adult = Profile(
+      id: 'adult',
+      name: 'Moi',
+      ageLimit: 4,
+      isKid: false,
+      locked: false,
+      createdAt: 0,
+    );
+    expect(visibleItems(items, kid), isEmpty);
+    expect(visibleItems(items, adult), hasLength(1));
+  });
+
+  testWidgets('fichier dont la taille annoncée ment : refusé après lecture', (
+    tester,
+  ) async {
+    final h = _H(tester);
+    h.files.next = BackupFile(
+      name: 'menteur.json',
+      length: 10,
+      read: () async => List.filled(Backup.maxBytes + 1, 32),
+    );
+    await h.pump();
+    await h.tapKey('otherImport:addons:pick');
+    expect(find.textContaining('trop volumineux'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('otherImport:addons:fileName')),
+      findsNothing,
+    );
+    await h.dispose();
+  });
+}
+
+class _FlakyLibrary extends LibraryRepository {
+  _FlakyLibrary(super.db, this.failing);
+
+  final Set<String> failing;
+
+  @override
+  Future<void> add(String profileId, MetaPreview item) async {
+    if (failing.contains(item.id)) throw StateError('disque plein');
+    return super.add(profileId, item);
+  }
 }
