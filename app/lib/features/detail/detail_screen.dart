@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/l10n/l10n.dart';
-import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/detail/streams_list.dart';
@@ -163,11 +162,20 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
     _loadStreams(v.id);
   }
 
-  Future<void> _play(StreamItem s) async {
+  Future<void> _play(
+    StreamItem s, {
+    List<StreamItem> fallbacks = const [],
+  }) async {
     final meta = _meta;
     final id = _videoId;
     if (meta == null || id == null) return;
-    await _launcher.play(context, meta: meta, videoId: id, stream: s);
+    await _launcher.play(
+      context,
+      meta: meta,
+      videoId: id,
+      stream: s,
+      fallbacks: fallbacks,
+    );
   }
 
   Future<void> _toggleList(bool inList) async {
@@ -233,9 +241,14 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       ..sort(
         (a, b) => order.indexOf(a.addonId).compareTo(order.indexOf(b.addonId)),
       );
-    final preferred = preferredStream([
-      for (final g in groups) ...g.items,
-    ], prefs);
+    final tracker = ref.watch(healthTrackerProvider);
+    final ranked = StreamRanker.rank(
+      [for (final g in groups) ...g.items],
+      prefs,
+      tracker,
+    );
+    final preferred = ranked.isEmpty ? null : ranked.first;
+    final fallbacks = ranked.skip(1).take(maxFallbacks).toList();
     final inList =
         ref.watch(libraryProvider).value?.any((m) => m.id == meta.id) ?? false;
     // L'affiche n'est autorisée en réseau privé que si c'est celle du
@@ -254,7 +267,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       inList: inList,
       canPlay: preferred != null && _videoId != null,
       onPlay: () {
-        if (preferred != null) _play(preferred);
+        if (preferred != null) _play(preferred, fallbacks: fallbacks);
       },
       onToggleList: () => _toggleList(inList),
     );
@@ -274,6 +287,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         loading: _loadingStreams,
         prefs: prefs,
         preferred: preferred,
+        tracker: tracker,
         onSelect: _play,
       ),
       noEpisodes: meta.videos.isEmpty && meta.type == 'series',

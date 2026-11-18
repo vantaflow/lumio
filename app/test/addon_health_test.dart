@@ -9,7 +9,6 @@ import 'package:lumio/data/addon_health_service.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/db.dart';
-import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/detail/streams_list.dart';

@@ -204,6 +204,31 @@ void main() {
     await h.dispose();
   });
 
+  testWidgets('liens directs préférés : actif par défaut, modifiable', (
+    tester,
+  ) async {
+    final h = _H(tester)..start();
+    await h.pump(const SettingsScreen());
+    expect(
+      find.text('Préférer les liens directs aux torrents'),
+      findsOneWidget,
+    );
+    expect(
+      (await h.run(
+        () => StreamPrefsStore(h.db).load(defaultProfileId),
+      )).preferDirect,
+      isTrue,
+    );
+    await h.tapTile('preferDirect');
+    await h.tapText('Sans préférence');
+    final prefs = await h.run(
+      () => StreamPrefsStore(h.db).load(defaultProfileId),
+    );
+    expect(prefs.preferDirect, isFalse);
+    expect(prefs.languages, ['fr']); // le reste est conservé
+    await h.dispose();
+  });
+
   testWidgets('cache torrents et débit montant : enregistrés', (tester) async {
     final h = _H(tester)..start();
     await h.pump(const SettingsScreen());

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/l10n/l10n.dart';
-import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/features/addons/health_pill.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
@@ -75,6 +74,8 @@ class _MagnetPainter extends CustomPainter {
   bool shouldRepaint(_MagnetPainter old) => old.color != color;
 }
 
+final _noHealth = HealthTracker();
+
 /// Liste des flux groupée par addon (story 1.4) : titre d'addon et santé,
 /// puis une ligne par flux (qualité, langue, taille, sources ; aimant pour
 /// un torrent). Le flux préféré du profil est signalé « Recommandé ».
@@ -88,12 +89,16 @@ class StreamsList extends StatelessWidget {
     required this.preferred,
     required this.onSelect,
     this.health = const {},
+    this.tracker,
   });
 
   final List<StreamGroup> groups;
 
   /// Mesures de fiabilité par identifiant de stockage d'addon.
   final Map<String, AddonHealth> health;
+
+  /// Suivi de fiabilité qui pondère le classement (aucun = tous inconnus).
+  final HealthTracker? tracker;
 
   /// Nom affiché par identifiant de stockage d'addon.
   final Map<String, String> addonNames;
@@ -154,7 +159,11 @@ class StreamsList extends StatelessWidget {
               ],
             ),
           ),
-          for (final s in sortStreams(g.items, prefs))
+          for (final s in StreamRanker.sort(
+            g.items,
+            prefs,
+            tracker ?? _noHealth,
+          ))
             Padding(
               padding: const EdgeInsets.only(bottom: LumioSpacing.sm),
               child: _StreamRow(

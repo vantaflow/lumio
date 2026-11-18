@@ -100,6 +100,8 @@ class PlayerScreen extends ConsumerStatefulWidget {
     this.videoId,
     this.meta,
     this.resolveNext,
+    this.resolveNextRanked,
+    this.fallbacks = const [],
     this.subtitles = const [],
     this.allowPrivateForAddon,
     this.videoBuilder,
@@ -131,6 +133,14 @@ class PlayerScreen extends ConsumerStatefulWidget {
   /// Résout le flux de l'épisode suivant (fournie par l'appelant) ; `null`
   /// en retour : « Épisode suivant indisponible ».
   final Future<StreamItem?> Function(core.Video next)? resolveNext;
+
+  /// Variante de [resolveNext] qui rend tous les flux classés : les suivants
+  /// servent de secours si le premier échoue avant la première image.
+  final Future<List<StreamItem>> Function(core.Video next)? resolveNextRanked;
+
+  /// Sources de secours de [item] (lecture automatique) : essayées dans
+  /// l'ordre si [item] échoue avant la première image.
+  final List<StreamItem> fallbacks;
 
   /// Sous-titres proposés par les addons pour ce flux.
   final List<SubtitleItem> subtitles;
@@ -210,7 +220,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   /// Ouvre [item] à la position de reprise enregistrée (au-delà de 2 %,
   /// jusqu'à 90 %), sinon depuis le début.
-  Future<void> _openFrom(StreamItem item) async {
+  Future<void> _openFrom(
+    StreamItem item, {
+    List<StreamItem> alternatives = const [],
+  }) async {
     var start = Duration.zero;
     final id = _videoId;
     if (widget.metaId != null && id != null) {
@@ -227,6 +240,26 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     }
     if (_disposed) return;
     if (start > Duration.zero) _tellL((l) => l.resumeAt(formatClock(start)));
+    if (alternatives.isEmpty) {
+      await _openOne(item, start);
+      return;
+    }
+    // Chaque source passe par le même chemin d'ouverture, donc par toutes
+    // les gardes (adresse privée, VPN, avertissement IP une seule fois).
+    final played = await _ctl.playWithFallback([
+      item,
+      ...alternatives,
+    ], opener: (s) => _openOne(s, start));
+    if (_disposed || played == null) return;
+    if (!identical(played, item) && mounted) {
+      setState(() => _title = played.title);
+      _tell(context.l10n.playingFallback(played.title));
+    }
+  }
+
+  /// Ouvre une seule source : torrent préparé par le moteur, lien direct par
+  /// le contrôleur.
+  Future<void> _openOne(StreamItem item, Duration start) async {
     _current = item;
     if (item.isTorrent) {
       await _openTorrent(item, start);
@@ -236,7 +269,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _torrentActive = false;
     _watcher?.stop();
     unawaited(_torrent?.release());
-    await _ctl.open(item, allowPrivate: widget.allowPrivate, start: start);
+    await _ctl.open(
+      item,
+      allowPrivate:
+          widget.allowPrivateForAddon?.call(item.addonId) ??
+          widget.allowPrivate,
+      start: start,
+    );
   }
 
   /// Torrent : démarre le moteur, attend une source, puis ouvre l'URL locale
@@ -289,19 +328,19 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     } on TorrentCancelledException {
       return;
     } on NoPeersException {
-      _failTorrent(token, (l) => l.torrentNoPeers);
+      _failTorrent(token, (l) => l.torrentNoPeers, fallbackable: true);
       return;
     } on InsufficientStorageException {
       _failTorrent(token, (l) => l.torrentInsufficientStorage);
       return;
     } on NoStreamableFileException {
-      _failTorrent(token, (l) => l.torrentNoFile);
+      _failTorrent(token, (l) => l.torrentNoFile, fallbackable: true);
       return;
     } on VpnRequiredException {
       _failTorrent(token, (l) => l.torrentVpnRequired);
       return;
     } on Object {
-      _failTorrent(token, (l) => l.torrentFailed);
+      _failTorrent(token, (l) => l.torrentFailed, fallbackable: true);
       return;
     }
     if (_disposed || token != _torrentToken) return;
@@ -349,10 +388,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     );
   }
 
-  void _failTorrent(int token, String Function(AppLocalizations l) message) {
+  void _failTorrent(
+    int token,
+    String Function(AppLocalizations l) message, {
+    bool fallbackable = false,
+  }) {
     if (_disposed || !mounted || token != _torrentToken) return;
     _watcher?.stop();
-    _ctl.fail(message(context.l10n));
+    _ctl.fail(message(context.l10n), fallbackable: fallbackable);
   }
 
   /// « Réessayer » : un torrent repart de la préparation, un lien direct
@@ -386,7 +429,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _ctl.stateListenable.addListener(_onState);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _recorder = _newRecorder();
-    unawaited(_openFrom(widget.item));
+    unawaited(_openFrom(widget.item, alternatives: widget.fallbacks));
     unawaited(_initTracks());
     _armHide();
   }
@@ -585,8 +628,18 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _switching = true;
     setState(() => _showNext = false);
     StreamItem? item;
+    var alternatives = const <StreamItem>[];
     try {
-      item = await resolve(next);
+      final ranked = widget.resolveNextRanked;
+      if (ranked != null) {
+        final list = await ranked(next);
+        if (list.isNotEmpty) {
+          item = list.first;
+          alternatives = list.skip(1).take(2).toList();
+        }
+      } else {
+        item = await resolve(next);
+      }
     } on Object {
       item = null;
     }
@@ -611,7 +664,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     });
     _switching = false;
     _root.requestFocus();
-    await _openFrom(item);
+    await _openFrom(item, alternatives: alternatives);
   }
 
   void _armHide() {
@@ -710,6 +763,19 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       child: Semantics(
                         label: context.l10n.buffering,
                         child: CircularProgressIndicator(color: colors.accent),
+                      ),
+                    ),
+                  if (st.notice != null && !failed)
+                    Align(
+                      alignment: const Alignment(0, 0.35),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          st.notice!,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: Colors.white),
+                        ),
                       ),
                     ),
                   if (failed)

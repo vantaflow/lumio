@@ -244,16 +244,22 @@ class PlaybackLauncher {
     ];
   }
 
-  /// Meilleur flux de [id] selon les préférences du profil ; `null` si aucun.
-  /// Le classement des préférences (langue, qualité, lien direct avant torrent
-  /// à égalité) décide seul : un torrent est lu comme un autre flux.
-  Future<StreamItem?> resolvePreferred(String type, String id) async {
+  /// Flux de [id] classés du meilleur au moins bon (préférences du profil,
+  /// doublons retirés, fiabilité des addons) ; vide s'il n'y en a aucun.
+  Future<List<StreamItem>> resolveRanked(String type, String id) async {
     final prefs = await _ref.read(streamPrefsProvider.future);
     final all = <StreamItem>[];
     await for (final g in loadStreams(type, id)) {
       all.addAll(g.items);
     }
-    return preferredStream(all, prefs);
+    return StreamRanker.rank(all, prefs, _ref.read(healthTrackerProvider));
+  }
+
+  /// Meilleur flux de [id] selon le classement ; `null` si aucun. Un torrent
+  /// est lu comme un autre flux : le classement décide seul.
+  Future<StreamItem?> resolvePreferred(String type, String id) async {
+    final ranked = await resolveRanked(type, id);
+    return ranked.isEmpty ? null : ranked.first;
   }
 
   bool allowPrivateFor(String storageId) => _ref
@@ -262,11 +268,14 @@ class PlaybackLauncher {
 
   /// Ouvre le lecteur sur [stream] (déjà rattaché à un identifiant de
   /// stockage). Un flux torrent est préparé par le lecteur lui-même.
+  /// [fallbacks] : sources suivantes essayées si [stream] échoue avant la
+  /// première image (lecture automatique seulement).
   Future<PlayerExit?> play(
     BuildContext context, {
     required Meta meta,
     required String videoId,
     required StreamItem stream,
+    List<StreamItem> fallbacks = const [],
   }) async {
     final navigator = Navigator.of(context);
     final profileId = _ref.read(currentProfileIdProvider);
@@ -284,6 +293,8 @@ class PlaybackLauncher {
       meta: meta,
       subtitles: subtitles,
       resolveNext: (core.Video next) => resolvePreferred(meta.type, next.id),
+      resolveNextRanked: (core.Video next) => resolveRanked(meta.type, next.id),
+      fallbacks: fallbacks,
     );
     final build = _ref.read(playerBuilderProvider);
     return navigator.push<PlayerExit>(
@@ -291,6 +302,9 @@ class PlaybackLauncher {
     );
   }
 }
+
+/// Nombre de sources de secours passées au lecteur (3 essais au total).
+const maxFallbacks = 2;
 
 /// Copie d'un flux avec un autre `addonId`.
 StreamItem retagStream(StreamItem s, String addonId) => StreamItem(

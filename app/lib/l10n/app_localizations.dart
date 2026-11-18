@@ -1388,6 +1388,36 @@ abstract class AppLocalizations {
   /// **'Qualité préférée'**
   String get settingsQuality;
 
+  /// No description provided for @settingsPreferDirect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préférer les liens directs aux torrents'**
+  String get settingsPreferDirect;
+
+  /// No description provided for @preferDirectOn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Liens directs en premier'**
+  String get preferDirectOn;
+
+  /// No description provided for @preferDirectOff.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sans préférence'**
+  String get preferDirectOff;
+
+  /// No description provided for @playerSourceFallback.
+  ///
+  /// In fr, this message translates to:
+  /// **'Source indisponible, essai de la suivante…'**
+  String get playerSourceFallback;
+
+  /// No description provided for @playingFallback.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture depuis une autre source : {title}'**
+  String playingFallback(String title);
+
   /// No description provided for @langSpanish.
   ///
   /// In fr, this message translates to:

@@ -5,6 +5,7 @@ import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/player/local_proxy.dart';
 import 'package:lumio/player/play_router.dart';
 import 'package:lumio/player/playback_report.dart';
+import 'package:lumio/player/source_fallback.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -26,6 +27,7 @@ class PlayerState {
     this.buffered = Duration.zero,
     this.volume = 100,
     this.error,
+    this.notice,
   });
 
   final PlayerPhase phase;
@@ -39,6 +41,10 @@ class PlayerState {
   /// Message français, sans URL (voir [explainFailure]).
   final String? error;
 
+  /// Information passagère affichée pendant l'ouverture (ex. basculement
+  /// vers la source suivante).
+  final String? notice;
+
   bool get isPlaying => phase == PlayerPhase.playing;
 
   PlayerState copyWith({
@@ -49,6 +55,7 @@ class PlayerState {
     double? volume,
     String? error,
     bool clearError = false,
+    bool clearNotice = false,
   }) => PlayerState(
     phase: phase ?? this.phase,
     position: position ?? this.position,
@@ -56,6 +63,7 @@ class PlayerState {
     buffered: buffered ?? this.buffered,
     volume: volume ?? this.volume,
     error: clearError ? null : (error ?? this.error),
+    notice: clearNotice ? null : notice,
   );
 }
 
@@ -131,6 +139,13 @@ class PlayerController {
   int? _lastStatus;
   bool _disposed = false;
 
+  // Basculement automatique (voir [playWithFallback]).
+  int _runId = 0;
+  Completer<bool>? _outcome;
+  bool _failFallbackable = false;
+  bool _holdFailure = false;
+  String? _notice;
+
   /// Durée jusqu'à la première image (ms) ; `null` tant qu'elle n'est pas là.
   int? firstFrameMs;
 
@@ -157,7 +172,13 @@ class PlayerController {
     _firstFrame = Completer<int>();
     _sinceOpen = Stopwatch()..start();
     _stall?.cancel();
-    _set(PlayerState(phase: PlayerPhase.opening, volume: state.volume));
+    _set(
+      PlayerState(
+        phase: PlayerPhase.opening,
+        volume: state.volume,
+        notice: _notice,
+      ),
+    );
     final url = s.url;
     if (url == null || s.isTorrent) {
       _fail(l10n.torrentNotPlayable);
@@ -213,6 +234,9 @@ class PlayerController {
     c.complete(firstFrameMs);
     _opened = true;
     _stall?.cancel();
+    _notice = null;
+    _set(state.copyWith(clearNotice: true));
+    _settle(true);
   }
 
   /// Attend la première image (pour la mesure de la sonde de debug).
@@ -233,18 +257,106 @@ class PlayerController {
   }
 
   /// Affiche une erreur sans ouvrir de média (échec avant l'ouverture, par
-  /// exemple la préparation d'un torrent).
-  void fail(String message) => _fail(message);
+  /// exemple la préparation d'un torrent). [fallbackable] : la source est en
+  /// cause (le basculement peut essayer la suivante) ; sinon (VPN exigé,
+  /// avertissement refusé, stockage) la suivante échouerait de même.
+  void fail(String message, {bool fallbackable = false}) =>
+      _fail(message, fallbackable: fallbackable);
 
   /// Repasse en phase d'ouverture (préparation d'un torrent en cours).
   void showOpening() {
     _stall?.cancel();
-    _set(PlayerState(phase: PlayerPhase.opening, volume: state.volume));
+    _set(
+      PlayerState(
+        phase: PlayerPhase.opening,
+        volume: state.volume,
+        notice: _notice,
+      ),
+    );
   }
 
-  void _fail(String message) {
+  void _fail(String message, {bool fallbackable = true}) {
     _stall?.cancel();
-    _set(state.copyWith(phase: PlayerPhase.failed, error: message));
+    _failFallbackable = fallbackable;
+    if (_holdFailure && fallbackable) {
+      // Une autre source va être essayée : pas d'écran d'erreur entre-temps.
+      _set(
+        PlayerState(
+          phase: PlayerPhase.opening,
+          volume: state.volume,
+          notice: _notice,
+        ),
+      );
+    } else {
+      _notice = null;
+      _set(
+        state.copyWith(
+          phase: PlayerPhase.failed,
+          error: message,
+          clearNotice: true,
+        ),
+      );
+    }
+    _settle(false);
+  }
+
+  void _settle(bool ok) {
+    final c = _outcome;
+    if (c != null && !c.isCompleted) c.complete(ok);
+  }
+
+  /// Ouvre la première source de [ranked] et, si elle échoue AVANT la
+  /// première image (ouverture, refus du proxy, torrent sans source ou trop
+  /// lent), essaie la suivante, [maxAttempts] sources au plus, avec la
+  /// notice « Source indisponible… ». Jamais de bascule une fois la lecture
+  /// commencée. [opener] ouvre une source en respectant toutes les gardes
+  /// (adresse privée, VPN, avertissement IP) ; par défaut [open].
+  /// Un échec qui n'est pas imputable à la source (VPN exigé…) arrête la
+  /// série. Retourne la source qui a démarré, `null` si aucune.
+  Future<StreamItem?> playWithFallback(
+    List<StreamItem> ranked, {
+    Future<void> Function(StreamItem item)? opener,
+    int maxAttempts = 3,
+    Duration attemptTimeout = const Duration(minutes: 3),
+  }) async {
+    final run = ++_runId;
+    _settle(false); // libère une série précédente
+    final open = opener ?? (StreamItem s) => this.open(s);
+    try {
+      return await runWithFallback<StreamItem>(
+        ranked,
+        maxAttempts: maxAttempts,
+        cancelled: () => _disposed || run != _runId,
+        attempt: (item, i, last) async {
+          _notice = i == 0 ? null : l10n.playerSourceFallback;
+          _holdFailure = !last;
+          _failFallbackable = false;
+          final outcome = _outcome = Completer<bool>();
+          await open(item);
+          final ok = await outcome.future.timeout(
+            attemptTimeout,
+            onTimeout: () {
+              _fail(
+                explainFailure(TimeoutException('open'), l10n: l10n),
+                fallbackable: true,
+              );
+              return false;
+            },
+          );
+          if (ok) return AttemptOutcome.played;
+          _stall?.cancel();
+          return _failFallbackable
+              ? AttemptOutcome.sourceFailed
+              : AttemptOutcome.stopped;
+        },
+      );
+    } finally {
+      if (run == _runId) {
+        _holdFailure = false;
+        _notice = null;
+        _outcome = null;
+      }
+    }
   }
 
   void _recompute() {
@@ -314,6 +426,7 @@ class PlayerController {
 
   Future<void> dispose() async {
     _disposed = true;
+    _settle(false);
     _stall?.cancel();
     _wake(false);
     await _proxySub?.cancel();

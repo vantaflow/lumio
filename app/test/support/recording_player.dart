@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/player/player_controller.dart';
+import 'package:lumio/player/source_fallback.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -15,6 +16,13 @@ class RecordingPlayerController extends Fake implements PlayerController {
   final trusted = <bool>[];
   final failures = <String>[];
 
+  /// Sources dont l'ouverture échoue (par titre) : `open` affiche l'échec.
+  final failOpen = <String>{};
+
+  /// Séries de basculement lancées : sources demandées.
+  final fallbackRuns = <List<String>>[];
+  bool _lastFallbackable = false;
+
   @override
   ValueListenable<PlayerState> get stateListenable => _state;
   @override
@@ -23,8 +31,9 @@ class RecordingPlayerController extends Fake implements PlayerController {
   void showOpening() =>
       _state.value = const PlayerState(phase: PlayerPhase.opening);
   @override
-  void fail(String message) {
+  void fail(String message, {bool fallbackable = false}) {
     failures.add(message);
+    _lastFallbackable = fallbackable;
     _state.value = PlayerState(phase: PlayerPhase.failed, error: message);
   }
 
@@ -37,7 +46,35 @@ class RecordingPlayerController extends Fake implements PlayerController {
   }) async {
     opened.add(s);
     trusted.add(trustedLocal);
+    if (failOpen.contains(s.title)) {
+      fail('échec ${s.title}', fallbackable: true);
+      return;
+    }
     _state.value = const PlayerState(phase: PlayerPhase.playing);
+  }
+
+  /// Même enchaînement que le vrai contrôleur : une source qui échoue sans
+  /// image passe à la suivante, un échec non imputable à la source arrête.
+  @override
+  Future<StreamItem?> playWithFallback(
+    List<StreamItem> ranked, {
+    Future<void> Function(StreamItem item)? opener,
+    int maxAttempts = 3,
+    Duration attemptTimeout = const Duration(minutes: 3),
+  }) {
+    fallbackRuns.add([for (final s in ranked) s.title]);
+    return runWithFallback<StreamItem>(
+      ranked,
+      maxAttempts: maxAttempts,
+      attempt: (item, i, last) async {
+        _lastFallbackable = false;
+        await (opener ?? (StreamItem s) => open(s))(item);
+        if (state.phase != PlayerPhase.failed) return AttemptOutcome.played;
+        return _lastFallbackable
+            ? AttemptOutcome.sourceFailed
+            : AttemptOutcome.stopped;
+      },
+    );
   }
 }
 

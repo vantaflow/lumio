@@ -140,53 +140,69 @@ void main() {
 
   group('préférences de flux', () {
     const prefs = StreamPrefs(); // 1080p, fr
+    final health = HealthTracker();
 
     test('langue d\'abord : un 720p fr bat un 1080p en', () {
-      final best = preferredStream([
-        _s('en1080', lang: 'en'),
-        _s('fr720', q: Quality.hd720, lang: 'fr'),
-      ], prefs);
+      final best = StreamRanker.preferred(
+        [_s('en1080', lang: 'en'), _s('fr720', q: Quality.hd720, lang: 'fr')],
+        prefs,
+        health,
+      );
       expect(best!.title, 'fr720');
     });
 
     test('qualité sous le plafond : 1080p devant 4K et 720p', () {
-      final best = preferredStream([
-        _s('4k', q: Quality.uhd2160, lang: 'fr'),
-        _s('720', q: Quality.hd720, lang: 'fr'),
-        _s('1080', lang: 'fr'),
-      ], prefs);
+      final best = StreamRanker.preferred(
+        [
+          _s('4k', q: Quality.uhd2160, lang: 'fr'),
+          _s('720', q: Quality.hd720, lang: 'fr'),
+          _s('1080', lang: 'fr'),
+        ],
+        prefs,
+        health,
+      );
       expect(best!.title, '1080');
     });
 
     test('seul le 4K existe : il reste choisi (au-dessus du plafond)', () {
       expect(
-        preferredStream([
-          _s('4k', q: Quality.uhd2160, lang: 'fr'),
-        ], prefs)!.title,
+        StreamRanker.preferred(
+          [_s('4k', q: Quality.uhd2160, lang: 'fr')],
+          prefs,
+          health,
+        )!.title,
         '4k',
       );
     });
 
     test('lien direct avant torrent à score égal, puis seeders', () {
-      final sorted = sortStreams([
-        _s('t10', lang: 'fr', torrent: true, seeders: 10),
-        _s('t90', lang: 'fr', torrent: true, seeders: 90),
-        _s('d', lang: 'fr'),
-      ], prefs);
+      final sorted = StreamRanker.sort(
+        [
+          _s('t10', lang: 'fr', torrent: true, seeders: 10),
+          _s('t90', lang: 'fr', torrent: true, seeders: 90),
+          _s('d', lang: 'fr'),
+        ],
+        prefs,
+        health,
+      );
       expect([for (final s in sorted) s.title], ['d', 't90', 't10']);
     });
 
     test('aucun flux : null', () {
-      expect(preferredStream(const [], prefs), isNull);
+      expect(StreamRanker.preferred(const [], prefs, health), isNull);
     });
 
     test('préférence 720p / en : respectée', () {
       const p = StreamPrefs(maxQuality: Quality.hd720, languages: ['en']);
-      final best = preferredStream([
-        _s('fr1080', lang: 'fr'),
-        _s('en1080', lang: 'en'),
-        _s('en720', q: Quality.hd720, lang: 'en'),
-      ], p);
+      final best = StreamRanker.preferred(
+        [
+          _s('fr1080', lang: 'fr'),
+          _s('en1080', lang: 'en'),
+          _s('en720', q: Quality.hd720, lang: 'en'),
+        ],
+        p,
+        health,
+      );
       expect(best!.title, 'en720');
     });
 

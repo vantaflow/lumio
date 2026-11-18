@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart';
-import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
@@ -20,7 +19,8 @@ import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
-import 'package:lumio_core/lumio_core.dart' show NetInterface, Quality;
+import 'package:lumio_core/lumio_core.dart'
+    show NetInterface, Quality, StreamPrefs;
 
 /// Clé de la mémoire du focus et nom de route de l'écran.
 const settingsRouteKey = 'settings';
@@ -269,6 +269,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             current: prefs.maxQuality,
           );
           if (picked != null) await _save(() => editor.setQuality(picked));
+        },
+      ),
+      _Tile(
+        id: 'preferDirect',
+        icon: Icons.link,
+        title: l.settingsPreferDirect,
+        subtitle: prefs.preferDirect ? l.preferDirectOn : l.preferDirectOff,
+        onTap: () async {
+          final picked = await _choose<bool>(
+            title: l.settingsPreferDirect,
+            options: [(true, l.preferDirectOn), (false, l.preferDirectOff)],
+            current: prefs.preferDirect,
+          );
+          if (picked != null) {
+            await _save(() => editor.setPreferDirect(picked));
+          }
         },
       ),
       _Header(l.settingsDownloads),

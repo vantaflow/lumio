@@ -8,7 +8,7 @@ import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/progress_repository.dart';
-import 'package:lumio/data/stream_prefs.dart';
+import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/detail/streams_list.dart';
@@ -885,6 +885,163 @@ void main() {
       expect(h.players, isEmpty);
       expect(h.client.streamCalls, isEmpty);
       expect(find.textContaining('pas autorisé'), findsOneWidget);
+      await h.close();
+    });
+  });
+
+  group('classement des sources (tâche 35)', () {
+    void failing(_H h, String storageId) {
+      final tracker = h.container.read(healthTrackerProvider);
+      for (var i = 0; i < 12; i++) {
+        tracker.record(storageId, const Duration(milliseconds: 100), i < 2);
+      }
+    }
+
+    final two = [
+      _installed('s1', _manifest('org.a')),
+      _installed('s2', _manifest('org.b')),
+    ];
+
+    testWidgets('« Lecture auto » : doublons retirés, secours = suivants '
+        'classés (2 au plus)', (t) async {
+      final h = _H(t);
+      h.client.streams['org.a'] = [
+        _direct('sd', 'https://cdn.example.com/sd.mp4', desc: 'VF 480p'),
+        _direct(
+          'fr',
+          'https://cdn.example.com/fr.mp4?token=1',
+          desc: 'VF 1080p',
+        ),
+        _direct('fr720', 'https://cdn.example.com/f7.mp4', desc: 'VF 720p'),
+        _direct('en', 'https://cdn.example.com/en.mp4', desc: 'EN 1080p'),
+      ];
+      h.client.streams['org.b'] = [
+        _direct(
+          'dup',
+          'https://cdn.example.com/fr.mp4?token=2',
+          desc: 'VF 1080p',
+        ),
+      ];
+      await h.pump(preview: _preview(), addons: two);
+      await t.tap(find.textContaining('Lecture auto'));
+      await h.settle();
+      final p = h.players.single;
+      expect(
+        p.item.url.toString(),
+        startsWith('https://cdn.example.com/fr.mp4'),
+      );
+      expect(
+        [for (final f in p.fallbacks) f.url!.path],
+        ['/f7.mp4', '/en.mp4'],
+      );
+      await h.close();
+    });
+
+    testWidgets('un addon défaillant est relégué par « Lecture auto »', (
+      t,
+    ) async {
+      final h = _H(t);
+      h.client.streams['org.a'] = [
+        _direct('a', 'https://cdn.example.com/a.mp4', desc: 'VF 1080p'),
+      ];
+      h.client.streams['org.b'] = [
+        _direct('b', 'https://cdn.example.com/b.mp4', desc: 'VF 720p'),
+      ];
+      await h.pump(preview: _preview(), addons: two);
+      failing(h, 's1');
+      h.container.invalidate(healthSnapshotProvider);
+      await h.settle();
+      await t.tap(find.textContaining('Lecture auto'));
+      await h.settle();
+      final p = h.players.single;
+      expect(p.item.url!.path, '/b.mp4');
+      expect(p.fallbacks.single.url!.path, '/a.mp4');
+      await h.close();
+    });
+
+    testWidgets('épisode suivant : resolveNextRanked classe avec la santé', (
+      t,
+    ) async {
+      final h = _H(t);
+      h.client.metas['org.a'] = {
+        'name': 'Série',
+        'videos': [
+          {'id': 'tt9:1:1', 'season': 1, 'episode': 1, 'title': 'Pilote'},
+          {'id': 'tt9:1:2', 'season': 1, 'episode': 2, 'title': 'Suite'},
+        ],
+      };
+      h.client.streams['org.a'] = [
+        _direct('a', 'https://cdn.example.com/a.mp4', desc: 'VF 1080p'),
+      ];
+      await h.pump(
+        preview: _preview(id: 'tt9', type: 'series'),
+        addons: two,
+      );
+      await t.tap(find.textContaining('Lecture auto'));
+      await h.settle();
+      final p = h.players.single;
+      h.client.streams['org.b'] = [
+        _direct('b', 'https://cdn.example.com/b.mp4', desc: 'VF 720p'),
+      ];
+      failing(h, 's1');
+      final ranked = await t.runAsync(
+        () => p.resolveNextRanked!(p.meta!.videos[1]),
+      );
+      expect([for (final s in ranked!) s.url!.path], ['/b.mp4', '/a.mp4']);
+      final one = await t.runAsync(() => p.resolveNext!(p.meta!.videos[1]));
+      expect(one!.url!.path, '/b.mp4');
+      await h.close();
+    });
+
+    testWidgets('reprise en un clic : même classement et secours', (t) async {
+      final h = _H(t);
+      h.client.streams['org.a'] = [
+        _direct('a', 'https://cdn.example.com/a.mp4', desc: 'VF 1080p'),
+      ];
+      h.client.streams['org.b'] = [
+        _direct('b', 'https://cdn.example.com/b.mp4', desc: 'VF 720p'),
+      ];
+      late BuildContext ctx;
+      await h.pump(
+        preview: _preview(),
+        addons: two,
+        home: Builder(
+          builder: (c) {
+            ctx = c;
+            return const Scaffold(body: Text('ACCUEIL'));
+          },
+        ),
+      );
+      failing(h, 's1');
+      final entry = ProgressEntry(
+        profileId: defaultProfileId,
+        metaId: 'tt1',
+        videoId: 'tt1',
+        position: const Duration(minutes: 5),
+        duration: const Duration(minutes: 40),
+        watched: false,
+        updatedAt: DateTime.utc(2026, 11, 18),
+      );
+      unawaited(h.container.read(continuePlaybackProvider).play(ctx, entry));
+      await h.settle();
+      final p = h.players.single;
+      expect(p.item.url!.path, '/b.mp4');
+      expect([for (final f in p.fallbacks) f.url!.path], ['/a.mp4']);
+      await h.close();
+    });
+
+    testWidgets('choix manuel dans la liste : pas de secours', (t) async {
+      final h = _H(t);
+      h.client.streams['org.a'] = [
+        _direct('a', 'https://cdn.example.com/a.mp4', desc: 'VF 1080p'),
+        _direct('b', 'https://cdn.example.com/b.mp4', desc: 'VF 720p'),
+      ];
+      await h.pump(preview: _preview());
+      await t.tap(find.textContaining('VF 720p').first);
+      await h.settle();
+      final p = h.players.single;
+      expect(p.item.url!.path, '/b.mp4');
+      expect(p.fallbacks, isEmpty);
       await h.close();
     });
   });

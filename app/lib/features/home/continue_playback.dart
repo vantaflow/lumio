@@ -105,9 +105,9 @@ class DefaultContinuePlayback implements ContinuePlayback {
       return;
     }
     final type = meta.type;
-    final stream = await launcher.resolvePreferred(type, entry.videoId);
+    final ranked = await launcher.resolveRanked(type, entry.videoId);
     if (!context.mounted) return;
-    if (stream == null) {
+    if (ranked.isEmpty) {
       tell(l.noSourceAvailable);
       return;
     }
@@ -115,7 +115,8 @@ class DefaultContinuePlayback implements ContinuePlayback {
       context,
       meta: meta,
       videoId: entry.videoId,
-      stream: stream,
+      stream: ranked.first,
+      fallbacks: ranked.skip(1).take(maxFallbacks).toList(),
     );
     // « Choisir une autre source » : la fiche s'ouvre sur la liste des flux.
     if (exit == PlayerExit.pickAnother && context.mounted) {

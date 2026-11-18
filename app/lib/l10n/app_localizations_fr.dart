@@ -743,6 +743,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsQuality => 'Qualité préférée';
 
   @override
+  String get settingsPreferDirect => 'Préférer les liens directs aux torrents';
+
+  @override
+  String get preferDirectOn => 'Liens directs en premier';
+
+  @override
+  String get preferDirectOff => 'Sans préférence';
+
+  @override
+  String get playerSourceFallback =>
+      'Source indisponible, essai de la suivante…';
+
+  @override
+  String playingFallback(String title) {
+    return 'Lecture depuis une autre source : $title';
+  }
+
+  @override
   String get langSpanish => 'Español';
 
   @override

@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart';
-import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/features/detail/playback_service.dart'
     show streamPrefsProvider, streamPrefsStoreProvider;
 import 'package:lumio/l10n/l10n.dart';
@@ -158,8 +157,7 @@ class ProfilePrefsEditor {
   Future<void> setAudioLang(String lang) async {
     final id = _ref.read(currentProfileIdProvider);
     final cur = await _ref.read(streamPrefsProvider.future);
-    final next = StreamPrefs(
-      maxQuality: cur.maxQuality,
+    final next = cur.copyWith(
       languages: [lang, ...cur.languages.where((l) => l != lang)],
     );
     await _ref.read(streamPrefsStoreProvider).save(id, next);
@@ -171,7 +169,16 @@ class ProfilePrefsEditor {
     final cur = await _ref.read(streamPrefsProvider.future);
     await _ref
         .read(streamPrefsStoreProvider)
-        .save(id, StreamPrefs(maxQuality: q, languages: cur.languages));
+        .save(id, cur.copyWith(maxQuality: q));
+    _ref.invalidate(streamPrefsProvider);
+  }
+
+  Future<void> setPreferDirect(bool value) async {
+    final id = _ref.read(currentProfileIdProvider);
+    final cur = await _ref.read(streamPrefsProvider.future);
+    await _ref
+        .read(streamPrefsStoreProvider)
+        .save(id, cur.copyWith(preferDirect: value));
     _ref.invalidate(streamPrefsProvider);
   }
 
