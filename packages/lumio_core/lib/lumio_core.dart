@@ -16,3 +16,6 @@ export 'src/torrent/magnet.dart';
 export 'src/streams/stream_item.dart';
 export 'src/streams/stream_normalizer.dart';
 export 'src/streams/stream_service.dart';
+export 'src/subtitles/charset.dart';
+export 'src/subtitles/subtitle_item.dart';
+export 'src/subtitles/subtitle_service.dart';
