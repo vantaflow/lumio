@@ -24,3 +24,5 @@ export 'src/playback/next_episode.dart';
 export 'src/playback/progress_rules.dart';
 export 'src/profiles/content_rating.dart';
 export 'src/profiles/pin.dart';
+export 'src/search/search_service.dart';
+export 'src/search/text_normalize.dart';
