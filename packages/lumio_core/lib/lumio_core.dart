@@ -13,3 +13,6 @@ export 'src/net/url_guard.dart';
 export 'src/update/update_checker.dart';
 export 'src/util/redact.dart';
 export 'src/torrent/magnet.dart';
+export 'src/streams/stream_item.dart';
+export 'src/streams/stream_normalizer.dart';
+export 'src/streams/stream_service.dart';
