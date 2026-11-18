@@ -15,6 +15,24 @@ final _selectKeys = {
   LogicalKeyboardKey.space,
 };
 
+/// Échelle de focus imposée aux cartes descendantes (rangées : 1,08).
+class FocusableCardScale extends InheritedWidget {
+  const FocusableCardScale({
+    super.key,
+    required this.scale,
+    required super.child,
+  });
+
+  final double scale;
+
+  static double of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<FocusableCardScale>()?.scale ??
+      1.06;
+
+  @override
+  bool updateShouldNotify(FocusableCardScale old) => scale != old.scale;
+}
+
 /// Carte focalisable à la télécommande : anneau de focus 4 dp décalé de 4 dp
 /// (dessiné hors de l'enfant, aucun décalage de mise en page), échelle 1,06
 /// (1,08 en rangée) animée en 160 ms, sans animation avec « réduire les
@@ -27,7 +45,7 @@ class FocusableCard extends StatefulWidget {
     this.onLongPress,
     this.autofocus = false,
     this.focusNode,
-    this.scale = 1.06,
+    this.scale,
     this.borderRadius = const BorderRadius.all(Radius.circular(LumioRadius.md)),
     this.semanticLabel,
     this.enabled = true,
@@ -41,7 +59,7 @@ class FocusableCard extends StatefulWidget {
   final FocusNode? focusNode;
 
   /// Échelle au focus (1,06 par défaut ; 1,08 pour les cartes de rangée).
-  final double scale;
+  final double? scale;
   final BorderRadius borderRadius;
 
   /// Étiquette d'accessibilité (titre + source).
@@ -58,6 +76,15 @@ class _FocusableCardState extends State<FocusableCard> {
   Timer? _timer;
   bool _longFired = false;
   bool _selectDown = false;
+
+  @override
+  void didUpdateWidget(FocusableCard old) {
+    super.didUpdateWidget(old);
+    if (!widget.enabled || widget.onLongPress == null) {
+      _timer?.cancel();
+      _selectDown = false;
+    }
+  }
 
   @override
   void dispose() {
@@ -86,6 +113,9 @@ class _FocusableCardState extends State<FocusableCard> {
       return KeyEventResult.handled;
     }
     if (event is KeyUpEvent) {
+      // Relâchement orphelin (la touche a été pressée avant l'arrivée du
+      // focus sur cette carte) : on l'ignore.
+      if (!_selectDown) return KeyEventResult.ignored;
       _selectDown = false;
       if (hasLong) {
         _timer?.cancel();
@@ -101,7 +131,9 @@ class _FocusableCardState extends State<FocusableCard> {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     final ring = context.lumio.focusRing;
     const out = lumioFocusOffset + lumioFocusWidth;
-    final scale = _focused && widget.enabled ? widget.scale : 1.0;
+    final scale = _focused && widget.enabled
+        ? (widget.scale ?? FocusableCardScale.of(context))
+        : 1.0;
 
     Widget body = Stack(
       clipBehavior: Clip.none,

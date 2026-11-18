@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
+import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/theme.dart';
 
 /// Rangée horizontale de cartes (titre + liste défilante paresseuse).
@@ -13,8 +14,10 @@ class TvRow extends ConsumerStatefulWidget {
     super.key,
     required this.title,
     required this.items,
-    this.restorationId = 'row',
+    required this.restorationId,
+    this.routeKey,
     this.itemExtent,
+    this.estimatedExtent = 300,
     this.height = 194,
     this.gap = LumioSpacing.lg,
     this.horizontalPadding = 96,
@@ -24,9 +27,16 @@ class TvRow extends ConsumerStatefulWidget {
   final List<Widget> items;
   final String restorationId;
 
-  /// Largeur fixe des éléments (optionnelle) : permet de restaurer le focus
-  /// sur un élément éloigné de la fenêtre initiale.
+  /// Clé d'écran pour la mémoire du focus ; par défaut le nom de la route.
+  /// À fournir quand l'écran n'est pas une route nommée.
+  final String? routeKey;
+
+  /// Largeur fixe des éléments (optionnelle). Sans elle, la restauration d'un
+  /// index éloigné utilise [estimatedExtent] pour se positionner.
   final double? itemExtent;
+
+  /// Largeur estimée d'un élément (poster 300 dp) quand [itemExtent] est nul.
+  final double estimatedExtent;
 
   /// Hauteur de la rangée (carte + 2 x 12 de marge pour l'anneau).
   final double height;
@@ -45,44 +55,48 @@ class _TvRowState extends ConsumerState<TvRow> {
     debugLabel: 'TvRow.restore',
   );
   int? _restoreAt;
-  bool _restorePending = false;
-  String _route = '/';
+  String _route = 'unnamed';
   bool _initialized = false;
 
   int? _readMemory() {
-    final key = ref.read(focusMemoryProvider.notifier).restore(_route);
-    final prefix = '${widget.restorationId}#';
-    if (key == null || !key.startsWith(prefix)) return null;
-    final i = int.tryParse(key.substring(prefix.length));
+    final key = ref
+        .read(focusMemoryProvider.notifier)
+        .restore(_route, row: widget.restorationId);
+    if (key == null) return null;
+    final i = int.tryParse(key);
     return (i != null && i >= 0 && i < widget.items.length) ? i : null;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _route = ModalRoute.of(context)?.settings.name ?? '/';
+    _route =
+        widget.routeKey ?? ModalRoute.of(context)?.settings.name ?? 'unnamed';
     if (_initialized) return;
     _initialized = true;
     _restoreAt = _readMemory();
-    final extent = widget.itemExtent;
+    final extent = widget.itemExtent ?? widget.estimatedExtent;
     _controller = ScrollController(
-      initialScrollOffset: _restoreAt != null && extent != null
+      initialScrollOffset: _restoreAt != null
           ? _restoreAt! * (extent + widget.gap)
           : 0,
     );
-    if (_restoreAt != null) {
-      _restorePending = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !_restorePending) return;
-        _restorePending = false;
-        for (final n in _restoreNode.descendants) {
-          if (n.canRequestFocus && !n.skipTraversal) {
-            n.requestFocus();
-            return;
-          }
+    if (_restoreAt != null) _tryRestore(5);
+  }
+
+  /// Rend le focus à l'élément mémorisé dès qu'il est construit (quelques
+  /// images d'attente : la liste est paresseuse).
+  void _tryRestore(int attempts) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final n in _restoreNode.descendants) {
+        if (n.canRequestFocus && !n.skipTraversal) {
+          n.requestFocus();
+          return;
         }
-      });
-    }
+      }
+      if (attempts > 1) _tryRestore(attempts - 1);
+    });
   }
 
   @override
@@ -96,7 +110,7 @@ class _TvRowState extends ConsumerState<TvRow> {
     if (!focused) return;
     ref
         .read(focusMemoryProvider.notifier)
-        .remember(_route, '${widget.restorationId}#$index');
+        .remember(_route, '$index', row: widget.restorationId);
     final reduce = MediaQuery.maybeDisableAnimationsOf(itemContext) ?? false;
     Scrollable.ensureVisible(
       itemContext,
@@ -142,14 +156,16 @@ class _TvRowState extends ConsumerState<TvRow> {
               vertical: 12,
             ),
             itemBuilder: (context, i) {
-              Widget item = Padding(
-                padding: EdgeInsets.only(right: widget.gap),
-                child: widget.items[i],
+              Widget item = Builder(
+                builder: (itemContext) => Focus(
+                  skipTraversal: true,
+                  canRequestFocus: false,
+                  onFocusChange: (f) => _onItemFocus(i, itemContext, f),
+                  child: widget.items[i],
+                ),
               );
-              item = Focus(
-                skipTraversal: true,
-                canRequestFocus: false,
-                onFocusChange: (f) => _onItemFocus(i, context, f),
+              item = Padding(
+                padding: EdgeInsets.only(right: widget.gap),
                 child: item,
               );
               if (i == _restoreAt) {
@@ -160,7 +176,7 @@ class _TvRowState extends ConsumerState<TvRow> {
                   child: item,
                 );
               }
-              return item;
+              return FocusableCardScale(scale: 1.08, child: item);
             },
           ),
         ),

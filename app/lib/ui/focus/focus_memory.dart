@@ -1,23 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Mémoire du dernier élément focalisé, par route (nom de route).
+/// Mémoire du dernier élément focalisé : route -> rangée -> clé.
 ///
-/// Une seule clé par route : la dernière focalisée. Le format de la clé est
-/// libre pour l'appelant (ex. « rangée#index » pour [TvRow]).
-final focusMemoryProvider = NotifierProvider<FocusMemory, Map<String, String>>(
-  FocusMemory.new,
-);
+/// [row] distingue plusieurs zones d'une même route (ex. chaque [TvRow]) ;
+/// sans [row], une zone unique par route.
+final focusMemoryProvider =
+    NotifierProvider<FocusMemory, Map<String, Map<String, String>>>(
+      FocusMemory.new,
+    );
 
-class FocusMemory extends Notifier<Map<String, String>> {
+class FocusMemory extends Notifier<Map<String, Map<String, String>>> {
   @override
-  Map<String, String> build() => const {};
+  Map<String, Map<String, String>> build() => const {};
 
-  void remember(String route, String key) {
-    if (state[route] == key) return;
-    state = {...state, route: key};
+  void remember(String route, String key, {String row = ''}) {
+    if (state[route]?[row] == key) return;
+    state = {
+      ...state,
+      route: {...?state[route], row: key},
+    };
   }
 
-  String? restore(String route) => state[route];
+  String? restore(String route, {String row = ''}) => state[route]?[row];
 
   void forget(String route) {
     if (!state.containsKey(route)) return;

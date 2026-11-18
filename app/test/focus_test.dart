@@ -11,17 +11,26 @@ import 'package:lumio/ui/theme.dart';
 Widget _app(Widget home, {ProviderContainer? container, bool reduce = false}) {
   final app = MaterialApp(
     theme: LumioTheme.dark(),
-    home: MediaQuery(
-      data: MediaQueryData(disableAnimations: reduce),
-      child: Scaffold(body: home),
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(context).copyWith(disableAnimations: reduce),
+      child: child!,
     ),
+    home: Scaffold(body: home),
   );
   return container == null
       ? ProviderScope(child: app)
       : UncontrolledProviderScope(container: container, child: app);
 }
 
+void _size(WidgetTester t, Size s) {
+  t.view.physicalSize = s;
+  t.view.devicePixelRatio = 1;
+  addTearDown(t.view.reset);
+}
+
 void main() {
+  const tv = Size(1920, 1080), phone = Size(400, 800);
+
   testWidgets('flèche droite déplace le focus vers la carte suivante', (
     t,
   ) async {
@@ -158,8 +167,8 @@ void main() {
     await t.pumpAndSettle();
     expect(nodes[2].hasFocus, isTrue);
     expect(
-      container.read(focusMemoryProvider.notifier).restore('/'),
-      'films#2',
+      container.read(focusMemoryProvider.notifier).restore('/', row: 'films'),
+      '2',
     );
 
     // Quitter la route (écran vide) puis revenir.
@@ -196,6 +205,7 @@ void main() {
       _app(
         TvRow(
           title: 'Séries',
+          restorationId: 'series',
           itemExtent: 300,
           items: [
             for (var i = 0; i < 12; i++)
@@ -255,5 +265,264 @@ void main() {
     await t.pump();
     await t.sendKeyEvent(LogicalKeyboardKey.mediaPlayPause);
     expect(n, 1);
+  });
+
+  testWidgets('relâchement orphelin : onSelect non appelé', (t) async {
+    var sel = 0;
+    final a = FocusNode(), b = FocusNode();
+    await t.pumpWidget(
+      _app(
+        Row(
+          children: [
+            FocusableCard(
+              focusNode: a,
+              autofocus: true,
+              onSelect: () {},
+              child: const SizedBox(width: 100, height: 60),
+            ),
+            FocusableCard(
+              focusNode: b,
+              onSelect: () => sel++,
+              onLongPress: () {},
+              child: const SizedBox(width: 100, height: 60),
+            ),
+          ],
+        ),
+      ),
+    );
+    await t.pump();
+    await t.sendKeyDownEvent(LogicalKeyboardKey.select);
+    b.requestFocus();
+    await t.pump();
+    await t.sendKeyUpEvent(LogicalKeyboardKey.select);
+    expect(sel, 0);
+  });
+
+  testWidgets('maintenir une flèche ne déclenche jamais l\'appui long', (
+    t,
+  ) async {
+    var long = 0;
+    await t.pumpWidget(
+      _app(
+        FocusableCard(
+          autofocus: true,
+          onSelect: () {},
+          onLongPress: () => long++,
+          child: const SizedBox(width: 100, height: 60),
+        ),
+      ),
+    );
+    await t.pump();
+    await t.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
+    await t.pump(const Duration(seconds: 2));
+    await t.sendKeyUpEvent(LogicalKeyboardKey.arrowRight);
+    expect(long, 0);
+  });
+
+  testWidgets('perte de focus pendant l\'appui annule l\'appui long', (
+    t,
+  ) async {
+    var long = 0;
+    final n = FocusNode();
+    await t.pumpWidget(
+      _app(
+        FocusableCard(
+          focusNode: n,
+          autofocus: true,
+          onSelect: () {},
+          onLongPress: () => long++,
+          child: const SizedBox(width: 100, height: 60),
+        ),
+      ),
+    );
+    await t.pump();
+    await t.sendKeyDownEvent(LogicalKeyboardKey.select);
+    n.unfocus();
+    await t.pump(const Duration(seconds: 1));
+    expect(long, 0);
+  });
+
+  testWidgets('enabled -> false annule le minuteur d\'appui long', (t) async {
+    var long = 0;
+    Widget w(bool en) => _app(
+      FocusableCard(
+        autofocus: true,
+        enabled: en,
+        onSelect: () {},
+        onLongPress: () => long++,
+        child: const SizedBox(width: 100, height: 60),
+      ),
+    );
+    await t.pumpWidget(w(true));
+    await t.pump();
+    await t.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await t.pumpWidget(w(false));
+    await t.pump(const Duration(seconds: 1));
+    expect(long, 0);
+  });
+
+  testWidgets('TvRow : haut/bas quittent la rangée ; échelle 1,08', (t) async {
+    _size(t, tv);
+    final top = FocusNode(), bottom = FocusNode();
+    Widget row(String id, FocusNode n, {bool auto = false}) => TvRow(
+      title: id,
+      restorationId: id,
+      items: [
+        FocusableCard(
+          focusNode: n,
+          autofocus: auto,
+          onSelect: () {},
+          child: const SizedBox(width: 300, height: 170),
+        ),
+      ],
+    );
+    await t.pumpWidget(
+      _app(Column(children: [row('a', top, auto: true), row('b', bottom)])),
+    );
+    await t.pump();
+    expect(
+      t.widget<AnimatedScale>(find.byType(AnimatedScale).first).scale,
+      1.08,
+    );
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await t.pump();
+    expect(bottom.hasFocus, isTrue);
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await t.pump();
+    expect(top.hasFocus, isTrue);
+  });
+
+  testWidgets('TvRow : mémoire distincte par rangée (A, B, A)', (t) async {
+    _size(t, tv);
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    List<FocusNode> mk() => List.generate(4, (_) => FocusNode());
+    Widget row(String id, List<FocusNode> ns, {bool auto = false}) => TvRow(
+      title: id,
+      restorationId: id,
+      itemExtent: 300,
+      items: [
+        for (var i = 0; i < 4; i++)
+          FocusableCard(
+            focusNode: ns[i],
+            autofocus: auto && i == 0,
+            onSelect: () {},
+            child: const SizedBox(width: 300, height: 170),
+          ),
+      ],
+    );
+    final a = mk(), b = mk();
+    await t.pumpWidget(
+      _app(
+        Column(children: [row('a', a, auto: true), row('b', b)]),
+        container: container,
+      ),
+    );
+    await t.pump();
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.pumpAndSettle();
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await t.pumpAndSettle();
+    final mem = container.read(focusMemoryProvider.notifier);
+    expect(mem.restore('/', row: 'a'), '2');
+    expect(mem.restore('/', row: 'b'), isNotNull);
+
+    await t.pumpWidget(_app(const SizedBox(), container: container));
+    final a2 = mk(), b2 = mk();
+    await t.pumpWidget(
+      _app(
+        Column(children: [row('a', a2), row('b', b2)]),
+        container: container,
+      ),
+    );
+    await t.pumpAndSettle();
+    // les deux rangées demandent le focus ; la mémoire de chacune est intacte
+    expect(mem.restore('/', row: 'a'), '2');
+    expect(a2[2].hasFocus || b2.any((n) => n.hasFocus), isTrue);
+  });
+
+  testWidgets('TvRow : carte focalisée centrée après un long déplacement', (
+    t,
+  ) async {
+    _size(t, tv);
+    final nodes = List.generate(20, (_) => FocusNode());
+    await t.pumpWidget(
+      _app(
+        TvRow(
+          title: 'R',
+          restorationId: 'r',
+          itemExtent: 300,
+          items: [
+            for (var i = 0; i < 20; i++)
+              FocusableCard(
+                focusNode: nodes[i],
+                autofocus: i == 0,
+                onSelect: () {},
+                child: SizedBox(key: ValueKey('i$i'), width: 300, height: 170),
+              ),
+          ],
+        ),
+      ),
+    );
+    await t.pump();
+    for (var k = 0; k < 10; k++) {
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await t.pumpAndSettle();
+    }
+    final r = t.getRect(find.byKey(const ValueKey('i10')));
+    expect(r.center.dx, closeTo(1920 / 2, 1.5));
+  });
+
+  testWidgets('TvRow : restauration à l\'index 30 sans itemExtent', (t) async {
+    _size(t, tv);
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    container
+        .read(focusMemoryProvider.notifier)
+        .remember('/', '30', row: 'big');
+    final nodes = List.generate(40, (_) => FocusNode());
+    await t.pumpWidget(
+      _app(
+        TvRow(
+          title: 'Big',
+          restorationId: 'big',
+          items: [
+            for (var i = 0; i < 40; i++)
+              FocusableCard(
+                focusNode: nodes[i],
+                onSelect: () {},
+                child: const SizedBox(width: 300, height: 170),
+              ),
+          ],
+        ),
+        container: container,
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(nodes[30].hasFocus, isTrue);
+  });
+
+  testWidgets('TvScaffold : Échap et goBack déclenchent Retour (téléphone)', (
+    t,
+  ) async {
+    _size(t, phone);
+    var n = 0;
+    await t.pumpWidget(
+      MaterialApp(
+        home: TvScaffold(
+          onBack: () => n++,
+          child: const Focus(autofocus: true, child: SizedBox()),
+        ),
+      ),
+    );
+    await t.pump();
+    await t.sendKeyEvent(LogicalKeyboardKey.escape);
+    expect(n, 1);
+    // goBack n'a pas de touche physique simulable : on vérifie le mappage.
+    expect(
+      tvShortcuts[const SingleActivator(LogicalKeyboardKey.goBack)],
+      isA<BackIntent>(),
+    );
   });
 }
