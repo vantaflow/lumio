@@ -1986,4 +1986,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trackingSimklAuthDone => 'Simkl is connected.';
+
+  @override
+  String get homeCalendar => 'Calendar';
+
+  @override
+  String get calendarTitle => 'Release calendar';
+
+  @override
+  String get calendarEmpty =>
+      'No series in your list. Add a series to \"My list\" to follow its upcoming episodes.';
+
+  @override
+  String get calendarNothingSoon => 'No release planned in the next 30 days.';
+
+  @override
+  String get calendarLoadError => 'Could not load the calendar.';
+
+  @override
+  String get calendarToday => 'Today';
+
+  @override
+  String get calendarTomorrow => 'Tomorrow';
+
+  @override
+  String get calendarUnknownHeader => 'Date unknown';
+
+  @override
+  String get calendarUnknownEntry => 'Date unknown';
+
+  @override
+  String calendarEpisodeLabel(int season, int episode) {
+    return 'S$season · E$episode';
+  }
+
+  @override
+  String calendarEpisodeOnly(int episode) {
+    return 'Episode $episode';
+  }
+
+  @override
+  String get calendarNotify => 'Notify me about new episodes';
+
+  @override
+  String get calendarNotifyHint =>
+      'Local notification on release day, on this device. Off by default.';
+
+  @override
+  String get calendarNotifyDenied =>
+      'Notifications denied: enable them in the system settings.';
+
+  @override
+  String get calendarNotifyOn =>
+      'You will be notified about upcoming episodes.';
+
+  @override
+  String get calendarNotifyChannel => 'New episodes';
+
+  @override
+  String calendarNotifyBody(String episode) {
+    return 'New episode available: $episode';
+  }
 }

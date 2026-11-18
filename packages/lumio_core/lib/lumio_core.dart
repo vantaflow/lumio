@@ -8,6 +8,7 @@ export 'src/addons/meta.dart';
 export 'src/addons/meta_preview.dart';
 export 'src/addons/meta_service.dart';
 export 'src/backup/backup.dart';
+export 'src/calendar/release_calendar.dart';
 export 'src/backup/stremio_import.dart';
 export 'src/cache/ttl_cache.dart';
 export 'src/health/health_tracker.dart';

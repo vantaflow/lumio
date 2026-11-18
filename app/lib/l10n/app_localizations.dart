@@ -3439,6 +3439,108 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Simkl est connecté.'**
   String get trackingSimklAuthDone;
+
+  /// No description provided for @homeCalendar.
+  ///
+  /// In fr, this message translates to:
+  /// **'Calendrier'**
+  String get homeCalendar;
+
+  /// No description provided for @calendarTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Calendrier des sorties'**
+  String get calendarTitle;
+
+  /// No description provided for @calendarEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune série dans votre liste. Ajoutez une série à « Ma liste » pour suivre ses prochains épisodes.'**
+  String get calendarEmpty;
+
+  /// No description provided for @calendarNothingSoon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune sortie prévue dans les 30 prochains jours.'**
+  String get calendarNothingSoon;
+
+  /// No description provided for @calendarLoadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de charger le calendrier.'**
+  String get calendarLoadError;
+
+  /// No description provided for @calendarToday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aujourd\'hui'**
+  String get calendarToday;
+
+  /// No description provided for @calendarTomorrow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demain'**
+  String get calendarTomorrow;
+
+  /// No description provided for @calendarUnknownHeader.
+  ///
+  /// In fr, this message translates to:
+  /// **'Date inconnue'**
+  String get calendarUnknownHeader;
+
+  /// No description provided for @calendarUnknownEntry.
+  ///
+  /// In fr, this message translates to:
+  /// **'Date inconnue'**
+  String get calendarUnknownEntry;
+
+  /// No description provided for @calendarEpisodeLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'S{season} · É{episode}'**
+  String calendarEpisodeLabel(int season, int episode);
+
+  /// No description provided for @calendarEpisodeOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épisode {episode}'**
+  String calendarEpisodeOnly(int episode);
+
+  /// No description provided for @calendarNotify.
+  ///
+  /// In fr, this message translates to:
+  /// **'Me prévenir des nouveaux épisodes'**
+  String get calendarNotify;
+
+  /// No description provided for @calendarNotifyHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notification locale le jour de la sortie, sur cet appareil. Désactivé par défaut.'**
+  String get calendarNotifyHint;
+
+  /// No description provided for @calendarNotifyDenied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications refusées : activez-les dans les réglages du système.'**
+  String get calendarNotifyDenied;
+
+  /// No description provided for @calendarNotifyOn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous serez prévenu des prochains épisodes.'**
+  String get calendarNotifyOn;
+
+  /// No description provided for @calendarNotifyChannel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveaux épisodes'**
+  String get calendarNotifyChannel;
+
+  /// No description provided for @calendarNotifyBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvel épisode disponible : {episode}'**
+  String calendarNotifyBody(String episode);
 }
 
 class _AppLocalizationsDelegate

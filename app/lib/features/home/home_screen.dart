@@ -9,6 +9,7 @@ import 'package:lumio/data/jellyfin_repository.dart'
 import 'package:lumio/data/local_library.dart' show isLocalId;
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
+import 'package:lumio/features/calendar/calendar_screen.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
 import 'package:lumio/features/library/library_screen.dart';
@@ -111,6 +112,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ),
   );
 
+  Future<void> _openCalendar() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      settings: const RouteSettings(name: calendarRouteKey),
+      builder: (_) => CalendarScreen(onOpenItem: _openFrom),
+    ),
+  );
+
   /// Depuis un écran poussé : la fiche s'ouvre par-dessus cet écran.
   void _openFrom(MetaPreview item) => _open(item);
 
@@ -149,6 +157,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onCustomize: _openEditor,
                     onSearch: _openSearch,
                     onLibrary: _openLibrary,
+                    onCalendar: _openCalendar,
                     onSettings: _openSettings,
                   ),
                 ),
@@ -174,6 +183,7 @@ class _TopBar extends StatelessWidget {
     required this.onCustomize,
     required this.onSearch,
     required this.onLibrary,
+    required this.onCalendar,
     required this.onSettings,
   });
 
@@ -181,6 +191,7 @@ class _TopBar extends StatelessWidget {
   final VoidCallback onCustomize;
   final VoidCallback onSearch;
   final VoidCallback onLibrary;
+  final VoidCallback onCalendar;
   final VoidCallback onSettings;
 
   @override
@@ -221,6 +232,12 @@ class _TopBar extends StatelessWidget {
                   onPressed: onLibrary,
                   icon: const Icon(Icons.bookmark_border),
                   label: Text(context.l10n.homeManageList),
+                ),
+                TextButton.icon(
+                  key: const ValueKey('home-calendar'),
+                  onPressed: onCalendar,
+                  icon: const Icon(Icons.event_outlined),
+                  label: Text(context.l10n.homeCalendar),
                 ),
                 TextButton.icon(
                   focusNode: customizeNode,
