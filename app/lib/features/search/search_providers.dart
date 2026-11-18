@@ -21,6 +21,10 @@ final searchServiceProvider = Provider<SearchService>(
 
 /// Dictée vocale : abstraction minimale pour pouvoir la simuler en test.
 abstract class VoiceInput {
+  /// Vrai si la plateforme peut proposer la dictée (sans sonder le micro ni
+  /// déclencher de demande d'autorisation).
+  bool get maySupport;
+
   /// Vrai si la reconnaissance est utilisable (micro et service présents).
   /// Ne lève jamais.
   Future<bool> init();
@@ -33,6 +37,11 @@ abstract class VoiceInput {
 
 class SpeechVoiceInput implements VoiceInput {
   final SpeechToText _stt = SpeechToText();
+
+  @override
+  bool get maySupport =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 
   @override
   Future<bool> init() async {
@@ -129,7 +138,13 @@ class SearchController extends AutoDisposeNotifier<SearchState> {
     _timer = Timer(searchDebounce, () => _run(query, token));
   }
 
-  void _run(String query, int token) {
+  Future<void> _run(String query, int token) async {
+    try {
+      await ref.read(addonsProvider.future);
+    } on Object {
+      // Liste illisible : traitée comme vide ci-dessous.
+    }
+    if (token != _token) return;
     final addons = _addons();
     final has = addons.any(
       (m) => m.catalogs.any((c) => c.extra.any((e) => e.name == 'search')),
@@ -147,10 +162,6 @@ class SearchController extends AutoDisposeNotifier<SearchState> {
             if (token != _token) return;
             first = false;
             state = SearchState(query: query, results: items, searching: true);
-          },
-          onError: (_) {
-            if (token != _token) return;
-            state = SearchState(query: query, results: const []);
           },
           onDone: () {
             if (token != _token) return;

@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/features/search/search_providers.dart';
+import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/features/search/search_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/theme.dart';
@@ -44,6 +46,16 @@ class _FakeAddons extends AddonsController {
   Future<List<InstalledAddon>> build() async => list;
 }
 
+class _Mem extends FocusMemory {
+  _Mem(this.id);
+  final String id;
+
+  @override
+  Map<String, Map<String, String>> build() => {
+    'search': {'': id},
+  };
+}
+
 class _FakeProfile extends CurrentProfileController {
   _FakeProfile(this.p);
   final Profile? p;
@@ -54,12 +66,15 @@ class _FakeProfile extends CurrentProfileController {
 
 class _FakeSearch implements SearchService {
   final queries = <String>[];
+  bool cancelled = false;
   final streams = <String, StreamController<List<MetaPreview>>>{};
 
   @override
   Stream<List<MetaPreview>> search(List<AddonManifest> addons, String query) {
     queries.add(query);
-    return (streams[query] = StreamController<List<MetaPreview>>()).stream;
+    return (streams[query] = StreamController<List<MetaPreview>>(
+      onCancel: () => cancelled = true,
+    )).stream;
   }
 
   @override
@@ -70,9 +85,16 @@ class _FakeVoice implements VoiceInput {
   _FakeVoice({this.available = true});
   final bool available;
   void Function(String, bool)? onText;
+  int inits = 0;
 
   @override
-  Future<bool> init() async => available;
+  bool get maySupport => true;
+
+  @override
+  Future<bool> init() async {
+    inits++;
+    return available;
+  }
 
   @override
   Future<void> listen(void Function(String text, bool done) onText) async =>
@@ -88,6 +110,7 @@ Future<_FakeSearch> _pump(
   Profile? profile,
   List<InstalledAddon>? addons,
   void Function(MetaPreview)? onOpen,
+  String? remembered,
 }) async {
   t.view.physicalSize = const Size(1920, 1080);
   t.view.devicePixelRatio = 1;
@@ -110,6 +133,8 @@ Future<_FakeSearch> _pump(
         currentProfileProvider.overrideWith(() => _FakeProfile(profile)),
         searchServiceProvider.overrideWithValue(search),
         voiceInputProvider.overrideWithValue(voice ?? _FakeVoice()),
+        if (remembered != null)
+          focusMemoryProvider.overrideWith(() => _Mem(remembered)),
       ],
       child: MaterialApp(
         theme: LumioTheme.dark(),
@@ -232,8 +257,16 @@ void main() {
     expect(s.queries, ['ك']);
   });
 
-  testWidgets('micro indisponible : bouton masqué, pas de plantage', (t) async {
-    await _pump(t, voice: _FakeVoice(available: false));
+  testWidgets('micro : aucune init à l\'ouverture, masqué si refusé', (
+    t,
+  ) async {
+    final v = _FakeVoice(available: false);
+    await _pump(t, voice: v);
+    expect(v.inits, 0);
+    expect(find.byKey(const ValueKey('key-mic')), findsOneWidget);
+    await _tap(t, 'mic');
+    await t.pump();
+    expect(v.inits, 1);
     expect(find.byKey(const ValueKey('key-mic')), findsNothing);
   });
 
@@ -266,4 +299,106 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'D-pad : droite atteint un résultat, gauche revient, select ouvre',
+    (t) async {
+      MetaPreview? opened;
+      final s = await _pump(t, onOpen: (m) => opened = m);
+      await _tap(t, 'x');
+      await t.pump(searchDebounce);
+      s.streams['x']!.add([_meta('1'), _meta('2')]);
+      await t.pump();
+      // Focus initial sur la première touche.
+      expect(FocusManager.instance.primaryFocus, isNotNull);
+      var guard = 0;
+      // Aller à droite jusqu'à la zone résultats.
+      while (!_focusIsResult(t) && guard++ < 12) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await t.pump();
+      }
+      expect(_focusIsResult(t), isTrue);
+      guard = 0;
+      while (_focusIsResult(t) && guard++ < 12) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await t.pump();
+      }
+      expect(_focusIsResult(t), isFalse);
+      guard = 0;
+      while (!_focusIsResult(t) && guard++ < 12) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await t.pump();
+      }
+      await t.sendKeyEvent(LogicalKeyboardKey.select);
+      await t.pump();
+      expect(opened, isNotNull);
+      await t.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('mémoire du focus : retour sur le résultat choisi', (t) async {
+    final s = await _pump(t);
+    final container = ProviderScope.containerOf(
+      t.element(find.byType(SearchScreen)),
+    );
+    await _tap(t, 'x');
+    await t.pump(searchDebounce);
+    s.streams['x']!.add([_meta('1'), _meta('2'), _meta('3')]);
+    await t.pump();
+    // Focalise le résultat 3 puis recrée l'écran.
+    var guard = 0;
+    while (container.read(focusMemoryProvider.notifier).restore('search') !=
+            '3' &&
+        guard++ < 40) {
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await t.pump();
+    }
+    expect(container.read(focusMemoryProvider.notifier).restore('search'), '3');
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('mémoire du focus : le résultat mémorisé reprend le focus', (
+    t,
+  ) async {
+    final s = await _pump(t, remembered: '2');
+    await _tap(t, 'x');
+    await t.pump(searchDebounce);
+    s.streams['x']!.add([_meta('1'), _meta('2'), _meta('3')]);
+    for (var i = 0; i < 8; i++) {
+      await t.pump(const Duration(milliseconds: 50));
+    }
+    final ctx = FocusManager.instance.primaryFocus!.context!;
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('result-2')),
+        matching: find.byWidget(ctx.widget),
+      ),
+      findsWidgets,
+    );
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('abonnement au service annulé à la fermeture', (t) async {
+    final s = await _pump(t);
+    await _tap(t, 'x');
+    await t.pump(searchDebounce);
+    expect(s.cancelled, isFalse);
+    await t.pumpWidget(const SizedBox());
+    expect(s.cancelled, isTrue);
+  });
+}
+
+bool _focusIsResult(WidgetTester t) {
+  final ctx = FocusManager.instance.primaryFocus?.context;
+  if (ctx == null) return false;
+  var found = false;
+  ctx.visitAncestorElements((e) {
+    final k = e.widget.key;
+    if (k is ValueKey<String> && k.value.startsWith('result-')) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+  return found;
 }

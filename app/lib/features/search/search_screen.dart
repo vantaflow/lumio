@@ -7,6 +7,7 @@ import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/features/search/search_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
@@ -36,7 +37,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _controller = TextEditingController();
   var _arabic = false;
   var _filter = _TypeFilter.all;
-  var _micAvailable = false;
+  var _micAvailable = true;
+  var _voiceReady = false;
   var _listening = false;
   late final VoiceInput _voice;
 
@@ -44,23 +46,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void initState() {
     super.initState();
     _voice = ref.read(voiceInputProvider);
-    unawaited(_initVoice());
+    _micAvailable = _voice.maySupport;
+    _restoreId = ref.read(focusMemoryProvider.notifier).restore(searchRouteKey);
   }
 
-  Future<void> _initVoice() async {
-    var ok = false;
-    try {
-      ok = await _voice.init();
-    } on Object {
-      ok = false;
-    }
-    if (mounted) setState(() => _micAvailable = ok);
-  }
+  String? _restoreId;
+  var _restoring = false;
+  final _restoreNode = FocusNode(
+    skipTraversal: true,
+    canRequestFocus: false,
+    debugLabel: 'Search.restore',
+  );
+  final _grid = ScrollController();
 
   @override
   void dispose() {
     if (_listening) unawaited(_voice.stop());
     _controller.dispose();
+    _restoreNode.dispose();
+    _grid.dispose();
     super.dispose();
   }
 
@@ -86,6 +90,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       setState(() => _listening = false);
       await _voice.stop();
       return;
+    }
+    if (!_voiceReady) {
+      // Première pression : c'est ici (et pas à l'ouverture) que l'autorisation
+      // du micro peut être demandée.
+      var ok = false;
+      try {
+        ok = await _voice.init();
+      } on Object {
+        ok = false;
+      }
+      if (!mounted) return;
+      if (!ok) {
+        setState(() => _micAvailable = false);
+        return;
+      }
+      _voiceReady = true;
     }
     setState(() => _listening = true);
     await _voice.listen((text, done) {
@@ -131,7 +151,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           children: [
             TextField(
               controller: _controller,
-              onChanged: (t) => ref.read(searchProvider.notifier).setQuery(t),
+              readOnly: true,
+              canRequestFocus: false,
+              showCursor: false,
+              enableInteractiveSelection: false,
               style: Theme.of(context).textTheme.titleLarge,
               decoration: InputDecoration(
                 hintText: 'Rechercher un titre',
@@ -205,6 +228,38 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  /// Rend le focus au résultat mémorisé dès qu'il est construit (la grille
+  /// est paresseuse : on s'en approche d'abord par défilement estimé).
+  void _scheduleRestore(int index, int attempts) {
+    if (_restoring) return;
+    _restoring = true;
+    void step(int left) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        for (final n in _restoreNode.descendants) {
+          if (n.canRequestFocus && !n.skipTraversal) {
+            n.requestFocus();
+            _restoreId = null;
+            return;
+          }
+        }
+        if (left > 1) {
+          if (_grid.hasClients && _restoreNode.context == null) {
+            const per = 4; // colonnes estimées (écran TV 1920)
+            _grid.jumpTo(
+              (index ~/ per * 364.0).clamp(0, _grid.position.maxScrollExtent),
+            );
+          }
+          step(left - 1);
+        } else {
+          _restoreId = null;
+        }
+      });
+    }
+
+    step(attempts);
+  }
+
   Widget _resultsPane(BuildContext context) {
     final s = ref.watch(searchProvider);
     final profile = ref.watch(currentProfileProvider);
@@ -233,7 +288,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     } else if (visible.isEmpty) {
       body = const StateView.empty(message: 'Aucun résultat');
     } else {
+      final restoreIndex = _restoreId == null
+          ? -1
+          : visible.indexWhere((m) => m.id == _restoreId);
+      if (restoreIndex >= 0) _scheduleRestore(restoreIndex, 5);
       body = GridView.builder(
+        controller: _grid,
         padding: const EdgeInsets.all(LumioSpacing.md),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 220,
@@ -244,15 +304,39 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         itemCount: visible.length,
         itemBuilder: (context, i) {
           final m = visible[i];
-          return Align(
-            alignment: AlignmentDirectional.topStart,
-            child: PosterCard(
-              key: ValueKey('result-${m.id}'),
-              item: m,
-              allowPrivate: priv.contains(m.sourceAddonId),
-              onSelect: () => widget.onOpenItem?.call(m),
+          Widget card = Focus(
+            skipTraversal: true,
+            canRequestFocus: false,
+            onFocusChange: (f) {
+              if (!f) return;
+              ref
+                  .read(focusMemoryProvider.notifier)
+                  .remember(searchRouteKey, m.id);
+              Scrollable.ensureVisible(
+                context,
+                alignment: 0.5,
+                duration: LumioMotion.focus,
+              );
+            },
+            child: Align(
+              alignment: AlignmentDirectional.topStart,
+              child: PosterCard(
+                key: ValueKey('result-${m.id}'),
+                item: m,
+                allowPrivate: priv.contains(m.sourceAddonId),
+                onSelect: () => widget.onOpenItem?.call(m),
+              ),
             ),
           );
+          if (i == restoreIndex) {
+            card = Focus(
+              focusNode: _restoreNode,
+              skipTraversal: true,
+              canRequestFocus: false,
+              child: card,
+            );
+          }
+          return card;
         },
       );
     }

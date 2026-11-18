@@ -143,4 +143,18 @@ void main() {
       expect(out.last.map((m) => m.id), ['1', '2']);
     },
   );
+
+  test('clientFor qui lève : addon ignoré, le flux se ferme', () async {
+    server.route(_path('/ok', 'x'), _metas([('1', 'X')]));
+    final bad = SearchService(
+      (a) => a.id == '/ko'
+          ? throw StateError('boom')
+          : AddonClient(IoHttpFetcher(), allowPrivate: true),
+    );
+    final out = await bad.search([
+      _addon(server, '/ko'),
+      _addon(server, '/ok'),
+    ], 'x').toList();
+    expect(out.last.map((m) => m.id), ['1']);
+  });
 }

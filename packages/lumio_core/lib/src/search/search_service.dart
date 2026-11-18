@@ -31,21 +31,26 @@ class SearchService {
     final perAddon = List<List<MetaPreview>>.filled(addons.length, const []);
 
     Future<void> one(int i) async {
-      final a = addons[i];
-      final searchable = [
-        for (final c in a.catalogs)
-          if (c.extra.any((e) => e.name == 'search')) c,
-      ];
-      if (searchable.isEmpty) return;
-      final client = clientFor(a);
-      final lists = await Future.wait([
-        for (final c in searchable)
-          _safe(() => client.catalog(a, c.type, c.id, extra: {'search': q})),
-      ]);
-      if (cancelled) return;
-      perAddon[i] = [for (final l in lists) ...l];
-      if (perAddon[i].isNotEmpty && !out.isClosed) {
-        out.add(_merge(perAddon, folded));
+      try {
+        final a = addons[i];
+        final searchable = [
+          for (final c in a.catalogs)
+            if (c.extra.any((e) => e.name == 'search')) c,
+        ];
+        if (searchable.isEmpty) return;
+        final lists = await Future.wait([
+          for (final c in searchable)
+            _safe(
+              () => clientFor(a).catalog(a, c.type, c.id, extra: {'search': q}),
+            ),
+        ]);
+        if (cancelled) return;
+        perAddon[i] = [for (final l in lists) ...l];
+        if (perAddon[i].isNotEmpty && !out.isClosed) {
+          out.add(_merge(perAddon, folded));
+        }
+      } on Object {
+        // Addon défaillant : ignoré.
       }
     }
 
