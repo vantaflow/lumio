@@ -1,0 +1,1 @@
+{"id":"dev.test.nulls","version":"1.0.0","name":"Champs null","description":null,"logo":null,"background":null,"resources":["catalog"],"types":["movie"],"catalogs":[{"type":"movie","id":"top","name":null}]}

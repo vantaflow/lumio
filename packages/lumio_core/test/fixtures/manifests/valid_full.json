@@ -1,0 +1,21 @@
+{
+  "id": "dev.test.full",
+  "version": "2.3.1",
+  "name": "Complet",
+  "description": "Addon de test complet avec accents : éàç.",
+  "logo": "https://example.com/logo.png",
+  "background": "https://example.com/bg.jpg",
+  "contactEmail": "test@example.com",
+  "resources": [
+    "catalog",
+    {"name": "meta", "types": ["movie", "series"], "idPrefixes": ["tt"]},
+    {"name": "stream", "types": ["movie"], "idPrefixes": ["tt", "dev:"]}
+  ],
+  "types": ["movie", "series", "tv"],
+  "idPrefixes": ["tt"],
+  "catalogs": [
+    {"type": "movie", "id": "top", "name": "Populaires", "extra": [{"name": "search", "isRequired": false}, {"name": "genre", "options": ["Action", "Drame"]}]},
+    {"type": "series", "id": "new", "name": "Nouveautés"}
+  ],
+  "behaviorHints": {"configurable": true, "configurationRequired": false}
+}

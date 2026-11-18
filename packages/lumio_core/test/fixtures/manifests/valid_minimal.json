@@ -1,0 +1,1 @@
+{"id":"dev.test.minimal","version":"1.0.0","name":"Minimal","resources":["catalog"],"types":["movie"],"catalogs":[{"type":"movie","id":"top"}]}

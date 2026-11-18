@@ -1,0 +1,1 @@
+{"id":"dev.test.arabic","version":"1.0.0","name":"إضافة الأفلام","description":"كتالوج الأفلام والمسلسلات العربية — مرحبا بالعالم","resources":["catalog"],"types":["movie","series"],"catalogs":[{"type":"movie","id":"ar-top","name":"الأفلام الأكثر مشاهدة"},{"type":"series","id":"ar-new","name":"مسلسلات جديدة"}]}

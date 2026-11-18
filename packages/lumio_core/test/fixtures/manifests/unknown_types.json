@@ -1,0 +1,1 @@
+{"id":"dev.test.unknowntypes","version":"1.0.0","name":"Types inconnus","resources":["catalog"],"types":["movie","hologram","podcast"],"catalogs":[{"type":"hologram","id":"h1","name":"Holo"},{"type":"movie","id":"top"}]}

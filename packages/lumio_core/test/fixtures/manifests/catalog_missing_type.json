@@ -1,0 +1,1 @@
+{"id":"dev.test.notype","version":"1.0.0","name":"Catalogue sans type","resources":["catalog"],"types":["movie"],"catalogs":[{"id":"orphan","name":"Sans type"},{"type":"movie","id":"top"}]}

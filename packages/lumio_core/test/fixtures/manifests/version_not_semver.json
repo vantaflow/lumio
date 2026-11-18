@@ -1,0 +1,1 @@
+{"id":"dev.test.badversion","version":"v2-beta","name":"Version libre","resources":["catalog"],"types":["movie"],"catalogs":[{"type":"movie","id":"top"}]}
