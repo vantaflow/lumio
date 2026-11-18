@@ -19,4 +19,10 @@ Aucune version n'est encore publiée.
   spike validé sur une box Android TV 32 bits (rapport dans `docs/rapports/`).
 - Tâche 6 : cœur du protocole d'addons (manifest, client, normalisation des
   URL) et garde SSRF.
+- Tâches 7 à 31, 34 à 42 : agrégation, lecteur, profils, accueil, recherche,
+  torrents, synchronisation chiffrée, import Stremio, confidentialité, santé
+  des addons, dossiers locaux, Jellyfin, Trakt, Simkl, calendrier, DLNA,
+  watch-party.
+- Tâche 43 : vérification finale et documentation
+  ([rapport](docs/rapports/2026-11-18-verification-finale.md)).
 - Documentation du projet.

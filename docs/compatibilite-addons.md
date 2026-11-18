@@ -3,9 +3,9 @@
 Lumio implémente le protocole d'addons utilisé par l'écosystème Stremio. Cette
 compatibilité est technique ; Lumio n'est pas affilié à Stremio.
 
-État : le client d'addons du cœur (manifest, catalogues, fiches, flux,
-sous-titres bruts) est écrit et testé. La normalisation des flux, l'agrégation
-et l'interface sont à venir.
+État : le client d'addons (manifest, catalogues, fiches, flux, sous-titres),
+la normalisation des flux, l'agrégation et l'interface sont écrits et testés.
+La validation avec des addons réels sur appareil reste à faire.
 
 ## Principe
 

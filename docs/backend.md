@@ -1,9 +1,8 @@
 # Backend
 
 Le backend est un Worker Cloudflare (Hono, TypeScript) dans `backend/`. Il est
-optionnel : l'application doit fonctionner sans lui. Il servira à la
-synchronisation, à l'appairage et aux watch-parties ; aujourd'hui seuls les
-comptes existent.
+optionnel : l'application doit fonctionner sans lui. Il sert aux
+comptes, à la synchronisation, à l'appairage et aux watch-parties.
 
 ## Routes existantes
 
@@ -44,7 +43,7 @@ plus haut.
   `backend/migrations/0001_init.sql`). Les jetons sont stockés hachés
   (SHA-256).
 - KV (`RATE`) : compteurs de limitation de débit.
-- Durable Objects : pas encore déclarés.
+- Durable Objects : `Room` (binding `ROOMS`), une salle de watch-party par objet.
 
 L'envoi d'e-mails passe par l'interface `EmailSender`. L'implémentation
 actuelle (`LogEmailSender`) ne fait que journaliser un message masqué : aucun
@@ -68,6 +67,8 @@ déploiement :
 2. Créer la base : `npx wrangler d1 create lumio`, puis remplacer
    `database_id` dans `wrangler.jsonc`.
 3. Créer le KV : `npx wrangler kv namespace create RATE`, puis remplacer `id`.
+   Le Durable Object `Room` est déclaré dans `wrangler.jsonc` (migration
+   `v1-rooms`) et créé au déploiement.
 4. Appliquer les migrations : `npx wrangler d1 migrations apply lumio --remote`.
 5. Configurer l'envoi d'e-mail : écrire une implémentation de `EmailSender`
    (par exemple avec Cloudflare Email Service, après vérification du domaine
