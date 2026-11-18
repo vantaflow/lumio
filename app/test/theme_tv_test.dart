@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -212,7 +213,11 @@ void main() {
       expect(read, isFalse);
     });
 
-    test('échec de lecture -> faux', () async {
+    test('échec de lecture -> faux et journalisé', () async {
+      final logs = <String?>[];
+      final old = debugPrint;
+      debugPrint = (m, {wrapWidth}) => logs.add(m);
+      addTearDown(() => debugPrint = old);
       expect(
         await detectAndroidTv(
           isAndroid: true,
@@ -220,6 +225,23 @@ void main() {
         ),
         isFalse,
       );
+      expect(logs.single, contains('StateError'));
+    });
+
+    test('lecture bloquée -> délai dépassé, faux et journalisé', () async {
+      final logs = <String?>[];
+      final old = debugPrint;
+      debugPrint = (m, {wrapWidth}) => logs.add(m);
+      addTearDown(() => debugPrint = old);
+      expect(
+        await detectAndroidTv(
+          isAndroid: true,
+          timeout: const Duration(milliseconds: 50),
+          features: () => Completer<List<String>>().future,
+        ),
+        isFalse,
+      );
+      expect(logs.single, contains('TimeoutException'));
     });
   });
 }

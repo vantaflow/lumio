@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/title_settings_store.dart';
+import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/player/player_screen.dart';
@@ -87,11 +88,30 @@ void main() {
     final h = AppHarness(t);
     await h.pump(
       const AddonsScreen(),
-      extra: [focusMemoryProvider.overrideWith(_Mem.new)],
+      extra: [
+        focusMemoryProvider.overrideWith(_Mem.new),
+        addonsProvider.overrideWith(_TwoAddons.new),
+      ],
     );
     final f = FocusManager.instance.primaryFocus!;
     expect(f.context!.findAncestorWidgetOfExactType<FilledButton>(), isNull);
     expect(f.context!.findAncestorWidgetOfExactType<Switch>(), isNotNull);
+    // Le focus est dans la tuile du second addon, pas du premier.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('second')),
+        matching: find.byWidgetPredicate((w) => w is Switch),
+      ),
+      findsOneWidget,
+    );
+    final tileOfFocus = f.context!.findAncestorWidgetOfExactType<Card>()!;
+    expect(
+      find.descendant(
+        of: find.byWidget(tileOfFocus),
+        matching: find.text('Addon second'),
+      ),
+      findsOneWidget,
+    );
     await h.close();
   });
 
@@ -116,6 +136,27 @@ void main() {
 class _Mem extends FocusMemory {
   @override
   Map<String, Map<String, String>> build() => {
-    addonsRouteKey: {'': 'fake'},
+    addonsRouteKey: {'': 'second'},
   };
+}
+
+class _TwoAddons extends AddonsController {
+  @override
+  Future<List<InstalledAddon>> build() async => [
+    for (final id in ['first', 'second'])
+      InstalledAddon(
+        id: id,
+        manifest: AddonManifest(
+          id: id,
+          version: '1.0.0',
+          name: 'Addon $id',
+          types: const ['movie'],
+          resources: const [AddonResource('catalog')],
+          catalogs: const [],
+          transportUrl: Uri.parse('https://$id.example.com/manifest.json'),
+        ),
+        position: id == 'first' ? 0 : 1,
+        enabled: true,
+      ),
+  ];
 }
