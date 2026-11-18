@@ -15,6 +15,8 @@ class PartyView {
     this.host = false,
     this.allControl = false,
     this.metaId,
+    this.mediaType,
+    this.controlDenied = false,
     this.error,
   });
 
@@ -26,6 +28,10 @@ class PartyView {
   /// Titre commun, si l'hôte l'a indiqué : chacun l'ouvre avec ses propres
   /// addons.
   final String? metaId;
+  final String? mediaType;
+
+  /// Le serveur a refusé un état de ce participant : il ne contrôle pas.
+  final bool controlDenied;
   final PartyErrorCode? error;
 
   bool get canControl => host || allControl;
@@ -36,6 +42,8 @@ class PartyView {
     bool? host,
     bool? allControl,
     String? metaId,
+    String? mediaType,
+    bool? controlDenied,
     PartyErrorCode? error,
   }) => PartyView(
     status: status ?? this.status,
@@ -43,6 +51,8 @@ class PartyView {
     host: host ?? this.host,
     allControl: allControl ?? this.allControl,
     metaId: metaId ?? this.metaId,
+    mediaType: mediaType ?? this.mediaType,
+    controlDenied: controlDenied ?? this.controlDenied,
     error: error ?? this.error,
   );
 }
@@ -166,6 +176,7 @@ class PartySession extends ValueNotifier<PartyView> {
           host: e.host,
           allControl: e.allControl,
           metaId: e.metaId,
+          mediaType: e.mediaType,
         );
         // Retardataire : se cale sur la position courante, même sous le seuil
         // de dérive si l'état de lecture diffère.
@@ -175,7 +186,9 @@ class PartySession extends ValueNotifier<PartyView> {
       case PartyCount():
         value = value.copyWith(participants: e.participants);
       case PartyControl():
-        value = value.copyWith(allControl: e.allControl);
+        value = value.copyWith(allControl: e.allControl, controlDenied: false);
+      case PartyControlDenied():
+        value = value.copyWith(controlDenied: true);
       case PartyPong():
         final d = Duration(milliseconds: _ms - e.sentAt);
         // Lissage : un pic isolé ne doit pas déplacer la position attendue.

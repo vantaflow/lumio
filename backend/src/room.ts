@@ -13,7 +13,10 @@ export const ROOM_CODE_LENGTH = 8;
 export const ROOM_MAX_MESSAGE_BYTES = 1024;
 export const ROOM_AUTH_TIMEOUT_MS = 5000;
 export const ROOM_MSG_PER_SEC = 20;
-export const ROOM_MAX_CODE_FAILURES = 50;
+export const ROOM_MAX_CODE_FAILURES = 200; // par fenêtre ; le plafond principal est par IP
+export const ROOM_FAILURE_WINDOW_MS = 10 * 60 * 1000;
+export const ROOM_TYPES = ['movie', 'series', 'channel', 'tv'] as const;
+const LAST_PERSIST_MS = 1000;
 export const ROOM_PROTOCOL = 'lumio.v1';
 export const CREATE_LIMIT = 10; // salles par heure et par utilisateur
 export const JOIN_FAIL_LIMIT = 20; // refus de code par minute et par IP
@@ -69,9 +72,11 @@ interface RoomMeta {
   codeHash: string;
   expiresAt: number;
   metaId: string | null;
+  type: string | null;
   allControl: boolean;
   everJoined: boolean;
   failures: number;
+  failuresSince: number;
   last: { positionMs: number; playing: boolean; at: number } | null;
 }
 
@@ -80,6 +85,7 @@ interface Attachment {
   deadline: number; // échéance d'authentification (ms)
   tokens: number; // seau à jetons (limite de débit)
   ts: number;
+  denied?: boolean; // control_denied déjà envoyé
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
@@ -99,28 +105,43 @@ export class Room extends DurableObject<Bindings> {
   authTimeoutMs = ROOM_AUTH_TIMEOUT_MS;
   private meta: RoomMeta | null | undefined;
   private gone = new WeakSet<WebSocket>();
+  private lastPersistedAt = 0;
 
   private async load(): Promise<RoomMeta | null> {
-    if (this.meta === undefined) this.meta = (await this.ctx.storage.get<RoomMeta>('meta')) ?? null;
+    if (this.meta === undefined) {
+      const m = (await this.ctx.storage.get<RoomMeta>('meta')) ?? null;
+      if (m) m.last = (await this.ctx.storage.get<RoomMeta['last']>('last')) ?? m.last;
+      this.meta = m;
+    }
     return this.meta;
   }
 
   private async save(m: RoomMeta) {
     this.meta = m;
-    await this.ctx.storage.put('meta', m);
+    // `last` change à chaque message : clé séparée, écrite au plus 1 fois/s.
+    const { last: _last, ...rest } = m;
+    await this.ctx.storage.put('meta', { ...rest, last: null });
   }
 
   /** Appelé une seule fois par le Worker à la création. */
-  async init(hostId: string, codeHash: string, expiresAt: number, metaId: string | null) {
+  async init(
+    hostId: string,
+    codeHash: string,
+    expiresAt: number,
+    metaId: string | null,
+    type: string | null = null,
+  ) {
     if (await this.load()) return;
     await this.save({
       hostId,
       codeHash,
       expiresAt,
       metaId,
+      type,
       allControl: false,
       everJoined: false,
       failures: 0,
+      failuresSince: 0,
       last: null,
     });
     await this.ctx.storage.setAlarm(expiresAt);
@@ -145,6 +166,11 @@ export class Room extends DurableObject<Bindings> {
     }
     const code = request.headers.get('x-room-code') ?? '';
     if (!timingSafeEqual(await sha256Hex(code), m.codeHash)) {
+      const t = Date.now();
+      if (t - m.failuresSince > ROOM_FAILURE_WINDOW_MS) {
+        m.failuresSince = t;
+        m.failures = 0;
+      }
       m.failures += 1;
       if (m.failures >= ROOM_MAX_CODE_FAILURES) {
         await this.destroy(1008, 'Trop de codes invalides');
@@ -215,6 +241,7 @@ export class Room extends DurableObject<Bindings> {
       host: uid === m.hostId,
       allControl: m.allControl,
       metaId: m.metaId,
+      mediaType: m.type,
       expiresAt: m.expiresAt,
       state,
     };
@@ -329,7 +356,11 @@ export class Room extends DurableObject<Bindings> {
     ws.serializeAttachment(next);
 
     const m = await this.load();
-    if (!m || now >= m.expiresAt) return;
+    if (!m) return;
+    if (now >= m.expiresAt) {
+      await this.destroy(1000, 'Salle expirée');
+      return;
+    }
 
     if (!att.uid) {
       // Premier message : {"type":"auth","token":"…"} dans le délai imparti.
@@ -361,10 +392,19 @@ export class Room extends DurableObject<Bindings> {
         return;
       case 'state': {
         // Seul l'hôte contrôle, sauf si « tout le monde peut contrôler ».
-        if (att.uid !== m.hostId && !m.allControl) return;
+        if (att.uid !== m.hostId && !m.allControl) {
+          if (!att.denied) {
+            ws.serializeAttachment({ ...next, denied: true });
+            this.send(ws, { type: 'control_denied' });
+          }
+          return;
+        }
         m.last = { positionMs: msg.positionMs!, playing: msg.playing!, at: now };
         this.meta = m;
-        await this.ctx.storage.put('meta', m);
+        if (now - this.lastPersistedAt >= LAST_PERSIST_MS) {
+          this.lastPersistedAt = now;
+          await this.ctx.storage.put('last', m.last);
+        }
         this.broadcast(
           { type: 'state', positionMs: msg.positionMs, playing: msg.playing, sentAt: msg.sentAt },
           ws,
@@ -397,8 +437,15 @@ roomRoutes.post('/rooms', async (c) => {
     return c.json({ error: 'Trop de demandes, réessayez plus tard' }, 429);
   }
   let metaId: string | null = null;
+  let type: string | null = null;
   try {
-    const body = (await c.req.json()) as { metaId?: unknown };
+    const body = (await c.req.json()) as { metaId?: unknown; type?: unknown };
+    if (body && body.type !== undefined && body.type !== null) {
+      if (typeof body.type !== 'string' || !(ROOM_TYPES as readonly string[]).includes(body.type)) {
+        return c.json({ error: 'Type invalide' }, 400);
+      }
+      type = body.type;
+    }
     if (body && body.metaId !== undefined && body.metaId !== null) {
       if (
         typeof body.metaId !== 'string' ||
@@ -417,7 +464,7 @@ roomRoutes.post('/rooms', async (c) => {
   const roomId = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
   const inviteCode = generateCode(ROOM_CODE_LENGTH);
   const expiresAt = now() + ROOM_TTL_MS;
-  await stub(c, roomId).init(userId, await sha256Hex(inviteCode), expiresAt, metaId);
+  await stub(c, roomId).init(userId, await sha256Hex(inviteCode), expiresAt, metaId, type);
   c.header('Cache-Control', 'no-store');
   return c.json({ roomId, inviteCode, expiresAt }, 201);
 });

@@ -909,5 +909,6 @@
   "partyErrFull": "The room is full (8 people).",
   "partyErrNotFound": "This room no longer exists.",
   "partyErrRateLimited": "Too many attempts, try again in a moment.",
-  "partyErrUnavailable": "Cannot reach the room."
+  "partyErrUnavailable": "Cannot reach the room.",
+  "partyHostOnly": "Only the host controls playback in this room."
 }

@@ -28,13 +28,23 @@ String partyErrorText(AppLocalizations l, PartyErrorCode c) => switch (c) {
 /// quand l'écran se ferme (le lecteur s'y synchronise) ; seul « Quitter » la
 /// ferme.
 class PartyScreen extends ConsumerStatefulWidget {
-  const PartyScreen({super.key, this.metaId, this.onOpenTitle, this.client});
+  const PartyScreen({
+    super.key,
+    this.metaId,
+    this.mediaType,
+    this.onOpenTitle,
+    this.client,
+  });
 
   /// Titre en cours de lecture, annoncé aux invités (identifiant seulement).
   final String? metaId;
 
+  /// Type du titre (movie, series…), annoncé avec [metaId].
+  final String? mediaType;
+
   /// Ouvre le titre commun ; par défaut sa fiche (filtre du profil appliqué).
-  final void Function(BuildContext context, String metaId)? onOpenTitle;
+  final void Function(BuildContext context, String metaId, String? mediaType)?
+  onOpenTitle;
 
   /// Substituable en test ; par défaut [partyClientProvider].
   final PartyClient? client;
@@ -71,7 +81,10 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
       _error = null;
     });
     try {
-      final info = await client.create(metaId: widget.metaId);
+      final info = await client.create(
+        metaId: widget.metaId,
+        type: widget.mediaType,
+      );
       if (!mounted) return;
       _info = info;
       _open(
@@ -110,10 +123,10 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
     setState(() => _info = null);
   }
 
-  void _openTitle(String metaId) {
+  void _openTitle(String metaId, String? mediaType) {
     final open = widget.onOpenTitle;
     if (open != null) {
-      open(context, metaId);
+      open(context, metaId, mediaType);
       return;
     }
     // Chaque participant ouvre le titre avec ses propres addons ; la fiche
@@ -124,7 +137,7 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
           builder: (_) => DetailScreen(
             preview: MetaPreview(
               id: metaId,
-              type: 'movie',
+              type: mediaType ?? 'movie',
               name: metaId,
               sourceAddonId: '',
             ),
@@ -319,7 +332,7 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
           FocusRing(
             child: FilledButton.icon(
               key: const ValueKey('party:openTitle'),
-              onPressed: () => _openTitle(v.metaId!),
+              onPressed: () => _openTitle(v.metaId!, v.mediaType),
               icon: const Icon(Icons.movie_outlined),
               label: Text(l.partyOpenTitle),
             ),

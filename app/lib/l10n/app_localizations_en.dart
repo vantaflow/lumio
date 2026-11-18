@@ -2183,4 +2183,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get partyErrUnavailable => 'Cannot reach the room.';
+
+  @override
+  String get partyHostOnly => 'Only the host controls playback in this room.';
 }

@@ -74,12 +74,16 @@ class PartyHello extends PartyEvent {
     required this.metaId,
     required this.expiresAt,
     this.state,
+    this.mediaType,
   });
 
   final int participants;
   final bool host;
   final bool allControl;
   final String? metaId;
+
+  /// movie, series, channel ou tv (liste blanche côté serveur), si annoncé.
+  final String? mediaType;
   final DateTime? expiresAt;
   final PartyState? state;
 }
@@ -99,6 +103,12 @@ class PartyCount extends PartyEvent {
 class PartyControl extends PartyEvent {
   const PartyControl({required this.allControl});
   final bool allControl;
+}
+
+/// Le serveur a ignoré un état envoyé sans en avoir le droit (invité alors que
+/// seul l'hôte contrôle).
+class PartyControlDenied extends PartyEvent {
+  const PartyControlDenied();
 }
 
 /// Réponse à un `ping` : [sentAt] est l'horodatage envoyé (mesure du RTT).
@@ -131,6 +141,7 @@ PartyEvent? decodePartyEvent(String raw) {
           host: j['host'] == true,
           allControl: j['allControl'] == true,
           metaId: j['metaId'] as String?,
+          mediaType: j['mediaType'] as String?,
           expiresAt: exp is num
               ? DateTime.fromMillisecondsSinceEpoch(exp.toInt())
               : null,
@@ -147,6 +158,8 @@ PartyEvent? decodePartyEvent(String raw) {
         );
       case 'control':
         return PartyControl(allControl: j['allControl'] == true);
+      case 'control_denied':
+        return const PartyControlDenied();
       case 'pong':
         return PartyPong((j['sentAt'] as num).toInt());
     }

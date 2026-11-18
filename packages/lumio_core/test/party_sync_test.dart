@@ -119,13 +119,14 @@ void main() {
       final hello =
           decodePartyEvent(
                 '{"type":"hello","participants":2,"host":false,"allControl":true,'
-                '"metaId":"tt1","expiresAt":1800000000000,'
+                '"metaId":"tt1","mediaType":"series","expiresAt":1800000000000,'
                 '"state":{"positionMs":5000,"playing":true,"sentAt":1}}',
               )
               as PartyHello;
       expect(hello.participants, 2);
       expect(hello.allControl, isTrue);
       expect(hello.metaId, 'tt1');
+      expect(hello.mediaType, 'series');
       expect(hello.state!.position, s(5));
       final st =
           decodePartyEvent(
@@ -145,6 +146,13 @@ void main() {
       expect(
         (decodePartyEvent('{"type":"pong","sentAt":42}') as PartyPong).sentAt,
         42,
+      );
+    });
+
+    test('control_denied décodé', () {
+      expect(
+        decodePartyEvent('{"type":"control_denied"}'),
+        isA<PartyControlDenied>(),
       );
     });
 

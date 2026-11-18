@@ -462,15 +462,32 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
 
   bool get _castShown => widget.castEnabled ?? castPlatformSupported;
 
+  /// Dans une salle où l'on ne contrôle pas (seul l'hôte le fait) : refuse la
+  /// commande locale et le dit ; sinon `false`.
+  bool _partyBlocks() {
+    final v = _partySession?.value;
+    if (v == null || v.status != PartyStatus.connected || v.canControl) {
+      return false;
+    }
+    _tellL((l) => l.partyHostOnly);
+    return true;
+  }
+
   bool get _partyShown =>
       widget.partyEnabled ?? ref.read(partyClientProvider) != null;
+
+  static String? _partyMediaType(String? t) =>
+      const {'movie', 'series', 'channel', 'tv'}.contains(t) ? t : null;
 
   /// Bouton « Regarder ensemble » : écran de salle, la lecture continue.
   Future<void> _openParty() async {
     _hide?.cancel();
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => PartyScreen(metaId: widget.metaId),
+        builder: (_) => PartyScreen(
+          metaId: widget.metaId,
+          mediaType: _partyMediaType(widget.meta?.type),
+        ),
       ),
     );
     if (mounted && !_disposed) _armHide();
@@ -886,13 +903,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         if (_controls) _armHide();
         return KeyEventResult.ignored;
       case PlayerKeyAction.togglePlay:
-        unawaited(_ctl.playPause());
+        if (!_partyBlocks()) unawaited(_ctl.playPause());
         _showControls();
       case PlayerKeyAction.seekBack:
+        if (_partyBlocks()) {
+          _showControls();
+          break;
+        }
         unawaited(_ctl.seekBy(-seekStep));
         _flushAfterSeek(_ctl.state.position - seekStep);
         _showControls();
       case PlayerKeyAction.seekForward:
+        if (_partyBlocks()) {
+          _showControls();
+          break;
+        }
         unawaited(_ctl.seekBy(seekStep));
         _flushAfterSeek(_ctl.state.position + seekStep);
         _showControls();
@@ -1000,15 +1025,17 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                                 ? () => unawaited(_openParty())
                                 : null,
                             onPlayPause: () {
-                              unawaited(_ctl.playPause());
+                              if (!_partyBlocks()) unawaited(_ctl.playPause());
                               _armHide();
                             },
                             onSeekBy: (d) {
+                              if (_partyBlocks()) return;
                               unawaited(_ctl.seekBy(d));
                               _flushAfterSeek(_ctl.state.position + d);
                               _armHide();
                             },
                             onSeekTo: (t) {
+                              if (_partyBlocks()) return;
                               unawaited(_ctl.seekTo(t));
                               _flushAfterSeek(t);
                               _armHide();

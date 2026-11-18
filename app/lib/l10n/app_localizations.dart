@@ -3787,6 +3787,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Impossible de joindre la salle.'**
   String get partyErrUnavailable;
+
+  /// No description provided for @partyHostOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seul l\'hôte contrôle la lecture dans cette salle.'**
+  String get partyHostOnly;
 }
 
 class _AppLocalizationsDelegate

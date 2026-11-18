@@ -118,13 +118,13 @@ class PartyClient {
   final SyncApiClient _api;
   final PartyConnector _connector;
 
-  Future<PartyRoomInfo> create({String? metaId}) async {
+  Future<PartyRoomInfo> create({String? metaId, String? type}) async {
     final SyncHttpResponse r;
     try {
       r = await _api.authedRequest(
         'POST',
         _api.urlFor('/rooms'),
-        body: jsonEncode({'metaId': ?metaId}),
+        body: jsonEncode({'metaId': ?metaId, 'type': ?type}),
       );
     } on SyncException catch (e) {
       throw _fromSync(e);

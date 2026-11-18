@@ -2204,4 +2204,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get partyErrUnavailable => 'Impossible de joindre la salle.';
+
+  @override
+  String get partyHostOnly =>
+      'Seul l\'hôte contrôle la lecture dans cette salle.';
 }

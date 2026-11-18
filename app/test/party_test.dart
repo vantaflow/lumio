@@ -2,12 +2,24 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lumio/data/db.dart';
 import 'package:lumio/data/party_client.dart';
 import 'package:lumio/data/secret_store.dart';
 import 'package:lumio/data/sync_service.dart';
+import 'package:lumio/data/title_settings_store.dart';
+import 'package:lumio/l10n/app_localizations.dart';
+import 'package:lumio/player/play_router.dart' show LocalFileSource;
+import 'package:lumio/player/player_controller.dart';
+import 'package:lumio/player/player_screen.dart';
+import 'package:lumio/player/subtitle_style.dart';
+import 'package:lumio/player/tracks_controller.dart';
+import 'package:lumio/providers.dart';
+import 'package:lumio_core/lumio_core.dart' show StreamItem;
 import 'package:lumio/features/party/party_providers.dart';
 import 'package:lumio/features/party/party_screen.dart';
 import 'package:lumio/features/party/party_session.dart';
@@ -81,12 +93,14 @@ Map<String, dynamic> hello({
   int participants = 1,
   Map<String, dynamic>? state,
   String? metaId,
+  String? mediaType,
 }) => {
   'type': 'hello',
   'participants': participants,
   'host': host,
   'allControl': allControl,
   'metaId': metaId,
+  'mediaType': mediaType,
   'expiresAt': DateTime.now()
       .add(const Duration(hours: 6))
       .millisecondsSinceEpoch,
@@ -159,13 +173,13 @@ void main() {
           'expiresAt': 1800000000000,
         }),
       );
-      final info = await client().create(metaId: 'tt1');
+      final info = await client().create(metaId: 'tt1', type: 'series');
       expect(info.roomId, roomId);
       expect(info.inviteCode, code);
       final r = http.requests.single;
       expect(r.url.path, '/rooms');
       expect(r.headers['Authorization'], 'Bearer sess1');
-      expect(jsonDecode(r.body!), {'metaId': 'tt1'});
+      expect(jsonDecode(r.body!), {'metaId': 'tt1', 'type': 'series'});
     });
 
     test('create : 429 et erreurs serveur traduits', () async {
@@ -423,6 +437,25 @@ void main() {
       },
     );
 
+    test(
+      'control_denied : l\'invité le sait, effacé quand l\'hôte ouvre le contrôle',
+      () async {
+        final s = session();
+        await s.start();
+        channel.emit(hello(mediaType: 'series'));
+        channel.emit({'type': 'control_denied'});
+        await pump();
+        expect(s.value.controlDenied, isTrue);
+        expect(s.value.canControl, isFalse);
+        expect(s.value.mediaType, 'series');
+        channel.emit({'type': 'control', 'allControl': true});
+        await pump();
+        expect(s.value.controlDenied, isFalse);
+        expect(s.value.canControl, isTrue);
+        s.dispose();
+      },
+    );
+
     test('RTT mesuré avec les pongs', () async {
       final s = session();
       await s.start();
@@ -550,7 +583,7 @@ void main() {
       await t.tap(find.byKey(const ValueKey('party:join')));
       await settle(t);
       expect(connects.single.url.queryParameters['code'], code);
-      channel.emit(hello(participants: 2, metaId: 'tt5'));
+      channel.emit(hello(participants: 2, metaId: 'tt5', mediaType: 'series'));
       await settle(t);
       expect(find.text('2 participants'), findsOneWidget);
       expect(
@@ -564,13 +597,13 @@ void main() {
           client(),
           child: PartyScreen(
             client: client(),
-            onOpenTitle: (_, id) => opened = id,
+            onOpenTitle: (_, id, type) => opened = '$id|$type',
           ),
         ),
       );
       await t.pump();
       await t.tap(find.byKey(const ValueKey('party:openTitle')));
-      expect(opened, 'tt5');
+      expect(opened, 'tt5|series');
       await t.tap(find.byKey(const ValueKey('party:leave')));
       await settle(t);
     });
@@ -588,9 +621,124 @@ void main() {
     });
   });
 
+  testWidgets('lecteur : un invité sans droit ne commande pas la lecture', (
+    t,
+  ) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final s = PartySession(
+      client: client(),
+      roomId: roomId,
+      inviteCode: code,
+      heartbeat: const Duration(hours: 1),
+      pingEvery: const Duration(hours: 1),
+    );
+    await t.runAsync(() async {
+      await s.start();
+      channel.emit(hello());
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    });
+    final ctl = _Ctl();
+    await t.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          titleSettingsStoreProvider.overrideWith(
+            (ref) async => DriftTitleSettingsStore(db),
+          ),
+          subtitleStyleStoreProvider.overrideWithValue(SubtitleStyleStore(db)),
+          partySessionProvider.overrideWith((ref) => s),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(extensions: const [LumioColors.dark]),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('fr'),
+          home: PlayerScreen(
+            item: StreamItem(
+              addonId: 'ad',
+              title: 'Film',
+              url: Uri.parse('https://x.test/v.mp4'),
+            ),
+            controller: ctl,
+            videoBuilder: (_) => const ColoredBox(color: Colors.black),
+            tracksBackend: (_) => _Backend(),
+            castEnabled: false,
+            partyEnabled: false,
+          ),
+        ),
+      ),
+    );
+    await t.pump();
+    await t.tap(find.bySemanticsLabel('Lecture'));
+    await t.pump();
+    expect(ctl.playPauses, 0);
+    expect(
+      find.text("Seul l'hôte contrôle la lecture dans cette salle."),
+      findsOneWidget,
+    );
+    // L'hôte ouvre le contrôle : la commande passe.
+    await t.runAsync(() async {
+      channel.emit({'type': 'control', 'allControl': true});
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    });
+    await t.tap(find.bySemanticsLabel('Lecture'));
+    await t.pump();
+    expect(ctl.playPauses, 1);
+    s.dispose();
+  });
+
   test('partyClientProvider : nul sans backend configuré', () {
     final c = ProviderContainer();
     addTearDown(c.dispose);
     expect(c.read(partyClientProvider), isNull); // backendUrl vide par défaut
   });
+}
+
+class _Ctl extends Fake implements PlayerController {
+  final _state = ValueNotifier<PlayerState>(
+    const PlayerState(phase: PlayerPhase.paused),
+  );
+  int playPauses = 0;
+  @override
+  ValueListenable<PlayerState> get stateListenable => _state;
+  @override
+  PlayerState get state => _state.value;
+  @override
+  Future<void> playPause() async => playPauses++;
+  @override
+  Future<void> open(
+    StreamItem s, {
+    bool allowPrivate = false,
+    bool trustedLocal = false,
+    LocalFileSource? local,
+    Duration start = Duration.zero,
+  }) async {}
+}
+
+class _Backend implements TracksBackend {
+  @override
+  final audioTracks = const <TrackOption>[];
+  @override
+  final subtitleTracks = const <TrackOption>[];
+  @override
+  String? get selectedAudioId => null;
+  @override
+  String? get selectedSubtitleId => null;
+  @override
+  Stream<void> get changes => const Stream.empty();
+  @override
+  Future<void> selectAudio(String id) async {}
+  @override
+  Future<void> selectSubtitle(String? id) async {}
+  @override
+  Future<void> loadExternalSubtitle(
+    String path, {
+    String? title,
+    String? lang,
+  }) async {}
+  @override
+  Future<void> setSubtitleDelay(int ms) async {}
+  @override
+  Future<void> applySubtitleStyle(SubtitleStyle style) async {}
 }

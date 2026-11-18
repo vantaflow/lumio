@@ -342,6 +342,75 @@ describe('abus', () => {
   });
 });
 
+describe('correctifs round 1', () => {
+  it('type de média : liste blanche, renvoyé dans hello', async () => {
+    const h = await makeUser();
+    expect((await createRoom(h.token, { type: 'podcast' })).status).toBe(400);
+    expect((await createRoom(h.token, { type: 5 })).status).toBe(400);
+    const { json } = await createRoom(h.token, { metaId: 'tt1', type: 'series' });
+    const host = await join(json.roomId, json.inviteCode, h.token);
+    expect(host.hello.mediaType).toBe('series');
+    const g = await makeUser();
+    expect((await join(json.roomId, json.inviteCode, g.token)).hello.mediaType).toBe('series');
+  });
+
+  it('compteur d’échecs par salle : fenêtre glissante, pas de salle brûlée', async () => {
+    const h = await makeUser();
+    const { json } = await createRoom(h.token);
+    const stub = roomStub(json.roomId);
+    const setFail = (failures: number, since: number) =>
+      runInDurableObject(stub, async (i: Room) => {
+        const m = (await (i as any).load()) as { failures: number; failuresSince: number };
+        m.failures = failures;
+        m.failuresSince = since;
+      });
+    // Fenêtre expirée : le compteur repart de zéro, la salle survit.
+    await setFail(10_000, Date.now() - 11 * 60 * 1000);
+    ip = `10.9.0.${++ipN}`;
+    expect((await tryJoin(json.roomId, 'AAAAAAAA', h.token)).status).toBe(403);
+    ip = `10.9.0.${++ipN}`;
+    expect((await tryJoin(json.roomId, json.inviteCode, h.token)).status).toBe(101);
+  });
+
+  it('au plafond de la fenêtre courante, la salle est détruite', async () => {
+    const h = await makeUser();
+    const { json } = await createRoom(h.token);
+    await runInDurableObject(roomStub(json.roomId), async (i: Room) => {
+      const m = (await (i as any).load()) as { failures: number; failuresSince: number };
+      m.failures = 199;
+      m.failuresSince = Date.now();
+    });
+    expect((await tryJoin(json.roomId, 'AAAAAAAA', h.token)).status).toBe(403);
+    ip = `10.9.1.${++ipN}`;
+    expect((await tryJoin(json.roomId, json.inviteCode, h.token)).status).toBe(404);
+  });
+
+  it('un invité sans droit reçoit control_denied une seule fois', async () => {
+    const h = await makeUser();
+    const g = await makeUser();
+    const { json } = await createRoom(h.token);
+    await join(json.roomId, json.inviteCode, h.token);
+    const guest = await join(json.roomId, json.inviteCode, g.token);
+    guest.c.send(st(1000, true));
+    guest.c.send(st(2000, true));
+    guest.c.send({ type: 'ping', sentAt: 1 });
+    await guest.c.next('pong');
+    expect(guest.c.messages.filter((m) => m.type === 'control_denied')).toHaveLength(1);
+  });
+
+  it('un message après expiration ferme le socket', async () => {
+    const h = await makeUser();
+    const { json } = await createRoom(h.token);
+    const host = await join(json.roomId, json.inviteCode, h.token);
+    await runInDurableObject(roomStub(json.roomId), async (i: Room) => {
+      const m = (await (i as any).load()) as { expiresAt: number };
+      m.expiresAt = Date.now() - 1;
+    });
+    host.c.send({ type: 'ping', sentAt: 1 });
+    expect((await host.c.closedWith()).code).toBe(1000);
+  });
+});
+
 describe('parseClientMessage', () => {
   it('accepte les messages bien formés', () => {
     expect(parseClientMessage('{"type":"state","positionMs":10,"playing":true,"sentAt":5}')).not.toBeNull();

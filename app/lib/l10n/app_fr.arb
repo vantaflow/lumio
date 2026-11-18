@@ -1145,5 +1145,6 @@
   "partyErrFull": "La salle est pleine (8 personnes).",
   "partyErrNotFound": "Cette salle n'existe plus.",
   "partyErrRateLimited": "Trop d'essais, réessayez dans un moment.",
-  "partyErrUnavailable": "Impossible de joindre la salle."
+  "partyErrUnavailable": "Impossible de joindre la salle.",
+  "partyHostOnly": "Seul l'hôte contrôle la lecture dans cette salle."
 }
