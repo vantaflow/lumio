@@ -19,7 +19,10 @@ String explainFailure(
 }) {
   final l = l10n ?? AppLocalizationsFr();
   if (refused) return l.failRefused;
-  final status = httpStatus ?? _statusFrom(err.toString());
+  // Un 2xx/3xx (ex. 206 aux requêtes Range de libmpv) n'explique rien.
+  final status = (httpStatus != null && httpStatus >= 400)
+      ? httpStatus
+      : _statusFrom(err.toString());
   if (status != null) return _statusMessage(status, l);
   if (err is TimeoutException) return l.failTimeout;
   if (err is SocketException) return l.failNetwork;

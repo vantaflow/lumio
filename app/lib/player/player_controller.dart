@@ -218,7 +218,7 @@ class PlayerController {
                 : CastHttpSource(route.url, mimeType: mimeForPath(url.path)));
       if (_viaProxy) {
         _proxySub ??= (await _proxy()).events.listen((e) {
-          if (e.status != 0) _lastStatus = e.status;
+          if (e.status >= 400) _lastStatus = e.status;
           if (e.refused) _refused = true;
         });
       }

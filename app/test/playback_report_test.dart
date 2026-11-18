@@ -15,6 +15,13 @@ void main() {
         contains('La source a répondu'),
       );
     });
+    test('un statut de succès (206, 200) n\'est jamais une erreur', () {
+      for (final ok in [200, 206, 302]) {
+        final m = explainFailure(TimeoutException('stall'), httpStatus: ok);
+        expect(m, contains('Délai dépassé'));
+        expect(m, isNot(contains('La source a répondu')));
+      }
+    });
     test('délai dépassé', () {
       expect(explainFailure(TimeoutException('t')), contains('Délai dépassé'));
       expect(
