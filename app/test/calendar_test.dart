@@ -10,6 +10,7 @@ import 'package:lumio/data/db.dart';
 import 'package:lumio/features/calendar/calendar_providers.dart';
 import 'package:lumio/features/calendar/calendar_screen.dart';
 import 'package:lumio/features/calendar/release_notifier.dart';
+import 'package:lumio/features/calendar/release_sync.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -55,9 +56,17 @@ class _FakeNotifier implements ReleaseNotifier {
     return grant;
   }
 
+  bool replaceOk = true;
+
   @override
-  Future<void> replaceAll(List<ScheduledRelease> items, String c) async =>
-      scheduled.add(items);
+  Future<bool> replaceAll(
+    List<ScheduledRelease> items,
+    String c, {
+    bool Function()? isCurrent,
+  }) async {
+    scheduled.add(items);
+    return replaceOk;
+  }
 
   @override
   Future<void> cancelAll() async => cancelCalls++;
@@ -80,7 +89,8 @@ class _H {
   final opened = <String>[];
 
   Future<void> start({
-    required List<MetaPreview> library,
+    List<MetaPreview> library = const [],
+    Stream<List<MetaPreview>>? libraryStream,
     required Future<Meta> Function(MetaPreview p) meta,
     _FakeNotifier? notifier,
     Profile? profile,
@@ -93,7 +103,9 @@ class _H {
     container = ProviderContainer(
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
-        libraryProvider.overrideWith((ref) => Stream.value(library)),
+        libraryProvider.overrideWith(
+          (ref) => libraryStream ?? Stream.value(library),
+        ),
         playbackLauncherProvider.overrideWith(
           (ref) => _FakeLauncher(ref, meta),
         ),
@@ -101,6 +113,7 @@ class _H {
       ],
     );
     addTearDown(container.dispose);
+    container.listen(releaseSyncProvider, (_, _) {}); // comme la racine
     if (profile != null) {
       container.read(currentProfileProvider.notifier).select(profile);
     }
@@ -420,9 +433,10 @@ void main() {
           isTrue,
         );
         // Désactiver : annulation.
+        final before = n.cancelCalls;
         await tester.tap(find.byType(SwitchListTile));
         await h.settle();
-        expect(n.cancelCalls, 1);
+        expect(n.cancelCalls, greaterThan(before));
         await h.close();
       },
     );
@@ -454,4 +468,158 @@ void main() {
       await h.close();
     });
   });
+
+  group('synchronisation des notifications', () {
+    Future<Meta> meta(MetaPreview p) async => Meta(
+      id: p.id,
+      type: p.type,
+      name: p.name,
+      certification: p.certification,
+      videos: [_ep('${p.id}:1:1', 1, 1, inDays(2))],
+    );
+
+    testWidgets('série retirée de « Ma liste » : notification retirée', (
+      tester,
+    ) async {
+      final h = _H(tester);
+      final n = _FakeNotifier();
+      final lib = StreamController<List<MetaPreview>>();
+      addTearDown(lib.close);
+      lib.add([_p('a'), _p('b')]);
+      await h.start(notifier: n, libraryStream: lib.stream, meta: meta);
+      await tester.tap(find.byType(SwitchListTile));
+      await h.settle();
+      expect(n.scheduled.last.map((r) => r.title), ['Série a', 'Série b']);
+      lib.add([_p('b')]); // retirée ailleurs (écran fermé ou autre écran)
+      await h.settle();
+      expect(n.scheduled.last.map((r) => r.title), ['Série b']);
+      lib.add(const []);
+      await h.settle();
+      expect(n.scheduled.last, isEmpty);
+      await h.close();
+    });
+
+    testWidgets(
+      'changement de profil : annulation, filtre enfant, réglage propre',
+      (tester) async {
+        final h = _H(tester);
+        final n = _FakeNotifier();
+        await h.start(
+          notifier: n,
+          library: [
+            _p('ok'),
+            _p('adult', cert: 'R'),
+          ],
+          meta: meta,
+        );
+        await tester.tap(find.byType(SwitchListTile));
+        await h.settle();
+        expect(n.scheduled.last.length, 2);
+        final before = n.cancelCalls;
+        h.container.read(currentProfileProvider.notifier).select(_kid);
+        await h.settle();
+        expect(n.cancelCalls, greaterThan(before));
+        // Réglage du profil enfant : désactivé par défaut.
+        expect(
+          tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+          isFalse,
+        );
+        // Activé pour l'enfant : seule la série autorisée est programmée.
+        await tester.tap(find.byType(SwitchListTile));
+        await h.settle();
+        expect(n.scheduled.last.map((r) => r.title), ['Série ok']);
+        await h.close();
+      },
+    );
+
+    testWidgets('échec de programmation : l\'interrupteur affiche l\'erreur', (
+      tester,
+    ) async {
+      final h = _H(tester);
+      final n = _FakeNotifier()..replaceOk = false;
+      await h.start(notifier: n, library: [_p('a')], meta: meta);
+      await tester.tap(find.byType(SwitchListTile));
+      await h.settle();
+      expect(
+        find.byKey(const ValueKey('calendar-notify-error')),
+        findsOneWidget,
+      );
+      await h.close();
+    });
+
+    test(
+      'désactivation pendant replaceAll : plus rien de programmé après',
+      () async {
+        final inner = _SlowNotifier();
+        final q = QueuedReleaseNotifier(inner);
+        final items = [
+          for (var i = 1; i <= 5; i++)
+            ScheduledRelease(
+              id: i,
+              when: DateTime.utc(2030),
+              title: 'T$i',
+              body: 'b',
+            ),
+        ];
+        final replacing = q.replaceAll(items, 'c');
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+        final cancelling = q.cancelAll();
+        await Future.wait([replacing, cancelling]);
+        // Annulation exécutée après la fin du remplacement, qui s'est arrêté.
+        expect(inner.log.last, 'cancel');
+        expect(
+          inner.log.where((e) => e.startsWith('sched')).length,
+          lessThan(5),
+        );
+        expect(inner.maxConcurrent, 1);
+      },
+    );
+  });
+
+  test('jour affiché : minuit UTC garde la date (pas de veille)', () {
+    final m = Meta(id: 'a', type: 'series', name: 'A');
+    final e = CalendarEntry(
+      series: m,
+      video: _ep('a:1:1', 1, 1, null),
+      date: DateTime.utc(2030, 5, 10),
+    );
+    expect(groupByDay([e]).single.day, DateTime(2030, 5, 10));
+    final p = notifyInstant(DateTime.utc(2030, 5, 10)).toLocal();
+    expect([p.year, p.month, p.day, p.hour], [2030, 5, 10, 9]);
+  });
+}
+
+class _SlowNotifier implements ReleaseNotifier {
+  final log = <String>[];
+  int running = 0;
+  int maxConcurrent = 0;
+
+  Future<void> _op(String name, Future<void> Function() f) async {
+    running++;
+    if (running > maxConcurrent) maxConcurrent = running;
+    await f();
+    running--;
+  }
+
+  @override
+  Future<bool> requestPermission() async => true;
+
+  @override
+  Future<bool> replaceAll(
+    List<ScheduledRelease> items,
+    String c, {
+    bool Function()? isCurrent,
+  }) async {
+    await _op('replace', () async {
+      for (final r in items) {
+        if (isCurrent != null && !isCurrent()) return;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        log.add('sched${r.id}');
+      }
+    });
+    return true;
+  }
+
+  @override
+  Future<void> cancelAll() => _op('cancel', () async => log.add('cancel'));
 }

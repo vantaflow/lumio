@@ -2064,4 +2064,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String calendarNotifyBody(String episode) {
     return 'Nouvel épisode disponible : $episode';
   }
+
+  @override
+  String get calendarNotifyError =>
+      'Notifications non programmées : une erreur est survenue. Réessayez en rouvrant le calendrier.';
 }

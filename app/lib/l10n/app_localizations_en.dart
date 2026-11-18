@@ -2047,4 +2047,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String calendarNotifyBody(String episode) {
     return 'New episode available: $episode';
   }
+
+  @override
+  String get calendarNotifyError =>
+      'Notifications could not be scheduled. Try again by reopening the calendar.';
 }

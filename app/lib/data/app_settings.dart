@@ -16,7 +16,8 @@ class AppSettingsStore {
   static const vpnInterfaceKey = 'torrent_vpn_interface';
   static const ipWarningAcceptedKey = 'torrent_ip_warning_accepted';
   static const onboardingDoneKey = 'onboarding_done';
-  static const notifyReleasesKey = 'notify_releases';
+  static String notifyReleasesKey(String profileId) =>
+      'notify_releases:$profileId';
   static const onboardingSkippedKey = 'onboarding_skipped';
   static const sourcesReminderDismissedKey = 'sources_reminder_dismissed';
   static String subtitleLangKey(String profileId) => 'subtitle_lang:$profileId';

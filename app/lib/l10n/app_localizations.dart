@@ -3541,6 +3541,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Nouvel épisode disponible : {episode}'**
   String calendarNotifyBody(String episode);
+
+  /// No description provided for @calendarNotifyError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications non programmées : une erreur est survenue. Réessayez en rouvrant le calendrier.'**
+  String get calendarNotifyError;
 }
 
 class _AppLocalizationsDelegate

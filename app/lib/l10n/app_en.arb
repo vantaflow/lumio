@@ -867,5 +867,6 @@
   "calendarNotifyOn": "You will be notified about upcoming episodes.",
   "calendarNotifyChannel": "New episodes",
   "calendarNotifyBody": "New episode available: {episode}",
-  "@calendarNotifyBody": {"placeholders": {"episode": {"type": "String"}}}
+  "@calendarNotifyBody": {"placeholders": {"episode": {"type": "String"}}},
+  "calendarNotifyError": "Notifications could not be scheduled. Try again by reopening the calendar."
 }

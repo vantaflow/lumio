@@ -11,6 +11,7 @@ import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/health_providers.dart';
+import 'package:lumio/features/calendar/release_sync.dart';
 import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
@@ -83,6 +84,8 @@ class LumioApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Notifications de sorties toujours d'accord avec « Ma liste ».
+    ref.watch(releaseSyncProvider);
     return MaterialApp(
       title: 'Lumio',
       locale: ref.watch(localeProvider),

@@ -102,7 +102,8 @@ final calendarProvider = FutureProvider.autoDispose<CalendarData>((ref) async {
   );
 });
 
-/// Réglage « Me prévenir des nouveaux épisodes » : désactivé par défaut.
+/// Réglage « Me prévenir des nouveaux épisodes » du profil actif :
+/// désactivé par défaut.
 final notifyReleasesProvider =
     AsyncNotifierProvider<NotifyReleasesController, bool>(
       NotifyReleasesController.new,
@@ -111,10 +112,11 @@ final notifyReleasesProvider =
 class NotifyReleasesController extends AsyncNotifier<bool> {
   @override
   Future<bool> build() async {
+    final id = ref.watch(currentProfileIdProvider);
     try {
       return await ref
               .read(appSettingsStoreProvider)
-              .read(AppSettingsStore.notifyReleasesKey) ==
+              .read(AppSettingsStore.notifyReleasesKey(id)) ==
           '1';
     } on Object {
       return false;
@@ -123,17 +125,18 @@ class NotifyReleasesController extends AsyncNotifier<bool> {
 
   /// Active ou désactive. L'autorisation n'est demandée qu'à l'activation ;
   /// refusée, le réglage reste désactivé et la méthode renvoie `false`.
+  /// Les notifications sont reprogrammées ou annulées par
+  /// `releaseSyncProvider`.
   Future<bool> set(bool value) async {
-    final notifier = ref.read(releaseNotifierProvider);
-    if (value && !await notifier.requestPermission()) {
+    final id = ref.read(currentProfileIdProvider);
+    if (value && !await ref.read(releaseNotifierProvider).requestPermission()) {
       state = const AsyncData(false);
       return false;
     }
     state = AsyncData(value);
-    if (!value) await notifier.cancelAll();
     await ref
         .read(appSettingsStoreProvider)
-        .write(AppSettingsStore.notifyReleasesKey, value ? '1' : '0');
+        .write(AppSettingsStore.notifyReleasesKey(id), value ? '1' : '0');
     return true;
   }
 }

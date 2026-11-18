@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lumio/features/calendar/calendar_providers.dart';
-import 'package:lumio/features/calendar/release_notifier.dart';
+import 'package:lumio/features/calendar/release_sync.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
@@ -34,7 +34,11 @@ List<DayGroup> groupByDay(List<CalendarEntry> entries) {
       unknown.add(e);
       continue;
     }
-    final l = d.toLocal();
+    final u = d.toUtc();
+    // Date sans heure (minuit UTC) : on garde le jour de la date, sans
+    // glissement vers la veille à l'ouest de l'UTC.
+    final dateOnly = u.hour == 0 && u.minute == 0 && u.second == 0;
+    final l = dateOnly ? u : d.toLocal();
     final day = DateTime(l.year, l.month, l.day);
     if (current == null || day != current) {
       groups.add(DayGroup(day, []));
@@ -89,26 +93,6 @@ class CalendarScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
-  /// Reprogramme les notifications d'après le calendrier affiché, si le
-  /// réglage est actif.
-  void _sync() {
-    if (!mounted) return;
-    if (ref.read(notifyReleasesProvider).value != true) return;
-    final data = ref.read(calendarProvider).value;
-    if (data == null) return;
-    final l = context.l10n;
-    ref
-        .read(releaseNotifierProvider)
-        .replaceAll(
-          planReleases(
-            data.entries,
-            DateTime.now(),
-            body: (e) => l.calendarNotifyBody(episodeLabel(l, e.video!)),
-          ),
-          l.calendarNotifyChannel,
-        );
-  }
-
   Future<void> _toggle(bool value) async {
     final ok = await ref.read(notifyReleasesProvider.notifier).set(value);
     if (!mounted) return;
@@ -116,18 +100,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.calendarNotifyDenied)),
       );
-      return;
     }
-    _sync();
   }
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    ref.listen(calendarProvider, (_, _) => _sync());
-    ref.listen(notifyReleasesProvider, (_, _) => _sync());
     final data = ref.watch(calendarProvider);
     final notify = ref.watch(notifyReleasesProvider).value ?? false;
+    final syncFailed = ref.watch(releaseSyncErrorProvider);
     final memory = ref.read(focusMemoryProvider.notifier);
     final remembered = memory.restore(calendarRouteKey);
 
@@ -165,7 +146,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 key: const ValueKey('calendar-notify'),
                 autofocus: remembered == null || remembered == 'notify',
                 title: Text(l.calendarNotify),
-                subtitle: Text(l.calendarNotifyHint),
+                subtitle: syncFailed
+                    ? Text(
+                        l.calendarNotifyError,
+                        key: const ValueKey('calendar-notify-error'),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      )
+                    : Text(l.calendarNotifyHint),
                 value: notify,
                 onChanged: _toggle,
                 onFocusChange: (f) {

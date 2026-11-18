@@ -33,6 +33,11 @@ class ScheduledRelease {
 /// Instant de notification d'une sortie : l'instant de sortie, ramené à 9 h
 /// locales du même jour quand il tombe avant 8 h.
 DateTime notifyInstant(DateTime release) {
+  final u = release.toUtc();
+  // Date sans heure (minuit UTC) : jour calendaire de la date, 9 h locales.
+  if (u.hour == 0 && u.minute == 0 && u.second == 0) {
+    return DateTime(u.year, u.month, u.day, _morningHour).toUtc();
+  }
   final local = release.toLocal();
   if (local.hour >= _nightUntilHour) return release.toUtc();
   return DateTime(local.year, local.month, local.day, _morningHour).toUtc();
@@ -74,8 +79,15 @@ abstract class ReleaseNotifier {
   /// indisponible. Appelée seulement quand l'utilisateur active le réglage.
   Future<bool> requestPermission();
 
-  /// Remplace toutes les notifications programmées par [items].
-  Future<void> replaceAll(List<ScheduledRelease> items, String channelName);
+  /// Remplace toutes les notifications programmées par [items] ; renvoie
+  /// faux si la programmation a échoué. [isCurrent] devient faux dès qu'une
+  /// annulation ou un remplacement plus récent est demandé : l'implémentation
+  /// l'interroge avant chaque programmation et s'arrête alors.
+  Future<bool> replaceAll(
+    List<ScheduledRelease> items,
+    String channelName, {
+    bool Function()? isCurrent,
+  });
 
   Future<void> cancelAll();
 }
@@ -115,11 +127,12 @@ class PluginReleaseNotifier implements ReleaseNotifier {
   }
 
   @override
-  Future<void> replaceAll(
+  Future<bool> replaceAll(
     List<ScheduledRelease> items,
-    String channelName,
-  ) async {
-    if (!_supported) return;
+    String channelName, {
+    bool Function()? isCurrent,
+  }) async {
+    if (!_supported) return true;
     try {
       await _ensureInit();
       await _plugin.cancelAllPendingNotifications();
@@ -131,6 +144,7 @@ class PluginReleaseNotifier implements ReleaseNotifier {
         ),
       );
       for (final r in items) {
+        if (isCurrent != null && !isCurrent()) return true;
         await _plugin.zonedSchedule(
           id: r.id,
           title: r.title,
@@ -141,8 +155,10 @@ class PluginReleaseNotifier implements ReleaseNotifier {
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
       }
+      return true;
     } on Object catch (e) {
       debugPrint('Notifications non programmées (${e.runtimeType})');
+      return false;
     }
   }
 
@@ -158,6 +174,48 @@ class PluginReleaseNotifier implements ReleaseNotifier {
   }
 }
 
+/// Sérialise les opérations d'un [ReleaseNotifier] (une seule en cours) :
+/// une annulation ou un remplacement plus récent invalide aussitôt les
+/// programmations en cours, qui s'arrêtent avant leur prochaine notification.
+class QueuedReleaseNotifier implements ReleaseNotifier {
+  QueuedReleaseNotifier(this._inner);
+
+  final ReleaseNotifier _inner;
+  Future<void> _tail = Future<void>.value();
+  int _generation = 0;
+
+  Future<T> _enqueue<T>(Future<T> Function() op) {
+    final done = _tail.then((_) => op());
+    _tail = done.then<void>((_) {}, onError: (Object _) {});
+    return done;
+  }
+
+  @override
+  Future<bool> requestPermission() => _enqueue(_inner.requestPermission);
+
+  @override
+  Future<bool> replaceAll(
+    List<ScheduledRelease> items,
+    String channelName, {
+    bool Function()? isCurrent,
+  }) {
+    final mine = ++_generation;
+    return _enqueue(
+      () => _inner.replaceAll(
+        items,
+        channelName,
+        isCurrent: () => mine == _generation && (isCurrent?.call() ?? true),
+      ),
+    );
+  }
+
+  @override
+  Future<void> cancelAll() {
+    _generation++;
+    return _enqueue(_inner.cancelAll);
+  }
+}
+
 final releaseNotifierProvider = Provider<ReleaseNotifier>(
-  (ref) => PluginReleaseNotifier(),
+  (ref) => QueuedReleaseNotifier(PluginReleaseNotifier()),
 );
