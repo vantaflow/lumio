@@ -43,3 +43,34 @@ Future<T?> runWithFallback<T>(
   }
   return null;
 }
+
+/// Numérote les tentatives d'ouverture pour ignorer les signaux périmés : un
+/// échec ou une première image qui arrive d'une source abandonnée ne doit
+/// jamais faire échouer ni réussir la tentative suivante.
+class AttemptGate {
+  int _current = 0;
+  int? _engine;
+
+  /// Numéro de la tentative en cours.
+  int get current => _current;
+
+  /// Démarre une tentative ; les signaux du moteur sont ignorés jusqu'à
+  /// [bindEngine] (le moteur peut encore parler de la source précédente).
+  int begin() {
+    _engine = null;
+    return ++_current;
+  }
+
+  /// Le moteur joue désormais le média de la tentative [id].
+  void bindEngine(int id) => _engine = id;
+
+  /// Plus aucun signal du moteur n'est attribué (ouverture en préparation).
+  void unbindEngine() => _engine = null;
+
+  /// Un signal portant l'identifiant [id] concerne-t-il la tentative en cours ?
+  bool accepts(int id) => id == _current;
+
+  /// Un signal du moteur (erreur, première image) concerne-t-il la tentative
+  /// en cours ?
+  bool get acceptsEngine => _engine != null && _engine == _current;
+}

@@ -142,8 +142,7 @@ class PlayerController {
   // Basculement automatique (voir [playWithFallback]).
   int _runId = 0;
   Completer<bool>? _outcome;
-  int _attemptSeq = 0;
-  int _outcomeId = 0;
+  final _gate = AttemptGate();
   bool _failFallbackable = false;
   bool _holdFailure = false;
   String? _notice;
@@ -164,6 +163,8 @@ class PlayerController {
     bool trustedLocal = false,
     Duration start = Duration.zero,
   }) async {
+    final attempt = _gate.current;
+    _gate.unbindEngine(); // rien du moteur avant l'ouverture de CE média
     _item = s;
     _allowPrivate = allowPrivate;
     _trustedLocal = trustedLocal;
@@ -183,7 +184,7 @@ class PlayerController {
     );
     final url = s.url;
     if (url == null || s.isTorrent) {
-      _fail(l10n.torrentNotPlayable);
+      _fail(l10n.torrentNotPlayable, attempt: attempt);
       return;
     }
     try {
@@ -201,10 +202,12 @@ class PlayerController {
         });
       }
       final playUrl = route.url;
+      if (!_gate.accepts(attempt)) return; // série abandonnée entre-temps
+      _gate.bindEngine(attempt);
       await player.open(
         Media(playUrl.toString(), start: start == Duration.zero ? null : start),
       );
-      _armStall();
+      _armStall(attempt);
     } catch (e) {
       _fail(
         explainFailure(
@@ -213,6 +216,7 @@ class PlayerController {
           refused: _refused,
           l10n: l10n,
         ),
+        attempt: attempt,
       );
     }
   }
@@ -230,6 +234,7 @@ class PlayerController {
   }
 
   void _onFirstFrame() {
+    if (!_gate.acceptsEngine) return; // image d'une source abandonnée
     final c = _firstFrame;
     if (c == null || c.isCompleted) return;
     firstFrameMs = _sinceOpen?.elapsedMilliseconds;
@@ -248,6 +253,7 @@ class PlayerController {
   void _onEngineError(String message) {
     // Le moteur signale aussi des avertissements bénins après une image.
     if (_opened && message.isEmpty) return;
+    if (!_gate.acceptsEngine) return; // erreur d'une source abandonnée
     _fail(
       explainFailure(
         message,
@@ -277,7 +283,8 @@ class PlayerController {
     );
   }
 
-  void _fail(String message, {bool fallbackable = true}) {
+  void _fail(String message, {bool fallbackable = true, int? attempt}) {
+    if (attempt != null && !_gate.accepts(attempt)) return; // signal périmé
     _stall?.cancel();
     _failFallbackable = fallbackable;
     if (_holdFailure && fallbackable) {
@@ -305,7 +312,7 @@ class PlayerController {
   /// Termine la tentative en cours. [id] : numéro de la tentative qui signale
   /// (un signal d'une tentative abandonnée est ignoré).
   void _settle(bool ok, {int? id}) {
-    if (id != null && id != _outcomeId) return;
+    if (id != null && !_gate.accepts(id)) return;
     final c = _outcome;
     if (c != null && !c.isCompleted) c.complete(ok);
   }
@@ -337,25 +344,29 @@ class PlayerController {
           _notice = i == 0 ? null : l10n.playerSourceFallback;
           _holdFailure = !last;
           _failFallbackable = false;
-          final id = _outcomeId = ++_attemptSeq;
+          final id = _gate.begin();
           final outcome = _outcome = Completer<bool>();
-          await open(item);
-          final ok = await outcome.future.timeout(
-            attemptTimeout,
-            onTimeout: () async {
-              // Trop long : cette source est abandonnée (lecteur arrêté,
-              // torrent libéré) avant de passer à la suivante.
-              await _abandon(item, onAbandon);
-              if (id == _outcomeId) {
-                _fail(
-                  explainFailure(TimeoutException('open'), l10n: l10n),
-                  fallbackable: true,
-                );
-              }
-              return false;
-            },
-          );
-          if (id != _outcomeId) return AttemptOutcome.stopped;
+          // Le délai court dès l'ouverture : une préparation bloquée est
+          // bornée elle aussi.
+          final ok =
+              await (() async {
+                await open(item);
+                return outcome.future;
+              })().timeout(
+                attemptTimeout,
+                onTimeout: () async {
+                  // Trop long : cette source est abandonnée (lecteur arrêté,
+                  // torrent libéré) avant de passer à la suivante.
+                  await _abandon(item, onAbandon);
+                  _fail(
+                    explainFailure(TimeoutException('open'), l10n: l10n),
+                    fallbackable: true,
+                    attempt: id,
+                  );
+                  return false;
+                },
+              );
+          if (!_gate.accepts(id)) return AttemptOutcome.stopped;
           if (ok) return AttemptOutcome.played;
           _stall?.cancel();
           return _failFallbackable
@@ -403,9 +414,11 @@ class PlayerController {
     }
   }
 
-  void _armStall() {
+  void _armStall([int? attempt]) {
+    final id = attempt ?? _gate.current;
     _stall?.cancel();
     _stall = Timer(stallTimeout, () {
+      if (!_gate.accepts(id)) return;
       if (_buffering || !_opened) {
         _fail(
           explainFailure(

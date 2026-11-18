@@ -1053,6 +1053,23 @@ void main() {
       await h.close();
     });
 
+    testWidgets('« +N autres addons » ne compte que les autres addons', (
+      t,
+    ) async {
+      final h = _H(t);
+      // Même source deux fois dans le même addon, une fois dans un autre.
+      h.client.streams['org.a'] = [
+        _direct('x', 'https://cdn.example.com/x.mp4?token=1', desc: 'VF 1080p'),
+        _direct('x', 'https://cdn.example.com/x.mp4?token=2', desc: 'VF 1080p'),
+      ];
+      h.client.streams['org.b'] = [
+        _direct('y', 'https://cdn.example.com/x.mp4?token=3', desc: 'VF 720p'),
+      ];
+      await h.pump(preview: _preview(), addons: two);
+      expect(find.text('+1 autre addon'), findsOneWidget);
+      await h.close();
+    });
+
     testWidgets('choix manuel dans la liste : pas de secours', (t) async {
       final h = _H(t);
       h.client.streams['org.a'] = [

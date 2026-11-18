@@ -106,6 +106,30 @@ void main() {
     });
   });
 
+  group('AttemptGate (signaux périmés)', () {
+    test('erreur tardive de la tentative 1 pendant la tentative 2', () {
+      final g = AttemptGate();
+      final a1 = g.begin();
+      g.bindEngine(a1);
+      expect(g.acceptsEngine, isTrue);
+      // La source 1 est abandonnée, la tentative 2 démarre.
+      final a2 = g.begin();
+      expect(g.acceptsEngine, isFalse); // le moteur parle encore de la 1
+      expect(g.accepts(a1), isFalse); // échec ou délai de la 1 : ignoré
+      expect(g.accepts(a2), isTrue);
+      g.bindEngine(a2);
+      expect(g.acceptsEngine, isTrue); // média 2 : ses signaux comptent
+    });
+
+    test('ouverture simple : le moteur n\'est écouté qu\'une fois lié', () {
+      final g = AttemptGate();
+      g.unbindEngine();
+      expect(g.acceptsEngine, isFalse);
+      g.bindEngine(g.current);
+      expect(g.acceptsEngine, isTrue);
+    });
+  });
+
   test('message de bascule fr et en', () {
     expect(
       AppLocalizationsFr().playerSourceFallback,

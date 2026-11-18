@@ -264,7 +264,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _torrentToken++;
     _torrentActive = false;
     _watcher?.stop();
-    await _torrent?.release();
+    _watcher = null;
+    try {
+      await _torrent?.release().timeout(const Duration(seconds: 10));
+    } on Object {
+      // Libération trop longue ou en échec : on passe à la suite.
+    }
   }
 
   /// Ouvre une seule source : torrent préparé par le moteur, lien direct par

@@ -125,11 +125,11 @@ class StreamsList extends StatelessWidget {
     // doublon le mieux noté ; les autres sont masqués et comptés.
     final tracked = tracker ?? _noHealth;
     final best = <String, StreamItem>{};
-    final copies = <String, int>{};
+    final copies = <String, Set<String>>{};
     for (final g in groups) {
       for (final s in g.items) {
         final k = s.signature;
-        copies[k] = (copies[k] ?? 0) + 1;
+        (copies[k] ??= {}).add(g.addonId);
         final cur = best[k];
         if (cur == null ||
             StreamRanker.score(s, prefs, tracked) >
@@ -189,7 +189,9 @@ class StreamsList extends StatelessWidget {
               child: _StreamRow(
                 item: s,
                 recommended: identical(s, preferred),
-                others: (copies[s.signature] ?? 1) - 1,
+                others: (copies[s.signature] ?? const <String>{}).difference({
+                  g.addonId,
+                }).length,
                 onSelect: () => onSelect(s),
               ),
             ),
