@@ -8,6 +8,7 @@ import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
+import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
 import 'package:lumio/features/local/local_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -328,8 +329,11 @@ final homeSummaryProvider = Provider<HomeSummary>((ref) {
   final ids = [for (final s in specs) s.id];
   final profile = ref.watch(currentProfileProvider);
   final local = visibleItems(ref.watch(localPreviewsProvider), profile);
-  // Sans addon, des vidéos locales suffisent à remplir l'accueil.
-  if (specs.isEmpty && local.isEmpty) {
+  final hasJellyfin =
+      ref.watch(jellyfinServersProvider).value?.isNotEmpty ?? false;
+  // Sans addon, des vidéos locales ou un serveur Jellyfin suffisent à
+  // remplir l'accueil.
+  if (specs.isEmpty && local.isEmpty && !hasJellyfin) {
     return HomeSummary(HomePhase.noAddons, ids);
   }
 
@@ -343,7 +347,7 @@ final homeSummaryProvider = Provider<HomeSummary>((ref) {
       ref.watch(libraryProvider).value ?? const [],
       profile,
     );
-    if (cont.isEmpty && lib.isEmpty && local.isEmpty) {
+    if (cont.isEmpty && lib.isEmpty && local.isEmpty && !hasJellyfin) {
       final raw = rows.rows.values.fold<int>(0, (n, r) => n + r.items.length);
       final shown = rows.rows.values.fold<int>(
         0,

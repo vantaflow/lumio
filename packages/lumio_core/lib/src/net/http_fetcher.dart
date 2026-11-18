@@ -66,12 +66,27 @@ abstract class HttpFetcher {
   });
 }
 
+/// Fetcher qui sait aussi envoyer un corps (POST). Interface séparée pour ne
+/// pas imposer la méthode à tous les faux de test.
+abstract class HttpPostFetcher implements HttpFetcher {
+  /// POST de [body] ; aucune redirection n'est suivie (le corps peut porter
+  /// des identifiants) : une redirection lève [InsecureRedirectException].
+  Future<FetchResponse> post(
+    Uri url, {
+    required List<int> body,
+    Map<String, String> headers = const {},
+    int maxBytes = 5 * 1024 * 1024,
+    Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
+  });
+}
+
 /// Implémentation `dart:io`.
 ///
 /// Le délai couvre l'ensemble de l'opération (redirections et lecture du
 /// corps comprises). La taille est comptée au fil du flux : le téléchargement
 /// est interrompu dès que [maxBytes] est dépassé.
-class IoHttpFetcher implements HttpFetcher {
+class IoHttpFetcher implements HttpPostFetcher {
   IoHttpFetcher({this.maxRedirects = 3, this.redirectGuard});
 
   final int maxRedirects;
@@ -113,21 +128,74 @@ class IoHttpFetcher implements HttpFetcher {
     }
   }
 
+  @override
+  Future<FetchResponse> post(
+    Uri url, {
+    required List<int> body,
+    Map<String, String> headers = const {},
+    int maxBytes = 5 * 1024 * 1024,
+    Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
+  }) async {
+    final client = HttpClient()..connectionTimeout = timeout;
+    try {
+      guard?.call(url);
+      redirectGuard?.call(url);
+      return await _run(
+        client,
+        url,
+        headers,
+        maxBytes,
+        guard,
+        body: body,
+      ).timeout(
+        timeout,
+        onTimeout: () => throw TimeoutException(
+          'Délai dépassé (${timeout.inMilliseconds} ms)',
+          timeout,
+        ),
+      );
+    } on SocketException catch (e) {
+      if (_isConnectTimeout(e)) {
+        throw TimeoutException(
+          'Délai dépassé (${timeout.inMilliseconds} ms)',
+          timeout,
+        );
+      }
+      rethrow;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   Future<FetchResponse> _run(
     HttpClient client,
     Uri url,
     Map<String, String> headers,
     int maxBytes,
-    void Function(Uri target)? guard,
-  ) async {
+    void Function(Uri target)? guard, {
+    List<int>? body,
+  }) async {
     var current = url;
     var sent = headers;
     for (var hops = 0; ; hops++) {
-      final req = await client.getUrl(current);
+      final req = body == null
+          ? await client.getUrl(current)
+          : await client.postUrl(current);
       req.followRedirects = false;
       sent.forEach(req.headers.set);
+      if (body != null) {
+        req.headers.contentLength = body.length;
+        req.add(body);
+      }
       final res = await req.close();
 
+      if (res.isRedirect && body != null) {
+        await res.listen((_) {}).cancel();
+        throw InsecureRedirectException(
+          validateRedirect(current, res.headers.value('location')),
+        );
+      }
       if (res.isRedirect) {
         // Corps de redirection ignoré : on coupe la connexion sans le lire.
         await res.listen((_) {}).cancel();

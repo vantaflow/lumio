@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
+import 'package:lumio/data/jellyfin_repository.dart'
+    show isJellyfinId, parseJellyfinId;
 import 'package:lumio/data/local_library.dart' show LocalItemView, isLocalId;
 import 'package:lumio/features/detail/detail_screen.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/home/home_providers.dart';
+import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
+import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_providers.dart';
 import 'package:lumio/features/local/local_screen.dart';
 import 'package:lumio/player/player_screen.dart';
@@ -14,11 +18,19 @@ import 'package:lumio_core/lumio_core.dart';
 
 /// Ce que l'accueil affiche pour une entrée « Continuer ».
 class ContinueInfo {
-  const ContinueInfo({required this.title, this.subtitle, this.poster});
+  const ContinueInfo({
+    required this.title,
+    this.subtitle,
+    this.poster,
+    this.allowPrivate = false,
+  });
 
   final String title;
   final String? subtitle;
   final Uri? poster;
+
+  /// L'affiche vient d'un serveur du réseau privé approuvé (Jellyfin).
+  final bool allowPrivate;
 }
 
 /// Lecture en un clic d'une entrée « Continuer » à la bonne position.
@@ -84,11 +96,32 @@ class DefaultContinuePlayback implements ContinuePlayback {
         subtitle: item?.episodeLabel,
       );
     }
+    if (isJellyfinId(entry.metaId)) return _describeJellyfin(entry);
     final meta = await _meta(entry);
     return ContinueInfo(
       title: meta.name,
       subtitle: episodeLabel(meta, entry.videoId),
       poster: meta.poster,
+    );
+  }
+
+  Future<ContinueInfo> _describeJellyfin(ProgressEntry entry) async {
+    final ids = parseJellyfinId(entry.metaId);
+    if (ids == null) return ContinueInfo(title: entry.metaId);
+    final repo = _ref.read(jellyfinRepositoryProvider);
+    final server = await repo.server(ids.serverId);
+    final client = await repo.client(ids.serverId);
+    if (server == null || client == null) {
+      return ContinueInfo(title: entry.metaId);
+    }
+    final it = await client.item(ids.itemId);
+    return ContinueInfo(
+      title: it.name,
+      subtitle: it.seriesName,
+      poster: it.imageTag == null
+          ? null
+          : client.imageUrl(it.id, tag: it.imageTag),
+      allowPrivate: server.allowPrivate,
     );
   }
 
@@ -117,6 +150,25 @@ class DefaultContinuePlayback implements ContinuePlayback {
           entry.certification,
         ]),
         build: _ref.read(playerBuilderProvider),
+      );
+      return;
+    }
+    if (isJellyfinId(entry.metaId)) {
+      final ids = parseJellyfinId(entry.metaId);
+      if (ids == null) {
+        tell(l.sheetUnavailable);
+        return;
+      }
+      // La classification est relue sur le serveur à chaque lecture ;
+      // `playJellyfinItem` refuse un profil enfant sans classification connue.
+      await playJellyfinItem(
+        context,
+        repo: _ref.read(jellyfinRepositoryProvider),
+        profile: _ref.read(currentProfileProvider),
+        profileId: _ref.read(currentProfileIdProvider),
+        build: _ref.read(playerBuilderProvider),
+        serverId: ids.serverId,
+        itemId: ids.itemId,
       );
       return;
     }

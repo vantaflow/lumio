@@ -3037,6 +3037,210 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ce dossier ne peut pas être ajouté (dossier système ou chemin non absolu).'**
   String get localFolderForbidden;
+
+  /// No description provided for @jellyfinServers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveurs Jellyfin'**
+  String get jellyfinServers;
+
+  /// No description provided for @jellyfinServersHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos bibliothèques Jellyfin sur l\'accueil'**
+  String get jellyfinServersHint;
+
+  /// No description provided for @jellyfinAddServer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un serveur'**
+  String get jellyfinAddServer;
+
+  /// No description provided for @jellyfinEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun serveur. Ajoutez un serveur Jellyfin pour retrouver ses bibliothèques dans Lumio.'**
+  String get jellyfinEmpty;
+
+  /// No description provided for @jellyfinServerUrl.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse du serveur'**
+  String get jellyfinServerUrl;
+
+  /// No description provided for @jellyfinServerUrlHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'https://jellyfin.exemple.fr'**
+  String get jellyfinServerUrlHint;
+
+  /// No description provided for @jellyfinUser.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utilisateur'**
+  String get jellyfinUser;
+
+  /// No description provided for @jellyfinPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe'**
+  String get jellyfinPassword;
+
+  /// No description provided for @jellyfinConnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se connecter'**
+  String get jellyfinConnect;
+
+  /// No description provided for @jellyfinConnecting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion…'**
+  String get jellyfinConnecting;
+
+  /// No description provided for @jellyfinSignedInAs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecté en tant que {user}'**
+  String jellyfinSignedInAs(String user);
+
+  /// No description provided for @jellyfinRemove.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se déconnecter de {name}'**
+  String jellyfinRemove(String name);
+
+  /// No description provided for @jellyfinRemoveTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer {name} ?'**
+  String jellyfinRemoveTitle(String name);
+
+  /// No description provided for @jellyfinRemoveBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le jeton de connexion sera supprimé de cet appareil.'**
+  String get jellyfinRemoveBody;
+
+  /// No description provided for @jellyfinRemoved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur retiré'**
+  String get jellyfinRemoved;
+
+  /// No description provided for @jellyfinAdded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur ajouté'**
+  String get jellyfinAdded;
+
+  /// No description provided for @jellyfinInsecureTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion non chiffrée'**
+  String get jellyfinInsecureTitle;
+
+  /// No description provided for @jellyfinInsecureBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion non chiffrée : votre mot de passe circulerait en clair. Préférez une adresse https.'**
+  String get jellyfinInsecureBody;
+
+  /// No description provided for @jellyfinInsecureContinue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer quand même'**
+  String get jellyfinInsecureContinue;
+
+  /// No description provided for @jellyfinLibraries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bibliothèques'**
+  String get jellyfinLibraries;
+
+  /// No description provided for @jellyfinLoadMore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Charger la suite'**
+  String get jellyfinLoadMore;
+
+  /// No description provided for @jellyfinEmptyFolder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun élément à afficher'**
+  String get jellyfinEmptyFolder;
+
+  /// No description provided for @jellyfinPlayFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture impossible : le serveur Jellyfin n\'a pas répondu.'**
+  String get jellyfinPlayFailed;
+
+  /// No description provided for @jellyfinErrAuth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom d\'utilisateur ou mot de passe incorrect.'**
+  String get jellyfinErrAuth;
+
+  /// No description provided for @jellyfinErrExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Session expirée. Reconnectez-vous au serveur.'**
+  String get jellyfinErrExpired;
+
+  /// No description provided for @jellyfinErrCert.
+  ///
+  /// In fr, this message translates to:
+  /// **'Certificat du serveur invalide : la connexion est refusée.'**
+  String get jellyfinErrCert;
+
+  /// No description provided for @jellyfinErrTimeout.
+  ///
+  /// In fr, this message translates to:
+  /// **'Délai dépassé : le serveur Jellyfin ne répond pas.'**
+  String get jellyfinErrTimeout;
+
+  /// No description provided for @jellyfinErrUnreachable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur Jellyfin injoignable.'**
+  String get jellyfinErrUnreachable;
+
+  /// No description provided for @jellyfinErrServer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le serveur Jellyfin est en erreur (HTTP {status}).'**
+  String jellyfinErrServer(int status);
+
+  /// No description provided for @jellyfinErrRefused.
+  ///
+  /// In fr, this message translates to:
+  /// **'Requête refusée par le serveur Jellyfin (HTTP {status}).'**
+  String jellyfinErrRefused(int status);
+
+  /// No description provided for @jellyfinErrInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réponse inattendue : est-ce bien un serveur Jellyfin ?'**
+  String get jellyfinErrInvalid;
+
+  /// No description provided for @jellyfinErrTooLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réponse du serveur trop volumineuse.'**
+  String get jellyfinErrTooLarge;
+
+  /// No description provided for @jellyfinErrRedirect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le serveur redirige vers une autre adresse : saisissez l\'adresse finale.'**
+  String get jellyfinErrRedirect;
+
+  /// No description provided for @jellyfinErrAddress.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse du serveur invalide.'**
+  String get jellyfinErrAddress;
 }
 
 class _AppLocalizationsDelegate

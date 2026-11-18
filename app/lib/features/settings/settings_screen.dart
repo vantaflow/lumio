@@ -6,6 +6,7 @@ import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
+import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_screen.dart';
 import 'package:lumio/features/settings/account_screen.dart';
 import 'package:lumio/features/settings/backup_section.dart';
@@ -174,6 +175,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         subtitle: l.localFoldersHint,
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const LocalFoldersScreen()),
+        ),
+      ),
+      _Header(l.jellyfinServers),
+      _Tile(
+        id: 'jellyfin',
+        icon: Icons.dns_outlined,
+        title: l.jellyfinServers,
+        subtitle: l.jellyfinServersHint,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const JellyfinServersScreen(),
+          ),
         ),
       ),
       if (ref.watch(syncServiceProvider) != null) ...[

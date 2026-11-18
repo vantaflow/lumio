@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/data/jellyfin_repository.dart'
+    show JellyfinServer, isJellyfinId, jellyfinSourceKind, parseJellyfinId;
 import 'package:lumio/data/local_library.dart' show isLocalId;
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
+import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
 import 'package:lumio/features/library/library_screen.dart';
 import 'package:lumio/features/local/local_providers.dart';
 import 'package:lumio/features/local/local_screen.dart';
@@ -285,6 +288,9 @@ class _HomeBody extends ConsumerWidget {
       libraryRowId,
       localRowId,
       ...summary.catalogIds,
+      for (final r
+          in ref.watch(jellyfinRowsProvider).value ?? const <JellyfinRowData>[])
+        r.id,
     ];
     final ids = layout.requireValue.visible(natural);
     return ListView.builder(
@@ -299,6 +305,10 @@ class _HomeBody extends ConsumerWidget {
             continueRowId => const _ContinueRow(),
             libraryRowId => _LibraryRow(onOpenItem: onOpenItem),
             localRowId => _LocalRow(onOpenItem: onOpenItem),
+            _ when id.startsWith('jf:') => _JellyfinRowView(
+              rowId: id,
+              onOpenItem: onOpenItem,
+            ),
             _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
           },
         );
@@ -344,6 +354,41 @@ class _CatalogRowView extends ConsumerWidget {
       items: items,
       onOpenItem: onOpenItem,
       allowPrivate: spec.allowPrivate,
+    );
+  }
+}
+
+/// Bibliothèque d'un serveur Jellyfin (badge « Jellyfin ») ; filtre d'âge :
+/// classification inconnue masquée aux profils enfants.
+class _JellyfinRowView extends ConsumerWidget {
+  const _JellyfinRowView({required this.rowId, required this.onOpenItem});
+
+  final String rowId;
+  final void Function(MetaPreview item)? onOpenItem;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final row = ref
+        .watch(jellyfinRowsProvider)
+        .value
+        ?.where((r) => r.id == rowId)
+        .firstOrNull;
+    if (row == null) return const SizedBox.shrink();
+    if (row.error != null) {
+      return _ErrorRow(
+        title: row.title,
+        message: l10nForError(context.l10n, row.error!),
+        onRetry: () => ref.invalidate(jellyfinRowsProvider),
+      );
+    }
+    final items = visibleItems(row.items, ref.watch(currentProfileProvider));
+    if (items.isEmpty) return const SizedBox.shrink();
+    return _PosterRow(
+      rowId: rowId,
+      title: row.title,
+      items: items,
+      onOpenItem: onOpenItem,
+      allowPrivate: row.allowPrivate,
     );
   }
 }
@@ -439,12 +484,22 @@ class _ContinueRow extends ConsumerWidget {
     final localIds = {
       for (final i in ref.watch(localItemsProvider).value ?? const []) i.id,
     };
+    // Idem pour un serveur Jellyfin absent (ou retiré) de cet appareil.
+    final serverIds = {
+      for (final s
+          in ref.watch(jellyfinServersProvider).value ??
+              const <JellyfinServer>[])
+        s.id,
+    };
     final entries = [
       for (final e in visibleProgress(
         ref.watch(continueWatchingProvider).value ?? const [],
         ref.watch(currentProfileProvider),
       ))
-        if (!isLocalId(e.metaId) || localIds.contains(e.metaId)) e,
+        if ((!isLocalId(e.metaId) || localIds.contains(e.metaId)) &&
+            (!isJellyfinId(e.metaId) ||
+                serverIds.contains(parseJellyfinId(e.metaId)?.serverId)))
+          e,
     ];
     if (entries.isEmpty) return const SizedBox.shrink();
     final playback = ref.watch(continuePlaybackProvider);
@@ -510,7 +565,11 @@ class PosterCard extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(LumioRadius.md),
                     child: _Poster(
-                      title: item.sourceKind == 'local' ? item.name : null,
+                      title:
+                          item.sourceKind == 'local' ||
+                              item.sourceKind == jellyfinSourceKind
+                          ? item.name
+                          : null,
                       url: item.poster,
                       allowPrivate: allowPrivate,
                       width: _posterWidth,
@@ -672,7 +731,7 @@ class _ContinueCardState extends State<_ContinueCard> {
                         borderRadius: BorderRadius.circular(LumioRadius.md),
                         child: _Poster(
                           url: info.poster,
-                          allowPrivate: false,
+                          allowPrivate: info.allowPrivate,
                           width: _continueWidth,
                         ),
                       ),

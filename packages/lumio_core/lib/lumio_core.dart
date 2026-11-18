@@ -36,3 +36,4 @@ export 'src/search/text_normalize.dart';
 export 'src/sync/sync_engine.dart';
 export 'src/sync/sync_models.dart';
 export 'src/local/media_name.dart';
+export 'src/jellyfin/jellyfin_client.dart';

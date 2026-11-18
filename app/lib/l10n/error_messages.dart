@@ -1,3 +1,7 @@
+import 'dart:io' show CertificateException;
+
+import 'package:lumio/data/jellyfin_repository.dart'
+    show JellyfinInsecureException;
 import 'package:lumio/data/pairing_client.dart';
 import 'package:lumio/data/profile_repository.dart' show ProfileLimitException;
 import 'package:lumio/l10n/app_localizations.dart';
@@ -30,6 +34,25 @@ String l10nForError(AppLocalizations l, Object error) {
       PairingErrorCode.expired => l.pairExpired,
     };
   }
+  if (error is JellyfinAuthException) {
+    return error.expired ? l.jellyfinErrExpired : l.jellyfinErrAuth;
+  }
+  if (error is JellyfinException) {
+    return switch (error.code) {
+      JellyfinErrorCode.timeout => l.jellyfinErrTimeout,
+      JellyfinErrorCode.unreachable => l.jellyfinErrUnreachable,
+      JellyfinErrorCode.serverError => l.jellyfinErrServer(error.status ?? 500),
+      JellyfinErrorCode.refused => l.jellyfinErrRefused(error.status ?? 0),
+      JellyfinErrorCode.tooLarge => l.jellyfinErrTooLarge,
+      JellyfinErrorCode.redirect => l.jellyfinErrRedirect,
+      JellyfinErrorCode.invalidResponse => l.jellyfinErrInvalid,
+      JellyfinErrorCode.invalidServer => l.jellyfinErrAddress,
+    };
+  }
+  // Certificat invalide : toujours dit explicitement, jamais contourné.
+  if (error is CertificateException) return l.jellyfinErrCert;
+  if (error is JellyfinInsecureException) return l.jellyfinInsecureBody;
+  if (error is UnsafeUrlException) return l.errAddressRefused;
   if (error is AddonException) {
     return switch (error.code) {
       AddonErrorCode.duplicate => l.errDuplicate,

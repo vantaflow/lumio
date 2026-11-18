@@ -7,7 +7,10 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/detail/streams_list.dart';
+import 'package:lumio/data/jellyfin_repository.dart' show jellyfinSourceKind;
 import 'package:lumio/data/local_library.dart' show localSourceKind;
+import 'package:lumio/features/jellyfin/jellyfin_screen.dart'
+    show openJellyfinDetail;
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/local/local_screen.dart' show openLocalDetail;
 import 'package:lumio/features/search/search_providers.dart';
@@ -26,11 +29,13 @@ const detailRouteKey = 'detail';
 
 /// Ouvre la fiche de [item] (accueil, recherche, « Ma liste »).
 Future<void> openDetail(BuildContext context, MetaPreview item) =>
-    item.sourceKind == localSourceKind
-    ? openLocalDetail(context, item)
-    : Navigator.of(context).push(
+    switch (item.sourceKind) {
+      localSourceKind => openLocalDetail(context, item),
+      jellyfinSourceKind => openJellyfinDetail(context, item),
+      _ => Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => DetailScreen(preview: item)),
-      );
+      ),
+    };
 
 enum _Phase { loading, ready, refused, error }
 

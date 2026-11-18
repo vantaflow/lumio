@@ -1764,4 +1764,125 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get localFolderForbidden =>
       'Ce dossier ne peut pas être ajouté (dossier système ou chemin non absolu).';
+
+  @override
+  String get jellyfinServers => 'Serveurs Jellyfin';
+
+  @override
+  String get jellyfinServersHint => 'Vos bibliothèques Jellyfin sur l\'accueil';
+
+  @override
+  String get jellyfinAddServer => 'Ajouter un serveur';
+
+  @override
+  String get jellyfinEmpty =>
+      'Aucun serveur. Ajoutez un serveur Jellyfin pour retrouver ses bibliothèques dans Lumio.';
+
+  @override
+  String get jellyfinServerUrl => 'Adresse du serveur';
+
+  @override
+  String get jellyfinServerUrlHint => 'https://jellyfin.exemple.fr';
+
+  @override
+  String get jellyfinUser => 'Utilisateur';
+
+  @override
+  String get jellyfinPassword => 'Mot de passe';
+
+  @override
+  String get jellyfinConnect => 'Se connecter';
+
+  @override
+  String get jellyfinConnecting => 'Connexion…';
+
+  @override
+  String jellyfinSignedInAs(String user) {
+    return 'Connecté en tant que $user';
+  }
+
+  @override
+  String jellyfinRemove(String name) {
+    return 'Se déconnecter de $name';
+  }
+
+  @override
+  String jellyfinRemoveTitle(String name) {
+    return 'Retirer $name ?';
+  }
+
+  @override
+  String get jellyfinRemoveBody =>
+      'Le jeton de connexion sera supprimé de cet appareil.';
+
+  @override
+  String get jellyfinRemoved => 'Serveur retiré';
+
+  @override
+  String get jellyfinAdded => 'Serveur ajouté';
+
+  @override
+  String get jellyfinInsecureTitle => 'Connexion non chiffrée';
+
+  @override
+  String get jellyfinInsecureBody =>
+      'Connexion non chiffrée : votre mot de passe circulerait en clair. Préférez une adresse https.';
+
+  @override
+  String get jellyfinInsecureContinue => 'Continuer quand même';
+
+  @override
+  String get jellyfinLibraries => 'Bibliothèques';
+
+  @override
+  String get jellyfinLoadMore => 'Charger la suite';
+
+  @override
+  String get jellyfinEmptyFolder => 'Aucun élément à afficher';
+
+  @override
+  String get jellyfinPlayFailed =>
+      'Lecture impossible : le serveur Jellyfin n\'a pas répondu.';
+
+  @override
+  String get jellyfinErrAuth => 'Nom d\'utilisateur ou mot de passe incorrect.';
+
+  @override
+  String get jellyfinErrExpired =>
+      'Session expirée. Reconnectez-vous au serveur.';
+
+  @override
+  String get jellyfinErrCert =>
+      'Certificat du serveur invalide : la connexion est refusée.';
+
+  @override
+  String get jellyfinErrTimeout =>
+      'Délai dépassé : le serveur Jellyfin ne répond pas.';
+
+  @override
+  String get jellyfinErrUnreachable => 'Serveur Jellyfin injoignable.';
+
+  @override
+  String jellyfinErrServer(int status) {
+    return 'Le serveur Jellyfin est en erreur (HTTP $status).';
+  }
+
+  @override
+  String jellyfinErrRefused(int status) {
+    return 'Requête refusée par le serveur Jellyfin (HTTP $status).';
+  }
+
+  @override
+  String get jellyfinErrInvalid =>
+      'Réponse inattendue : est-ce bien un serveur Jellyfin ?';
+
+  @override
+  String get jellyfinErrTooLarge => 'Réponse du serveur trop volumineuse.';
+
+  @override
+  String get jellyfinErrRedirect =>
+      'Le serveur redirige vers une autre adresse : saisissez l\'adresse finale.';
+
+  @override
+  String get jellyfinErrAddress => 'Adresse du serveur invalide.';
 }
