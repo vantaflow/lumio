@@ -88,3 +88,6 @@ Le détail des écrans, l'ordre fin des tâches (suivant l'ordre de développeme
 - Builds macOS/Windows non produits dans ce run (Xcode incomplet, pas de Windows) : code partagé, vérifié par les tests.
 - Envoi réel des e-mails, clés Trakt/Simkl/TMDB et déploiement : à fournir ensuite ; tout est testé avec des doubles.
 - Liaison à une interface réseau : arrêt applicatif si le VPN tombe, pas de liaison native (non exposée par la bibliothèque).
+
+## Amendement du 2026-11-18 — retrait de l'IPTV
+Décision de l'utilisateur : **Lumio n'a pas d'IPTV**. Retirés du périmètre : listes M3U/Xtream, chaînes en direct, guide EPG/XMLTV (EF-10, stories 5.1 et 5.2), le badge de source « IPTV », l'entrée « liste M3U » de l'assistant et l'écran « TV en direct ». Le proxy HTTP local reste (flux HLS et en-têtes imposés par les addons).
