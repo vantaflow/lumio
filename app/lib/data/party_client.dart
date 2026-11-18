@@ -2,14 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:lumio/data/sync_service.dart';
-
 enum PartyErrorCode {
   /// Serveur injoignable ou réponse invalide.
   unavailable,
-
-  /// Pas connecté (ou session non renouvelable).
-  signedOut,
 
   /// Lien ou code mal formé.
   invalidLink,
@@ -34,15 +29,19 @@ class PartyException implements Exception {
 }
 
 /// Salle créée : [inviteCode] n'est montré qu'à l'hôte, qui le transmet.
+/// [hostKey] reste sur l'appareil de l'hôte (il prouve qu'il a créé la salle) :
+/// il n'est jamais mis dans le lien d'invitation.
 class PartyRoomInfo {
   const PartyRoomInfo({
     required this.roomId,
     required this.inviteCode,
+    required this.hostKey,
     required this.expiresAt,
   });
 
   final String roomId;
   final String inviteCode;
+  final String hostKey;
   final DateTime expiresAt;
 
   Uri get link => partyLink(roomId, inviteCode);
@@ -50,7 +49,7 @@ class PartyRoomInfo {
 
 /// Lien d'invitation, reconnu uniquement dans l'application (aucun schéma
 /// d'URL n'est enregistré auprès du système) : il contient la salle et le code,
-/// jamais le jeton de session ni un titre.
+/// jamais la clé de l'hôte ni un titre.
 Uri partyLink(String roomId, String code) => Uri(
   scheme: 'lumio',
   host: 'party',
@@ -83,7 +82,7 @@ abstract class PartyChannel {
   Future<void> close();
 }
 
-/// Ouvre un canal ; [protocols] porte le jeton (jamais dans l'URL).
+/// Ouvre un canal ; [protocols] porte la clé de l'hôte (jamais dans l'URL).
 typedef PartyConnector =
     Future<PartyChannel> Function(Uri url, List<String> protocols);
 
@@ -109,26 +108,123 @@ Future<PartyChannel> ioPartyConnector(Uri url, List<String> protocols) async {
   return IoPartyChannel(ws);
 }
 
-/// Client des salles de watch-party : création (HTTP authentifié) et
-/// connexion WebSocket. Seuls position et état de lecture y circulent.
-class PartyClient {
-  PartyClient(this._api, {PartyConnector? connector})
-    : _connector = connector ?? ioPartyConnector;
+/// Réponse HTTP minimale (statut et corps texte).
+class PartyHttpResponse {
+  const PartyHttpResponse(this.status, this.body);
+  final int status;
+  final String body;
+}
 
-  final SyncApiClient _api;
+/// Transport HTTP du client des salles ; substituable en test.
+abstract class PartyHttp {
+  Future<PartyHttpResponse> send(
+    String method,
+    Uri url, {
+    Map<String, String> headers,
+    String? body,
+  });
+}
+
+class IoPartyHttp implements PartyHttp {
+  const IoPartyHttp({this.timeout = const Duration(seconds: 15)});
+  final Duration timeout;
+
+  static const _maxBytes = 64 * 1024;
+
+  @override
+  Future<PartyHttpResponse> send(
+    String method,
+    Uri url, {
+    Map<String, String> headers = const {},
+    String? body,
+  }) async {
+    final client = HttpClient()..connectionTimeout = timeout;
+    try {
+      return await () async {
+        final req = await client.openUrl(method, url);
+        req.followRedirects = false;
+        headers.forEach(req.headers.set);
+        if (body != null) {
+          final bytes = utf8.encode(body);
+          req.headers.contentType = ContentType.json;
+          req.contentLength = bytes.length;
+          req.add(bytes);
+        }
+        final res = await req.close();
+        final bytes = <int>[];
+        await for (final chunk in res) {
+          bytes.addAll(chunk);
+          if (bytes.length > _maxBytes) {
+            throw const PartyException(PartyErrorCode.unavailable);
+          }
+        }
+        return PartyHttpResponse(
+          res.statusCode,
+          utf8.decode(bytes, allowMalformed: true),
+        );
+      }().timeout(timeout);
+    } finally {
+      client.close(force: true);
+    }
+  }
+}
+
+/// Client des salles de watch-party : création (HTTP) et connexion WebSocket.
+/// Aucun compte : une salle est protégée par son identifiant aléatoire et son
+/// code d'invitation. Seuls position et état de lecture y circulent.
+class PartyClient {
+  PartyClient._(this._base, this._http, this._connector);
+
+  /// [serverUrl] : https obligatoire, sauf http vers localhost (développement).
+  factory PartyClient(
+    String serverUrl, {
+    PartyHttp? http,
+    PartyConnector? connector,
+  }) {
+    final u = Uri.tryParse(serverUrl.trim());
+    final local =
+        u != null &&
+        (u.host == 'localhost' || u.host == '127.0.0.1' || u.host == '::1');
+    if (u == null ||
+        !u.hasAuthority ||
+        !(u.scheme == 'https' || (u.scheme == 'http' && local))) {
+      throw const PartyException(PartyErrorCode.unavailable);
+    }
+    return PartyClient._(
+      u,
+      http ?? const IoPartyHttp(),
+      connector ?? ioPartyConnector,
+    );
+  }
+
+  final Uri _base;
+  final PartyHttp _http;
   final PartyConnector _connector;
 
-  Future<PartyRoomInfo> create({String? metaId, String? type}) async {
-    final SyncHttpResponse r;
+  Uri _url(String path) =>
+      _base.replace(path: '${_base.path.replaceAll(RegExp(r'/+$'), '')}$path');
+
+  Future<PartyHttpResponse> _send(
+    String method,
+    Uri url, {
+    Map<String, String> headers = const {},
+    String? body,
+  }) async {
     try {
-      r = await _api.authedRequest(
-        'POST',
-        _api.urlFor('/rooms'),
-        body: jsonEncode({'metaId': ?metaId, 'type': ?type}),
-      );
-    } on SyncException catch (e) {
-      throw _fromSync(e);
+      return await _http.send(method, url, headers: headers, body: body);
+    } on PartyException {
+      rethrow;
+    } on Object {
+      throw const PartyException(PartyErrorCode.unavailable);
     }
+  }
+
+  Future<PartyRoomInfo> create({String? metaId, String? type}) async {
+    final r = await _send(
+      'POST',
+      _url('/rooms'),
+      body: jsonEncode({'metaId': ?metaId, 'type': ?type}),
+    );
     if (r.status == 429) throw const PartyException(PartyErrorCode.rateLimited);
     if (r.status != 201) throw const PartyException(PartyErrorCode.unavailable);
     try {
@@ -136,6 +232,7 @@ class PartyClient {
       return PartyRoomInfo(
         roomId: j['roomId'] as String,
         inviteCode: j['inviteCode'] as String,
+        hostKey: j['hostKey'] as String,
         expiresAt: DateTime.fromMillisecondsSinceEpoch(
           (j['expiresAt'] as num).toInt(),
         ),
@@ -145,67 +242,56 @@ class PartyClient {
     }
   }
 
-  /// « L'hôte seul contrôle » ou « Tout le monde peut contrôler ».
-  Future<void> setControl(String roomId, {required bool allControl}) async {
-    final SyncHttpResponse r;
-    try {
-      r = await _api.authedRequest(
-        'POST',
-        _api.urlFor('/room/$roomId/control'),
-        body: jsonEncode({'allControl': allControl}),
-      );
-    } on SyncException catch (e) {
-      throw _fromSync(e);
-    }
-    if (r.status == 204) return;
-    throw PartyException(
-      r.status == 404 ? PartyErrorCode.notFound : PartyErrorCode.unavailable,
+  /// « L'hôte seul contrôle » ou « Tout le monde peut contrôler » ; réservé à
+  /// l'hôte ([hostKey]).
+  Future<void> setControl(
+    String roomId, {
+    required String hostKey,
+    required bool allControl,
+  }) async {
+    final r = await _send(
+      'POST',
+      _url('/room/$roomId/control'),
+      headers: {'authorization': 'Bearer $hostKey'},
+      body: jsonEncode({'allControl': allControl}),
     );
+    if (r.status == 204) return;
+    throw PartyException(switch (r.status) {
+      404 => PartyErrorCode.notFound,
+      429 => PartyErrorCode.rateLimited,
+      _ => PartyErrorCode.unavailable,
+    });
   }
 
-  /// Rejoint la salle. Le code part dans l'URL (il ne donne rien sans session
-  /// valide), le jeton de session dans l'en-tête de sous-protocole.
-  Future<PartyChannel> connect(String roomId, String code) async {
-    final base = _api.urlFor('/room/$roomId');
+  /// Rejoint la salle avec son code. L'hôte ajoute sa [hostKey] dans l'en-tête
+  /// de sous-protocole (jamais dans l'URL).
+  Future<PartyChannel> connect(
+    String roomId,
+    String code, {
+    String? hostKey,
+  }) async {
+    final base = _url('/room/$roomId');
     final url = base.replace(
       scheme: base.scheme == 'https' ? 'wss' : 'ws',
       queryParameters: {'code': code},
     );
-    for (var attempt = 0; attempt < 2; attempt++) {
-      final String token;
-      try {
-        token = await _api.freshSession(forceRefresh: attempt > 0);
-      } on SyncException catch (e) {
-        throw _fromSync(e);
-      }
-      try {
-        return await _connector(url, ['lumio.v1', token]);
-      } on WebSocketException catch (e) {
-        final status = int.tryParse(
-          RegExp(r'status code: (\d+)').firstMatch(e.message)?.group(1) ?? '',
-        );
-        if (status == 401 && attempt == 0) continue;
-        throw PartyException(switch (status) {
-          401 => PartyErrorCode.signedOut,
-          403 => PartyErrorCode.wrongCode,
-          404 => PartyErrorCode.notFound,
-          409 => PartyErrorCode.full,
-          429 => PartyErrorCode.rateLimited,
-          _ => PartyErrorCode.unavailable,
-        });
-      } on PartyException {
-        rethrow;
-      } on Object {
-        throw const PartyException(PartyErrorCode.unavailable);
-      }
-    }
-    throw const PartyException(PartyErrorCode.signedOut);
-  }
-
-  static PartyException _fromSync(SyncException e) =>
-      PartyException(switch (e.code) {
-        SyncErrorCode.signedOut => PartyErrorCode.signedOut,
-        SyncErrorCode.rateLimited => PartyErrorCode.rateLimited,
+    try {
+      return await _connector(url, ['lumio.v1', ?hostKey]);
+    } on WebSocketException catch (e) {
+      final status = int.tryParse(
+        RegExp(r'status code: (\d+)').firstMatch(e.message)?.group(1) ?? '',
+      );
+      throw PartyException(switch (status) {
+        403 => PartyErrorCode.wrongCode,
+        404 => PartyErrorCode.notFound,
+        409 => PartyErrorCode.full,
+        429 => PartyErrorCode.rateLimited,
         _ => PartyErrorCode.unavailable,
       });
+    } on PartyException {
+      rethrow;
+    } on Object {
+      throw const PartyException(PartyErrorCode.unavailable);
+    }
+  }
 }

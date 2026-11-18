@@ -4,17 +4,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
-  // Les identifiants ci-dessous sont des substituts : à remplacer au déploiement
-  // (wrangler d1 create / wrangler kv namespace create). Les tests locaux
-  // utilisent Miniflare et n'en ont pas besoin.
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "lumio",
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
-    }
-  ],
+  // L'identifiant KV ci-dessous est un substitut : à remplacer au déploiement
+  // (wrangler kv namespace create RATE). Les tests locaux utilisent Miniflare.
   "kv_namespaces": [
     { "binding": "RATE", "id": "00000000000000000000000000000000" }
   ],

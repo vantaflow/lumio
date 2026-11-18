@@ -9,8 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/party_client.dart';
-import 'package:lumio/data/secret_store.dart';
-import 'package:lumio/data/sync_service.dart';
 import 'package:lumio/data/title_settings_store.dart';
 import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/player/play_router.dart' show LocalFileSource;
@@ -29,13 +27,13 @@ import 'package:qr_flutter/qr_flutter.dart';
 const roomId = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
 const code = 'KR74PQ2X';
 
-class FakeHttp implements SyncHttp {
+class FakeHttp implements PartyHttp {
   final requests =
       <({String method, Uri url, Map<String, String> headers, String? body})>[];
-  SyncHttpResponse Function(String method, Uri url)? handler;
+  PartyHttpResponse Function(String method, Uri url)? handler;
 
   @override
-  Future<SyncHttpResponse> send(
+  Future<PartyHttpResponse> send(
     String method,
     Uri url, {
     Map<String, String> headers = const {},
@@ -108,26 +106,21 @@ Map<String, dynamic> hello({
 };
 
 void main() {
-  late MemorySecretStore secrets;
   late FakeHttp http;
-  late SyncApiClient api;
   late FakeChannel channel;
   late List<({Uri url, List<String> protocols})> connects;
   Object? connectError;
 
   setUp(() async {
-    secrets = MemorySecretStore();
-    await secrets.write(SyncSecretKeys.session, 'sess1');
-    await secrets.write(SyncSecretKeys.refresh, 'ref1');
     http = FakeHttp();
-    api = SyncApiClient('https://api.example.com', secrets, http: http);
     channel = FakeChannel();
     connects = [];
     connectError = null;
   });
 
   PartyClient client() => PartyClient(
-    api,
+    'https://api.example.com',
+    http: http,
     connector: (url, protocols) async {
       connects.add((url: url, protocols: protocols));
       final e = connectError;
@@ -164,12 +157,13 @@ void main() {
   });
 
   group('PartyClient', () {
-    test('create : POST authentifié, ne transmet que le metaId', () async {
-      http.handler = (m, u) => SyncHttpResponse(
+    test('create : POST sans compte, ne transmet que le metaId', () async {
+      http.handler = (m, u) => PartyHttpResponse(
         201,
         jsonEncode({
           'roomId': roomId,
           'inviteCode': code,
+          'hostKey': 'hk1',
           'expiresAt': 1800000000000,
         }),
       );
@@ -178,12 +172,13 @@ void main() {
       expect(info.inviteCode, code);
       final r = http.requests.single;
       expect(r.url.path, '/rooms');
-      expect(r.headers['Authorization'], 'Bearer sess1');
+      expect(r.headers.containsKey('authorization'), isFalse);
+      expect(info.hostKey, 'hk1');
       expect(jsonDecode(r.body!), {'metaId': 'tt1', 'type': 'series'});
     });
 
     test('create : 429 et erreurs serveur traduits', () async {
-      http.handler = (m, u) => const SyncHttpResponse(429, '{}');
+      http.handler = (m, u) => const PartyHttpResponse(429, '{}');
       await expectLater(
         client().create(),
         throwsA(
@@ -194,7 +189,7 @@ void main() {
           ),
         ),
       );
-      http.handler = (m, u) => const SyncHttpResponse(500, '{}');
+      http.handler = (m, u) => const PartyHttpResponse(500, '{}');
       await expectLater(
         client().create(),
         throwsA(
@@ -208,32 +203,35 @@ void main() {
     });
 
     test(
-      'connect : wss, code en paramètre, jeton dans le sous-protocole seulement',
+      'connect : wss, code en paramètre, aucune clé pour un invité',
       () async {
         await client().connect(roomId, code);
         final c = connects.single;
         expect(c.url.scheme, 'wss');
         expect(c.url.path, '/room/$roomId');
         expect(c.url.queryParameters, {'code': code});
-        expect(c.url.toString(), isNot(contains('sess1')));
-        expect(c.protocols, ['lumio.v1', 'sess1']);
+        expect(c.protocols, ['lumio.v1']);
       },
     );
 
     test(
-      'connect : 401 -> renouvelle la session puis réessaie une fois',
+      'connect : la clé de l\'hôte part dans le sous-protocole seulement',
       () async {
-        http.handler = (m, u) => SyncHttpResponse(
-          200,
-          jsonEncode({'session': 'sess2', 'refresh': 'ref2'}),
-        );
-        connectError = const WebSocketException(
-          'was not upgraded to websocket, HTTP status code: 401',
-        );
-        await client().connect(roomId, code);
-        expect(connects.map((c) => c.protocols.last), ['sess1', 'sess2']);
+        await client().connect(roomId, code, hostKey: 'hk1');
+        final c = connects.single;
+        expect(c.url.toString(), isNot(contains('hk1')));
+        expect(c.protocols, ['lumio.v1', 'hk1']);
       },
     );
+
+    test('adresse non https refusée (sauf localhost)', () {
+      expect(
+        () => PartyClient('http://example.com'),
+        throwsA(isA<PartyException>()),
+      );
+      expect(() => PartyClient(''), throwsA(isA<PartyException>()));
+      expect(PartyClient('http://localhost:8787'), isA<PartyClient>());
+    });
 
     test('connect : statuts HTTP traduits', () async {
       for (final (status, expected) in [
@@ -253,21 +251,6 @@ void main() {
           reason: '$status',
         );
       }
-    });
-
-    test('connect : sans session -> signedOut', () async {
-      await secrets.delete(SyncSecretKeys.session);
-      await secrets.delete(SyncSecretKeys.refresh);
-      await expectLater(
-        client().connect(roomId, code),
-        throwsA(
-          isA<PartyException>().having(
-            (e) => e.code,
-            'code',
-            PartyErrorCode.signedOut,
-          ),
-        ),
-      );
     });
   });
 
@@ -521,16 +504,17 @@ void main() {
     ) async {
       http.handler = (m, u) {
         if (u.path == '/rooms') {
-          return SyncHttpResponse(
+          return PartyHttpResponse(
             201,
             jsonEncode({
               'roomId': roomId,
               'inviteCode': code,
+              'hostKey': 'hk1',
               'expiresAt': 1800000000000,
             }),
           );
         }
-        return const SyncHttpResponse(204, '');
+        return const PartyHttpResponse(204, '');
       };
       await t.pumpWidget(app(client()));
       await t.tap(find.byKey(const ValueKey('party:create')));
@@ -551,6 +535,7 @@ void main() {
         (r) => r.url.path.endsWith('/control'),
       );
       expect(jsonDecode(control.body!), {'allControl': true});
+      expect(control.headers['authorization'], 'Bearer hk1');
 
       await t.ensureVisible(find.byKey(const ValueKey('party:leave')));
       await t.tap(find.byKey(const ValueKey('party:leave')));

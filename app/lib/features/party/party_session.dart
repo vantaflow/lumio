@@ -72,6 +72,7 @@ class PartySession extends ValueNotifier<PartyView> {
     required PartyClient client,
     required this.roomId,
     required this.inviteCode,
+    this.hostKey,
     bool host = false,
     PartySync sync = const PartySync(),
     DateTime Function()? now,
@@ -85,6 +86,9 @@ class PartySession extends ValueNotifier<PartyView> {
 
   final String roomId;
   final String inviteCode;
+
+  /// Clé de l'hôte (nulle pour un invité) : prouve la création de la salle.
+  final String? hostKey;
   final Duration heartbeat;
   final Duration pingEvery;
 
@@ -116,7 +120,7 @@ class PartySession extends ValueNotifier<PartyView> {
 
   Future<void> start() async {
     try {
-      final ch = await _client.connect(roomId, inviteCode);
+      final ch = await _client.connect(roomId, inviteCode, hostKey: hostKey);
       if (_disposed) {
         unawaited(ch.close());
         return;
@@ -255,9 +259,10 @@ class PartySession extends ValueNotifier<PartyView> {
 
   /// Bascule « Tout le monde peut contrôler » (hôte seulement).
   Future<void> setAllControl(bool allControl) async {
-    if (!value.host) return;
+    final key = hostKey;
+    if (!value.host || key == null) return;
     try {
-      await _client.setControl(roomId, allControl: allControl);
+      await _client.setControl(roomId, hostKey: key, allControl: allControl);
     } on PartyException catch (e) {
       value = value.copyWith(error: e.code);
     }

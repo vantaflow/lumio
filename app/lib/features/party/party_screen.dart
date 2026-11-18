@@ -14,7 +14,6 @@ import 'package:lumio_core/lumio_core.dart' show MetaPreview;
 import 'package:qr_flutter/qr_flutter.dart';
 
 String partyErrorText(AppLocalizations l, PartyErrorCode c) => switch (c) {
-  PartyErrorCode.signedOut => l.partyErrSignedOut,
   PartyErrorCode.invalidLink => l.partyErrInvalidLink,
   PartyErrorCode.wrongCode => l.partyErrWrongCode,
   PartyErrorCode.full => l.partyErrFull,
@@ -92,6 +91,7 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
           client: client,
           roomId: info.roomId,
           inviteCode: info.inviteCode,
+          hostKey: info.hostKey,
           host: true,
         ),
       );
