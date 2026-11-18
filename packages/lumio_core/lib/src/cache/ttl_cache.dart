@@ -9,6 +9,9 @@ class TtlCache {
   final DateTime Function() _now;
   final Map<String, _Entry> _entries = {};
 
+  /// Heure courante selon l'horloge (injectable) du cache.
+  DateTime now() => _now();
+
   /// Valeur encore valide pour [k], sinon `null` (absente, expirée ou d'un
   /// autre type que [T]).
   T? get<T>(String k) {

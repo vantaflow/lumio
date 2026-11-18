@@ -40,8 +40,13 @@ class CatalogAggregator {
 
   final Queue<Completer<void>> _waiting = Queue();
   var _running = 0;
-  // Par catalogue : skip -> éléments livrés (skip 0 = rangée d'accueil).
-  final Map<String, Map<int, List<MetaPreview>>> _delivered = {};
+
+  /// Nombre maximal de pages mémorisées par catalogue (les plus récentes).
+  static const maxPagesPerCatalog = 50;
+
+  // Par catalogue : skip -> éléments livrés (skip 0 = rangée d'accueil),
+  // avec la même durée de vie que le cache.
+  final Map<String, _Delivered> _delivered = {};
 
   /// Émet une rangée par catalogue (hors catalogues à extra obligatoire,
   /// comme la recherche), dans l'ordre d'arrivée.
@@ -60,9 +65,8 @@ class CatalogAggregator {
           const {},
           isCancelled: () => cancelled,
         );
-        _deliveredFor(a, c)
-          ..clear()
-          ..[0] = items;
+        if (cancelled) return; // ne pas toucher à l'état d'une rangée annulée
+        _deliveredFor(a, c, reset: true).pages[0] = items;
         row = CatalogRow(
           addonId: a.id,
           catalogId: c.id,
@@ -100,7 +104,7 @@ class CatalogAggregator {
     CatalogDecl c, {
     required int skip,
   }) async {
-    final delivered = _deliveredFor(a, c);
+    final delivered = _deliveredFor(a, c).pages;
     final known = delivered[skip];
     if (known != null) return known; // même page : même résultat
     final items = await _fetch(a, c, {if (skip > 0) 'skip': '$skip'});
@@ -116,11 +120,27 @@ class CatalogAggregator {
         if (seen.add(m.id)) m,
     ]);
     delivered[skip] = page;
+    // Ne garde que les pages les plus récentes (la rangée d'accueil, skip 0,
+    // sert de référence de dédoublonnage : elle reste).
+    while (delivered.length > maxPagesPerCatalog) {
+      delivered.remove(delivered.keys.firstWhere((k) => k != 0));
+    }
     return page;
   }
 
-  Map<int, List<MetaPreview>> _deliveredFor(AddonManifest a, CatalogDecl c) =>
-      _delivered.putIfAbsent('${a.transportUrl}|${c.type}|${c.id}', () => {});
+  _Delivered _deliveredFor(
+    AddonManifest a,
+    CatalogDecl c, {
+    bool reset = false,
+  }) {
+    final key = '${a.transportUrl}|${c.type}|${c.id}';
+    final now = _cache.now();
+    var d = _delivered[key];
+    if (reset || d == null || !now.isBefore(d.expires)) {
+      d = _delivered[key] = _Delivered(now.add(_cache.ttl));
+    }
+    return d;
+  }
 
   Future<List<MetaPreview>> _fetch(
     AddonManifest a,
@@ -175,4 +195,10 @@ class CatalogAggregator {
   static AddonException _asAddonException(Object e) => e is AddonException
       ? e
       : AddonException('Erreur inattendue lors du chargement', cause: e);
+}
+
+class _Delivered {
+  _Delivered(this.expires);
+  final DateTime expires;
+  final Map<int, List<MetaPreview>> pages = {};
 }

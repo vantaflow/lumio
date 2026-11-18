@@ -194,6 +194,73 @@ void main() {
     expect(after.single.failed, isTrue);
   });
 
+  test('après le TTL, la même page est redemandée au réseau', () async {
+    server.route('/a/catalog/movie/top.json', FakeResponse.json(_metas(['a'])));
+    server.route(
+      '/a/catalog/movie/top/skip=100.json',
+      FakeResponse.json(_metas(['b'])),
+    );
+    var now = DateTime(2026, 1, 1, 12);
+    final agg = CatalogAggregator(
+      _client(),
+      TtlCache(ttl: const Duration(minutes: 30), now: () => now),
+    );
+    final addon = _addon(server, '/a', 'a');
+    final c = addon.catalogs.first;
+    expect((await agg.page(addon, c, skip: 100)).map((m) => m.id), ['b']);
+    server.route(
+      '/a/catalog/movie/top/skip=100.json',
+      FakeResponse.json(_metas(['b', 'z'])),
+    );
+    expect((await agg.page(addon, c, skip: 100)).map((m) => m.id), ['b']);
+    now = now.add(const Duration(minutes: 31));
+    expect((await agg.page(addon, c, skip: 100)).map((m) => m.id), ['b', 'z']);
+  });
+
+  test(
+    'flux annulé : page() déduplique toujours contre la rangée livrée',
+    () async {
+      server.route(
+        '/a/catalog/movie/top.json',
+        FakeResponse.json(_metas(['a', 'b'])),
+      );
+      server.route(
+        '/a/catalog/movie/top/skip=100.json',
+        FakeResponse.json(_metas(['b', 'c'])),
+      );
+      final addon = _addon(server, '/a', 'a');
+      final agg = CatalogAggregator(_client(), TtlCache());
+      final first = await agg.rows([addon]).first; // annule le flux
+      expect(first.items.map((m) => m.id), ['a', 'b']);
+      // Une relance annulée aussitôt ne doit pas effacer l'état.
+      final sub = agg.rows([addon]).listen((_) {});
+      await sub.cancel();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final next = await agg.page(addon, addon.catalogs.first, skip: 100);
+      expect(next.map((m) => m.id), ['c']);
+    },
+  );
+
+  test('pages hors ordre : skip=200 avant 100, sans plantage', () async {
+    server.route('/a/catalog/movie/top.json', FakeResponse.json(_metas(['a'])));
+    server.route(
+      '/a/catalog/movie/top/skip=200.json',
+      FakeResponse.json(_metas(['x', 'y'])),
+    );
+    server.route(
+      '/a/catalog/movie/top/skip=100.json',
+      FakeResponse.json(_metas(['y', 'w'])),
+    );
+    final addon = _addon(server, '/a', 'a');
+    final c = addon.catalogs.first;
+    final agg = CatalogAggregator(_client(), TtlCache());
+    await agg.rows([addon]).toList();
+    expect((await agg.page(addon, c, skip: 200)).map((m) => m.id), ['x', 'y']);
+    // Règle : dédoublonnage seulement contre les skip inférieurs déjà livrés,
+    // donc 'y' (livré à skip=200) reste présent à skip=100.
+    expect((await agg.page(addon, c, skip: 100)).map((m) => m.id), ['y', 'w']);
+  });
+
   test('au plus 4 requêtes simultanées (pic mesuré)', () async {
     final catalogs = [
       for (var i = 0; i < 8; i++)
