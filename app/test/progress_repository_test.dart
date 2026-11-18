@@ -125,6 +125,56 @@ void main() {
     },
   );
 
+  test(
+    'migration v4 vers v5 : ajoute certification (nulle), garde les lignes',
+    () async {
+      driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+      final old = AppDatabase(
+        NativeDatabase.memory(
+          setup: (raw) {
+            raw.execute(
+              'CREATE TABLE progress (profile_id TEXT NOT NULL DEFAULT \'default\', '
+              'item_id TEXT NOT NULL, position_ms INTEGER NOT NULL DEFAULT 0, '
+              'duration_ms INTEGER NOT NULL DEFAULT 0, '
+              'updated_at INTEGER NOT NULL DEFAULT 0, '
+              'meta_id TEXT NOT NULL DEFAULT \'\', '
+              'watched INTEGER NOT NULL DEFAULT 0, '
+              'PRIMARY KEY (profile_id, item_id))',
+            );
+            raw.execute(
+              "INSERT INTO progress VALUES ('p', 'tt1', 40, 100, 7, 'tt1', 0)",
+            );
+            raw.execute('PRAGMA user_version = 4');
+          },
+        ),
+      );
+      addTearDown(old.close);
+      final rows = await old.select(old.progress).get();
+      expect(rows.single.itemId, 'tt1');
+      expect(rows.single.certification, isNull);
+    },
+  );
+
+  test(
+    'certification : mémorisée, conservée quand une sauvegarde l\'ignore',
+    () async {
+      await repo.save(
+        'p',
+        'tt1',
+        'tt1',
+        _min * 10,
+        _min * 100,
+        certification: 'PG',
+      );
+      await repo.save('p', 'tt1', 'tt1', _min * 20, _min * 100);
+      expect((await repo.get('p', 'tt1'))!.certification, 'PG');
+      expect(
+        (await repo.continueWatching('p').first).single.certification,
+        'PG',
+      );
+    },
+  );
+
   test('get : renvoie la progression enregistrée, null sinon', () async {
     expect(await repo.get('p', 'tt1'), isNull);
     await save('tt1', 'tt1', 40);

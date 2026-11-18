@@ -80,9 +80,11 @@ class GuardedNetworkImage extends ImageProvider<GuardedNetworkImage> {
   ) async {
     final cache = this.cache ?? sharedImageCache;
     final id = url.toString();
-    var bytes = cache.get(id);
+    // Garde d'abord : une entrée en cache ne contourne jamais le refus ; la
+    // clé distingue aussi les deux niveaux de confiance.
+    UrlGuard.check(url, allowPrivate: allowPrivate);
+    var bytes = cache.get('${allowPrivate ? 'p' : 'u'}|$id');
     if (bytes == null) {
-      UrlGuard.check(url, allowPrivate: allowPrivate);
       final http =
           fetcher ??
           IoHttpFetcher(
@@ -98,7 +100,7 @@ class GuardedNetworkImage extends ImageProvider<GuardedNetworkImage> {
         throw StateError('image indisponible');
       }
       bytes = Uint8List.fromList(res.body);
-      cache.put(id, bytes);
+      cache.put('${allowPrivate ? 'p' : 'u'}|$id', bytes);
     }
     final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
     return decode(buffer);

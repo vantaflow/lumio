@@ -71,6 +71,10 @@ class Progress extends Table {
   /// Marqué comme vu (≥ 90 %, v3).
   BoolColumn get watched => boolean().withDefault(const Constant(false))();
 
+  /// Certification d'âge du titre (v5), pour le filtre des profils enfants ;
+  /// nulle si inconnue.
+  TextColumn get certification => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {profileId, itemId};
 }
@@ -112,7 +116,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -133,6 +137,7 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(profiles, profiles.isKid);
         await m.addColumn(profiles, profiles.locked);
       }
+      if (from < 5) await m.addColumn(progress, progress.certification);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

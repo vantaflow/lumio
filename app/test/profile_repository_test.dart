@@ -27,6 +27,17 @@ void main() {
             'name TEXT NOT NULL, created_at INTEGER NOT NULL DEFAULT 0)',
           );
           raw.execute("INSERT INTO profiles VALUES ('default', 'Moi', 5)");
+          // La migration continue jusqu'à v5 : la table de progression v3
+          // doit exister.
+          raw.execute(
+            'CREATE TABLE progress (profile_id TEXT NOT NULL DEFAULT \'default\', '
+            'item_id TEXT NOT NULL, position_ms INTEGER NOT NULL DEFAULT 0, '
+            'duration_ms INTEGER NOT NULL DEFAULT 0, '
+            'updated_at INTEGER NOT NULL DEFAULT 0, '
+            'meta_id TEXT NOT NULL DEFAULT \'\', '
+            'watched INTEGER NOT NULL DEFAULT 0, '
+            'PRIMARY KEY (profile_id, item_id))',
+          );
           raw.execute('PRAGMA user_version = 3');
         },
       ),

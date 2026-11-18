@@ -15,6 +15,7 @@ class ProgressEntry {
     required this.duration,
     required this.watched,
     required this.updatedAt,
+    this.certification,
   });
 
   final String profileId;
@@ -28,6 +29,9 @@ class ProgressEntry {
   final Duration duration;
   final bool watched;
   final DateTime updatedAt;
+
+  /// Certification d'âge du titre ; nulle si inconnue (masqué aux enfants).
+  final String? certification;
 }
 
 /// Progression locale (SQLite) : reprise, « vu » et rangée « Continuer ».
@@ -50,6 +54,7 @@ class ProgressRepository {
     Duration pos,
     Duration dur, {
     String? nextVideoId,
+    String? certification,
   }) async {
     final stamp = _now().millisecondsSinceEpoch;
     final watched = ProgressRules.isWatched(pos, dur);
@@ -65,6 +70,7 @@ class ProgressRepository {
               durationMs: Value(dur.inMilliseconds),
               watched: Value(watched),
               updatedAt: Value(stamp),
+              certification: Value.absentIfNull(certification),
             ),
           );
       if (!watched || nextVideoId == null) return;
@@ -100,6 +106,7 @@ class ProgressRepository {
               durationMs: const Value(0),
               watched: const Value(false),
               updatedAt: Value(stamp + 1),
+              certification: Value.absentIfNull(certification),
             ),
           );
     });
@@ -155,6 +162,7 @@ class ProgressRepository {
     duration: Duration(milliseconds: r.durationMs),
     watched: r.watched,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(r.updatedAt, isUtc: true),
+    certification: r.certification,
   );
 }
 

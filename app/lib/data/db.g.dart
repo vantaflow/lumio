@@ -1330,6 +1330,17 @@ class $ProgressTable extends Progress
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _certificationMeta = const VerificationMeta(
+    'certification',
+  );
+  @override
+  late final GeneratedColumn<String> certification = GeneratedColumn<String>(
+    'certification',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     profileId,
@@ -1339,6 +1350,7 @@ class $ProgressTable extends Progress
     updatedAt,
     metaId,
     watched,
+    certification,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1396,6 +1408,15 @@ class $ProgressTable extends Progress
         watched.isAcceptableOrUnknown(data['watched']!, _watchedMeta),
       );
     }
+    if (data.containsKey('certification')) {
+      context.handle(
+        _certificationMeta,
+        certification.isAcceptableOrUnknown(
+          data['certification']!,
+          _certificationMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1433,6 +1454,10 @@ class $ProgressTable extends Progress
         DriftSqlType.bool,
         data['${effectivePrefix}watched'],
       )!,
+      certification: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}certification'],
+      ),
     );
   }
 
@@ -1455,6 +1480,10 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
 
   /// Marqué comme vu (≥ 90 %, v3).
   final bool watched;
+
+  /// Certification d'âge du titre (v5), pour le filtre des profils enfants ;
+  /// nulle si inconnue.
+  final String? certification;
   const ProgressData({
     required this.profileId,
     required this.itemId,
@@ -1463,6 +1492,7 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     required this.updatedAt,
     required this.metaId,
     required this.watched,
+    this.certification,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1474,6 +1504,9 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     map['updated_at'] = Variable<int>(updatedAt);
     map['meta_id'] = Variable<String>(metaId);
     map['watched'] = Variable<bool>(watched);
+    if (!nullToAbsent || certification != null) {
+      map['certification'] = Variable<String>(certification);
+    }
     return map;
   }
 
@@ -1486,6 +1519,9 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       updatedAt: Value(updatedAt),
       metaId: Value(metaId),
       watched: Value(watched),
+      certification: certification == null && nullToAbsent
+          ? const Value.absent()
+          : Value(certification),
     );
   }
 
@@ -1502,6 +1538,7 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       metaId: serializer.fromJson<String>(json['metaId']),
       watched: serializer.fromJson<bool>(json['watched']),
+      certification: serializer.fromJson<String?>(json['certification']),
     );
   }
   @override
@@ -1515,6 +1552,7 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       'updatedAt': serializer.toJson<int>(updatedAt),
       'metaId': serializer.toJson<String>(metaId),
       'watched': serializer.toJson<bool>(watched),
+      'certification': serializer.toJson<String?>(certification),
     };
   }
 
@@ -1526,6 +1564,7 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     int? updatedAt,
     String? metaId,
     bool? watched,
+    Value<String?> certification = const Value.absent(),
   }) => ProgressData(
     profileId: profileId ?? this.profileId,
     itemId: itemId ?? this.itemId,
@@ -1534,6 +1573,9 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     updatedAt: updatedAt ?? this.updatedAt,
     metaId: metaId ?? this.metaId,
     watched: watched ?? this.watched,
+    certification: certification.present
+        ? certification.value
+        : this.certification,
   );
   ProgressData copyWithCompanion(ProgressCompanion data) {
     return ProgressData(
@@ -1548,6 +1590,9 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       metaId: data.metaId.present ? data.metaId.value : this.metaId,
       watched: data.watched.present ? data.watched.value : this.watched,
+      certification: data.certification.present
+          ? data.certification.value
+          : this.certification,
     );
   }
 
@@ -1560,7 +1605,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           ..write('durationMs: $durationMs, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('metaId: $metaId, ')
-          ..write('watched: $watched')
+          ..write('watched: $watched, ')
+          ..write('certification: $certification')
           ..write(')'))
         .toString();
   }
@@ -1574,6 +1620,7 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     updatedAt,
     metaId,
     watched,
+    certification,
   );
   @override
   bool operator ==(Object other) =>
@@ -1585,7 +1632,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           other.durationMs == this.durationMs &&
           other.updatedAt == this.updatedAt &&
           other.metaId == this.metaId &&
-          other.watched == this.watched);
+          other.watched == this.watched &&
+          other.certification == this.certification);
 }
 
 class ProgressCompanion extends UpdateCompanion<ProgressData> {
@@ -1596,6 +1644,7 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
   final Value<int> updatedAt;
   final Value<String> metaId;
   final Value<bool> watched;
+  final Value<String?> certification;
   final Value<int> rowid;
   const ProgressCompanion({
     this.profileId = const Value.absent(),
@@ -1605,6 +1654,7 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     this.updatedAt = const Value.absent(),
     this.metaId = const Value.absent(),
     this.watched = const Value.absent(),
+    this.certification = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProgressCompanion.insert({
@@ -1615,6 +1665,7 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     this.updatedAt = const Value.absent(),
     this.metaId = const Value.absent(),
     this.watched = const Value.absent(),
+    this.certification = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : itemId = Value(itemId);
   static Insertable<ProgressData> custom({
@@ -1625,6 +1676,7 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     Expression<int>? updatedAt,
     Expression<String>? metaId,
     Expression<bool>? watched,
+    Expression<String>? certification,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1635,6 +1687,7 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (metaId != null) 'meta_id': metaId,
       if (watched != null) 'watched': watched,
+      if (certification != null) 'certification': certification,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1647,6 +1700,7 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     Value<int>? updatedAt,
     Value<String>? metaId,
     Value<bool>? watched,
+    Value<String?>? certification,
     Value<int>? rowid,
   }) {
     return ProgressCompanion(
@@ -1657,6 +1711,7 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
       updatedAt: updatedAt ?? this.updatedAt,
       metaId: metaId ?? this.metaId,
       watched: watched ?? this.watched,
+      certification: certification ?? this.certification,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1685,6 +1740,9 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     if (watched.present) {
       map['watched'] = Variable<bool>(watched.value);
     }
+    if (certification.present) {
+      map['certification'] = Variable<String>(certification.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1701,6 +1759,7 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('metaId: $metaId, ')
           ..write('watched: $watched, ')
+          ..write('certification: $certification, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2860,6 +2919,7 @@ typedef $$ProgressTableCreateCompanionBuilder =
       Value<int> updatedAt,
       Value<String> metaId,
       Value<bool> watched,
+      Value<String?> certification,
       Value<int> rowid,
     });
 typedef $$ProgressTableUpdateCompanionBuilder =
@@ -2871,6 +2931,7 @@ typedef $$ProgressTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<String> metaId,
       Value<bool> watched,
+      Value<String?> certification,
       Value<int> rowid,
     });
 
@@ -2915,6 +2976,11 @@ class $$ProgressTableFilterComposer
 
   ColumnFilters<bool> get watched => $composableBuilder(
     column: $table.watched,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get certification => $composableBuilder(
+    column: $table.certification,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2962,6 +3028,11 @@ class $$ProgressTableOrderingComposer
     column: $table.watched,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get certification => $composableBuilder(
+    column: $table.certification,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProgressTableAnnotationComposer
@@ -2997,6 +3068,11 @@ class $$ProgressTableAnnotationComposer
 
   GeneratedColumn<bool> get watched =>
       $composableBuilder(column: $table.watched, builder: (column) => column);
+
+  GeneratedColumn<String> get certification => $composableBuilder(
+    column: $table.certification,
+    builder: (column) => column,
+  );
 }
 
 class $$ProgressTableTableManager
@@ -3037,6 +3113,7 @@ class $$ProgressTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<String> metaId = const Value.absent(),
                 Value<bool> watched = const Value.absent(),
+                Value<String?> certification = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProgressCompanion(
                 profileId: profileId,
@@ -3046,6 +3123,7 @@ class $$ProgressTableTableManager
                 updatedAt: updatedAt,
                 metaId: metaId,
                 watched: watched,
+                certification: certification,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3057,6 +3135,7 @@ class $$ProgressTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<String> metaId = const Value.absent(),
                 Value<bool> watched = const Value.absent(),
+                Value<String?> certification = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProgressCompanion.insert(
                 profileId: profileId,
@@ -3066,6 +3145,7 @@ class $$ProgressTableTableManager
                 updatedAt: updatedAt,
                 metaId: metaId,
                 watched: watched,
+                certification: certification,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

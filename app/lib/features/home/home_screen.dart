@@ -167,13 +167,24 @@ class _HomeBody extends ConsumerWidget {
           message: 'Impossible de charger vos addons',
           onRetry: () => ref.read(addonsProvider.notifier).reload(),
         );
+      case HomePhase.noCatalog:
+        return const StateView.empty(
+          message: 'Vos addons ne proposent aucun catalogue',
+        );
       case HomePhase.noAddons:
-        return StateView.empty(
+        final help = StateView.empty(
           message:
               'Ajoutez un addon ou une source personnelle pour remplir '
               'votre accueil.',
           actionLabel: 'Gérer les addons',
           onAction: onOpenAddons,
+        );
+        // Les reprises restent accessibles même sans addon.
+        return Column(
+          children: [
+            const _ContinueRow(),
+            Expanded(child: help),
+          ],
         );
       case HomePhase.filtered:
         return const StateView.empty(
@@ -242,6 +253,7 @@ class _CatalogRowView extends ConsumerWidget {
       title: spec.title,
       items: items,
       onOpenItem: onOpenItem,
+      allowPrivate: spec.allowPrivate,
     );
   }
 }
@@ -273,8 +285,10 @@ class _PosterRow extends ConsumerWidget {
     required this.title,
     required this.items,
     required this.onOpenItem,
+    this.allowPrivate = false,
   });
 
+  final bool allowPrivate;
   final String rowId;
   final String title;
   final List<MetaPreview> items;
@@ -282,7 +296,6 @@ class _PosterRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final priv = ref.watch(homeRowsProvider.select((s) => s.privateAddons));
     return TvRow(
       title: title,
       restorationId: rowId,
@@ -294,7 +307,7 @@ class _PosterRow extends ConsumerWidget {
           PosterCard(
             key: ValueKey('${m.sourceAddonId}|${m.id}'),
             item: m,
-            allowPrivate: priv.contains(m.sourceAddonId),
+            allowPrivate: allowPrivate,
             onSelect: () => onOpenItem?.call(m),
           ),
       ],
@@ -307,7 +320,10 @@ class _ContinueRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entries = ref.watch(continueWatchingProvider).value ?? const [];
+    final entries = visibleProgress(
+      ref.watch(continueWatchingProvider).value ?? const [],
+      ref.watch(currentProfileProvider),
+    );
     if (entries.isEmpty) return const SizedBox.shrink();
     final playback = ref.watch(continuePlaybackProvider);
     return TvRow(

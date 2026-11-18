@@ -171,6 +171,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final id = _videoId;
     if (metaId == null || id == null) return null;
     final nextId = _next?.id;
+    final certification = widget.meta?.certification;
     // Lu ici : `ref` n'est plus utilisable quand dispose() écrit la sortie.
     final repo = ref.read(progressRepositoryProvider);
     return ProgressRecorder(
@@ -182,6 +183,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         pos,
         dur,
         nextVideoId: nextId,
+        certification: certification,
       ),
     );
   }

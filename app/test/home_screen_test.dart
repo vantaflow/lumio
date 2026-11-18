@@ -41,7 +41,9 @@ MetaPreview _meta(
   String? cert = 'G',
   String kind = 'addon',
   String addon = 'a',
+  Uri? poster,
 }) => MetaPreview(
+  poster: poster,
   id: id,
   type: 'movie',
   name: 'Film $id',
@@ -93,6 +95,24 @@ class _FakeAggregator implements CatalogAggregator {
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
+/// Répond par URL de transport (plusieurs addons partageant un id de manifeste).
+class _ByUrlAggregator implements CatalogAggregator {
+  _ByUrlAggregator(this.byHost);
+  final Map<String, List<CatalogRow>> byHost;
+
+  @override
+  Stream<CatalogRow> rows(List<AddonManifest> addons) async* {
+    for (final a in addons) {
+      for (final r in byHost[a.transportUrl.host] ?? const <CatalogRow>[]) {
+        yield r;
+      }
+    }
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
 class _FakeAddons extends AddonsController {
   _FakeAddons(this.list);
   final List<InstalledAddon> list;
@@ -116,10 +136,11 @@ class _RecordingPlayback implements ContinuePlayback {
 InstalledAddon _installed(AddonManifest m, {bool enabled = true}) =>
     InstalledAddon(id: m.id, manifest: m, position: 0, enabled: enabled);
 
-ProgressEntry _progress() => ProgressEntry(
+ProgressEntry _progress({String meta = 'tt9', String? cert}) => ProgressEntry(
+  certification: cert,
   profileId: 'default',
-  metaId: 'tt9',
-  videoId: 'tt9:1:2',
+  metaId: meta,
+  videoId: '$meta:1:2',
   position: const Duration(seconds: 125),
   duration: const Duration(minutes: 40),
   watched: false,
@@ -135,9 +156,10 @@ class _H {
 
   Future<void> pump({
     List<InstalledAddon> addons = const [],
-    _FakeAggregator? aggregator,
+    CatalogAggregator? aggregator,
     List<ProgressEntry> progress = const [],
     Profile? profile,
+    List<MetaPreview>? library,
   }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
@@ -153,6 +175,8 @@ class _H {
         ),
         continueWatchingProvider.overrideWith((ref) => Stream.value(progress)),
         continuePlaybackProvider.overrideWithValue(playback),
+        if (library != null)
+          libraryProvider.overrideWith((ref) => Stream.value(library)),
       ],
     );
     addTearDown(container.dispose);
@@ -284,6 +308,31 @@ void main() {
         });
       }
       expect(fetcher.count, 1);
+    });
+
+    testWidgets('le cache ne contourne pas la garde', (t) async {
+      final fetcher = _CountingFetcher(png);
+      final cache = ImageBytesCache();
+      final url = Uri.parse('http://192.168.1.5/p.png');
+      Future<Object?> load(bool allow) => t.runAsync(() async {
+        final c = Completer<Object?>();
+        GuardedNetworkImage(
+              url,
+              allowPrivate: allow,
+              fetcher: fetcher,
+              cache: cache,
+            )
+            .resolve(ImageConfiguration.empty)
+            .addListener(
+              ImageStreamListener(
+                (_, _) => c.complete(null),
+                onError: (e, _) => c.complete(e),
+              ),
+            );
+        return c.future;
+      });
+      expect(await load(true), isNull);
+      expect(await load(false), isA<UnsafeUrlException>());
     });
 
     test('cache LRU borné', () {
@@ -491,6 +540,152 @@ void main() {
         )..where((s) => s.key.equals('home_layout:default'))).getSingle(),
       );
       expect(row!.value, contains('cat:a|movie|new'));
+      await h.close();
+    });
+
+    testWidgets(
+      'même id de manifeste : l\'addon public ne reçoit pas le privé',
+      (t) async {
+        final h = _H(t);
+        final pub = _manifest(
+          'same',
+          url: 'https://pub.example.com/t/manifest.json',
+        );
+        final priv = _manifest(
+          'same',
+          url: 'http://192.168.1.5:7000/manifest.json',
+        );
+        final poster = Uri.parse('http://192.168.1.9/p.png');
+        await h.pump(
+          addons: [
+            InstalledAddon(
+              id: 'pub',
+              manifest: pub,
+              position: 0,
+              enabled: true,
+            ),
+            InstalledAddon(
+              id: 'priv',
+              manifest: priv,
+              position: 1,
+              enabled: true,
+            ),
+          ],
+          aggregator: _ByUrlAggregator({
+            'pub.example.com': [
+              _row('same', 'top', [_meta('1', addon: 'same', poster: poster)]),
+            ],
+            '192.168.1.5': [
+              _row('same', 'top', [_meta('2', addon: 'same', poster: poster)]),
+            ],
+          }),
+        );
+        expect(t.takeException(), isNull); // pas de clés dupliquées
+        expect(find.text('Film 1'), findsOneWidget);
+        expect(find.text('Film 2'), findsOneWidget);
+        bool allow(String film) {
+          final card = find.ancestor(
+            of: find.text(film),
+            matching: find.byType(PosterCard),
+          );
+          final img = t.widget<Image>(
+            find.descendant(of: card, matching: find.byType(Image)),
+          );
+          final p =
+              (img.image as ResizeImage).imageProvider as GuardedNetworkImage;
+          return p.allowPrivate;
+        }
+
+        expect(allow('Film 1'), isFalse);
+        expect(allow('Film 2'), isTrue);
+        await h.close();
+      },
+    );
+
+    testWidgets('profil enfant : « Continuer » filtré par certification', (
+      t,
+    ) async {
+      final h = _H(t);
+      await h.pump(
+        addons: [_installed(_manifest('a'))],
+        aggregator: _FakeAggregator([
+          [
+            _row('a', 'top', [_meta('1', cert: 'PG')]),
+          ],
+        ]),
+        progress: [
+          _progress(meta: 'ok', cert: 'G'),
+          _progress(meta: 'adulte', cert: 'R'),
+          _progress(meta: 'inconnu'),
+        ],
+        profile: _kid(),
+      );
+      expect(find.text('Série ok'), findsOneWidget);
+      expect(find.text('Série adulte'), findsNothing);
+      expect(find.text('Série inconnu'), findsNothing);
+      await h.close();
+    });
+
+    testWidgets('profil enfant : tout filtré, Continuer et Ma liste compris', (
+      t,
+    ) async {
+      final h = _H(t);
+      await h.pump(
+        addons: [_installed(_manifest('a'))],
+        aggregator: _FakeAggregator([
+          [
+            _row('a', 'top', [_meta('1', cert: 'R')]),
+          ],
+        ]),
+        progress: [_progress(meta: 'adulte', cert: 'R')],
+        library: [_meta('9', cert: null)],
+        profile: _kid(),
+      );
+      expect(find.text('Aucun contenu adapté à ce profil'), findsOneWidget);
+      expect(find.text('Film 9'), findsNothing);
+      await h.close();
+    });
+
+    testWidgets('profil enfant : « Ma liste » filtrée', (t) async {
+      final h = _H(t);
+      await h.pump(
+        addons: [_installed(_manifest('a'))],
+        aggregator: _FakeAggregator([
+          [
+            _row('a', 'top', [_meta('1', cert: 'G')]),
+          ],
+        ]),
+        library: [
+          _meta('8', cert: 'G'),
+          _meta('9', cert: 'R'),
+        ],
+        profile: _kid(),
+      );
+      expect(find.text('Film 8'), findsWidgets);
+      expect(find.text('Film 9'), findsNothing);
+      await h.close();
+    });
+
+    testWidgets('addons sans aucun titre : message clair', (t) async {
+      final h = _H(t);
+      await h.pump(
+        addons: [_installed(_manifest('a'))],
+        aggregator: _FakeAggregator([
+          [_row('a', 'top', const [])],
+        ]),
+      );
+      expect(
+        find.text('Vos addons ne proposent aucun catalogue'),
+        findsOneWidget,
+      );
+      await h.close();
+    });
+
+    testWidgets('sans addon, « Continuer » reste affiché', (t) async {
+      final h = _H(t);
+      await h.pump(progress: [_progress()]);
+      expect(find.text('Continuer à regarder'), findsOneWidget);
+      expect(find.textContaining('Ajoutez un addon'), findsOneWidget);
       await h.close();
     });
 

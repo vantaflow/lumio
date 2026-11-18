@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/library_repository.dart';
+import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/providers.dart';
@@ -75,8 +76,9 @@ class HomeLayoutController extends AsyncNotifier<HomeLayout> {
     }
   }
 
-  Future<void> setHidden(String id, bool hidden) {
-    final cur = state.value ?? const HomeLayout();
+  Future<void> setHidden(String id, bool hidden) async {
+    // Attend la disposition chargée : jamais d'écrasement par les défauts.
+    final cur = state.value ?? await future;
     return _set(
       cur.copyWith(
         hidden: hidden ? {...cur.hidden, id} : ({...cur.hidden}..remove(id)),
@@ -85,13 +87,14 @@ class HomeLayoutController extends AsyncNotifier<HomeLayout> {
   }
 
   /// Déplace [id] d'un cran dans [arranged] (ordre complet courant).
-  Future<void> move(String id, int delta, List<String> arranged) {
+  Future<void> move(String id, int delta, List<String> arranged) async {
     final i = arranged.indexOf(id);
     final j = i + delta;
-    if (i < 0 || j < 0 || j >= arranged.length) return Future.value();
+    if (i < 0 || j < 0 || j >= arranged.length) return;
+    final cur = state.value ?? await future;
     final order = [...arranged];
     order.insert(j, order.removeAt(i));
-    return _set((state.value ?? const HomeLayout()).copyWith(order: order));
+    return _set(cur.copyWith(order: order));
   }
 }
 
@@ -100,6 +103,7 @@ class HomeLayoutController extends AsyncNotifier<HomeLayout> {
 class RowSpec {
   const RowSpec({
     required this.id,
+    required this.addonId,
     required this.title,
     required this.manifest,
     required this.catalog,
@@ -107,28 +111,27 @@ class RowSpec {
   });
 
   final String id;
+
+  /// Identifiant de stockage de l'addon (unique), pas celui du manifeste.
+  final String addonId;
   final String title;
   final AddonManifest manifest;
   final CatalogDecl catalog;
+
+  /// Vrai si l'agrégateur qui produit la rangée accepte le réseau privé ;
+  /// vaut aussi pour les affiches de la rangée.
   final bool allowPrivate;
 
   String get addonName => manifest.name;
 }
 
 class HomeRowsState {
-  const HomeRowsState({
-    this.specs = const [],
-    this.rows = const {},
-    this.privateAddons = const {},
-  });
+  const HomeRowsState({this.specs = const [], this.rows = const {}});
 
   final List<RowSpec> specs;
 
   /// Rangées déjà arrivées (par identifiant de rangée).
   final Map<String, CatalogRow> rows;
-
-  /// Addons approuvés pour le réseau privé (leurs affiches aussi).
-  final Set<String> privateAddons;
 
   bool get complete => specs.every((s) => rows.containsKey(s.id));
 }
@@ -152,6 +155,7 @@ final homeRowsProvider = NotifierProvider<HomeRowsController, HomeRowsState>(
 
 class HomeRowsController extends Notifier<HomeRowsState> {
   final List<StreamSubscription<CatalogRow>> _subs = [];
+  final Map<String, StreamSubscription<CatalogRow>> _retries = {};
 
   @override
   HomeRowsState build() {
@@ -161,18 +165,18 @@ class HomeRowsController extends Notifier<HomeRowsState> {
     if (addons == null) return const HomeRowsState();
     final usable = [
       for (final a in addons)
-        if (a.enabled && !a.broken) a.manifest!,
+        if (a.enabled && !a.broken) a,
     ];
     final specs = <RowSpec>[];
-    final privateAddons = <String>{};
-    for (final m in usable) {
+    for (final a in usable) {
+      final m = a.manifest!;
       final priv = isPrivateAddress(m.transportUrl);
-      if (priv) privateAddons.add(m.id);
       for (final c in m.catalogs) {
         if (c.extra.any((e) => e.isRequired)) continue;
         specs.add(
           RowSpec(
-            id: catalogRowId(m.id, c.type, c.id),
+            id: catalogRowId(a.id, c.type, c.id),
+            addonId: a.id,
             title: c.name,
             manifest: m,
             catalog: c,
@@ -182,30 +186,26 @@ class HomeRowsController extends Notifier<HomeRowsState> {
       }
     }
     _load(usable);
-    return HomeRowsState(specs: specs, privateAddons: privateAddons);
+    return HomeRowsState(specs: specs);
   }
 
-  void _load(List<AddonManifest> manifests) {
+  /// Un flux par addon : la rangée est rattachée à l'identifiant de stockage
+  /// (deux addons peuvent déclarer le même identifiant de manifeste).
+  void _load(List<InstalledAddon> addons) {
     final factory = ref.read(aggregatorFactoryProvider);
-    for (final priv in [false, true]) {
-      final group = [
-        for (final m in manifests)
-          if (isPrivateAddress(m.transportUrl) == priv) m,
-      ];
-      if (group.isEmpty) continue;
+    for (final a in addons) {
+      final m = a.manifest!;
       _subs.add(
-        factory(allowPrivate: priv).rows(group).listen(_onRow, onError: (_) {}),
+        factory(
+          allowPrivate: isPrivateAddress(m.transportUrl),
+        ).rows([m]).listen((r) => _onRow(a.id, r), onError: (_) {}),
       );
     }
   }
 
-  void _onRow(CatalogRow row) {
-    final id = catalogRowId(row.addonId, row.type, row.catalogId);
-    state = HomeRowsState(
-      specs: state.specs,
-      rows: {...state.rows, id: row},
-      privateAddons: state.privateAddons,
-    );
+  void _onRow(String addonId, CatalogRow row) {
+    final id = catalogRowId(addonId, row.type, row.catalogId);
+    state = HomeRowsState(specs: state.specs, rows: {...state.rows, id: row});
   }
 
   void _cancel() {
@@ -213,16 +213,20 @@ class HomeRowsController extends Notifier<HomeRowsState> {
       s.cancel();
     }
     _subs.clear();
+    for (final s in _retries.values) {
+      s.cancel();
+    }
+    _retries.clear();
   }
 
   /// Relance une rangée en erreur : elle repasse en squelette.
   void retry(String rowId) {
     final spec = state.specs.where((s) => s.id == rowId).firstOrNull;
     if (spec == null) return;
+    _retries.remove(rowId)?.cancel();
     state = HomeRowsState(
       specs: state.specs,
       rows: {...state.rows}..remove(rowId),
-      privateAddons: state.privateAddons,
     );
     final single = AddonManifest(
       id: spec.manifest.id,
@@ -236,27 +240,44 @@ class HomeRowsController extends Notifier<HomeRowsState> {
       logo: spec.manifest.logo,
       idPrefixes: spec.manifest.idPrefixes,
     );
-    _subs.add(
-      ref
-          .read(aggregatorFactoryProvider)(allowPrivate: spec.allowPrivate)
-          .rows([single])
-          .listen(_onRow, onError: (_) {}),
-    );
+    _retries[rowId] = ref
+        .read(aggregatorFactoryProvider)(allowPrivate: spec.allowPrivate)
+        .rows([single])
+        .listen((r) => _onRow(spec.addonId, r), onError: (_) {});
   }
 }
+
+/// Limite d'âge d'un profil enfant ; valeur corrompue = la plus stricte.
+AgeLimit _limitOf(Profile p) =>
+    p.ageLimit >= 0 && p.ageLimit < AgeLimit.values.length
+    ? AgeLimit.values[p.ageLimit]
+    : AgeLimit.all;
 
 /// Éléments visibles par le profil actif (filtre d'âge : certification
 /// inconnue masquée pour un profil enfant).
 List<MetaPreview> visibleItems(List<MetaPreview> items, Profile? profile) {
   if (profile == null || !profile.isKid) return items;
-  final limit = AgeLimit.values[profile.ageLimit];
+  final limit = _limitOf(profile);
   return [
     for (final m in items)
       if (ratingAllows(m.certification, limit)) m,
   ];
 }
 
-enum HomePhase { loading, error, noAddons, filtered, ready }
+/// Même règle pour « Continuer » (certification mémorisée avec la progression).
+List<ProgressEntry> visibleProgress(
+  List<ProgressEntry> entries,
+  Profile? profile,
+) {
+  if (profile == null || !profile.isKid) return entries;
+  final limit = _limitOf(profile);
+  return [
+    for (final e in entries)
+      if (ratingAllows(e.certification, limit)) e,
+  ];
+}
+
+enum HomePhase { loading, error, noAddons, filtered, noCatalog, ready }
 
 /// Vue d'ensemble de l'accueil ; comparée par valeur pour que l'écran ne se
 /// reconstruise pas à chaque rangée qui arrive.
@@ -290,17 +311,24 @@ final homeSummaryProvider = Provider<HomeSummary>((ref) {
   if (specs.isEmpty) return HomeSummary(HomePhase.noAddons, ids);
 
   final profile = ref.watch(currentProfileProvider);
-  if (profile != null && profile.isKid) {
-    final rows = ref.watch(homeRowsProvider);
-    final cont = ref.watch(continueWatchingProvider).value ?? const [];
-    final lib = ref.watch(libraryProvider).value ?? const [];
-    if (rows.complete && cont.isEmpty && lib.isEmpty) {
+  final rows = ref.watch(homeRowsProvider);
+  if (rows.complete && rows.rows.values.every((r) => !r.failed)) {
+    final cont = visibleProgress(
+      ref.watch(continueWatchingProvider).value ?? const [],
+      profile,
+    );
+    final lib = visibleItems(
+      ref.watch(libraryProvider).value ?? const [],
+      profile,
+    );
+    if (cont.isEmpty && lib.isEmpty) {
       final raw = rows.rows.values.fold<int>(0, (n, r) => n + r.items.length);
       final shown = rows.rows.values.fold<int>(
         0,
         (n, r) => n + visibleItems(r.items, profile).length,
       );
-      if (raw > 0 && shown == 0) return HomeSummary(HomePhase.filtered, ids);
+      if (raw == 0) return HomeSummary(HomePhase.noCatalog, ids);
+      if (shown == 0) return HomeSummary(HomePhase.filtered, ids);
     }
   }
   return HomeSummary(HomePhase.ready, ids);
