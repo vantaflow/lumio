@@ -944,4 +944,74 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errPairRateLimited =>
       'Trop de demandes, réessayez dans une minute';
+
+  @override
+  String onboardingStep(int n, int total) {
+    return 'Étape $n sur $total';
+  }
+
+  @override
+  String get onboardingSkip => 'Passer';
+
+  @override
+  String get onboardingStart => 'Commencer';
+
+  @override
+  String get onboardingLanguageTitle => 'Choisissez votre langue';
+
+  @override
+  String get onboardingProfileTitle => 'Votre profil';
+
+  @override
+  String get onboardingProfileBody =>
+      'Comment doit-on vous appeler ? Vous pourrez le changer plus tard.';
+
+  @override
+  String get onboardingProfileName => 'Nom du profil';
+
+  @override
+  String get onboardingAddKid => 'Ajouter un profil enfant';
+
+  @override
+  String onboardingKidAdded(String name) {
+    return 'Profil enfant ajouté : $name';
+  }
+
+  @override
+  String get onboardingSourcesTitle => 'Ajoutez vos sources';
+
+  @override
+  String get onboardingSourcesBody =>
+      'Lumio ne propose aucun contenu : ajoutez vos propres sources pour remplir l\'accueil.';
+
+  @override
+  String onboardingAddonsInstalled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count addons installés',
+      one: '1 addon installé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get onboardingDoneTitle => 'Tout est prêt';
+
+  @override
+  String get onboardingDoneBody =>
+      'Vous pourrez ajouter ou changer vos sources à tout moment depuis les réglages.';
+
+  @override
+  String get onboardingSaveError => 'Enregistrement impossible, réessayez';
+
+  @override
+  String get sourcesReminderTitle => 'Ajoutez vos sources';
+
+  @override
+  String get sourcesReminderBody =>
+      'Votre accueil est vide tant qu\'aucune source n\'est ajoutée.';
+
+  @override
+  String get sourcesReminderDismiss => 'Masquer';
 }

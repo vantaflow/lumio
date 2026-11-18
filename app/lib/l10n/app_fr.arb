@@ -475,8 +475,8 @@
   "pairStep1": "Scannez ce code avec votre téléphone.",
   "pairStep2": "Collez le lien et touchez Envoyer.",
   "pairStep3": "Il arrive ici : vous confirmez ensuite l'installation.",
-  "pairOrOpen": "Ou ouvrez {url} et saisissez le code."
-,  "@pairOrOpen": {
+  "pairOrOpen": "Ou ouvrez {url} et saisissez le code.",
+  "@pairOrOpen": {
     "placeholders": {
       "url": {
         "type": "String"
@@ -484,8 +484,8 @@
     }
   },
   "pairCodeLabel": "Code",
-  "pairExpiresIn": "Expire dans {time}"
-,  "@pairExpiresIn": {
+  "pairExpiresIn": "Expire dans {time}",
+  "@pairExpiresIn": {
     "placeholders": {
       "time": {
         "type": "String"
@@ -498,5 +498,47 @@
   "pairQrLabel": "Code QR d'appairage",
   "errPairInsecure": "Adresse du serveur non sécurisée",
   "errPairUnavailable": "Serveur injoignable, réessayez",
-  "errPairRateLimited": "Trop de demandes, réessayez dans une minute"
+  "errPairRateLimited": "Trop de demandes, réessayez dans une minute",
+  "onboardingStep": "Étape {n} sur {total}",
+  "@onboardingStep": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingSkip": "Passer",
+  "onboardingStart": "Commencer",
+  "onboardingLanguageTitle": "Choisissez votre langue",
+  "onboardingProfileTitle": "Votre profil",
+  "onboardingProfileBody": "Comment doit-on vous appeler ? Vous pourrez le changer plus tard.",
+  "onboardingProfileName": "Nom du profil",
+  "onboardingAddKid": "Ajouter un profil enfant",
+  "onboardingKidAdded": "Profil enfant ajouté : {name}",
+  "@onboardingKidAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingSourcesTitle": "Ajoutez vos sources",
+  "onboardingSourcesBody": "Lumio ne propose aucun contenu : ajoutez vos propres sources pour remplir l'accueil.",
+  "onboardingAddonsInstalled": "{count, plural, =1{1 addon installé} other{{count} addons installés}}",
+  "@onboardingAddonsInstalled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingDoneTitle": "Tout est prêt",
+  "onboardingDoneBody": "Vous pourrez ajouter ou changer vos sources à tout moment depuis les réglages.",
+  "onboardingSaveError": "Enregistrement impossible, réessayez",
+  "sourcesReminderTitle": "Ajoutez vos sources",
+  "sourcesReminderBody": "Votre accueil est vide tant qu'aucune source n'est ajoutée.",
+  "sourcesReminderDismiss": "Masquer"
 }

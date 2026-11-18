@@ -931,4 +931,74 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errPairRateLimited => 'Too many requests, try again in a minute';
+
+  @override
+  String onboardingStep(int n, int total) {
+    return 'Step $n of $total';
+  }
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingStart => 'Get started';
+
+  @override
+  String get onboardingLanguageTitle => 'Choose your language';
+
+  @override
+  String get onboardingProfileTitle => 'Your profile';
+
+  @override
+  String get onboardingProfileBody =>
+      'What should we call you? You can change it later.';
+
+  @override
+  String get onboardingProfileName => 'Profile name';
+
+  @override
+  String get onboardingAddKid => 'Add a kid profile';
+
+  @override
+  String onboardingKidAdded(String name) {
+    return 'Kid profile added: $name';
+  }
+
+  @override
+  String get onboardingSourcesTitle => 'Add your sources';
+
+  @override
+  String get onboardingSourcesBody =>
+      'Lumio ships with no content: add your own sources to fill the home screen.';
+
+  @override
+  String onboardingAddonsInstalled(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count addons installed',
+      one: '1 addon installed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get onboardingDoneTitle => 'All set';
+
+  @override
+  String get onboardingDoneBody =>
+      'You can add or change your sources at any time from the settings.';
+
+  @override
+  String get onboardingSaveError => 'Could not save, please try again';
+
+  @override
+  String get sourcesReminderTitle => 'Add your sources';
+
+  @override
+  String get sourcesReminderBody =>
+      'Your home stays empty until you add a source.';
+
+  @override
+  String get sourcesReminderDismiss => 'Hide';
 }

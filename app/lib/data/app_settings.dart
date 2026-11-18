@@ -11,6 +11,9 @@ class AppSettingsStore {
   static const localeKey = 'ui_locale';
   static const torrentCacheKey = 'torrent_cache_gb';
   static const uploadKey = 'upload_kbps';
+  static const onboardingDoneKey = 'onboarding_done';
+  static const onboardingSkippedKey = 'onboarding_skipped';
+  static const sourcesReminderDismissedKey = 'sources_reminder_dismissed';
   static String subtitleLangKey(String profileId) => 'subtitle_lang:$profileId';
 
   Future<String?> read(String key) async {

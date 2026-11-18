@@ -1759,6 +1759,114 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Trop de demandes, réessayez dans une minute'**
   String get errPairRateLimited;
+
+  /// No description provided for @onboardingStep.
+  ///
+  /// In fr, this message translates to:
+  /// **'Étape {n} sur {total}'**
+  String onboardingStep(int n, int total);
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commencer'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingLanguageTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez votre langue'**
+  String get onboardingLanguageTitle;
+
+  /// No description provided for @onboardingProfileTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre profil'**
+  String get onboardingProfileTitle;
+
+  /// No description provided for @onboardingProfileBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment doit-on vous appeler ? Vous pourrez le changer plus tard.'**
+  String get onboardingProfileBody;
+
+  /// No description provided for @onboardingProfileName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom du profil'**
+  String get onboardingProfileName;
+
+  /// No description provided for @onboardingAddKid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un profil enfant'**
+  String get onboardingAddKid;
+
+  /// No description provided for @onboardingKidAdded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil enfant ajouté : {name}'**
+  String onboardingKidAdded(String name);
+
+  /// No description provided for @onboardingSourcesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoutez vos sources'**
+  String get onboardingSourcesTitle;
+
+  /// No description provided for @onboardingSourcesBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lumio ne propose aucun contenu : ajoutez vos propres sources pour remplir l\'accueil.'**
+  String get onboardingSourcesBody;
+
+  /// No description provided for @onboardingAddonsInstalled.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 addon installé} other{{count} addons installés}}'**
+  String onboardingAddonsInstalled(int count);
+
+  /// No description provided for @onboardingDoneTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout est prêt'**
+  String get onboardingDoneTitle;
+
+  /// No description provided for @onboardingDoneBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous pourrez ajouter ou changer vos sources à tout moment depuis les réglages.'**
+  String get onboardingDoneBody;
+
+  /// No description provided for @onboardingSaveError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrement impossible, réessayez'**
+  String get onboardingSaveError;
+
+  /// No description provided for @sourcesReminderTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoutez vos sources'**
+  String get sourcesReminderTitle;
+
+  /// No description provided for @sourcesReminderBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre accueil est vide tant qu\'aucune source n\'est ajoutée.'**
+  String get sourcesReminderBody;
+
+  /// No description provided for @sourcesReminderDismiss.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer'**
+  String get sourcesReminderDismiss;
 }
 
 class _AppLocalizationsDelegate

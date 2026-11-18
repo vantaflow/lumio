@@ -276,5 +276,47 @@
   "pairQrLabel": "Pairing QR code",
   "errPairInsecure": "Insecure server address",
   "errPairUnavailable": "Server unreachable, try again",
-  "errPairRateLimited": "Too many requests, try again in a minute"
+  "errPairRateLimited": "Too many requests, try again in a minute",
+  "onboardingStep": "Step {n} of {total}",
+  "@onboardingStep": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingSkip": "Skip",
+  "onboardingStart": "Get started",
+  "onboardingLanguageTitle": "Choose your language",
+  "onboardingProfileTitle": "Your profile",
+  "onboardingProfileBody": "What should we call you? You can change it later.",
+  "onboardingProfileName": "Profile name",
+  "onboardingAddKid": "Add a kid profile",
+  "onboardingKidAdded": "Kid profile added: {name}",
+  "@onboardingKidAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingSourcesTitle": "Add your sources",
+  "onboardingSourcesBody": "Lumio ships with no content: add your own sources to fill the home screen.",
+  "onboardingAddonsInstalled": "{count, plural, =1{1 addon installed} other{{count} addons installed}}",
+  "@onboardingAddonsInstalled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingDoneTitle": "All set",
+  "onboardingDoneBody": "You can add or change your sources at any time from the settings.",
+  "onboardingSaveError": "Could not save, please try again",
+  "sourcesReminderTitle": "Add your sources",
+  "sourcesReminderBody": "Your home stays empty until you add a source.",
+  "sourcesReminderDismiss": "Hide"
 }

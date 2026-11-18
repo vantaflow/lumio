@@ -12,6 +12,7 @@ import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/row_editor_screen.dart';
+import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/update/update_banner.dart';
@@ -133,6 +134,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onSettings: _openSettings,
                   ),
                 ),
+                SourcesReminderCard(onAdd: _openAddons),
                 Expanded(
                   child: _HomeBody(
                     onOpenAddons: _openAddons,

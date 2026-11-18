@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/home/home_screen.dart';
+import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -55,7 +56,7 @@ class LumioApp extends ConsumerWidget {
           ? const PlayerSpikeScreen()
           : _debugTorrent
           ? const TorrentSpikeScreen()
-          : const ProfileGate(child: RootScreen()),
+          : const OnboardingGate(child: ProfileGate(child: RootScreen())),
     );
   }
 }
