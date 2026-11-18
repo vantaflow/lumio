@@ -124,6 +124,9 @@ class CastServer {
 
   bool get isClosed => _closed;
 
+  /// Sockets de flux encore ouvertes (tests : doit retomber à 0).
+  int get openSockets => _sockets.length;
+
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
@@ -243,10 +246,17 @@ class CastServer {
       res.persistentConnection = false;
       final socket = await res.detachSocket(writeHeaders: true);
       _sockets.add(socket);
+      if (_closed) {
+        // close() est passé pendant le détachement : rien ne doit survivre.
+        _sockets.remove(socket);
+        socket.destroy();
+      }
       unawaited(socket.done.then((_) {}, onError: (Object _) {}));
       // Une demi-fermeture du client juste après la requête (avant le premier
       // octet envoyé) n'est pas une déconnexion ; ensuite, la fin de lecture ou
       // une erreur d'E/S coupe l'amont.
+      // (Une fermeture complète avant le premier octet est traitée comme une
+      // demi-fermeture : le flux n'est coupé que par un échec d'écriture.)
       var sending = false;
       socket.listen(
         (_) {},
@@ -268,7 +278,6 @@ class CastServer {
       } on Object {
         client.close(force: true); // client parti ou amont coupé
       } finally {
-        _sockets.remove(socket);
         if (ok) {
           try {
             await socket.close();
@@ -278,6 +287,7 @@ class CastServer {
         } else {
           socket.destroy();
         }
+        _sockets.remove(socket);
       }
     } on TimeoutException {
       _setStatus(res, HttpStatus.gatewayTimeout);

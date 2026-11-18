@@ -342,7 +342,11 @@ void main() {
     unawaited(raw.done.catchError((Object _) {}));
     sub.pause(); // figé, jamais déconnecté
     await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(s.openSockets, 1); // le flux figé est bien en cours
     await s.close();
+    // Immédiatement après close() : la socket détachée est détruite et
+    // oubliée, sans attendre l'échec de l'écriture ni la fermeture amont.
+    expect(s.openSockets, 0);
     await upstreamGone.future.timeout(const Duration(seconds: 5));
     // La socket du client figé a bien été détruite côté serveur.
     sub.resume();
