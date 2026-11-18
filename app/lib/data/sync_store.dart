@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:lumio/data/addon_sync.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/sync_schema.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -11,14 +12,19 @@ const _maxNameLength = 40;
 
 /// Base locale (SQLite) vue par le moteur de synchronisation.
 ///
+/// Les addons passent par [AddonSync] (blob chiffré, installation par le chemin
+/// normal) : sans lui ils ne sont ni envoyés ni appliqués.
+///
 /// Défense en profondeur : tout ce qui arrive du serveur est revalidé ici
 /// (liste blanche de réglages, bornes, types) avant d'écrire, et le contenu
 /// d'un PIN n'est jamais lu ni écrit.
 class DriftLocalSyncStore implements LocalSyncStore {
-  DriftLocalSyncStore(this._db, {DateTime Function()? now})
-    : _now = now ?? DateTime.now;
+  DriftLocalSyncStore(this._db, {DateTime Function()? now, AddonSync? addons})
+    : _now = now ?? DateTime.now,
+      _addons = addons;
 
   final AppDatabase _db;
+  final AddonSync? _addons;
   final DateTime Function() _now;
 
   static const _lastVersionKey = 'last_version';
@@ -72,7 +78,8 @@ class DriftLocalSyncStore implements LocalSyncStore {
   Future<List<PendingChange>> pending(int limit) async {
     final rows = await _db
         .customSelect(
-          'SELECT seq, kind, key FROM sync_outbox ORDER BY seq LIMIT ?',
+          "SELECT seq, kind, key FROM sync_outbox WHERE kind <> 'addons' "
+          'ORDER BY seq LIMIT ?',
           variables: [Variable.withInt(limit)],
         )
         .get();
@@ -82,6 +89,21 @@ class DriftLocalSyncStore implements LocalSyncStore {
       final key = r.read<String>('key');
       final item = await _snapshot(kind, key);
       out.add(PendingChange(item, r.read<int>('seq')));
+    }
+    // Les addons : seulement si une phrase secrète permet de les chiffrer et
+    // que le blob distant a été lu ; sinon la marque reste en attente.
+    final addons = _addons;
+    if (addons != null && out.length < limit) {
+      final row = await _db
+          .customSelect(
+            "SELECT seq FROM sync_outbox WHERE kind = 'addons' AND key = 'all'",
+          )
+          .getSingleOrNull();
+      if (row != null) {
+        final seq = row.read<int>('seq');
+        final item = await addons.snapshot(seq);
+        if (item != null) out.add(PendingChange(item, seq));
+      }
     }
     return out;
   }
@@ -172,6 +194,11 @@ class DriftLocalSyncStore implements LocalSyncStore {
         ]);
       }
     });
+    for (final c in sent) {
+      if (c.item.kind == SyncKind.addons) {
+        await _addons?.acknowledged(c.seq, deleted: c.item.deleted);
+      }
+    }
   }
 
   // --- Réception ---------------------------------------------------------
@@ -181,6 +208,7 @@ class DriftLocalSyncStore implements LocalSyncStore {
     SyncKind.library: 1,
     SyncKind.progress: 2,
     SyncKind.settings: 3,
+    SyncKind.addons: 4,
   };
 
   @override
@@ -201,6 +229,12 @@ class DriftLocalSyncStore implements LocalSyncStore {
       await _setMeta('applying', '1');
       try {
         for (final i in items) {
+          if (i.kind == SyncKind.addons) {
+            // Mis de côté, déchiffré plus tard (AddonSync.process) : même en
+            // cas de changement local en attente, la mise de côté est sans risque.
+            await _addons?.recordRemote(i);
+            continue;
+          }
           if (pending.contains('${i.kind}\u0000${i.key}')) continue;
           await _applyOne(i);
         }

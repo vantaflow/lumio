@@ -25,12 +25,37 @@ L'URL d'un addon contient souvent une clé personnelle. Règles du projet :
 - jamais dans les journaux : `redactUrl` ne conserve que le schéma et l'hôte ;
 - jamais en clair sur le serveur de synchronisation.
 
-## Chiffrement côté client (prévu)
+## Chiffrement côté client
 
-Pour la synchronisation, les secrets seront chiffrés par le client (AES-GCM,
-clé dérivée d'une phrase secrète) avant envoi ; le serveur ne les lira pas.
-Cela n'est pas encore implémenté. Corollaire : une phrase secrète perdue ne
-se récupère pas.
+Les adresses d'addons sont synchronisées sous la forme d'un seul élément
+`addons/all`, chiffré par le client avant l'envoi : le serveur ne voit qu'un
+texte opaque et ne reçoit jamais la phrase secrète.
+
+- Format : `v1.<sel>.<nonce>.<texte chiffré + tag>` (base64url). Clé :
+  PBKDF2-HMAC-SHA256, 210 000 itérations, sel aléatoire de 16 octets, 256 bits.
+  Chiffrement : AES-256-GCM, nonce aléatoire de 12 octets. Les données
+  associées sont le type d'élément (`addons`) : un blob ne peut pas être
+  rejoué sous un autre type. Toute altération, ou une mauvaise phrase, donne
+  la même erreur.
+- La phrase (12 caractères au moins) est saisie une fois par appareil, reste
+  dans le stockage sécurisé de l'appareil et sert à synchroniser sans
+  intervention. La dérivation s'exécute hors du fil d'interface.
+- Rien n'est envoyé tant que le blob du serveur n'a pas été lu avec la phrase
+  courante : un nouvel appareil n'écrase jamais les addons existants. Avec une
+  mauvaise phrase, les addons locaux ne sont pas modifiés.
+- À la réception, les addons manquants sont installés par le chemin normal
+  (garde d'URL, récupération du manifeste). Une adresse du réseau local n'est
+  jamais autorisée automatiquement : elle attend la confirmation de
+  l'utilisateur. Un addon n'est retiré localement que s'il venait du dernier
+  blob ; un addon ajouté sur l'appareil n'est jamais touché.
+- Phrase perdue : « Réinitialiser » supprime le blob distant (pierre
+  tombale) ; les addons doivent être réajoutés ou renvoyés depuis un appareil
+  qui les a encore, le reste des données reste disponible. Une phrase perdue
+  ne se récupère pas.
+- Limite : environ 11 Ko de clair (une quarantaine d'addons) ; au-delà, un
+  message l'indique et rien n'est envoyé. En cas de modifications simultanées
+  sur deux appareils, la dernière envoyée l'emporte (comme pour les autres
+  éléments).
 
 ## Backend
 

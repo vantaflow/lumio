@@ -9,7 +9,8 @@ import 'package:drift/drift.dart';
 /// d'éléments reçus, pour ne pas les renvoyer au serveur.
 ///
 /// Types : `library` et `progress` (clé `profil|titre`), `profiles` (id),
-/// `settings` (clé de réglage, liste blanche seulement : jamais de PIN).
+/// `settings` (clé de réglage, liste blanche seulement : jamais de PIN),
+/// `addons` (clé `all`, blob chiffré côté client).
 const syncTableStatements = <String>[
   'CREATE TABLE IF NOT EXISTS sync_meta ('
       'key TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL)',
@@ -75,6 +76,19 @@ List<String> _triggers() {
     'CREATE TRIGGER IF NOT EXISTS sync_profiles_ad AFTER DELETE ON profiles '
         'WHEN $_notApplying BEGIN ${_enqueue('profiles', 'OLD.id')} END',
   ]);
+  // Addons : un seul élément `addons/all` (blob chiffré), marqué à envoyer
+  // quand la liste, l'activation ou l'ordre change. Le contenu (adresses) n'est
+  // jamais lu ici : il vient du SecretStore à l'envoi.
+  for (final (name, event) in [
+    ('ai', 'INSERT'),
+    ('au', 'UPDATE OF enabled, position'),
+    ('ad', 'DELETE'),
+  ]) {
+    out.add(
+      'CREATE TRIGGER IF NOT EXISTS sync_addons_$name AFTER $event ON addons '
+      'WHEN $_notApplying BEGIN ${_enqueue('addons', "'all'")} END',
+    );
+  }
   for (final (name, event, row) in [
     ('ai', 'INSERT', 'NEW'),
     ('au', 'UPDATE', 'NEW'),
@@ -102,6 +116,9 @@ final syncBackfillStatements = <String>[
       "SELECT 'profiles', id FROM profiles",
   "INSERT OR REPLACE INTO sync_outbox (kind, key) SELECT 'settings', key FROM settings "
       "WHERE ${_settingsGuard('settings')}",
+  // Rien ne part sans phrase secrète (voir AddonSync) : la marque est inoffensive.
+  "INSERT OR REPLACE INTO sync_outbox (kind, key) SELECT 'addons', 'all' "
+      'WHERE EXISTS (SELECT 1 FROM addons)',
 ];
 
 /// Crée les tables et les déclencheurs de synchronisation (idempotent).

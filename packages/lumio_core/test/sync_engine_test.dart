@@ -290,17 +290,32 @@ void main() {
     a.put('settings', 'active_profile', {'value': 'p1'});
     a.put('profiles', 'p1', {'name': 'Léa', 'pinHash': 'secret'});
     a.put('library', 'p|trop-gros', {'name': 'x' * 17000});
-    a.put('addons', 'default', {'blob': 'AAAA'});
+    a.put('addons', 'default', {'blob': 'v1.a.b.c'});
+    a.put('addons', 'all', {
+      'urls': ['https://secret.example/k'],
+    });
     a.put('library', 'p|ok', {'name': 'ok'});
     await ea.syncOnce();
     expect(server.items.keys, ['library/p|ok']);
     expect(a.outbox, isEmpty);
   });
 
-  test('éléments reçus de types non activés (addons) ignorés', () async {
+  test('addons/all : blob chiffré et pierre tombale voyagent', () async {
+    a.put('addons', 'all', {'blob': 'v1.AAAA.BBBB.CCCC'});
+    await ea.syncOnce();
+    expect(server.items.keys, ['addons/all']);
+    await eb.syncOnce();
+    expect(b.data['addons/all'], {'blob': 'v1.AAAA.BBBB.CCCC'});
+    expect(
+      isPushable(const SyncItem(kind: 'addons', key: 'all', deleted: true)),
+      isTrue,
+    );
+  });
+
+  test('éléments reçus de types non activés ignorés', () async {
     server.version = 1;
-    server.items['addons/default'] = const SyncItem(
-      kind: 'addons',
+    server.items['future/default'] = const SyncItem(
+      kind: 'future',
       key: 'default',
       payload: {'blob': 'AAAA'},
       version: 1,

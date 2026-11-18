@@ -358,7 +358,7 @@
   "settingsAccount": "Account and sync",
   "accountSettingsHint": "Get your list and progress on your other devices",
   "accountTitle": "Account",
-  "accountIntro": "Sign in with your e-mail to sync your list, progress, profiles and settings. Your addon links are not sent.",
+  "accountIntro": "Sign in with your e-mail to sync your list, progress, profiles and settings. Your addon links only leave encrypted with a secret phrase you choose.",
   "accountEmailLabel": "E-mail address",
   "accountSendCode": "Get a code",
   "accountCodeSent": "A sign-in code was sent to your e-mail.",
@@ -383,5 +383,43 @@
   "accountErrRejected": "Code refused or expired",
   "accountErrRate": "Too many attempts, try again later",
   "accountErrUnavailable": "Server unreachable, try again later",
-  "kidProfileNeedsPin": "This kids profile came from another device. Create a parent PIN first to use it."
+  "kidProfileNeedsPin": "This kids profile came from another device. Create a parent PIN first to use it.",
+  "accountAddonsTitle": "Synced addons",
+  "addonSyncNoPassphrase": "No secret phrase: your addons are not synced.",
+  "addonSyncWaiting": "Waiting for the first exchange with the server…",
+  "addonSyncReady": "Your addons are synced, encrypted with your secret phrase.",
+  "addonSyncWrong": "Wrong secret phrase: your addons are not synced",
+  "addonSyncTooLarge": "Too many addons to sync. Remove a few to resume.",
+  "addonSyncResetting": "Reset waiting for a connection to the server…",
+  "addonSyncFailed": "{count} received addon(s) could not be installed for now; retrying automatically.",
+  "@addonSyncFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addonSyncPrivate": "Address on your local network needs confirmation: {label}",
+  "@addonSyncPrivate": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+  "addonSyncAllow": "Allow",
+  "addonSyncIgnore": "Ignore",
+  "passphraseSet": "Set the secret phrase",
+  "passphraseEnter": "Enter the secret phrase",
+  "passphraseChange": "Change the secret phrase",
+  "passphraseReset": "Reset",
+  "passphraseResetConfirm": "Delete your synced addons from the server? The addons on this device are kept and the rest of your data is untouched. You can then set a new secret phrase.",
+  "passphraseResetDone": "Reset requested",
+  "passphraseTitle": "Sync secret phrase",
+  "passphraseIntro": "This phrase encrypts your addons before they are sent: the server cannot read them and never receives the phrase. Enter the same one on each of your devices. If you lose it, your addons must be added again; the rest of your data stays available.",
+  "passphraseLabel": "Sync secret phrase",
+  "passphraseConfirmLabel": "Confirm the secret phrase",
+  "passphraseErrShort": "At least 12 characters",
+  "passphraseErrMismatch": "The two phrases differ",
+  "passphraseSave": "Save",
+  "passphraseSaved": "Secret phrase saved",
+  "passphraseErrSave": "Could not save the secret phrase"
 }

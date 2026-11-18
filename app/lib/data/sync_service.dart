@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:lumio/data/addon_sync.dart';
 import 'package:lumio/data/secret_store.dart';
 import 'package:lumio/data/sync_store.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -347,6 +348,7 @@ class SyncService {
     required SyncApiClient api,
     required DriftLocalSyncStore store,
     SyncEngine? engine,
+    this.addons,
     this.interval = const Duration(seconds: 15),
     this.maxBackoff = const Duration(minutes: 5),
     this.pauseDelay = const Duration(seconds: 1),
@@ -360,6 +362,9 @@ class SyncService {
   final SyncApiClient _api;
   final DriftLocalSyncStore _store;
   final SyncEngine _engine;
+
+  /// Addons chiffrés côté client ; nul = addons non synchronisés.
+  final AddonSync? addons;
   final Duration interval;
   final Duration maxBackoff;
 
@@ -453,9 +458,21 @@ class SyncService {
     try {
       final before = await _store.lastVersion();
       await _engine.syncOnce();
+      var addonsChanged = false;
+      final a = addons;
+      if (a != null) {
+        // Un tirage complet a eu lieu : le blob distant (ou son absence) est
+        // connu. Il est déchiffré et appliqué ici, puis renvoyé si besoin.
+        await a.markPulled();
+        final res = await _processAddons(a);
+        addonsChanged = res.changedLocal;
+        if (res.needsPush) await _engine.syncOnce();
+      }
       _failures = 0;
       _setStatus(SyncStatus.idle);
-      if (await _store.lastVersion() != before) onApplied?.call();
+      if (addonsChanged || await _store.lastVersion() != before) {
+        onApplied?.call();
+      }
     } on SyncException catch (e) {
       if (e.code == SyncErrorCode.signedOut) {
         _signedIn = false;
@@ -476,6 +493,16 @@ class SyncService {
         ? nextDelay
         : (forced > nextDelay ? forced : nextDelay);
     _schedule(d);
+  }
+
+  Future<AddonProcessResult> _processAddons(AddonSync a) async {
+    try {
+      return await a.process();
+    } on Object catch (e) {
+      // Pas de détail : il pourrait contenir une adresse.
+      debugPrint('Addons non synchronisés (${e.runtimeType})');
+      return const AddonProcessResult();
+    }
   }
 
   // --- Compte ------------------------------------------------------------
@@ -500,6 +527,7 @@ class SyncService {
     _cancelTimer();
     await _api.signOut();
     await _store.reset();
+    await addons?.forget();
     _signedIn = false;
     _failures = 0;
     _setStatus(SyncStatus.signedOut);
@@ -510,6 +538,7 @@ class SyncService {
     _cancelTimer();
     await _api.deleteAccount();
     await _store.reset();
+    await addons?.forget();
     _signedIn = false;
     _failures = 0;
     _setStatus(SyncStatus.signedOut);

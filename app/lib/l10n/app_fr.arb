@@ -587,7 +587,7 @@
   "settingsAccount": "Compte et synchronisation",
   "accountSettingsHint": "Retrouvez votre liste et votre progression sur vos autres appareils",
   "accountTitle": "Compte",
-  "accountIntro": "Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d'addons ne sont pas envoyés.",
+  "accountIntro": "Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d'addons ne partent que chiffrés par une phrase secrète que vous choisissez.",
   "accountEmailLabel": "Adresse e-mail",
   "accountSendCode": "Recevoir un code",
   "accountCodeSent": "Un code de connexion vous a été envoyé par e-mail.",
@@ -612,5 +612,43 @@
   "accountErrRejected": "Code refusé ou expiré",
   "accountErrRate": "Trop de tentatives, réessayez plus tard",
   "accountErrUnavailable": "Serveur injoignable, réessayez plus tard",
-  "kidProfileNeedsPin": "Ce profil enfant vient d'un autre appareil. Créez d'abord un PIN parent pour l'utiliser."
+  "kidProfileNeedsPin": "Ce profil enfant vient d'un autre appareil. Créez d'abord un PIN parent pour l'utiliser.",
+  "accountAddonsTitle": "Addons synchronisés",
+  "addonSyncNoPassphrase": "Pas de phrase secrète : vos addons ne sont pas synchronisés.",
+  "addonSyncWaiting": "En attente du premier échange avec le serveur…",
+  "addonSyncReady": "Vos addons sont synchronisés, chiffrés avec votre phrase secrète.",
+  "addonSyncWrong": "Phrase secrète incorrecte : vos addons ne sont pas synchronisés",
+  "addonSyncTooLarge": "Trop d'addons pour être synchronisés. Retirez-en quelques-uns pour reprendre.",
+  "addonSyncResetting": "Réinitialisation en attente d'une connexion au serveur…",
+  "addonSyncFailed": "{count} addon(s) reçu(s) n'ont pas pu être installés pour l'instant ; nouvel essai automatique.",
+  "@addonSyncFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addonSyncPrivate": "Adresse de votre réseau local à confirmer : {label}",
+  "@addonSyncPrivate": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+  "addonSyncAllow": "Autoriser",
+  "addonSyncIgnore": "Ignorer",
+  "passphraseSet": "Définir la phrase secrète",
+  "passphraseEnter": "Saisir la phrase secrète",
+  "passphraseChange": "Changer la phrase secrète",
+  "passphraseReset": "Réinitialiser",
+  "passphraseResetConfirm": "Supprimer du serveur vos addons synchronisés ? Les addons de cet appareil sont conservés et le reste de vos données n'est pas touché. Vous pourrez définir une nouvelle phrase secrète.",
+  "passphraseResetDone": "Réinitialisation demandée",
+  "passphraseTitle": "Phrase secrète de synchronisation",
+  "passphraseIntro": "Cette phrase chiffre vos addons avant leur envoi : le serveur ne peut pas les lire et ne reçoit jamais la phrase. Saisissez la même sur chacun de vos appareils. Si vous la perdez, vos addons devront être réajoutés ; le reste de vos données reste disponible.",
+  "passphraseLabel": "Phrase secrète de synchronisation",
+  "passphraseConfirmLabel": "Confirmer la phrase secrète",
+  "passphraseErrShort": "12 caractères au moins",
+  "passphraseErrMismatch": "Les deux phrases sont différentes",
+  "passphraseSave": "Enregistrer",
+  "passphraseSaved": "Phrase secrète enregistrée",
+  "passphraseErrSave": "Impossible d'enregistrer la phrase secrète"
 }

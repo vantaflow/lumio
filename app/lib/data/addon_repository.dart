@@ -247,6 +247,10 @@ class AddonRepository {
     }
   }
 
+  /// Empreinte d'une adresse (normalisée) : sert à reconnaître le même addon
+  /// d'un appareil à l'autre. Lève [FormatException] si l'adresse est invalide.
+  static String urlHashOf(String rawUrl) => _hash(normalizeAddonUrl(rawUrl));
+
   static String _hash(Uri normalized) =>
       sha256.convert(utf8.encode(normalized.toString())).toString();
 

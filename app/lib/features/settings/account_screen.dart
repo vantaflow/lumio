@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/data/addon_sync.dart';
 import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/data/sync_service.dart';
+import 'package:lumio/features/sync/passphrase_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
@@ -143,6 +147,137 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     });
   }
 
+  Future<void> _openPassphrase({required bool change}) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => PassphraseScreen(change: change)),
+    );
+    ref.invalidate(addonSyncStateProvider);
+  }
+
+  Future<void> _resetAddons() async {
+    final l = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(l.passphraseResetConfirm),
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            key: const ValueKey('account:resetConfirm'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.passphraseReset),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await _run(() async {
+      await ref.read(addonSyncProvider).requestReset();
+      ref.invalidate(addonSyncStateProvider);
+      unawaited(ref.read(syncServiceProvider)?.syncNow());
+      if (mounted) setState(() => _notice = context.l10n.passphraseResetDone);
+    });
+  }
+
+  Future<void> _pending(Future<void> Function() op) async {
+    await _run(op);
+    ref.invalidate(addonSyncStateProvider);
+    ref.read(syncServiceProvider)?.syncNow();
+  }
+
+  /// État de la synchronisation des addons et actions sur la phrase secrète.
+  List<Widget> _addonsSection() {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    if (ref.read(syncServiceProvider)?.addons == null) return const [];
+    final st = ref.watch(addonSyncStateProvider).value;
+    if (st == null) return const [];
+    final text = switch (st.status) {
+      AddonSyncStatus.noPassphrase => l.addonSyncNoPassphrase,
+      AddonSyncStatus.waiting => l.addonSyncWaiting,
+      AddonSyncStatus.ready => l.addonSyncReady,
+      AddonSyncStatus.wrongPassphrase => l.addonSyncWrong,
+      AddonSyncStatus.tooLarge => l.addonSyncTooLarge,
+      AddonSyncStatus.resetting => l.addonSyncResetting,
+    };
+    final hasPhrase =
+        st.status != AddonSyncStatus.noPassphrase &&
+        st.status != AddonSyncStatus.resetting;
+    final bad =
+        st.status == AddonSyncStatus.wrongPassphrase ||
+        st.status == AddonSyncStatus.tooLarge;
+    return [
+      Text(l.accountAddonsTitle, style: theme.textTheme.titleMedium),
+      const SizedBox(height: LumioSpacing.sm),
+      Text(
+        text,
+        key: const ValueKey('account:addonStatus'),
+        style: bad ? TextStyle(color: theme.colorScheme.error) : null,
+      ),
+      if (st.failed > 0) ...[
+        const SizedBox(height: LumioSpacing.sm),
+        Text(l.addonSyncFailed(st.failed)),
+      ],
+      for (final p in st.pendingPrivate) ...[
+        const SizedBox(height: LumioSpacing.sm),
+        Text(l.addonSyncPrivate(p.label)),
+        Row(
+          children: [
+            OutlinedButton(
+              key: ValueKey('account:allow:${p.index}'),
+              onPressed: _busy
+                  ? null
+                  : () => _pending(
+                      () => ref
+                          .read(addonSyncProvider)
+                          .installPending(p.index)
+                          .then((_) {}),
+                    ),
+              child: Text(l.addonSyncAllow),
+            ),
+            const SizedBox(width: LumioSpacing.sm),
+            OutlinedButton(
+              key: ValueKey('account:ignore:${p.index}'),
+              onPressed: _busy
+                  ? null
+                  : () => _pending(
+                      () => ref.read(addonSyncProvider).dismissPending(p.index),
+                    ),
+              child: Text(l.addonSyncIgnore),
+            ),
+          ],
+        ),
+      ],
+      const SizedBox(height: LumioSpacing.md),
+      if (st.status != AddonSyncStatus.resetting)
+        OutlinedButton(
+          key: const ValueKey('account:passphrase'),
+          onPressed: _busy
+              ? null
+              : () =>
+                    _openPassphrase(change: st.status == AddonSyncStatus.ready),
+          child: Text(switch (st.status) {
+            AddonSyncStatus.noPassphrase => l.passphraseSet,
+            AddonSyncStatus.ready => l.passphraseChange,
+            _ => l.passphraseEnter,
+          }),
+        ),
+      if (hasPhrase) ...[
+        const SizedBox(height: LumioSpacing.md),
+        OutlinedButton(
+          key: const ValueKey('account:resetAddons'),
+          onPressed: _busy ? null : _resetAddons,
+          child: Text(l.passphraseReset),
+        ),
+      ],
+      const SizedBox(height: LumioSpacing.lg),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -165,6 +300,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
         const SizedBox(height: LumioSpacing.sm),
         Text(statusText, key: const ValueKey('account:status')),
         const SizedBox(height: LumioSpacing.lg),
+        ..._addonsSection(),
         FilledButton(
           key: const ValueKey('account:syncNow'),
           autofocus: true,

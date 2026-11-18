@@ -121,7 +121,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -166,6 +166,7 @@ class AppDatabase extends _$AppDatabase {
           settings,
           progress,
           libraryItems,
+          addons,
         ]) {
           final has = await customSelect(
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
@@ -175,6 +176,8 @@ class AppDatabase extends _$AppDatabase {
         }
         await installSyncSchema(this, backfill: true);
       }
+      // v8 : déclencheurs de la synchronisation des addons (blob chiffré).
+      if (from == 7) await installSyncSchema(this);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

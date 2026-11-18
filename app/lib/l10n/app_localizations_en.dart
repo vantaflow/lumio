@@ -1077,7 +1077,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountIntro =>
-      'Sign in with your e-mail to sync your list, progress, profiles and settings. Your addon links are not sent.';
+      'Sign in with your e-mail to sync your list, progress, profiles and settings. Your addon links only leave encrypted with a secret phrase you choose.';
 
   @override
   String get accountEmailLabel => 'E-mail address';
@@ -1143,4 +1143,94 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get kidProfileNeedsPin =>
       'This kids profile came from another device. Create a parent PIN first to use it.';
+
+  @override
+  String get accountAddonsTitle => 'Synced addons';
+
+  @override
+  String get addonSyncNoPassphrase =>
+      'No secret phrase: your addons are not synced.';
+
+  @override
+  String get addonSyncWaiting =>
+      'Waiting for the first exchange with the server…';
+
+  @override
+  String get addonSyncReady =>
+      'Your addons are synced, encrypted with your secret phrase.';
+
+  @override
+  String get addonSyncWrong =>
+      'Wrong secret phrase: your addons are not synced';
+
+  @override
+  String get addonSyncTooLarge =>
+      'Too many addons to sync. Remove a few to resume.';
+
+  @override
+  String get addonSyncResetting =>
+      'Reset waiting for a connection to the server…';
+
+  @override
+  String addonSyncFailed(int count) {
+    return '$count received addon(s) could not be installed for now; retrying automatically.';
+  }
+
+  @override
+  String addonSyncPrivate(Object label) {
+    return 'Address on your local network needs confirmation: $label';
+  }
+
+  @override
+  String get addonSyncAllow => 'Allow';
+
+  @override
+  String get addonSyncIgnore => 'Ignore';
+
+  @override
+  String get passphraseSet => 'Set the secret phrase';
+
+  @override
+  String get passphraseEnter => 'Enter the secret phrase';
+
+  @override
+  String get passphraseChange => 'Change the secret phrase';
+
+  @override
+  String get passphraseReset => 'Reset';
+
+  @override
+  String get passphraseResetConfirm =>
+      'Delete your synced addons from the server? The addons on this device are kept and the rest of your data is untouched. You can then set a new secret phrase.';
+
+  @override
+  String get passphraseResetDone => 'Reset requested';
+
+  @override
+  String get passphraseTitle => 'Sync secret phrase';
+
+  @override
+  String get passphraseIntro =>
+      'This phrase encrypts your addons before they are sent: the server cannot read them and never receives the phrase. Enter the same one on each of your devices. If you lose it, your addons must be added again; the rest of your data stays available.';
+
+  @override
+  String get passphraseLabel => 'Sync secret phrase';
+
+  @override
+  String get passphraseConfirmLabel => 'Confirm the secret phrase';
+
+  @override
+  String get passphraseErrShort => 'At least 12 characters';
+
+  @override
+  String get passphraseErrMismatch => 'The two phrases differ';
+
+  @override
+  String get passphraseSave => 'Save';
+
+  @override
+  String get passphraseSaved => 'Secret phrase saved';
+
+  @override
+  String get passphraseErrSave => 'Could not save the secret phrase';
 }

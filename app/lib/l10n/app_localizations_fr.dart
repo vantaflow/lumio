@@ -1090,7 +1090,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get accountIntro =>
-      'Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d\'addons ne sont pas envoyés.';
+      'Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d\'addons ne partent que chiffrés par une phrase secrète que vous choisissez.';
 
   @override
   String get accountEmailLabel => 'Adresse e-mail';
@@ -1158,4 +1158,94 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get kidProfileNeedsPin =>
       'Ce profil enfant vient d\'un autre appareil. Créez d\'abord un PIN parent pour l\'utiliser.';
+
+  @override
+  String get accountAddonsTitle => 'Addons synchronisés';
+
+  @override
+  String get addonSyncNoPassphrase =>
+      'Pas de phrase secrète : vos addons ne sont pas synchronisés.';
+
+  @override
+  String get addonSyncWaiting =>
+      'En attente du premier échange avec le serveur…';
+
+  @override
+  String get addonSyncReady =>
+      'Vos addons sont synchronisés, chiffrés avec votre phrase secrète.';
+
+  @override
+  String get addonSyncWrong =>
+      'Phrase secrète incorrecte : vos addons ne sont pas synchronisés';
+
+  @override
+  String get addonSyncTooLarge =>
+      'Trop d\'addons pour être synchronisés. Retirez-en quelques-uns pour reprendre.';
+
+  @override
+  String get addonSyncResetting =>
+      'Réinitialisation en attente d\'une connexion au serveur…';
+
+  @override
+  String addonSyncFailed(int count) {
+    return '$count addon(s) reçu(s) n\'ont pas pu être installés pour l\'instant ; nouvel essai automatique.';
+  }
+
+  @override
+  String addonSyncPrivate(Object label) {
+    return 'Adresse de votre réseau local à confirmer : $label';
+  }
+
+  @override
+  String get addonSyncAllow => 'Autoriser';
+
+  @override
+  String get addonSyncIgnore => 'Ignorer';
+
+  @override
+  String get passphraseSet => 'Définir la phrase secrète';
+
+  @override
+  String get passphraseEnter => 'Saisir la phrase secrète';
+
+  @override
+  String get passphraseChange => 'Changer la phrase secrète';
+
+  @override
+  String get passphraseReset => 'Réinitialiser';
+
+  @override
+  String get passphraseResetConfirm =>
+      'Supprimer du serveur vos addons synchronisés ? Les addons de cet appareil sont conservés et le reste de vos données n\'est pas touché. Vous pourrez définir une nouvelle phrase secrète.';
+
+  @override
+  String get passphraseResetDone => 'Réinitialisation demandée';
+
+  @override
+  String get passphraseTitle => 'Phrase secrète de synchronisation';
+
+  @override
+  String get passphraseIntro =>
+      'Cette phrase chiffre vos addons avant leur envoi : le serveur ne peut pas les lire et ne reçoit jamais la phrase. Saisissez la même sur chacun de vos appareils. Si vous la perdez, vos addons devront être réajoutés ; le reste de vos données reste disponible.';
+
+  @override
+  String get passphraseLabel => 'Phrase secrète de synchronisation';
+
+  @override
+  String get passphraseConfirmLabel => 'Confirmer la phrase secrète';
+
+  @override
+  String get passphraseErrShort => '12 caractères au moins';
+
+  @override
+  String get passphraseErrMismatch => 'Les deux phrases sont différentes';
+
+  @override
+  String get passphraseSave => 'Enregistrer';
+
+  @override
+  String get passphraseSaved => 'Phrase secrète enregistrée';
+
+  @override
+  String get passphraseErrSave => 'Impossible d\'enregistrer la phrase secrète';
 }

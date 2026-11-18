@@ -1985,7 +1985,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountIntro.
   ///
   /// In fr, this message translates to:
-  /// **'Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d\'addons ne sont pas envoyés.'**
+  /// **'Connectez-vous avec votre e-mail pour synchroniser votre liste, votre progression, vos profils et vos réglages. Vos liens d\'addons ne partent que chiffrés par une phrase secrète que vous choisissez.'**
   String get accountIntro;
 
   /// No description provided for @accountEmailLabel.
@@ -2107,6 +2107,162 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ce profil enfant vient d\'un autre appareil. Créez d\'abord un PIN parent pour l\'utiliser.'**
   String get kidProfileNeedsPin;
+
+  /// No description provided for @accountAddonsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addons synchronisés'**
+  String get accountAddonsTitle;
+
+  /// No description provided for @addonSyncNoPassphrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de phrase secrète : vos addons ne sont pas synchronisés.'**
+  String get addonSyncNoPassphrase;
+
+  /// No description provided for @addonSyncWaiting.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente du premier échange avec le serveur…'**
+  String get addonSyncWaiting;
+
+  /// No description provided for @addonSyncReady.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos addons sont synchronisés, chiffrés avec votre phrase secrète.'**
+  String get addonSyncReady;
+
+  /// No description provided for @addonSyncWrong.
+  ///
+  /// In fr, this message translates to:
+  /// **'Phrase secrète incorrecte : vos addons ne sont pas synchronisés'**
+  String get addonSyncWrong;
+
+  /// No description provided for @addonSyncTooLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop d\'addons pour être synchronisés. Retirez-en quelques-uns pour reprendre.'**
+  String get addonSyncTooLarge;
+
+  /// No description provided for @addonSyncResetting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialisation en attente d\'une connexion au serveur…'**
+  String get addonSyncResetting;
+
+  /// No description provided for @addonSyncFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} addon(s) reçu(s) n\'ont pas pu être installés pour l\'instant ; nouvel essai automatique.'**
+  String addonSyncFailed(int count);
+
+  /// No description provided for @addonSyncPrivate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse de votre réseau local à confirmer : {label}'**
+  String addonSyncPrivate(Object label);
+
+  /// No description provided for @addonSyncAllow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autoriser'**
+  String get addonSyncAllow;
+
+  /// No description provided for @addonSyncIgnore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ignorer'**
+  String get addonSyncIgnore;
+
+  /// No description provided for @passphraseSet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Définir la phrase secrète'**
+  String get passphraseSet;
+
+  /// No description provided for @passphraseEnter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisir la phrase secrète'**
+  String get passphraseEnter;
+
+  /// No description provided for @passphraseChange.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer la phrase secrète'**
+  String get passphraseChange;
+
+  /// No description provided for @passphraseReset.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialiser'**
+  String get passphraseReset;
+
+  /// No description provided for @passphraseResetConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer du serveur vos addons synchronisés ? Les addons de cet appareil sont conservés et le reste de vos données n\'est pas touché. Vous pourrez définir une nouvelle phrase secrète.'**
+  String get passphraseResetConfirm;
+
+  /// No description provided for @passphraseResetDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialisation demandée'**
+  String get passphraseResetDone;
+
+  /// No description provided for @passphraseTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Phrase secrète de synchronisation'**
+  String get passphraseTitle;
+
+  /// No description provided for @passphraseIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette phrase chiffre vos addons avant leur envoi : le serveur ne peut pas les lire et ne reçoit jamais la phrase. Saisissez la même sur chacun de vos appareils. Si vous la perdez, vos addons devront être réajoutés ; le reste de vos données reste disponible.'**
+  String get passphraseIntro;
+
+  /// No description provided for @passphraseLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Phrase secrète de synchronisation'**
+  String get passphraseLabel;
+
+  /// No description provided for @passphraseConfirmLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer la phrase secrète'**
+  String get passphraseConfirmLabel;
+
+  /// No description provided for @passphraseErrShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'12 caractères au moins'**
+  String get passphraseErrShort;
+
+  /// No description provided for @passphraseErrMismatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les deux phrases sont différentes'**
+  String get passphraseErrMismatch;
+
+  /// No description provided for @passphraseSave.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer'**
+  String get passphraseSave;
+
+  /// No description provided for @passphraseSaved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Phrase secrète enregistrée'**
+  String get passphraseSaved;
+
+  /// No description provided for @passphraseErrSave.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'enregistrer la phrase secrète'**
+  String get passphraseErrSave;
 }
 
 class _AppLocalizationsDelegate

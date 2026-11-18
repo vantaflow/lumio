@@ -1,7 +1,8 @@
 import 'dart:convert';
 
-/// Types d'éléments synchronisés. `addons` n'est PAS synchronisé par cette
-/// version : il le sera sous forme de blob chiffré côté client (tâche 28).
+/// Types d'éléments synchronisés. `addons` voyage sous la forme d'un unique
+/// blob chiffré côté client (`addons/all`, voir `SecretBox`) : le serveur ne
+/// voit jamais les adresses des addons.
 abstract final class SyncKind {
   static const library = 'library';
   static const progress = 'progress';
@@ -10,7 +11,10 @@ abstract final class SyncKind {
   static const addons = 'addons';
 
   /// Types que le moteur envoie et applique.
-  static const enabled = {library, progress, settings, profiles};
+  static const enabled = {library, progress, settings, profiles, addons};
+
+  /// Clé de l'unique élément `addons`.
+  static const addonsKey = 'all';
 }
 
 /// Un élément synchronisé. [version] est attribuée par le serveur (0 pour un
@@ -111,6 +115,9 @@ bool isPushable(SyncItem item, {Set<String> kinds = SyncKind.enabled}) {
   if (item.kind == SyncKind.settings && !isSyncableSettingKey(item.key)) {
     return false;
   }
+  if (item.kind == SyncKind.addons && item.key != SyncKind.addonsKey) {
+    return false;
+  }
   if (item.deleted) return true;
   final p = item.payload;
   if (p == null) return false;
@@ -119,5 +126,13 @@ bool isPushable(SyncItem item, {Set<String> kinds = SyncKind.enabled}) {
     return false;
   }
   if (item.kind == SyncKind.progress && p['updatedAt'] is! num) return false;
+  if (item.kind == SyncKind.addons && !isSealedAddonsPayload(p)) return false;
   return utf8.encode(jsonEncode(p)).length <= SyncLimits.maxPayloadBytes;
 }
+
+/// Contenu d'un élément `addons` : un seul champ `blob`, texte chiffré au
+/// format `v1.…` (jamais de liste d'adresses en clair).
+bool isSealedAddonsPayload(Map<String, dynamic> p) =>
+    p.length == 1 &&
+    p['blob'] is String &&
+    (p['blob'] as String).startsWith('v1.');
