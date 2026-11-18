@@ -1402,4 +1402,117 @@ class AppLocalizationsFr extends AppLocalizations {
   String backupPrivateBody(String name, String host) {
     return '« $name » ($host) pointe vers votre réseau local. L\'installer quand même ?';
   }
+
+  @override
+  String get otherImportTitle => 'Importer depuis un autre client';
+
+  @override
+  String get otherImportHint => 'Addons et liste depuis des fichiers exportés';
+
+  @override
+  String get otherImportHelp =>
+      'Choisissez ou collez les fichiers JSON exportés depuis votre ancien client compatible (par exemple Stremio : réponses de addonCollectionGet et datastoreGet). Aucun compte n\'est contacté : seuls ces fichiers sont lus. La liste est ajoutée au profil actif ; les addons sont installés un par un.';
+
+  @override
+  String get otherImportAddonsLabel => 'Addons (JSON)';
+
+  @override
+  String get otherImportLibraryLabel => 'Bibliothèque (JSON)';
+
+  @override
+  String get otherImportPasteHint => 'Collez le contenu ici…';
+
+  @override
+  String get otherImportChooseFile => 'Choisir un fichier';
+
+  @override
+  String get otherImportRemoveFile => 'Retirer le fichier';
+
+  @override
+  String otherImportFileLoaded(String name) {
+    return 'Fichier : $name';
+  }
+
+  @override
+  String get otherImportPickTitle => 'Choisir un fichier JSON';
+
+  @override
+  String otherImportNoFiles(String dir) {
+    return 'Aucun fichier .json trouvé. Copiez-y vos fichiers exportés : $dir';
+  }
+
+  @override
+  String get otherImportRun => 'Importer';
+
+  @override
+  String get otherImportNothing => 'Choisissez ou collez au moins un fichier.';
+
+  @override
+  String otherImportErrFormat(String which) {
+    return 'Ce contenu n\'est pas un export reconnu : $which.';
+  }
+
+  @override
+  String get otherImportErrTooLarge =>
+      'Ce contenu est trop volumineux (10 Mo au maximum).';
+
+  @override
+  String otherImportProgressAddons(int done, int total) {
+    return 'Installation des addons : $done sur $total';
+  }
+
+  @override
+  String get otherImportProgressLibrary => 'Ajout à la liste…';
+
+  @override
+  String get otherImportDoneTitle => 'Import terminé';
+
+  @override
+  String otherImportSumInstalled(int n) {
+    return '$n addon(s) installé(s)';
+  }
+
+  @override
+  String otherImportSumAlready(int n) {
+    return '$n addon(s) déjà présent(s)';
+  }
+
+  @override
+  String otherImportSumPending(int n) {
+    return '$n addon(s) en attente (adresse locale)';
+  }
+
+  @override
+  String otherImportSumFailed(int n) {
+    return '$n addon(s) n\'ont pas pu être installés';
+  }
+
+  @override
+  String otherImportSumSkipped(int n, String names) {
+    return '$n élément(s) ignoré(s) : $names';
+  }
+
+  @override
+  String otherImportSumLibrary(int n) {
+    return '$n titre(s) ajouté(s) à la liste';
+  }
+
+  @override
+  String otherImportSumLibraryAlready(int n) {
+    return '$n titre(s) déjà dans la liste';
+  }
+
+  @override
+  String get otherImportSumNothing => 'Rien à importer dans ces fichiers.';
+
+  @override
+  String otherImportPendingItem(String host) {
+    return 'Un addon pointe vers votre réseau local ($host). L\'installer quand même ?';
+  }
+
+  @override
+  String get otherImportWhatAddons => 'addons';
+
+  @override
+  String get otherImportWhatLibrary => 'bibliothèque';
 }

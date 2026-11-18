@@ -50,7 +50,7 @@ class _FakeFiles implements BackupFiles {
   Future<BackupFile?> pick() async => next;
 
   @override
-  Future<List<BackupFile>> listLocal() async => local;
+  Future<List<BackupFile>> listLocal({bool anyJson = false}) async => local;
 }
 
 BackupFile _file(String name, String text) {

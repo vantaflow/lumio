@@ -34,8 +34,9 @@ abstract class BackupFiles {
   /// Choisit un fichier avec le sélecteur du système (nul si annulé).
   Future<BackupFile?> pick();
 
-  /// Sauvegardes `*.lumio.json` du dossier de l'application, récentes d'abord.
-  Future<List<BackupFile>> listLocal();
+  /// Sauvegardes `*.lumio.json` du dossier de l'application, récentes d'abord ;
+  /// avec [anyJson], tous les fichiers `.json` (exports d'un autre client).
+  Future<List<BackupFile>> listLocal({bool anyJson = false});
 
   /// Dossier de l'application où `save` écrit sans sélecteur.
   Future<String> get directory;
@@ -124,12 +125,15 @@ class PlatformBackupFiles implements BackupFiles {
   }
 
   @override
-  Future<List<BackupFile>> listLocal() async {
+  Future<List<BackupFile>> listLocal({bool anyJson = false}) async {
     final dir = Directory(await directory);
     if (!await dir.exists()) return const [];
     final files = <(File, DateTime, int)>[];
     await for (final e in dir.list(followLinks: false)) {
-      if (e is File && e.path.endsWith(backupExtension)) {
+      if (e is File &&
+          (anyJson
+              ? e.path.toLowerCase().endsWith('.json')
+              : e.path.endsWith(backupExtension))) {
         final st = await e.stat();
         files.add((e, st.modified, st.size));
       }

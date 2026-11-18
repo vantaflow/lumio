@@ -13,6 +13,7 @@ import 'package:lumio/features/detail/playback_service.dart'
     show streamPrefsProvider;
 import 'package:lumio/features/profiles/pin_dialog.dart' show requireParent;
 import 'package:lumio/features/settings/settings_providers.dart';
+import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
@@ -189,6 +190,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: l.backupImport,
         subtitle: l.backupImportHint,
         onTap: () => BackupFlows(context, ref).import(),
+      ),
+      _Tile(
+        id: 'otherImport',
+        icon: Icons.swap_horiz,
+        title: l.otherImportTitle,
+        subtitle: l.otherImportHint,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const StremioImportScreen()),
+        ),
       ),
       _Header(l.settingsLanguage),
       _Tile(

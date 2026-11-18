@@ -770,5 +770,124 @@
         "type": "String"
       }
     }
-  }
+  },
+  "otherImportTitle": "Importer depuis un autre client",
+  "otherImportHint": "Addons et liste depuis des fichiers exportés",
+  "otherImportHelp": "Choisissez ou collez les fichiers JSON exportés depuis votre ancien client compatible (par exemple Stremio : réponses de addonCollectionGet et datastoreGet). Aucun compte n'est contacté : seuls ces fichiers sont lus. La liste est ajoutée au profil actif ; les addons sont installés un par un.",
+  "otherImportAddonsLabel": "Addons (JSON)",
+  "otherImportLibraryLabel": "Bibliothèque (JSON)",
+  "otherImportPasteHint": "Collez le contenu ici…",
+  "otherImportChooseFile": "Choisir un fichier",
+  "otherImportRemoveFile": "Retirer le fichier",
+  "otherImportFileLoaded": "Fichier : {name}",
+  "@otherImportFileLoaded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "otherImportPickTitle": "Choisir un fichier JSON",
+  "otherImportNoFiles": "Aucun fichier .json trouvé. Copiez-y vos fichiers exportés : {dir}",
+  "@otherImportNoFiles": {
+    "placeholders": {
+      "dir": {
+        "type": "String"
+      }
+    }
+  },
+  "otherImportRun": "Importer",
+  "otherImportNothing": "Choisissez ou collez au moins un fichier.",
+  "otherImportErrFormat": "Ce contenu n'est pas un export reconnu : {which}.",
+  "@otherImportErrFormat": {
+    "placeholders": {
+      "which": {
+        "type": "String"
+      }
+    }
+  },
+  "otherImportErrTooLarge": "Ce contenu est trop volumineux (10 Mo au maximum).",
+  "otherImportProgressAddons": "Installation des addons : {done} sur {total}",
+  "@otherImportProgressAddons": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportProgressLibrary": "Ajout à la liste…",
+  "otherImportDoneTitle": "Import terminé",
+  "otherImportSumInstalled": "{n} addon(s) installé(s)",
+  "@otherImportSumInstalled": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumAlready": "{n} addon(s) déjà présent(s)",
+  "@otherImportSumAlready": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumPending": "{n} addon(s) en attente (adresse locale)",
+  "@otherImportSumPending": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumFailed": "{n} addon(s) n'ont pas pu être installés",
+  "@otherImportSumFailed": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumSkipped": "{n} élément(s) ignoré(s) : {names}",
+  "@otherImportSumSkipped": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "otherImportSumLibrary": "{n} titre(s) ajouté(s) à la liste",
+  "@otherImportSumLibrary": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumLibraryAlready": "{n} titre(s) déjà dans la liste",
+  "@otherImportSumLibraryAlready": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "otherImportSumNothing": "Rien à importer dans ces fichiers.",
+  "otherImportPendingItem": "Un addon pointe vers votre réseau local ({host}). L'installer quand même ?",
+  "@otherImportPendingItem": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "otherImportWhatAddons": "addons",
+  "otherImportWhatLibrary": "bibliothèque"
 }

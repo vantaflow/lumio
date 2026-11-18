@@ -2503,6 +2503,180 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'« {name} » ({host}) pointe vers votre réseau local. L\'installer quand même ?'**
   String backupPrivateBody(String name, String host);
+
+  /// No description provided for @otherImportTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Importer depuis un autre client'**
+  String get otherImportTitle;
+
+  /// No description provided for @otherImportHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addons et liste depuis des fichiers exportés'**
+  String get otherImportHint;
+
+  /// No description provided for @otherImportHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez ou collez les fichiers JSON exportés depuis votre ancien client compatible (par exemple Stremio : réponses de addonCollectionGet et datastoreGet). Aucun compte n\'est contacté : seuls ces fichiers sont lus. La liste est ajoutée au profil actif ; les addons sont installés un par un.'**
+  String get otherImportHelp;
+
+  /// No description provided for @otherImportAddonsLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addons (JSON)'**
+  String get otherImportAddonsLabel;
+
+  /// No description provided for @otherImportLibraryLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bibliothèque (JSON)'**
+  String get otherImportLibraryLabel;
+
+  /// No description provided for @otherImportPasteHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez le contenu ici…'**
+  String get otherImportPasteHint;
+
+  /// No description provided for @otherImportChooseFile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir un fichier'**
+  String get otherImportChooseFile;
+
+  /// No description provided for @otherImportRemoveFile.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer le fichier'**
+  String get otherImportRemoveFile;
+
+  /// No description provided for @otherImportFileLoaded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fichier : {name}'**
+  String otherImportFileLoaded(String name);
+
+  /// No description provided for @otherImportPickTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir un fichier JSON'**
+  String get otherImportPickTitle;
+
+  /// No description provided for @otherImportNoFiles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun fichier .json trouvé. Copiez-y vos fichiers exportés : {dir}'**
+  String otherImportNoFiles(String dir);
+
+  /// No description provided for @otherImportRun.
+  ///
+  /// In fr, this message translates to:
+  /// **'Importer'**
+  String get otherImportRun;
+
+  /// No description provided for @otherImportNothing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez ou collez au moins un fichier.'**
+  String get otherImportNothing;
+
+  /// No description provided for @otherImportErrFormat.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce contenu n\'est pas un export reconnu : {which}.'**
+  String otherImportErrFormat(String which);
+
+  /// No description provided for @otherImportErrTooLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce contenu est trop volumineux (10 Mo au maximum).'**
+  String get otherImportErrTooLarge;
+
+  /// No description provided for @otherImportProgressAddons.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installation des addons : {done} sur {total}'**
+  String otherImportProgressAddons(int done, int total);
+
+  /// No description provided for @otherImportProgressLibrary.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajout à la liste…'**
+  String get otherImportProgressLibrary;
+
+  /// No description provided for @otherImportDoneTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Import terminé'**
+  String get otherImportDoneTitle;
+
+  /// No description provided for @otherImportSumInstalled.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) installé(s)'**
+  String otherImportSumInstalled(int n);
+
+  /// No description provided for @otherImportSumAlready.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) déjà présent(s)'**
+  String otherImportSumAlready(int n);
+
+  /// No description provided for @otherImportSumPending.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) en attente (adresse locale)'**
+  String otherImportSumPending(int n);
+
+  /// No description provided for @otherImportSumFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} addon(s) n\'ont pas pu être installés'**
+  String otherImportSumFailed(int n);
+
+  /// No description provided for @otherImportSumSkipped.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} élément(s) ignoré(s) : {names}'**
+  String otherImportSumSkipped(int n, String names);
+
+  /// No description provided for @otherImportSumLibrary.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} titre(s) ajouté(s) à la liste'**
+  String otherImportSumLibrary(int n);
+
+  /// No description provided for @otherImportSumLibraryAlready.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} titre(s) déjà dans la liste'**
+  String otherImportSumLibraryAlready(int n);
+
+  /// No description provided for @otherImportSumNothing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rien à importer dans ces fichiers.'**
+  String get otherImportSumNothing;
+
+  /// No description provided for @otherImportPendingItem.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un addon pointe vers votre réseau local ({host}). L\'installer quand même ?'**
+  String otherImportPendingItem(String host);
+
+  /// No description provided for @otherImportWhatAddons.
+  ///
+  /// In fr, this message translates to:
+  /// **'addons'**
+  String get otherImportWhatAddons;
+
+  /// No description provided for @otherImportWhatLibrary.
+  ///
+  /// In fr, this message translates to:
+  /// **'bibliothèque'**
+  String get otherImportWhatLibrary;
 }
 
 class _AppLocalizationsDelegate
