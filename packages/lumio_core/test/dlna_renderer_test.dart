@@ -107,6 +107,11 @@ void main() {
     expect(p.body, contains('object.item.videoItem'));
   });
 
+  test('protocolInfo suit le type MIME donné', () async {
+    await r.setUri(Uri.parse('http://192.168.1.10/a'), 'T', mime: 'video/webm');
+    expect(f.posts.single.body, contains('http-get:*:video/webm:*'));
+  });
+
   test('Play, Pause, Stop, Seek : bonnes actions et paramètres', () async {
     await r.play();
     await r.pause();

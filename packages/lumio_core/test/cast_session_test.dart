@@ -11,10 +11,18 @@ class _FakeRenderer implements CastRenderer {
   Object? positionError;
   Object? setUriError;
   Object? seekError;
+  String? lastMime;
+  Completer<void>? gate;
 
   @override
-  Future<void> setUri(Uri media, String title) async {
+  Future<void> setUri(
+    Uri media,
+    String title, {
+    String mime = 'video/mp4',
+  }) async {
     calls.add('setUri');
+    lastMime = mime;
+    await gate?.future;
     if (setUriError != null) throw setUriError!;
     uri = media;
   }
@@ -167,6 +175,50 @@ void main() {
       );
       await expectLater(s.start(), throwsA(isA<CastNetworkException>()));
       expect(renderer.calls, isEmpty);
+    },
+  );
+
+  test('stop pendant le démarrage : serveur fermé, démarrage annulé', () async {
+    renderer.gate = Completer<void>();
+    final s = make();
+    final started = s.start();
+    started.ignore();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    final url = renderer.uri;
+    expect(url, isNull);
+    await s.stop();
+    renderer.gate!.complete();
+    await expectLater(started, throwsA(anything));
+    expect(s.isActive, isFalse);
+  });
+
+  test(
+    'MIME annoncé : fichier par extension, flux HTTP par mimeType',
+    () async {
+      final f = File('${Directory.systemTemp.path}/x_cast.mkv');
+      final s1 = CastSession(
+        device: _device,
+        renderer: renderer,
+        source: CastFileSource(f),
+        title: 't',
+        localAddresses: () async => [InternetAddress.loopbackIPv4],
+      );
+      await s1.start();
+      await s1.stop();
+      expect(renderer.lastMime, 'video/x-matroska');
+      final s2 = CastSession(
+        device: _device,
+        renderer: renderer,
+        source: CastHttpSource(
+          Uri.parse('http://127.0.0.1:${upstream.port}/a'),
+          mimeType: 'video/webm',
+        ),
+        title: 't',
+        localAddresses: () async => [InternetAddress.loopbackIPv4],
+      );
+      await s2.start();
+      await s2.stop();
+      expect(renderer.lastMime, 'video/webm');
     },
   );
 }

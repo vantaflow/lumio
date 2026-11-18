@@ -13,6 +13,14 @@ class CastNetworkException implements Exception {
   String toString() => 'CastNetworkException: aucune interface commune';
 }
 
+/// Le cast a été arrêté pendant son démarrage.
+class CastCancelledException implements Exception {
+  const CastCancelledException();
+
+  @override
+  String toString() => 'CastCancelledException';
+}
+
 /// Un cast en cours : serveur éphémère + commandes de l'appareil + suivi de
 /// la position. Le serveur n'existe que pendant la session.
 class CastSession {
@@ -53,6 +61,14 @@ class CastSession {
       ...i.addresses,
   ];
 
+  String _mime() {
+    final s = source;
+    return switch (s) {
+      CastFileSource() => mimeForPath(s.file.path),
+      CastHttpSource() => s.mimeType ?? 'video/mp4',
+    };
+  }
+
   bool get isActive => _server != null && !_stopped;
   Duration get lastPosition => _lastPosition;
 
@@ -61,14 +77,20 @@ class CastSession {
   Future<void> start({Duration startAt = Duration.zero}) async {
     final bind = pickLanAddress(device.address, await _localAddresses());
     if (bind == null) throw const CastNetworkException();
+    if (_stopped) throw const CastCancelledException();
     final server = await CastServer.start(
       bindAddress: bind,
       allowedClient: device.address,
       source: source,
     );
     _server = server;
+    if (_stopped) {
+      // stop() est arrivé pendant l'ouverture du serveur.
+      await _teardown();
+      throw const CastCancelledException();
+    }
     try {
-      await _renderer.setUri(server.url, title);
+      await _renderer.setUri(server.url, title, mime: _mime());
       await _renderer.play();
       if (startAt > Duration.zero) {
         try {
@@ -80,6 +102,10 @@ class CastSession {
     } on Object {
       await _teardown();
       rethrow;
+    }
+    if (_stopped) {
+      await _teardown();
+      throw const CastCancelledException();
     }
     _lastPosition = startAt;
     _lastOk = DateTime.now();

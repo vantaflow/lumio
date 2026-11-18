@@ -37,6 +37,12 @@ class PlayerCast extends ChangeNotifier {
   final CastSession Function(CastDevice, CastSource, String) _create;
 
   CastSession? _session;
+
+  /// Session en cours de démarrage : `stop()`/`dispose()` doivent aussi
+  /// l'arrêter (le serveur est déjà lié pendant `start`).
+  CastSession? _pending;
+  bool _cancelled = false;
+  bool _disposed = false;
   CastDevice? _device;
   bool _paused = false;
   bool _busy = false;
@@ -56,26 +62,41 @@ class PlayerCast extends ChangeNotifier {
   CastDevice? get device => _device;
   bool get paused => _paused;
 
+  /// Dernière position connue sur l'appareil (pour enregistrer la progression
+  /// à la sortie du lecteur).
+  Duration get lastPosition => _session?.lastPosition ?? Duration.zero;
+
   Future<CastStart> start(CastDevice device, String title) async {
-    if (_busy || _session != null) return CastStart.failed;
+    if (_disposed || _busy || _session != null) return CastStart.failed;
     final src = source();
     if (src == null) return CastStart.unsupported;
     _busy = true;
     final at = position();
     final session = _create(device, src, title);
+    _pending = session;
+    _cancelled = false;
     try {
       await pauseLocal();
       session.onLost = (last) => unawaited(_lost(session, last));
       await session.start(startAt: at);
     } on CastNetworkException {
-      await resumeLocal(at);
+      _pending = null;
+      if (!_disposed && !_cancelled) await resumeLocal(at);
       return CastStart.noNetwork;
     } on Object {
+      _pending = null;
       await session.stop();
-      await resumeLocal(at);
+      if (!_disposed && !_cancelled) await resumeLocal(at);
       return CastStart.failed;
     } finally {
       _busy = false;
+    }
+    _pending = null;
+    if (_disposed || _cancelled) {
+      // Le lecteur s'est fermé (ou le cast a été annulé) pendant le démarrage :
+      // rien n'est publié, serveur et flux de l'appareil sont arrêtés.
+      await session.stop();
+      return CastStart.failed;
     }
     _session = session;
     _device = device;
@@ -129,6 +150,11 @@ class PlayerCast extends ChangeNotifier {
   /// Arrête le cast (serveur fermé). [resume] : le lecteur local reprend à la
   /// position atteinte sur l'appareil.
   Future<void> stop({bool resume = true}) async {
+    final p = _pending;
+    if (p != null) {
+      _cancelled = true; // start() arrêtera la session à son retour
+      unawaited(p.stop());
+    }
     final s = _session;
     if (s == null) return;
     _clear();
@@ -138,9 +164,12 @@ class PlayerCast extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     final s = _session;
     _session = null;
     if (s != null) unawaited(s.stop());
+    final p = _pending;
+    if (p != null) unawaited(p.stop());
     super.dispose();
   }
 }

@@ -12,14 +12,30 @@ sealed class CastSource {
 /// Relais d'une URL de nos propres composants (proxy local, serveur du moteur
 /// de torrents) : toujours sur la boucle locale.
 class CastHttpSource extends CastSource {
-  const CastHttpSource(this.upstream);
+  const CastHttpSource(this.upstream, {this.mimeType});
   final Uri upstream;
+
+  /// Type MIME annoncé au téléviseur (par défaut `video/mp4`).
+  final String? mimeType;
 }
 
 /// Fichier d'un dossier local accordé.
 class CastFileSource extends CastSource {
   const CastFileSource(this.file);
   final File file;
+}
+
+/// Type MIME d'une vidéo d'après l'extension du chemin.
+String mimeForPath(String path) {
+  final ext = path.contains('.') ? path.split('.').last.toLowerCase() : '';
+  return switch (ext) {
+    'mp4' || 'm4v' => 'video/mp4',
+    'mkv' => 'video/x-matroska',
+    'webm' => 'video/webm',
+    'avi' => 'video/x-msvideo',
+    'ts' => 'video/mp2t',
+    _ => 'video/mp4',
+  };
 }
 
 /// Choisit l'adresse locale à utiliser pour joindre [renderer] : une adresse
@@ -154,13 +170,20 @@ class CastServer {
           await _serveFile(req, s.file);
       }
     } catch (_) {
-      try {
-        res.statusCode = HttpStatus.badGateway;
-      } catch (_) {}
+      _setStatus(res, HttpStatus.badGateway);
     } finally {
       try {
         await res.close();
       } catch (_) {}
+    }
+  }
+
+  /// Écrit le statut seulement si les en-têtes ne sont pas déjà partis.
+  static void _setStatus(HttpResponse res, int code) {
+    try {
+      res.statusCode = code;
+    } on Object {
+      // En-têtes déjà envoyés : rien à changer.
     }
   }
 
@@ -186,40 +209,57 @@ class CastServer {
         return;
       }
       res.statusCode = up.statusCode;
+      final noBody = req.method == 'HEAD' || up.statusCode >= 400;
       for (final n in const [
         HttpHeaders.contentTypeHeader,
         HttpHeaders.contentLengthHeader,
         HttpHeaders.contentRangeHeader,
         HttpHeaders.acceptRangesHeader,
       ]) {
+        // Pas de Content-Length d'un corps qu'on n'envoie pas (erreurs).
+        if (n == HttpHeaders.contentLengthHeader && up.statusCode >= 400) {
+          continue;
+        }
         final v = up.headers.value(n);
         if (v != null) res.headers.set(n, v);
       }
-      if (req.method == 'HEAD' || up.statusCode >= 400) {
+      if (noBody) {
         await up.listen((_) {}).cancel();
         return;
       }
-      await res.addStream(up);
+      // HttpResponse.addStream ne signale pas un téléviseur parti en cours de
+      // route : on détache la socket pour la surveiller et couper aussitôt la
+      // connexion amont (sinon le torrent / la source remplirait un tampon).
+      // Corps délimité par la fermeture de la connexion si la longueur est
+      // inconnue (pas de transfert fragmenté en brut).
+      if (!res.headers.chunkedTransferEncoding ||
+          up.headers.value(HttpHeaders.contentLengthHeader) == null) {
+        res.headers.chunkedTransferEncoding = false;
+        res.persistentConnection = false;
+      }
+      final socket = await res.detachSocket(writeHeaders: true);
+      socket.listen(
+        (_) {},
+        onDone: () => client.close(force: true),
+        onError: (Object _) => client.close(force: true),
+        cancelOnError: true,
+      );
+      try {
+        await socket.addStream(up);
+      } on Object {
+        // Amont coupé ou client parti.
+      } finally {
+        socket.destroy();
+      }
     } on TimeoutException {
-      res.statusCode = HttpStatus.gatewayTimeout;
+      _setStatus(res, HttpStatus.gatewayTimeout);
     } on Object {
-      res.statusCode = HttpStatus.badGateway;
+      // Le téléviseur est parti en cours de route : l'amont est coupé ci-dessous.
+      _setStatus(res, HttpStatus.badGateway);
     } finally {
       _upstreams.remove(client);
       client.close(force: true);
     }
-  }
-
-  static String _mime(String path) {
-    final ext = path.contains('.') ? path.split('.').last.toLowerCase() : '';
-    return switch (ext) {
-      'mp4' || 'm4v' => 'video/mp4',
-      'mkv' => 'video/x-matroska',
-      'webm' => 'video/webm',
-      'avi' => 'video/x-msvideo',
-      'ts' => 'video/mp2t',
-      _ => 'application/octet-stream',
-    };
   }
 
   Future<void> _serveFile(HttpRequest req, File file) async {
@@ -232,7 +272,7 @@ class CastServer {
       return;
     }
     res.headers
-      ..set(HttpHeaders.contentTypeHeader, _mime(file.path))
+      ..set(HttpHeaders.contentTypeHeader, mimeForPath(file.path))
       ..set(HttpHeaders.acceptRangesHeader, 'bytes');
     var start = 0;
     var end = len - 1;

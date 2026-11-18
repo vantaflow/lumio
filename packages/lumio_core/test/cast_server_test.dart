@@ -207,4 +207,84 @@ void main() {
       );
     });
   });
+
+  test(
+    'erreur amont : pas de Content-Length copié ; HEAD relayé sans corps',
+    () async {
+      final err = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => err.close(force: true));
+      err.listen((req) async {
+        if (req.uri.path == '/missing') {
+          req.response.statusCode = 404;
+          req.response.headers.contentLength = 5000;
+          req.response.add(List.filled(5000, 1));
+          await req.response.close();
+          return;
+        }
+        req.response.headers.contentLength = 1000;
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        if (req.method != 'HEAD') req.response.add(media);
+        await req.response.close();
+      });
+      final s404 = await start(
+        source: CastHttpSource(
+          Uri.parse('http://127.0.0.1:${err.port}/missing'),
+        ),
+      );
+      addTearDown(s404.close);
+      final (code, body, h) = await _get(s404.url);
+      expect(code, 404);
+      expect(body, isEmpty);
+      expect(h['content-length'], '0');
+      final sh = await start(
+        source: CastHttpSource(Uri.parse('http://127.0.0.1:${err.port}/ok')),
+      );
+      addTearDown(sh.close);
+      final (hc, hb, hh) = await _get(sh.url, method: 'HEAD');
+      expect(hc, 200);
+      expect(hb, isEmpty);
+      expect(hh['content-length'], '1000');
+    },
+  );
+
+  test(
+    'le téléviseur coupe en plein flux : la connexion amont est fermée',
+    () async {
+      final slow = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => slow.close(force: true));
+      final closed = Completer<void>();
+      slow.listen((req) async {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.headers.chunkedTransferEncoding = false;
+        req.response.persistentConnection = false;
+        final sock = await req.response.detachSocket(writeHeaders: true);
+        sock.listen(
+          (_) {},
+          onDone: () {
+            if (!closed.isCompleted) closed.complete();
+          },
+          onError: (Object _) {
+            if (!closed.isCompleted) closed.complete();
+          },
+        );
+        try {
+          for (var i = 0; i < 200; i++) {
+            sock.add(List.filled(4096, 1));
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+          }
+        } on Object {
+          // Écriture refusée : connexion déjà fermée.
+        }
+      });
+      final s = await start(
+        source: CastHttpSource(Uri.parse('http://127.0.0.1:${slow.port}/v')),
+      );
+      addTearDown(s.close);
+      final c = HttpClient();
+      final res = await (await c.getUrl(s.url)).close();
+      await res.first;
+      c.close(force: true); // le téléviseur part
+      await closed.future.timeout(const Duration(seconds: 5));
+    },
+  );
 }

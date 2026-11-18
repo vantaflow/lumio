@@ -215,7 +215,7 @@ class PlayerController {
           ? CastFileSource(File(local.path))
           : (url.path.toLowerCase().endsWith('.m3u8')
                 ? null
-                : CastHttpSource(route.url));
+                : CastHttpSource(route.url, mimeType: mimeForPath(url.path)));
       if (_viaProxy) {
         _proxySub ??= (await _proxy()).events.listen((e) {
           if (e.status != 0) _lastStatus = e.status;

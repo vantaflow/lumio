@@ -42,11 +42,13 @@ class _Session extends CastSession {
     : super(device: d, renderer: _NoRenderer(), source: s, title: 't');
   final events = <String>[];
   Object? startError;
+  Completer<void>? gate;
   Duration last = const Duration(seconds: 77);
 
   @override
   Future<void> start({Duration startAt = Duration.zero}) async {
     events.add('start:${startAt.inSeconds}');
+    await gate?.future;
     if (startError != null) throw startError!;
   }
 
@@ -121,6 +123,32 @@ void main() {
       session.startError = const CastNetworkException();
       expect(await cast.start(_dev('TV'), 'Film'), CastStart.noNetwork);
       expect(log, ['pause', 'resume:30']);
+    });
+
+    test(
+      'dispose pendant un démarrage lent : session arrêtée, rien publié',
+      () async {
+        session.gate = Completer<void>();
+        final f = cast.start(_dev('TV'), 'Film');
+        await Future<void>.delayed(Duration.zero);
+        cast.dispose();
+        session.gate!.complete();
+        expect(await f, CastStart.failed);
+        expect(session.events, contains('stop'));
+        expect(log, ['pause']); // pas de reprise locale sur un lecteur fermé
+        expect(cast.active, isFalse);
+      },
+    );
+
+    test('stop pendant un démarrage lent : annulé, serveur arrêté', () async {
+      session.gate = Completer<void>();
+      final f = cast.start(_dev('TV'), 'Film');
+      await Future<void>.delayed(Duration.zero);
+      await cast.stop();
+      session.gate!.complete();
+      expect(await f, CastStart.failed);
+      expect(session.events, contains('stop'));
+      expect(cast.active, isFalse);
     });
 
     test(

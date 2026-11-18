@@ -187,7 +187,8 @@ class PlayerScreen extends ConsumerStatefulWidget {
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class _PlayerScreenState extends ConsumerState<PlayerScreen> {
+class _PlayerScreenState extends ConsumerState<PlayerScreen>
+    with WidgetsBindingObserver {
   late final PlayerController _ctl;
   final _root = FocusNode(debugLabel: 'player-root');
   final _playNode = FocusNode(debugLabel: 'player-play');
@@ -505,6 +506,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         PlayerController(proxy: () => ref.read(localProxyProvider.future));
     _ctl.stateListenable.addListener(_onState);
     _events = ref.read(playbackEventsProvider);
+    WidgetsBinding.instance.addObserver(this);
     _cast = PlayerCast(
       source: () => _ctl.castSource,
       position: () => _ctl.state.position,
@@ -523,6 +525,16 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     unawaited(_openFrom(widget.item, alternatives: widget.fallbacks));
     unawaited(_initTracks());
     _armHide();
+  }
+
+  /// Mise en arrière-plan : le cast continue (pause de l'application = pas
+  /// de pause de la télévision). Fermeture de l'application (`detached`) : le
+  /// cast et son serveur sont arrêtés.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      unawaited(_cast.stop(resume: false));
+    }
   }
 
   void _tellL(String Function(AppLocalizations l) message) {
@@ -623,9 +635,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   @override
   void dispose() {
     _disposed = true;
+    WidgetsBinding.instance.removeObserver(this);
     _announce(PlaybackAction.stop);
     final st = _ctl.state;
-    _recorder?.flush(st.position, st.duration, force: true);
+    // Cast en cours : la position utile est celle de l'appareil, pas celle du
+    // lecteur local (en pause depuis le début du cast).
+    final castPos = _cast.active ? _cast.lastPosition : null;
+    _recorder?.flush(castPos ?? st.position, st.duration, force: true);
     _hide?.cancel();
     _cast.dispose(); // ferme le serveur de cast et arrête l'appareil
     _ctl.stateListenable.removeListener(_onState);

@@ -28,7 +28,7 @@ class SoapFaultException extends DlnaException {
 
 /// Commandes d'un lecteur distant (abstrait pour les tests de session).
 abstract class CastRenderer {
-  Future<void> setUri(Uri media, String title);
+  Future<void> setUri(Uri media, String title, {String mime = 'video/mp4'});
   Future<void> play();
   Future<void> pause();
   Future<void> stop();
@@ -49,13 +49,13 @@ String _esc(String s) => s
 /// Métadonnées DIDL-Lite d'une vidéo (non échappées pour l'enveloppe : le
 /// titre et l'URL le sont ici, l'ensemble l'est une seconde fois dans
 /// `CurrentURIMetaData`).
-String buildDidl(Uri media, String title) =>
+String buildDidl(Uri media, String title, {String mime = 'video/mp4'}) =>
     '<DIDL-Lite xmlns="$_didlNs" xmlns:dc="http://purl.org/dc/elements/1.1/" '
     'xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/">'
     '<item id="0" parentID="-1" restricted="1">'
     '<dc:title>${_esc(title)}</dc:title>'
     '<upnp:class>object.item.videoItem</upnp:class>'
-    '<res protocolInfo="http-get:*:video/mp4:*">${_esc(media.toString())}</res>'
+    '<res protocolInfo="http-get:*:${_esc(mime)}:*">${_esc(media.toString())}</res>'
     '</item></DIDL-Lite>';
 
 /// Enveloppe SOAP d'une [action] AVTransport ; [args] dans l'ordre, valeurs
@@ -176,10 +176,14 @@ class DlnaRenderer implements CastRenderer {
   }
 
   @override
-  Future<void> setUri(Uri media, String title) async {
+  Future<void> setUri(
+    Uri media,
+    String title, {
+    String mime = 'video/mp4',
+  }) async {
     await _call('SetAVTransportURI', [
       MapEntry('CurrentURI', media.toString()),
-      MapEntry('CurrentURIMetaData', buildDidl(media, title)),
+      MapEntry('CurrentURIMetaData', buildDidl(media, title, mime: mime)),
     ]);
   }
 
