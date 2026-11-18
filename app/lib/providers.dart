@@ -3,7 +3,9 @@ import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/db_connection.dart';
 import 'package:lumio/data/secret_store.dart';
+import 'package:lumio/data/title_settings_store.dart';
 import 'package:lumio/player/local_proxy.dart';
+import 'package:lumio/player/subtitle_style.dart';
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase(openAppDatabase());
@@ -67,3 +69,19 @@ class AddonsController extends AsyncNotifier<List<InstalledAddon>> {
   /// À appeler après une installation réussie.
   Future<void> refresh() async => state = AsyncData(await _repo.list());
 }
+
+/// Profil actif (un seul profil « default » pour l'instant).
+const defaultProfileId = 'default';
+
+/// Réglages par titre du profil actif, préchargés depuis SQLite.
+final titleSettingsStoreProvider = FutureProvider<DriftTitleSettingsStore>((
+  ref,
+) async {
+  final store = DriftTitleSettingsStore(ref.watch(appDatabaseProvider));
+  await store.load(defaultProfileId);
+  return store;
+});
+
+final subtitleStyleStoreProvider = Provider<SubtitleStyleStore>(
+  (ref) => SubtitleStyleStore(ref.watch(appDatabaseProvider)),
+);

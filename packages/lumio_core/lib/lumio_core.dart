@@ -19,3 +19,4 @@ export 'src/streams/stream_service.dart';
 export 'src/subtitles/charset.dart';
 export 'src/subtitles/subtitle_item.dart';
 export 'src/subtitles/subtitle_service.dart';
+export 'src/playback/title_settings.dart';

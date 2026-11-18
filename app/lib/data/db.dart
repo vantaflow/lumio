@@ -68,19 +68,41 @@ class Settings extends Table {
   Set<Column<Object>> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [Profiles, Addons, LibraryItems, Progress, Settings])
+/// Réglages de lecture par titre (clé : série, voir `titleSettingsKey`).
+@DataClassName('TitleSettingsRow')
+class TitleSettingsTable extends Table {
+  @override
+  String get tableName => 'title_settings';
+
+  TextColumn get profileId => text()();
+  TextColumn get metaId => text()();
+  TextColumn get json => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {profileId, metaId};
+}
+
+@DriftDatabase(
+  tables: [
+    Profiles,
+    Addons,
+    LibraryItems,
+    Progress,
+    Settings,
+    TitleSettingsTable,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
-      // Étapes de migration à ajouter ici à chaque nouvelle version :
-      // if (from < 2) { await m.addColumn(...); }
+      if (from < 2) await m.createTable(titleSettingsTable);
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

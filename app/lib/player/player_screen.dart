@@ -1,14 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/player/player_controller.dart';
+import 'package:lumio/player/tracks_controller.dart';
+import 'package:lumio/player/tracks_panel.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart' hide Video;
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Résultat renvoyé à la fermeture de l'écran.
 enum PlayerExit {
@@ -77,6 +81,8 @@ class PlayerScreen extends ConsumerStatefulWidget {
     required this.item,
     this.allowPrivate = false,
     this.controller,
+    this.metaId,
+    this.subtitles = const [],
     super.key,
   });
 
@@ -88,6 +94,13 @@ class PlayerScreen extends ConsumerStatefulWidget {
   /// Contrôleur fourni (tests) ; sinon créé et libéré par l'écran.
   final PlayerController? controller;
 
+  /// Identifiant du titre (`tt1` ou `tt1:1:2`) pour mémoriser pistes et
+  /// décalage par série ; sans lui, rien n'est mémorisé.
+  final String? metaId;
+
+  /// Sous-titres proposés par les addons pour ce flux.
+  final List<SubtitleItem> subtitles;
+
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
 }
@@ -96,6 +109,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   late final PlayerController _ctl;
   final _root = FocusNode(debugLabel: 'player-root');
   final _playNode = FocusNode(debugLabel: 'player-play');
+  final _tracksNode = FocusNode(debugLabel: 'player-tracks');
+  TracksController? _tracks;
+  bool _panel = false;
   Timer? _hide;
   bool _controls = true;
 
@@ -108,7 +124,66 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _ctl.stateListenable.addListener(_onState);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     unawaited(_ctl.open(widget.item, allowPrivate: widget.allowPrivate));
+    unawaited(_initTracks());
     _armHide();
+  }
+
+  Future<void> _initTracks() async {
+    try {
+      final store = await ref.read(titleSettingsStoreProvider.future);
+      final styleStore = ref.read(subtitleStyleStoreProvider);
+      final style = await styleStore.load();
+      if (!mounted) return;
+      final allowPrivate = widget.allowPrivate;
+      final c = TracksController(
+        backend: MediaKitTracksBackend(_ctl.player),
+        store: widget.metaId == null ? InMemoryTitleSettingsStore() : store,
+        profileId: defaultProfileId,
+        metaId: widget.metaId ?? '',
+        addonSubtitles: widget.subtitles,
+        style: style,
+        onStyleChanged: (s) => unawaited(styleStore.save(s)),
+        // Téléchargement protégé : garde d'URL sur l'adresse et les
+        // redirections, 2 Mo maximum, jamais de requête brute d'addon.
+        download: (url) async {
+          final r = await IoHttpFetcher().get(
+            url,
+            maxBytes: subtitleMaxBytes,
+            guard: (u) => UrlGuard.check(u, allowPrivate: allowPrivate),
+          );
+          if (r.status != 200) throw HttpException('statut ${r.status}');
+          return r.body;
+        },
+        writeTemp: (name, content) async {
+          final dir = await getTemporaryDirectory();
+          final f = File('${dir.path}/$name');
+          await f.writeAsString(content);
+          return f.path;
+        },
+      );
+      await c.init();
+      if (!mounted) {
+        c.dispose();
+        return;
+      }
+      setState(() => _tracks = c);
+    } on Object {
+      // Sans réglages mémorisés, le lecteur reste utilisable.
+    }
+  }
+
+  void _openPanel() {
+    if (_tracks == null) return;
+    _hide?.cancel();
+    setState(() => _panel = true);
+  }
+
+  void _closePanel() {
+    setState(() => _panel = false);
+    _showControls();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _tracksNode.requestFocus();
+    });
   }
 
   @override
@@ -118,6 +193,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _root.dispose();
     _playNode.dispose();
+    _tracksNode.dispose();
+    _tracks?.dispose();
     if (widget.controller == null) unawaited(_ctl.dispose());
     super.dispose();
   }
@@ -239,6 +316,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           title: widget.item.title,
                           state: st,
                           playNode: _playNode,
+                          tracksNode: _tracksNode,
+                          onTracks: _tracks == null ? null : _openPanel,
                           onPlayPause: () {
                             unawaited(_ctl.playPause());
                             _armHide();
@@ -256,7 +335,17 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       ),
                     ),
                   ),
-                if (!_controls && !failed)
+                if (_panel && _tracks != null && !failed)
+                  PositionedDirectional(
+                    top: 0,
+                    bottom: 0,
+                    end: 0,
+                    child: TracksPanel(
+                      controller: _tracks!,
+                      onClose: _closePanel,
+                    ),
+                  ),
+                if (!_controls && !failed && !_panel)
                   // Toucher l'écran réaffiche les commandes (téléphone/bureau).
                   Positioned.fill(
                     child: GestureDetector(
@@ -319,6 +408,8 @@ class _Controls extends StatelessWidget {
     required this.title,
     required this.state,
     required this.playNode,
+    required this.tracksNode,
+    required this.onTracks,
     required this.onPlayPause,
     required this.onSeekBy,
     required this.onSeekTo,
@@ -328,6 +419,8 @@ class _Controls extends StatelessWidget {
   final String title;
   final PlayerState state;
   final FocusNode playNode;
+  final FocusNode tracksNode;
+  final VoidCallback? onTracks;
   final VoidCallback onPlayPause;
   final ValueChanged<Duration> onSeekBy;
   final ValueChanged<Duration> onSeekTo;
@@ -395,6 +488,16 @@ class _Controls extends StatelessWidget {
                     size: big ? 88 : 56,
                     onPressed: () => onSeekBy(seekStep),
                   ),
+                  if (onTracks != null) ...[
+                    const SizedBox(width: LumioSpacing.lg),
+                    _RoundButton(
+                      focusNode: tracksNode,
+                      icon: Icons.subtitles,
+                      label: 'Pistes et sous-titres',
+                      size: big ? 88 : 56,
+                      onPressed: onTracks!,
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: LumioSpacing.lg),

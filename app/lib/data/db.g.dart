@@ -1658,6 +1658,272 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   }
 }
 
+class $TitleSettingsTableTable extends TitleSettingsTable
+    with TableInfo<$TitleSettingsTableTable, TitleSettingsRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TitleSettingsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<String> profileId = GeneratedColumn<String>(
+    'profile_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _metaIdMeta = const VerificationMeta('metaId');
+  @override
+  late final GeneratedColumn<String> metaId = GeneratedColumn<String>(
+    'meta_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
+  @override
+  late final GeneratedColumn<String> json = GeneratedColumn<String>(
+    'json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [profileId, metaId, json];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'title_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TitleSettingsRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_profileIdMeta);
+    }
+    if (data.containsKey('meta_id')) {
+      context.handle(
+        _metaIdMeta,
+        metaId.isAcceptableOrUnknown(data['meta_id']!, _metaIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_metaIdMeta);
+    }
+    if (data.containsKey('json')) {
+      context.handle(
+        _jsonMeta,
+        json.isAcceptableOrUnknown(data['json']!, _jsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {profileId, metaId};
+  @override
+  TitleSettingsRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TitleSettingsRow(
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}profile_id'],
+      )!,
+      metaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meta_id'],
+      )!,
+      json: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}json'],
+      )!,
+    );
+  }
+
+  @override
+  $TitleSettingsTableTable createAlias(String alias) {
+    return $TitleSettingsTableTable(attachedDatabase, alias);
+  }
+}
+
+class TitleSettingsRow extends DataClass
+    implements Insertable<TitleSettingsRow> {
+  final String profileId;
+  final String metaId;
+  final String json;
+  const TitleSettingsRow({
+    required this.profileId,
+    required this.metaId,
+    required this.json,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['profile_id'] = Variable<String>(profileId);
+    map['meta_id'] = Variable<String>(metaId);
+    map['json'] = Variable<String>(json);
+    return map;
+  }
+
+  TitleSettingsTableCompanion toCompanion(bool nullToAbsent) {
+    return TitleSettingsTableCompanion(
+      profileId: Value(profileId),
+      metaId: Value(metaId),
+      json: Value(json),
+    );
+  }
+
+  factory TitleSettingsRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TitleSettingsRow(
+      profileId: serializer.fromJson<String>(json['profileId']),
+      metaId: serializer.fromJson<String>(json['metaId']),
+      json: serializer.fromJson<String>(json['json']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'profileId': serializer.toJson<String>(profileId),
+      'metaId': serializer.toJson<String>(metaId),
+      'json': serializer.toJson<String>(json),
+    };
+  }
+
+  TitleSettingsRow copyWith({
+    String? profileId,
+    String? metaId,
+    String? json,
+  }) => TitleSettingsRow(
+    profileId: profileId ?? this.profileId,
+    metaId: metaId ?? this.metaId,
+    json: json ?? this.json,
+  );
+  TitleSettingsRow copyWithCompanion(TitleSettingsTableCompanion data) {
+    return TitleSettingsRow(
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      metaId: data.metaId.present ? data.metaId.value : this.metaId,
+      json: data.json.present ? data.json.value : this.json,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TitleSettingsRow(')
+          ..write('profileId: $profileId, ')
+          ..write('metaId: $metaId, ')
+          ..write('json: $json')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(profileId, metaId, json);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TitleSettingsRow &&
+          other.profileId == this.profileId &&
+          other.metaId == this.metaId &&
+          other.json == this.json);
+}
+
+class TitleSettingsTableCompanion extends UpdateCompanion<TitleSettingsRow> {
+  final Value<String> profileId;
+  final Value<String> metaId;
+  final Value<String> json;
+  final Value<int> rowid;
+  const TitleSettingsTableCompanion({
+    this.profileId = const Value.absent(),
+    this.metaId = const Value.absent(),
+    this.json = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TitleSettingsTableCompanion.insert({
+    required String profileId,
+    required String metaId,
+    required String json,
+    this.rowid = const Value.absent(),
+  }) : profileId = Value(profileId),
+       metaId = Value(metaId),
+       json = Value(json);
+  static Insertable<TitleSettingsRow> custom({
+    Expression<String>? profileId,
+    Expression<String>? metaId,
+    Expression<String>? json,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (profileId != null) 'profile_id': profileId,
+      if (metaId != null) 'meta_id': metaId,
+      if (json != null) 'json': json,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TitleSettingsTableCompanion copyWith({
+    Value<String>? profileId,
+    Value<String>? metaId,
+    Value<String>? json,
+    Value<int>? rowid,
+  }) {
+    return TitleSettingsTableCompanion(
+      profileId: profileId ?? this.profileId,
+      metaId: metaId ?? this.metaId,
+      json: json ?? this.json,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (profileId.present) {
+      map['profile_id'] = Variable<String>(profileId.value);
+    }
+    if (metaId.present) {
+      map['meta_id'] = Variable<String>(metaId.value);
+    }
+    if (json.present) {
+      map['json'] = Variable<String>(json.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TitleSettingsTableCompanion(')
+          ..write('profileId: $profileId, ')
+          ..write('metaId: $metaId, ')
+          ..write('json: $json, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1666,6 +1932,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LibraryItemsTable libraryItems = $LibraryItemsTable(this);
   late final $ProgressTable progress = $ProgressTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final $TitleSettingsTableTable titleSettingsTable =
+      $TitleSettingsTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1676,6 +1944,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     libraryItems,
     progress,
     settings,
+    titleSettingsTable,
   ];
 }
 
@@ -2608,6 +2877,181 @@ typedef $$SettingsTableProcessedTableManager =
       Setting,
       PrefetchHooks Function()
     >;
+typedef $$TitleSettingsTableTableCreateCompanionBuilder =
+    TitleSettingsTableCompanion Function({
+      required String profileId,
+      required String metaId,
+      required String json,
+      Value<int> rowid,
+    });
+typedef $$TitleSettingsTableTableUpdateCompanionBuilder =
+    TitleSettingsTableCompanion Function({
+      Value<String> profileId,
+      Value<String> metaId,
+      Value<String> json,
+      Value<int> rowid,
+    });
+
+class $$TitleSettingsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $TitleSettingsTableTable> {
+  $$TitleSettingsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get profileId => $composableBuilder(
+    column: $table.profileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metaId => $composableBuilder(
+    column: $table.metaId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TitleSettingsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $TitleSettingsTableTable> {
+  $$TitleSettingsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get profileId => $composableBuilder(
+    column: $table.profileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get metaId => $composableBuilder(
+    column: $table.metaId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TitleSettingsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TitleSettingsTableTable> {
+  $$TitleSettingsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get profileId =>
+      $composableBuilder(column: $table.profileId, builder: (column) => column);
+
+  GeneratedColumn<String> get metaId =>
+      $composableBuilder(column: $table.metaId, builder: (column) => column);
+
+  GeneratedColumn<String> get json =>
+      $composableBuilder(column: $table.json, builder: (column) => column);
+}
+
+class $$TitleSettingsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TitleSettingsTableTable,
+          TitleSettingsRow,
+          $$TitleSettingsTableTableFilterComposer,
+          $$TitleSettingsTableTableOrderingComposer,
+          $$TitleSettingsTableTableAnnotationComposer,
+          $$TitleSettingsTableTableCreateCompanionBuilder,
+          $$TitleSettingsTableTableUpdateCompanionBuilder,
+          (
+            TitleSettingsRow,
+            BaseReferences<
+              _$AppDatabase,
+              $TitleSettingsTableTable,
+              TitleSettingsRow
+            >,
+          ),
+          TitleSettingsRow,
+          PrefetchHooks Function()
+        > {
+  $$TitleSettingsTableTableTableManager(
+    _$AppDatabase db,
+    $TitleSettingsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TitleSettingsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TitleSettingsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TitleSettingsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> profileId = const Value.absent(),
+                Value<String> metaId = const Value.absent(),
+                Value<String> json = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TitleSettingsTableCompanion(
+                profileId: profileId,
+                metaId: metaId,
+                json: json,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String profileId,
+                required String metaId,
+                required String json,
+                Value<int> rowid = const Value.absent(),
+              }) => TitleSettingsTableCompanion.insert(
+                profileId: profileId,
+                metaId: metaId,
+                json: json,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TitleSettingsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TitleSettingsTableTable,
+      TitleSettingsRow,
+      $$TitleSettingsTableTableFilterComposer,
+      $$TitleSettingsTableTableOrderingComposer,
+      $$TitleSettingsTableTableAnnotationComposer,
+      $$TitleSettingsTableTableCreateCompanionBuilder,
+      $$TitleSettingsTableTableUpdateCompanionBuilder,
+      (
+        TitleSettingsRow,
+        BaseReferences<
+          _$AppDatabase,
+          $TitleSettingsTableTable,
+          TitleSettingsRow
+        >,
+      ),
+      TitleSettingsRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2622,4 +3066,6 @@ class $AppDatabaseManager {
       $$ProgressTableTableManager(_db, _db.progress);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
+  $$TitleSettingsTableTableTableManager get titleSettingsTable =>
+      $$TitleSettingsTableTableTableManager(_db, _db.titleSettingsTable);
 }
