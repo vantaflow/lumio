@@ -87,6 +87,7 @@ class CastServer {
   final InternetAddress _allowed;
   final CastSource _source;
   final _upstreams = <HttpClient>{};
+  final _sockets = <Socket>{};
   bool _closed = false;
 
   static const _upstreamHeaders = Duration(seconds: 20);
@@ -129,6 +130,12 @@ class CastServer {
     for (final c in _upstreams.toList()) {
       c.close(force: true);
     }
+    // Sockets détachées (flux en cours) : un téléviseur figé mais non
+    // déconnecté ne doit pas survivre à l'arrêt du cast.
+    for (final k in _sockets.toList()) {
+      k.destroy();
+    }
+    _sockets.clear();
     await _server.close(force: true);
   }
 
@@ -230,26 +237,47 @@ class CastServer {
       // HttpResponse.addStream ne signale pas un téléviseur parti en cours de
       // route : on détache la socket pour la surveiller et couper aussitôt la
       // connexion amont (sinon le torrent / la source remplirait un tampon).
-      // Corps délimité par la fermeture de la connexion si la longueur est
-      // inconnue (pas de transfert fragmenté en brut).
-      if (!res.headers.chunkedTransferEncoding ||
-          up.headers.value(HttpHeaders.contentLengthHeader) == null) {
-        res.headers.chunkedTransferEncoding = false;
-        res.persistentConnection = false;
-      }
+      // Connexion non persistante, sans transfert fragmenté en brut : le corps
+      // est délimité par Content-Length ou, à défaut, par la fermeture.
+      res.headers.chunkedTransferEncoding = false;
+      res.persistentConnection = false;
       final socket = await res.detachSocket(writeHeaders: true);
+      _sockets.add(socket);
+      unawaited(socket.done.then((_) {}, onError: (Object _) {}));
+      // Une demi-fermeture du client juste après la requête (avant le premier
+      // octet envoyé) n'est pas une déconnexion ; ensuite, la fin de lecture ou
+      // une erreur d'E/S coupe l'amont.
+      var sending = false;
       socket.listen(
         (_) {},
-        onDone: () => client.close(force: true),
+        onDone: () {
+          if (sending) client.close(force: true);
+        },
         onError: (Object _) => client.close(force: true),
         cancelOnError: true,
       );
+      var ok = false;
       try {
-        await socket.addStream(up);
+        await socket.addStream(
+          up.map((chunk) {
+            sending = true;
+            return chunk;
+          }),
+        );
+        ok = true;
       } on Object {
-        // Amont coupé ou client parti.
+        client.close(force: true); // client parti ou amont coupé
       } finally {
-        socket.destroy();
+        _sockets.remove(socket);
+        if (ok) {
+          try {
+            await socket.close();
+          } on Object {
+            socket.destroy();
+          }
+        } else {
+          socket.destroy();
+        }
       }
     } on TimeoutException {
       _setStatus(res, HttpStatus.gatewayTimeout);

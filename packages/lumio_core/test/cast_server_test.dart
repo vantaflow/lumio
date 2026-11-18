@@ -258,6 +258,7 @@ void main() {
         req.response.headers.chunkedTransferEncoding = false;
         req.response.persistentConnection = false;
         final sock = await req.response.detachSocket(writeHeaders: true);
+        unawaited(sock.done.then((_) {}, onError: (Object _) {}));
         sock.listen(
           (_) {},
           onDone: () {
@@ -285,6 +286,82 @@ void main() {
       await res.first;
       c.close(force: true); // le téléviseur part
       await closed.future.timeout(const Duration(seconds: 5));
+    },
+  );
+
+  test('client figé : close() détruit la socket et ferme l\'amont', () async {
+    final slow = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => slow.close(force: true));
+    final upstreamGone = Completer<void>();
+    slow.listen((req) async {
+      req.response.headers.chunkedTransferEncoding = false;
+      req.response.persistentConnection = false;
+      final sock = await req.response.detachSocket(writeHeaders: true);
+      unawaited(sock.done.then((_) {}, onError: (Object _) {}));
+      sock.listen(
+        (_) {},
+        onDone: () {
+          if (!upstreamGone.isCompleted) upstreamGone.complete();
+        },
+        onError: (Object _) {
+          if (!upstreamGone.isCompleted) upstreamGone.complete();
+        },
+      );
+      // Beaucoup de données : le tampon du client figé se remplit.
+      try {
+        for (var i = 0; i < 4000; i++) {
+          sock.add(List.filled(64 * 1024, 1));
+          await Future<void>.delayed(const Duration(milliseconds: 1));
+        }
+      } on Object {
+        // Connexion fermée.
+      }
+    });
+    final s = await start(
+      source: CastHttpSource(Uri.parse('http://127.0.0.1:${slow.port}/v')),
+    );
+    // Client brut qui lit une fois puis se fige (pause sur la socket).
+    final raw = await Socket.connect(s.url.host, s.url.port);
+    raw.write(
+      'GET ${s.url.path} HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n',
+    );
+    final got = Completer<void>();
+    final ended = Completer<void>();
+    final sub = raw.listen(
+      (_) {
+        if (!got.isCompleted) got.complete();
+      },
+      onDone: () {
+        if (!ended.isCompleted) ended.complete();
+      },
+      onError: (Object _) {
+        if (!ended.isCompleted) ended.complete();
+      },
+    );
+    await got.future.timeout(const Duration(seconds: 5));
+    unawaited(raw.done.catchError((Object _) {}));
+    sub.pause(); // figé, jamais déconnecté
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await s.close();
+    await upstreamGone.future.timeout(const Duration(seconds: 5));
+    // La socket du client figé a bien été détruite côté serveur.
+    sub.resume();
+    await ended.future.timeout(const Duration(seconds: 5));
+    raw.destroy();
+  });
+
+  test(
+    'demi-fermeture du client juste après la requête : flux non coupé',
+    () async {
+      final s = await start();
+      addTearDown(s.close);
+      final raw = await Socket.connect(s.url.host, s.url.port);
+      raw.write('GET ${s.url.path} HTTP/1.1\r\nHost: x\r\n\r\n');
+      await raw.flush();
+      await raw.close(); // fin d'écriture seulement
+      final bytes = await raw.fold<List<int>>([], (a, b) => a..addAll(b));
+      expect(String.fromCharCodes(bytes), startsWith('HTTP/1.1 200'));
+      expect(bytes.length, greaterThan(1000));
     },
   );
 }
