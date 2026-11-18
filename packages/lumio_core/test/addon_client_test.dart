@@ -36,6 +36,33 @@ class _Scripted implements HttpFetcher {
   }
 }
 
+class _Capturing implements HttpFetcher {
+  void Function(Uri)? guard;
+
+  @override
+  Future<FetchResponse> get(
+    Uri url, {
+    Map<String, String> headers = const {},
+    int maxBytes = 5 * 1024 * 1024,
+    Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
+  }) async {
+    this.guard = guard;
+    return FetchResponse(
+      status: 200,
+      body: utf8.encode(
+        jsonEncode({
+          'id': 'a',
+          'version': '1.0.0',
+          'name': 'A',
+          'resources': ['catalog'],
+          'types': ['movie'],
+        }),
+      ),
+    );
+  }
+}
+
 FetchResponse _ok(Object body, [int status = 200]) =>
     FetchResponse(status: status, body: utf8.encode(jsonEncode(body)));
 
@@ -318,29 +345,20 @@ void main() {
 
   group('garde par construction', () {
     test(
-      'AddonClient(IoHttpFetcher()) refuse une redirection vers le privé',
+      'AddonClient transmet toujours un garde qui refuse le réseau privé',
       () async {
-        server.route(
-          '/manifest.json',
-          FakeResponse.raw(
-            const [],
-            status: 302,
-            headers: {'location': 'http://10.0.0.5/manifest.json'},
-          ),
+        final f = _Capturing();
+        await AddonClient(
+          f,
+        ).fetchManifest(Uri.parse('https://addon.example/manifest.json'));
+        expect(f.guard, isNotNull);
+        expect(
+          () => f.guard!(Uri.parse('http://10.0.0.5/')),
+          throwsA(isA<UnsafeUrlException>()),
         );
-        await expectLater(
-          AddonClient(
-            IoHttpFetcher(),
-            allowPrivate: false,
-          ).fetchManifest(server.baseUrl.replace(path: '/manifest.json')),
-          throwsA(isA<ManifestException>()),
-        );
-        // Avec allowPrivate, la première URL (127.0.0.1) passe, la cible 10.x
-        // aussi ; le garde par défaut est donc bien celui d'allowPrivate.
-        final res = AddonClient(IoHttpFetcher(), allowPrivate: false);
-        await expectLater(
-          res.catalog(manifest, 'movie', 'top'),
-          throwsA(isA<AddonException>()),
+        expect(
+          () => f.guard!(Uri.parse('https://addon.example/')),
+          returnsNormally,
         );
       },
     );
