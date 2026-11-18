@@ -28,8 +28,7 @@ Existant :
 - serveur d'addons simulé pour les tests.
 
 Prévu : agrégation de catalogues, fiches fusionnées, normalisation des flux,
-sous-titres, tri et dédoublonnage des sources, santé des addons, parseurs
-M3U/Xtream et XMLTV, règles de progression, profils, modèles de synchro,
+sous-titres, tri et dédoublonnage des sources, santé des addons, règles de progression, profils, modèles de synchro,
 chiffrement, import.
 
 ### `app`

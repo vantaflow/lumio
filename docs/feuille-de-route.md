@@ -1,7 +1,7 @@
 # Feuille de route
 
 Source : le plan d'implémentation (`docs/superpowers/plans/2026-11-18-lumio.md`),
-43 tâches. État : les tâches 1 à 6 sont terminées, le reste est à venir.
+41 tâches (numérotées de 1 à 43 ; les tâches 32 et 33 ont été retirées). État : les tâches 1 à 6 sont terminées, le reste est à venir.
 Légende : fait, à venir.
 
 ## Phase 0 — Socle (terminée)
@@ -44,8 +44,7 @@ Légende : fait, à venir.
 
 Synchronisation (27), chiffrement côté client des secrets (28), export et
 import local (29), import depuis Stremio (30), confidentialité réseau des
-torrents (31), listes M3U et Xtream et chaînes en direct (32), guide XMLTV
-(33), santé des addons (34), tri, dédoublonnage et basculement automatique
+torrents (31), santé des addons (34), tri, dédoublonnage et basculement automatique
 des sources (35).
 
 ## Phase 3 — Extensions (à venir)

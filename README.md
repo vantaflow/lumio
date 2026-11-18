@@ -20,7 +20,6 @@ le protocole d'addons » décrit uniquement l'interopérabilité technique.
 - Un lecteur plein écran pensé pour la télécommande (D-pad) et la souris.
 - Un moteur de torrents intégré (libtorrent) pour lire des magnets en
   streaming.
-- De l'IPTV (listes M3U et Xtream, guide des programmes XMLTV).
 - Des dossiers locaux et Jellyfin comme sources.
 - Des profils avec contrôle parental.
 - Une synchronisation auto-hébergeable, avec chiffrement des secrets côté
@@ -34,13 +33,13 @@ n'est préinstallé, aucun scraper n'est inclus. Voir
 ## Avancement
 
 Le détail est dans la [feuille de route](docs/feuille-de-route.md). Le plan
-compte 43 tâches ; les tâches 1 à 6 sont terminées.
+compte 41 tâches (numérotées de 1 à 43, les tâches 32 et 33 ayant été retirées) ; les tâches 1 à 6 sont terminées.
 
 | Phase | Contenu | Tâches | État |
 |---|---|---|---|
 | 0 — Socle | Monorepo et CI, addons simulés, backend de comptes, mises à jour, spike du moteur de torrents | 1 à 5 | Terminée |
 | 1 — MVP | Protocole d'addons, agrégation, lecteur, focus TV, profils, accueil, recherche, torrents de bout en bout | 6 à 26 | En cours (tâche 6 faite, 7 à 26 à venir) |
-| 2 — « En mieux » | Synchronisation, chiffrement, import Stremio, confidentialité des torrents, IPTV, santé des addons | 27 à 35 | À venir |
+| 2 — « En mieux » | Synchronisation, chiffrement, import Stremio, confidentialité des torrents, santé des addons, tri des sources | 27 à 31, 34, 35 | À venir |
 | 3 — Extensions | Dossiers locaux, Jellyfin, Trakt, Simkl, calendrier, DLNA, watch-party, vérification finale | 36 à 43 | À venir |
 
 ## Ce qui existe aujourd'hui
@@ -107,10 +106,10 @@ votre pays. Voir [docs/AVERTISSEMENT.md](docs/AVERTISSEMENT.md).
 Lumio is a free (GPL-3.0), cross-platform media client compatible with the
 Stremio addon protocol, aimed at Android TV, Android, macOS and Windows
 (Flutter). Planned features: addon aggregation, built-in torrent streaming
-(libtorrent), IPTV (M3U/Xtream/XMLTV), local folders, Jellyfin, profiles with
+(libtorrent), local folders, Jellyfin, profiles with
 parental control, self-hostable end-to-end-encrypted sync, Trakt/Simkl.
 
-**Status: under development, no release yet.** Done so far (tasks 1 to 6 of 43):
+**Status: under development, no release yet.** Done so far (tasks 1 to 6 of 41):
 monorepo and CI, fake addon server, magic-token auth backend, update checker
 and hardened HTTP fetcher, torrent engine spike validated on an Android TV box,
 addon protocol core with an SSRF guard. Everything else is planned.

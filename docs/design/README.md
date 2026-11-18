@@ -3,7 +3,7 @@
 Maquettes (Claude Design) : https://claude.ai/artifact/GKZmDLAFWRfcPDSEjCZStJ
 (privé tant qu'il n'est pas partagé). Jetons machine : `tokens.json` (source de `app/lib/ui/theme.dart`).
 
-16 artboards : 12 TV 1920×1080 (onboarding x3, choix du profil + PIN, accueil, fiche + flux, lecteur, ajout d'addon, appairage QR, réglages/addons, TV en direct + EPG, recherche), 3 téléphone 390×844 (accueil, fiche, ajout), 1 bureau 1440×900 (accueil).
+15 artboards : 11 TV 1920×1080 (onboarding x3, choix du profil + PIN, accueil, fiche + flux, lecteur, ajout d'addon, appairage QR, réglages/addons, recherche), 3 téléphone 390×844 (accueil, fiche, ajout), 1 bureau 1440×900 (accueil).
 
 ## Principes
 
@@ -64,7 +64,7 @@ Titres **Bricolage Grotesque** 700, texte **Manrope** 400/600/700 (à embarquer 
 - **FocusableCard** : poster 300×170 (rangée) ou portrait 230×340 (recherche), badge de source en haut à gauche, barre de progression 8 dp en bas (Continuer), titre ≥ 26. États : repos, focus (anneau + échelle), pression, désactivé. Fournit un `Semantics` (titre + source).
 - **TvRow** : titre h2/title à 96 de la marge, rangée défilante horizontale, marge de 12 verticale pour l'anneau, mémorise le dernier focus, recentre sur l'élément focalisé.
 - **StateView** : `loading` (squelettes de cartes, pas de spinner plein écran), `empty` (illustration simple + une action, ex. « Ajouter un addon »), `error` (message clair + « Réessayer » focalisé par défaut).
-- **Badges** : source (Direct, Torrent, Jellyfin, Local) sur fond encre 88 % ; qualité (1080p, 4K) sur `surfaceFocus`, meilleure qualité en ambre ; santé d'addon (point + mot : Bonne/Lente/Hors ligne) ; EN DIRECT (rouge corail).
+- **Badges** : source (Direct, Torrent, Jellyfin, Local) sur fond encre 88 % ; qualité (1080p, 4K) sur `surfaceFocus`, meilleure qualité en ambre ; santé d'addon (point + mot : Bonne/Lente/Hors ligne).
 - **Panneaux** : panneau latéral droit du lecteur (620 de large, pistes/sous-titres), boîte PIN (clavier numérique focalisable), panneau d'aperçu d'addon.
 - **Boutons** : principal (ambre, texte `onAccent`), secondaire (`surfaceFocus`), destructif (texte `error`, confirmation obligatoire).
 - **Clavier TV** : touches 76×84, ligne d'actions Espace/Effacer/123, bouton micro.
@@ -80,9 +80,8 @@ Titres **Bricolage Grotesque** 700, texte **Manrope** 400/600/700 (à embarquer 
 6. **Ajout d'addon (1.1)** : champ + « Coller » ; raccourcis : QR depuis le téléphone, Partager Android, lien `stremio://` (ouvre cet écran avec le lien pré-rempli). Aperçu dès un manifeste valide (logo, nom, version, types) ; bouton unique **Installer** ; erreur en une phrase sous le champ ; message de prudence. Ne jamais afficher l'URL complète (clé) dans les journaux.
 7. **Appairage QR (1.7)** : QR 544 dp sur fond clair (contraste), code court KR7-4PQ de secours, 3 étapes, état d'attente + expiration 10 min, « Nouveau code ».
 8. **Réglages / addons (3.7)** : menu à gauche ; liste ordonnable (appui long + haut/bas), bascule activer, supprimer avec confirmation, santé (point + mot + latence + taux). Ordre = priorité des sources.
-9. **TV en direct + EPG (5.1/5.2)** : aperçu en haut (barre de progression du programme), grille chaînes × temps, ligne « maintenant » ambre, gauche/droite = programme précédent/suivant, OK lit, option favori.
-10. **Recherche (3.2)** : clavier à gauche, résultats à droite par type (Tout/Films/Séries/Chaînes), micro pour la dictée, résultats avec badge de source.
-11. **Téléphone/bureau** : mêmes jetons, échelle réduite ; navigation basse (téléphone) ou latérale (bureau) ; l'ajout d'addon sur téléphone envoie aussi vers la TV appairée.
+9. **Recherche (3.2)** : clavier à gauche, résultats à droite par type (Tout/Films/Séries), micro pour la dictée, résultats avec badge de source.
+10. **Téléphone/bureau** : mêmes jetons, échelle réduite ; navigation basse (téléphone) ou latérale (bureau) ; l'ajout d'addon sur téléphone envoie aussi vers la TV appairée.
 
 ## Accessibilité
 
