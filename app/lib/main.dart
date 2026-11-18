@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:lumio/features/update/update_banner.dart';
 import 'package:lumio/ui/common/state_view.dart';
 
 void main() {
@@ -45,8 +46,15 @@ class RootScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: StateView.empty(
-        message: 'Lumio est prêt. Ajoutez un addon pour commencer.',
+      body: Column(
+        children: [
+          UpdateBanner(),
+          Expanded(
+            child: StateView.empty(
+              message: 'Lumio est prêt. Ajoutez un addon pour commencer.',
+            ),
+          ),
+        ],
       ),
     );
   }

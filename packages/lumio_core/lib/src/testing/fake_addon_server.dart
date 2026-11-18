@@ -5,21 +5,30 @@ import 'dart:io';
 /// Réponse préparée d'avance pour une route de [FakeAddonServer].
 class FakeResponse {
   /// Corps JSON encodé en UTF-8, `content-type: application/json`.
-  FakeResponse.json(Object body,
-      {this.status = 200, this.delay = Duration.zero})
-      : bytes = utf8.encode(jsonEncode(body)),
-        contentType = 'application/json; charset=utf-8';
+  FakeResponse.json(
+    Object body, {
+    this.status = 200,
+    this.delay = Duration.zero,
+    this.headers = const {},
+  }) : bytes = utf8.encode(jsonEncode(body)),
+       contentType = 'application/json; charset=utf-8';
 
   /// Octets arbitraires (JSON tronqué, HTML, gros corps…).
-  FakeResponse.raw(this.bytes,
-      {this.contentType = 'application/octet-stream',
-      this.status = 200,
-      this.delay = Duration.zero});
+  FakeResponse.raw(
+    this.bytes, {
+    this.contentType = 'application/octet-stream',
+    this.status = 200,
+    this.delay = Duration.zero,
+    this.headers = const {},
+  });
 
   final List<int> bytes;
   final String contentType;
   final int status;
   final Duration delay;
+
+  /// En-têtes supplémentaires (ex. `location` pour une redirection).
+  final Map<String, String> headers;
 }
 
 /// Serveur HTTP local (boucle locale, port éphémère) imitant un addon.
@@ -59,8 +68,9 @@ class FakeAddonServer {
       req.response
         ..statusCode = r.status
         ..headers.set(HttpHeaders.contentTypeHeader, r.contentType)
-        ..headers.set(HttpHeaders.accessControlAllowOriginHeader, '*')
-        ..add(r.bytes);
+        ..headers.set(HttpHeaders.accessControlAllowOriginHeader, '*');
+      r.headers.forEach(req.response.headers.set);
+      req.response.add(r.bytes);
     } finally {
       try {
         await req.response.close();
