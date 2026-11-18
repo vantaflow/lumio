@@ -26,9 +26,16 @@ check legacy-format 0 legacy
 check leak 1 leak
 check crash 1 crash
 check stuck 1 stuck
+check silent 1 silent
+check stale 1 stale
+check error 1 error
+check blip 0 blip
 check usage 2 stable 0
 
-grep -q 'dead' "$TMP/crash.csv" && echo "ok   crash : ligne dead dans le CSV" \
+grep -q "aucune activité du lecteur" "$TMP/silent.out" && echo "ok   silent : message dédié" \
+  || { echo "FAIL silent : message"; fail=1; }
+grep -q 'dead' "$TMP/blip.csv" && { echo "FAIL blip : faux dead"; fail=1; }
+grep -q 'dead'  "$TMP/crash.csv" && echo "ok   crash : ligne dead dans le CSV" \
   || { echo "FAIL crash : pas de ligne dead"; fail=1; }
 rows="$(($(wc -l < "$TMP/stable.csv") - 1))"
 [ "$rows" = 97 ] && echo "ok   stable : 97 relevés" \

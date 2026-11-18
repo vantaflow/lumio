@@ -76,7 +76,7 @@ if ! box get-state >/dev/null 2>&1; then
 fi
 
 echo "timestamp,elapsed_s,pss_kb,alive,pid,state,stuck_count" > "$OUT"
-echo "endurance : $SAMPLES relevés toutes les ${INTERVAL}s -> $OUT"
+echo "endurance : $((SAMPLES + 1)) relevés toutes les ${INTERVAL}s -> $OUT"
 
 # PSS total en Ko : « TOTAL PSS: N » (Android 14), sinon 1re colonne de « TOTAL ».
 parse_pss() {
@@ -87,16 +87,28 @@ parse_pss() {
   ' | head -n 1
 }
 
-# Valeur du champ "state" du dernier battement (tick) LUMIO_PLAYER/TORRENT.
+# État du dernier battement LUMIO_PLAYER/TORRENT : "state" du tick, ou `error`
+# (dernier évènement en erreur), `stale` (tick plus vieux que 2 intervalles,
+# horloge de la box), `none` (aucun battement). Tout sauf `playing` compte.
 last_state() {
-  { box logcat -d -t 4000 2>/dev/null || true; } \
-    | grep -E 'LUMIO_(PLAYER|TORRENT) .*"event":"tick"' | tail -n 1 \
-    | sed -n 's/.*"state":"\([a-z]*\)".*/\1/p'
+  local line now ts age
+  line="$({ box logcat -d -v epoch -t 4000 2>/dev/null || true; } \
+    | grep -E 'LUMIO_(PLAYER|TORRENT) .*"event":"(tick|error)"' | tail -n 1)"
+  [ -n "$line" ] || { echo none; return; }
+  case "$line" in *'"event":"error"'*) echo error; return ;; esac
+  now="$(box shell date +%s 2>/dev/null | tr -d '\r' || true)"
+  ts="$(echo "$line" | awk '{ sub(/\..*/, "", $1); print $1 }')"
+  case "$now$ts" in ''|*[!0-9]*) ;; *)
+    age=$((now - ts))
+    if [ "$age" -gt $((2 * INTERVAL)) ]; then echo stale; return; fi ;;
+  esac
+  echo "$line" | sed -n 's/.*"state":"\([a-z]*\)".*/\1/p'
 }
 
 stuck=0
 unreachable=0
 stuck_seen=0
+none_seen=0
 status=0
 i=0
 while [ "$i" -le "$SAMPLES" ]; do
@@ -111,7 +123,13 @@ while [ "$i" -le "$SAMPLES" ]; do
     fi
   else
     unreachable=0
-    pid="$(box shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}' || true)"
+    # Trois essais espacés de 5 s : un raté d'adb (Wi-Fi) n'est pas une mort.
+    pid=""
+    for try in 1 2 3; do
+      pid="$(box shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}' || true)"
+      [ -n "$pid" ] && break
+      if [ "$try" -lt 3 ] && [ "$DRY" = 0 ]; then sleep 5; fi
+    done
     if [ -z "$pid" ]; then
       echo "$ts,$elapsed,,0,,dead,$stuck" >> "$OUT"
       echo "endurance : ÉCHEC, l'application est morte à ${elapsed}s." >&2
@@ -119,12 +137,16 @@ while [ "$i" -le "$SAMPLES" ]; do
     fi
     pss="$(box shell dumpsys meminfo "$PKG" 2>/dev/null | tr -d '\r' | parse_pss || true)"
     state="$(last_state || true)"
-    if [ -n "$state" ] && [ "$state" != "playing" ]; then
+    # `none` compte aussi : sans battement, le lecteur n'est pas éprouvé.
+    if [ "${state:-none}" != "playing" ]; then
       stuck=$((stuck + 1))
     else
       stuck=0
     fi
-    [ "$stuck" -ge "$STUCK_LIMIT" ] && stuck_seen=1
+    if [ "$stuck" -ge "$STUCK_LIMIT" ]; then
+      stuck_seen=1
+      [ "${state:-none}" = none ] && none_seen=1
+    fi
     echo "$ts,$elapsed,$pss,1,$pid,${state:-none},$stuck" >> "$OUT"
   fi
   i=$((i + 1))
@@ -142,19 +164,24 @@ verdict="$(awk -F, -v max="$MAX_GROWTH" '
       if (t[k] <= win) { fs += p[k]; fc++ }
       if (t[k] >= total - win) { ls += p[k]; lc++ }
     }
-    if (fc == 0 || lc == 0) { print "INCONNU 0 0 0"; exit }
+    if (fc == 0 || lc == 0 || fs == 0) { print "INCONNU 0 0 0"; exit }
     f = fs / fc; l = ls / lc; g = (l - f) / f * 100
     printf "%s %.1f %d %d\n", (g > max ? "KO" : "OK"), g, f, l
   }' "$OUT")"
+# shellcheck disable=SC2086 # découpage voulu : « STATUT croissance 1re dernière »
 set -- $verdict
 echo "endurance : PSS 1re heure ${3} Ko, dernière heure ${4} Ko, croissance ${2} % (max ${MAX_GROWTH} %)."
 case "$1" in
   KO) echo "endurance : ÉCHEC, fuite mémoire probable." >&2; status=1 ;;
-  INCONNU) echo "endurance : ÉCHEC, PSS illisible." >&2; status=1 ;;
+  INCONNU) echo "endurance : ÉCHEC, PSS illisible ou nulle." >&2; status=2 ;;
 esac
 if [ "$stuck_seen" = 1 ]; then
-  echo "endurance : ÉCHEC, lecture figée (état hors lecture sur $STUCK_LIMIT relevés de suite)." >&2
-  status=1
+  if [ "$none_seen" = 1 ]; then
+    echo "endurance : ÉCHEC, aucune activité du lecteur (aucun battement LUMIO_* sur $STUCK_LIMIT relevés de suite ; boucle LUMIO_DEBUG_LOOP lancée ?)." >&2
+  else
+    echo "endurance : ÉCHEC, lecture figée (état hors lecture sur $STUCK_LIMIT relevés de suite)." >&2
+  fi
+  [ "$status" = 2 ] || status=1
 fi
 [ "$status" = 0 ] && echo "endurance : OK."
 exit "$status"

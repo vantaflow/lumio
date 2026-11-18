@@ -2,7 +2,8 @@
 # adb factice pour `scripts/endurance.sh --dry-run` et test-endurance.sh.
 # FAKE_ADB_SCENARIO : stable (défaut) | leak (+1,5 %/relevé) | crash (l'application
 # meurt au relevé 10) | stuck (lecture bloquée en buffering dès le relevé 5)
-# | legacy (format meminfo ancien). FAKE_ADB_STATE : fichier compteur de relevés.
+# | silent (aucun battement dans logcat) | stale (battements vieux) | error (dernier
+# évènement en erreur) | blip (un seul pidof raté au relevé 10) | legacy (format meminfo ancien). FAKE_ADB_STATE : fichier compteur de relevés.
 set -u
 SCEN="${FAKE_ADB_SCENARIO:-stable}"
 STATE="${FAKE_ADB_STATE:?FAKE_ADB_STATE requis}"
@@ -20,8 +21,12 @@ case "$cmd" in
     sub="${1:-}"; shift || true
     case "$sub" in
       pidof)
+        if [ "$SCEN" = blip ] && [ "$(n)" -ge 10 ] && [ ! -e "$STATE.blip" ]; then
+          : > "$STATE.blip"; exit 1
+        fi
         if [ "$SCEN" = crash ] && [ "$(n)" -ge 10 ]; then exit 1; fi
         echo 4242 ;;
+      date) date +%s ;;
       dumpsys)
         # Un relevé = un appel meminfo.
         echo x >> "$STATE"
@@ -40,8 +45,14 @@ case "$cmd" in
   logcat)
     i=$(n)
     st=playing
+    ts=$(date +%s)
     if [ "$SCEN" = stuck ] && [ "$i" -ge 5 ]; then st=buffering; fi
-    echo '11-18 10:00:00.000 I/flutter ( 1): LUMIO_PLAYER {"event":"phase_start","phase":"direct"}'
-    echo "11-18 10:00:01.000 I/flutter ( 1): LUMIO_TORRENT {\"event\":\"tick\",\"phase\":\"torrent\",\"state\":\"$st\",\"pos_s\":$i}" ;;
+    if [ "$SCEN" = stale ] && [ "$i" -ge 5 ]; then ts=$((ts - 100000)); fi
+    [ "$SCEN" = silent ] && exit 0
+    echo "$ts.000  4242  4242 I flutter: LUMIO_PLAYER {\"event\":\"phase_start\",\"phase\":\"direct\"}"
+    echo "$ts.500  4242  4242 I flutter: LUMIO_TORRENT {\"event\":\"tick\",\"phase\":\"torrent\",\"state\":\"$st\",\"pos_s\":$i}"
+    if [ "$SCEN" = error ] && [ "$i" -ge 5 ]; then
+      echo "$ts.900  4242  4242 I flutter: LUMIO_TORRENT {\"event\":\"error\",\"phase\":\"torrent\",\"error\":\"X\"}"
+    fi ;;
 esac
 exit 0
