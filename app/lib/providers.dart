@@ -3,11 +3,19 @@ import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/db_connection.dart';
 import 'package:lumio/data/secret_store.dart';
+import 'package:lumio/player/local_proxy.dart';
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase(openAppDatabase());
   ref.onDispose(db.close);
   return db;
+});
+
+/// Proxy local du lecteur (HLS et en-têtes imposés), démarré à la demande.
+final localProxyProvider = FutureProvider<LocalProxy>((ref) async {
+  final proxy = await LocalProxy.start();
+  ref.onDispose(proxy.close);
+  return proxy;
 });
 
 final secretStoreProvider = Provider<SecretStore>((ref) => SecureSecretStore());

@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/update/update_banner.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/theme.dart';
+import 'package:media_kit/media_kit.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   runApp(const ProviderScope(child: LumioApp()));
   SchedulerBinding.instance.addPostFrameCallback((_) {
     // Lu par scripts/box-smoke.sh dans logcat.
@@ -19,6 +22,7 @@ void main() {
 }
 
 const _debugTorrent = String.fromEnvironment('LUMIO_DEBUG_TORRENT') == '1';
+const _debugPlayer = String.fromEnvironment('LUMIO_DEBUG_PLAYER') == '1';
 
 class LumioApp extends StatelessWidget {
   const LumioApp({super.key});
@@ -37,7 +41,11 @@ class LumioApp extends StatelessWidget {
         const SingleActivator(LogicalKeyboardKey.select):
             const ActivateIntent(),
       },
-      home: _debugTorrent ? const TorrentSpikeScreen() : const RootScreen(),
+      home: _debugPlayer
+          ? const PlayerSpikeScreen()
+          : _debugTorrent
+          ? const TorrentSpikeScreen()
+          : const RootScreen(),
     );
   }
 }
