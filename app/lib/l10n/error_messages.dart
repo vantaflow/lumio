@@ -1,3 +1,4 @@
+import 'package:lumio/data/pairing_client.dart';
 import 'package:lumio/data/profile_repository.dart' show ProfileLimitException;
 import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -6,6 +7,14 @@ import 'package:lumio_core/lumio_core.dart';
 /// français reste réservé aux journaux.
 String l10nForError(AppLocalizations l, Object error) {
   if (error is ProfileLimitException) return l.maxProfilesReached;
+  if (error is PairingException) {
+    return switch (error.code) {
+      PairingErrorCode.insecureUrl => l.errPairInsecure,
+      PairingErrorCode.unavailable => l.errPairUnavailable,
+      PairingErrorCode.rateLimited => l.errPairRateLimited,
+      PairingErrorCode.expired => l.pairExpired,
+    };
+  }
   if (error is AddonException) {
     return switch (error.code) {
       AddonErrorCode.duplicate => l.errDuplicate,

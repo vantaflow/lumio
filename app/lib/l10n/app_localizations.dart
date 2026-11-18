@@ -1669,6 +1669,96 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Automatique'**
   String get qualityAuto;
+
+  /// No description provided for @pairPhoneButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisir depuis mon téléphone'**
+  String get pairPhoneButton;
+
+  /// No description provided for @pairTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisir depuis mon téléphone'**
+  String get pairTitle;
+
+  /// No description provided for @pairStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez ce code avec votre téléphone.'**
+  String get pairStep1;
+
+  /// No description provided for @pairStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez le lien et touchez Envoyer.'**
+  String get pairStep2;
+
+  /// No description provided for @pairStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il arrive ici : vous confirmez ensuite l\'installation.'**
+  String get pairStep3;
+
+  /// No description provided for @pairOrOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ou ouvrez {url} et saisissez le code.'**
+  String pairOrOpen(String url);
+
+  /// No description provided for @pairCodeLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code'**
+  String get pairCodeLabel;
+
+  /// No description provided for @pairExpiresIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Expire dans {time}'**
+  String pairExpiresIn(String time);
+
+  /// No description provided for @pairWaiting.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente du téléphone…'**
+  String get pairWaiting;
+
+  /// No description provided for @pairExpired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce code a expiré.'**
+  String get pairExpired;
+
+  /// No description provided for @pairNewCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau code'**
+  String get pairNewCode;
+
+  /// No description provided for @pairQrLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code QR d\'appairage'**
+  String get pairQrLabel;
+
+  /// No description provided for @errPairInsecure.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse du serveur non sécurisée'**
+  String get errPairInsecure;
+
+  /// No description provided for @errPairUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur injoignable, réessayez'**
+  String get errPairUnavailable;
+
+  /// No description provided for @errPairRateLimited.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop de demandes, réessayez dans une minute'**
+  String get errPairRateLimited;
 }
 
 class _AppLocalizationsDelegate

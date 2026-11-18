@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/db_connection.dart';
+import 'package:lumio/config.dart';
+import 'package:lumio/data/pairing_client.dart';
 import 'package:lumio/data/profile_repository.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/secret_store.dart';
@@ -38,6 +40,17 @@ final addonRepositoryProvider = Provider<AddonRepository>(
     ref.watch(secretStoreProvider),
   ),
 );
+
+/// Client d'appairage mobile ; null (bouton masqué) si `backendUrl` est vide
+/// ou invalide.
+final pairingClientProvider = Provider<PairingClient?>((ref) {
+  if (backendUrl.isEmpty) return null;
+  try {
+    return PairingClient(backendUrl);
+  } on PairingException {
+    return null;
+  }
+});
 
 /// Liste des addons installés ; chaque mutation recharge la liste.
 final addonsProvider =

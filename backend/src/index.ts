@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { authRoutes, requireUser } from './auth';
 import { LogEmailSender } from './email';
+import { pairPageRoutes, pairRoutes } from './pair';
 import type { AppEnv, Deps } from './types';
 
 export { requireUser };
@@ -24,6 +25,8 @@ export function createApp(overrides: Partial<Deps> = {}) {
 
   app.get('/health', (c) => c.json({ ok: true }));
   app.route('/auth', authRoutes);
+  app.route('/pair', pairRoutes);
+  app.route('/p', pairPageRoutes);
 
   app.get('/me', async (c) => c.json({ userId: await requireUser(c) }));
 

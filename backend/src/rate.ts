@@ -28,3 +28,21 @@ export async function rateLimit(
   await kv.put(storeKey, String(count + 1), { expirationTtl: Math.max(60, windowSec * 2) });
   return { allowed: true, remaining: limit - count - 1, retryAfterSec };
 }
+
+/**
+ * Lecture seule : vrai si `key` a déjà atteint `limit` dans la fenêtre courante
+ * (sans incrémenter). Sert aux compteurs d'échecs alimentés par `rateLimit`.
+ */
+export async function rateBlocked(
+  kv: KVNamespace,
+  key: string,
+  limit: number,
+  windowSec: number,
+  now: number = Date.now(),
+): Promise<RateResult> {
+  const windowIndex = Math.floor(now / 1000 / windowSec);
+  const storeKey = `rl:${await sha256Hex(key)}:${windowIndex}`;
+  const count = Number((await kv.get(storeKey)) ?? '0');
+  const retryAfterSec = Math.max(1, (windowIndex + 1) * windowSec - Math.floor(now / 1000));
+  return { allowed: count < limit, remaining: Math.max(0, limit - count), retryAfterSec };
+}

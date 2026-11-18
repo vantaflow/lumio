@@ -469,5 +469,34 @@
   "errManifestInvalid": "Manifeste invalide",
   "errUnexpected": "Erreur inattendue lors du chargement",
   "errOther": "Une erreur est survenue",
-  "qualityAuto": "Automatique"
+  "qualityAuto": "Automatique",
+  "pairPhoneButton": "Saisir depuis mon téléphone",
+  "pairTitle": "Saisir depuis mon téléphone",
+  "pairStep1": "Scannez ce code avec votre téléphone.",
+  "pairStep2": "Collez le lien et touchez Envoyer.",
+  "pairStep3": "Il arrive ici : vous confirmez ensuite l'installation.",
+  "pairOrOpen": "Ou ouvrez {url} et saisissez le code."
+,  "@pairOrOpen": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "pairCodeLabel": "Code",
+  "pairExpiresIn": "Expire dans {time}"
+,  "@pairExpiresIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "pairWaiting": "En attente du téléphone…",
+  "pairExpired": "Ce code a expiré.",
+  "pairNewCode": "Nouveau code",
+  "pairQrLabel": "Code QR d'appairage",
+  "errPairInsecure": "Adresse du serveur non sécurisée",
+  "errPairUnavailable": "Serveur injoignable, réessayez",
+  "errPairRateLimited": "Trop de demandes, réessayez dans une minute"
 }

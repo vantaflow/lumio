@@ -261,5 +261,20 @@
   "errManifestInvalid": "Invalid manifest",
   "errUnexpected": "Unexpected error while loading",
   "errOther": "Something went wrong",
-  "qualityAuto": "Automatic"
+  "qualityAuto": "Automatic",
+  "pairPhoneButton": "Enter from my phone",
+  "pairTitle": "Enter from my phone",
+  "pairStep1": "Scan this code with your phone.",
+  "pairStep2": "Paste the link and tap Send.",
+  "pairStep3": "It arrives here: you then confirm the installation.",
+  "pairOrOpen": "Or open {url} and enter the code.",
+  "pairCodeLabel": "Code",
+  "pairExpiresIn": "Expires in {time}",
+  "pairWaiting": "Waiting for your phone…",
+  "pairExpired": "This code has expired.",
+  "pairNewCode": "New code",
+  "pairQrLabel": "Pairing QR code",
+  "errPairInsecure": "Insecure server address",
+  "errPairUnavailable": "Server unreachable, try again",
+  "errPairRateLimited": "Too many requests, try again in a minute"
 }

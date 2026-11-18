@@ -893,4 +893,55 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get qualityAuto => 'Automatique';
+
+  @override
+  String get pairPhoneButton => 'Saisir depuis mon téléphone';
+
+  @override
+  String get pairTitle => 'Saisir depuis mon téléphone';
+
+  @override
+  String get pairStep1 => 'Scannez ce code avec votre téléphone.';
+
+  @override
+  String get pairStep2 => 'Collez le lien et touchez Envoyer.';
+
+  @override
+  String get pairStep3 =>
+      'Il arrive ici : vous confirmez ensuite l\'installation.';
+
+  @override
+  String pairOrOpen(String url) {
+    return 'Ou ouvrez $url et saisissez le code.';
+  }
+
+  @override
+  String get pairCodeLabel => 'Code';
+
+  @override
+  String pairExpiresIn(String time) {
+    return 'Expire dans $time';
+  }
+
+  @override
+  String get pairWaiting => 'En attente du téléphone…';
+
+  @override
+  String get pairExpired => 'Ce code a expiré.';
+
+  @override
+  String get pairNewCode => 'Nouveau code';
+
+  @override
+  String get pairQrLabel => 'Code QR d\'appairage';
+
+  @override
+  String get errPairInsecure => 'Adresse du serveur non sécurisée';
+
+  @override
+  String get errPairUnavailable => 'Serveur injoignable, réessayez';
+
+  @override
+  String get errPairRateLimited =>
+      'Trop de demandes, réessayez dans une minute';
 }

@@ -882,4 +882,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qualityAuto => 'Automatic';
+
+  @override
+  String get pairPhoneButton => 'Enter from my phone';
+
+  @override
+  String get pairTitle => 'Enter from my phone';
+
+  @override
+  String get pairStep1 => 'Scan this code with your phone.';
+
+  @override
+  String get pairStep2 => 'Paste the link and tap Send.';
+
+  @override
+  String get pairStep3 => 'It arrives here: you then confirm the installation.';
+
+  @override
+  String pairOrOpen(String url) {
+    return 'Or open $url and enter the code.';
+  }
+
+  @override
+  String get pairCodeLabel => 'Code';
+
+  @override
+  String pairExpiresIn(String time) {
+    return 'Expires in $time';
+  }
+
+  @override
+  String get pairWaiting => 'Waiting for your phone…';
+
+  @override
+  String get pairExpired => 'This code has expired.';
+
+  @override
+  String get pairNewCode => 'New code';
+
+  @override
+  String get pairQrLabel => 'Pairing QR code';
+
+  @override
+  String get errPairInsecure => 'Insecure server address';
+
+  @override
+  String get errPairUnavailable => 'Server unreachable, try again';
+
+  @override
+  String get errPairRateLimited => 'Too many requests, try again in a minute';
 }
