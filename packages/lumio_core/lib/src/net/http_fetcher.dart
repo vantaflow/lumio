@@ -68,9 +68,14 @@ abstract class HttpFetcher {
 /// corps comprises). La taille est comptée au fil du flux : le téléchargement
 /// est interrompu dès que [maxBytes] est dépassé.
 class IoHttpFetcher implements HttpFetcher {
-  IoHttpFetcher({this.maxRedirects = 3});
+  IoHttpFetcher({this.maxRedirects = 3, this.redirectGuard});
 
   final int maxRedirects;
+
+  /// Appelé sur la cible de chaque redirection (après [validateRedirect]) ;
+  /// peut lever pour la refuser (ex. `UrlGuard.check`). L'URL initiale n'est
+  /// pas concernée : c'est à l'appelant de la vérifier.
+  final void Function(Uri target)? redirectGuard;
 
   @override
   Future<FetchResponse> get(
@@ -115,6 +120,7 @@ class IoHttpFetcher implements HttpFetcher {
           throw TooManyRedirectsException(maxRedirects);
         }
         final next = validateRedirect(current, location);
+        redirectGuard?.call(next);
         if (!_sameOrigin(current, next)) sent = _withoutCredentials(sent);
         current = next;
         continue;
