@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:lumio/data/sync_schema.dart';
 
 part 'db.g.dart';
 
@@ -108,7 +107,7 @@ class TitleSettingsTable extends Table {
 }
 
 /// Dossiers locaux accordés par l'utilisateur (v9). Propres à l'appareil :
-/// jamais synchronisés.
+/// propres à l'appareil.
 class LocalFolders extends Table {
   TextColumn get path => text()();
   IntColumn get addedAt => integer().withDefault(const Constant(0))();
@@ -142,7 +141,7 @@ class LocalItems extends Table {
 }
 
 /// File d'attente du suivi (Trakt…, v10) : événements de lecture à renvoyer.
-/// Propre à l'appareil : jamais synchronisée.
+/// Propre à l'appareil.
 @DataClassName('ScrobbleRow')
 class ScrobbleQueueTable extends Table {
   @override
@@ -177,13 +176,12 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
-      await installSyncSchema(this);
     },
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.createTable(titleSettingsTable);
@@ -213,8 +211,9 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(libraryItems, libraryItems.certification);
         }
       }
-      // v7 : file d'envoi de la synchronisation ; les données existantes y
-      // sont inscrites pour être envoyées à la première connexion.
+      // v7 : l'ancienne file de synchronisation est abandonnée (supprimée en
+      // v11) ; ici seules les tables d'origine éventuellement absentes d'une
+      // base très ancienne sont créées.
       if (from < 7) {
         // Tables d'origine éventuellement absentes d'une base très ancienne.
         for (final TableInfo<Table, dynamic> t in [
@@ -230,10 +229,7 @@ class AppDatabase extends _$AppDatabase {
           ).get();
           if (has.isEmpty) await m.createTable(t);
         }
-        await installSyncSchema(this, backfill: true);
       }
-      // v8 : déclencheurs de la synchronisation des addons (blob chiffré).
-      if (from == 7) await installSyncSchema(this);
       // v9 : dossiers locaux et leurs vidéos.
       if (from < 9) {
         await m.createTable(localFolders);
@@ -241,9 +237,34 @@ class AppDatabase extends _$AppDatabase {
       }
       // v10 : file d'attente du suivi (Trakt).
       if (from < 10) await m.createTable(scrobbleQueueTable);
+      // v11 : plus de synchronisation ni de Simkl. Les déclencheurs et les
+      // tables de la file d'envoi disparaissent ; les données de l'utilisateur
+      // (profils, ma liste, progression, addons) ne sont pas touchées.
+      if (from < 11) await _dropSyncAndSimkl();
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Supprime les restes de la synchronisation (déclencheurs `sync_*`, tables
+  /// `sync_outbox` et `sync_meta`) et ceux de Simkl (file de suivi, réglages).
+  Future<void> _dropSyncAndSimkl() async {
+    final triggers = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type = 'trigger' "
+      "AND name LIKE 'sync\\_%' ESCAPE '\\'",
+    ).get();
+    for (final t in triggers) {
+      final name = t.read<String>('name').replaceAll('"', '');
+      await customStatement('DROP TRIGGER IF EXISTS "$name"');
+    }
+    await customStatement('DROP TABLE IF EXISTS sync_outbox');
+    await customStatement('DROP TABLE IF EXISTS sync_meta');
+    await customStatement(
+      "DELETE FROM scrobble_queue WHERE tracker_id = 'simkl'",
+    );
+    await customStatement(
+      "DELETE FROM settings WHERE key LIKE 'tracking\\_reauth:simkl:%' ESCAPE '\\'",
+    );
+  }
 }
