@@ -24,17 +24,20 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
-        pendingLink = extractLink(intent)
+        // Pas de rejeu du lien quand l'activité est recréée (rotation...).
+        if (savedInstanceState == null) pendingLink = extractLink(intent)
+        setIntent(Intent())
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         val link = extractLink(intent) ?: return
+        setIntent(Intent())
         // Si Dart n'écoute pas encore (profil pas choisi), le lien reste en
         // attente et sera repris par takeLink.
         pendingLink = link
         linksChannel?.invokeMethod("link", link, object : MethodChannel.Result {
-            override fun success(r: Any?) { if (pendingLink == link) pendingLink = null }
+            override fun success(r: Any?) { if (r == true && pendingLink == link) pendingLink = null }
             override fun error(c: String, m: String?, d: Any?) {}
             override fun notImplemented() {}
         })

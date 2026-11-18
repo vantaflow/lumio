@@ -24,7 +24,11 @@ class ChannelInstallLinkSource implements InstallLinkSource {
   ChannelInstallLinkSource() {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'link' && call.arguments is String) {
+        // Accepté seulement si l'interface écoute ; sinon le natif garde le
+        // lien en attente.
+        if (!_controller.hasListener) return false;
         _controller.add(call.arguments as String);
+        return true;
       }
       return null;
     });
@@ -52,19 +56,6 @@ final installLinkSourceProvider = Provider<InstallLinkSource>(
   (ref) => ChannelInstallLinkSource(),
 );
 
-/// Vrai si [text] ressemble à un lien d'addon : on ne propose que ceux-là
-/// depuis le presse-papiers (jamais d'URL quelconque).
-bool isPlausibleInstallLink(String? text) {
-  final t = text?.trim();
-  if (t == null || t.isEmpty || t.length > 2048) return false;
-  final lower = t.toLowerCase();
-  final plausible =
-      lower.startsWith('stremio://') ||
-      lower.startsWith('lumio://install') ||
-      lower.endsWith('manifest.json');
-  return plausible && parseInstallLink(t) != null;
-}
-
 /// Écoute les liens d'installation entrants : profil enfant → PIN parent,
 /// puis écran d'ajout prérempli (aperçu, l'utilisateur confirme).
 class InstallLinkHandler extends ConsumerStatefulWidget {
@@ -79,6 +70,7 @@ class InstallLinkHandler extends ConsumerStatefulWidget {
 class _InstallLinkHandlerState extends ConsumerState<InstallLinkHandler> {
   StreamSubscription<String>? _sub;
   bool _busy = false;
+  String? _queued;
 
   @override
   void initState() {
@@ -99,7 +91,11 @@ class _InstallLinkHandlerState extends ConsumerState<InstallLinkHandler> {
   }
 
   Future<void> _handle(String raw) async {
-    if (_busy || !mounted) return;
+    if (!mounted) return;
+    if (_busy) {
+      _queued = raw;
+      return;
+    }
     final url = parseInstallLink(raw);
     if (url == null) {
       ScaffoldMessenger.maybeOf(
@@ -114,6 +110,9 @@ class _InstallLinkHandlerState extends ConsumerState<InstallLinkHandler> {
       await showAddAddonDialog(context, initialUrl: url.toString());
     } finally {
       _busy = false;
+      final next = _queued;
+      _queued = null;
+      if (next != null && mounted) unawaited(_handle(next));
     }
   }
 

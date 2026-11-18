@@ -6,8 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
-import 'package:lumio/features/addons/install_link_handler.dart'
-    show isPlausibleInstallLink;
 import 'package:lumio/features/pairing/pairing_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/data/addon_repository.dart';

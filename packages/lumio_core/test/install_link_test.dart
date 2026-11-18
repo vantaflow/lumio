@@ -103,4 +103,23 @@ void main() {
     final ok = 'https://h.org/${'a' * 1900}/manifest.json';
     expect(parseInstallLink(ok), isNotNull);
   });
+
+  test('identifiants dans l\'URL refusés', () {
+    expect(parseInstallLink('stremio://u:p@h.org/a/manifest.json'), isNull);
+    expect(parseInstallLink('https://a@evil.com/a/manifest.json'), isNull);
+    expect(
+      parseInstallLink(
+        'lumio://install?url=${Uri.encodeComponent('https://a:b@evil.com/manifest.json')}',
+      ),
+      isNull,
+    );
+  });
+
+  test('isPlausibleInstallLink', () {
+    expect(isPlausibleInstallLink('https://h.org/a/manifest.json'), isTrue);
+    expect(isPlausibleInstallLink('stremio://h.org/x'), isTrue);
+    expect(isPlausibleInstallLink('https://h.org/index.html'), isFalse);
+    expect(isPlausibleInstallLink('texte'), isFalse);
+    expect(isPlausibleInstallLink(null), isFalse);
+  });
 }

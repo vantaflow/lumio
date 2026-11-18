@@ -56,8 +56,24 @@ Uri? _parse(String raw, {required bool allowLumio}) {
 
 Uri? _normalize(String raw) {
   try {
-    return normalizeAddonUrl(raw);
+    final u = normalizeAddonUrl(raw);
+    // Identifiants dans l'URL (u:p@hôte) : refusés (hôte trompeur).
+    if (u.userInfo.isNotEmpty) return null;
+    return u;
   } on FormatException {
     return null;
   }
+}
+
+/// Vrai si [text] ressemble à un lien d'addon : on ne propose que ceux-là
+/// depuis le presse-papiers (jamais d'URL quelconque).
+bool isPlausibleInstallLink(String? text) {
+  final t = text?.trim();
+  if (t == null || t.isEmpty || t.length > _maxLinkLength) return false;
+  final lower = t.toLowerCase();
+  final plausible =
+      lower.startsWith('stremio://') ||
+      lower.startsWith('lumio://install') ||
+      lower.endsWith('manifest.json');
+  return plausible && parseInstallLink(t) != null;
 }

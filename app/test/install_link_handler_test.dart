@@ -276,11 +276,20 @@ void main() {
     await h.dispose();
   });
 
-  test('isPlausibleInstallLink', () {
-    expect(isPlausibleInstallLink(_urlA), isTrue);
-    expect(isPlausibleInstallLink('stremio://h.org/x'), isTrue);
-    expect(isPlausibleInstallLink('https://h.org/index.html'), isFalse);
-    expect(isPlausibleInstallLink('texte'), isFalse);
-    expect(isPlausibleInstallLink(null), isFalse);
+  testWidgets('lien http privé reçu : confirmation réseau local demandée', (
+    tester,
+  ) async {
+    final src = _FakeSource();
+    final h = _H(tester);
+    await h.start(src);
+    await h.run(h.profiles.ensureDefault);
+    await h.pump();
+
+    src.controller.add('http://192.168.1.20:7000/manifest.json');
+    await h.settle();
+
+    expect(find.text('Adresse locale'), findsOneWidget);
+    expect(await h.run(h.addons.list), isEmpty);
+    await h.dispose();
   });
 }
