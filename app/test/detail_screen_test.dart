@@ -1030,6 +1030,29 @@ void main() {
       await h.close();
     });
 
+    testWidgets('liste : un doublon n\'apparaît qu\'une fois, dans le groupe '
+        'du mieux noté, avec « +1 autre addon »', (t) async {
+      final h = _H(t);
+      h.client.streams['org.a'] = [
+        _direct('x', 'https://cdn.example.com/x.mp4?token=1', desc: 'VF 1080p'),
+      ];
+      h.client.streams['org.b'] = [
+        _direct('y', 'https://cdn.example.com/x.mp4?token=2', desc: 'VF 1080p'),
+        _direct('z', 'https://cdn.example.com/z.mp4', desc: 'VF 720p'),
+      ];
+      await h.pump(preview: _preview(), addons: two);
+      failing(h, 's2');
+      h.container.invalidate(healthSnapshotProvider);
+      await h.settle();
+      expect(find.textContaining('VF 1080p'), findsOneWidget);
+      expect(find.text('+1 autre addon'), findsOneWidget);
+      expect(find.textContaining('VF 720p'), findsOneWidget);
+      // Le doublon gardé est celui de l'addon sain (s1) : org.b n'a plus
+      // que son flux 720p.
+      expect(find.text('1 flux'), findsNWidgets(2));
+      await h.close();
+    });
+
     testWidgets('choix manuel dans la liste : pas de secours', (t) async {
       final h = _H(t);
       h.client.streams['org.a'] = [

@@ -142,6 +142,8 @@ class PlayerController {
   // Basculement automatique (voir [playWithFallback]).
   int _runId = 0;
   Completer<bool>? _outcome;
+  int _attemptSeq = 0;
+  int _outcomeId = 0;
   bool _failFallbackable = false;
   bool _holdFailure = false;
   String? _notice;
@@ -300,7 +302,10 @@ class PlayerController {
     _settle(false);
   }
 
-  void _settle(bool ok) {
+  /// Termine la tentative en cours. [id] : numéro de la tentative qui signale
+  /// (un signal d'une tentative abandonnée est ignoré).
+  void _settle(bool ok, {int? id}) {
+    if (id != null && id != _outcomeId) return;
     final c = _outcome;
     if (c != null && !c.isCompleted) c.complete(ok);
   }
@@ -318,6 +323,7 @@ class PlayerController {
     Future<void> Function(StreamItem item)? opener,
     int maxAttempts = 3,
     Duration attemptTimeout = const Duration(minutes: 3),
+    Future<void> Function(StreamItem item)? onAbandon,
   }) async {
     final run = ++_runId;
     _settle(false); // libère une série précédente
@@ -331,18 +337,25 @@ class PlayerController {
           _notice = i == 0 ? null : l10n.playerSourceFallback;
           _holdFailure = !last;
           _failFallbackable = false;
+          final id = _outcomeId = ++_attemptSeq;
           final outcome = _outcome = Completer<bool>();
           await open(item);
           final ok = await outcome.future.timeout(
             attemptTimeout,
-            onTimeout: () {
-              _fail(
-                explainFailure(TimeoutException('open'), l10n: l10n),
-                fallbackable: true,
-              );
+            onTimeout: () async {
+              // Trop long : cette source est abandonnée (lecteur arrêté,
+              // torrent libéré) avant de passer à la suivante.
+              await _abandon(item, onAbandon);
+              if (id == _outcomeId) {
+                _fail(
+                  explainFailure(TimeoutException('open'), l10n: l10n),
+                  fallbackable: true,
+                );
+              }
               return false;
             },
           );
+          if (id != _outcomeId) return AttemptOutcome.stopped;
           if (ok) return AttemptOutcome.played;
           _stall?.cancel();
           return _failFallbackable
@@ -356,6 +369,22 @@ class PlayerController {
         _notice = null;
         _outcome = null;
       }
+    }
+  }
+
+  Future<void> _abandon(
+    StreamItem item,
+    Future<void> Function(StreamItem item)? onAbandon,
+  ) async {
+    try {
+      await onAbandon?.call(item);
+    } on Object {
+      // Libération best effort.
+    }
+    try {
+      await player.stop();
+    } on Object {
+      // Lecteur indisponible : rien à arrêter.
     }
   }
 

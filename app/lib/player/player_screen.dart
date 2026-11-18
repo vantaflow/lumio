@@ -246,15 +246,25 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     }
     // Chaque source passe par le même chemin d'ouverture, donc par toutes
     // les gardes (adresse privée, VPN, avertissement IP une seule fois).
-    final played = await _ctl.playWithFallback([
-      item,
-      ...alternatives,
-    ], opener: (s) => _openOne(s, start));
+    final played = await _ctl.playWithFallback(
+      [item, ...alternatives],
+      opener: (s) => _openOne(s, start),
+      onAbandon: (_) => _abandonSource(),
+    );
     if (_disposed || played == null) return;
     if (!identical(played, item) && mounted) {
       setState(() => _title = played.title);
       _tell(context.l10n.playingFallback(played.title));
     }
+  }
+
+  /// Abandonne la source en cours (trop longue à démarrer) : ses retours
+  /// tardifs sont ignorés (jeton) et le torrent est libéré.
+  Future<void> _abandonSource() async {
+    _torrentToken++;
+    _torrentActive = false;
+    _watcher?.stop();
+    await _torrent?.release();
   }
 
   /// Ouvre une seule source : torrent préparé par le moteur, lien direct par

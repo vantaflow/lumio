@@ -218,6 +218,8 @@
   "settingsPreferDirect": "Prefer direct links over torrents",
   "preferDirectOn": "Direct links first",
   "preferDirectOff": "No preference",
+  "otherAddonsCount": "+{count, plural, =1{1 other addon} other{{count} other addons}}",
+  "@otherAddonsCount": {"placeholders": {"count": {"type": "int"}}},
   "playerSourceFallback": "Source unavailable, trying the next one…",
   "playingFallback": "Playing from another source: {title}",
   "@playingFallback": {"placeholders": {"title": {"type": "String"}}},

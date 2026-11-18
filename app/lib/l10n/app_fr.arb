@@ -400,6 +400,8 @@
   "settingsPreferDirect": "Préférer les liens directs aux torrents",
   "preferDirectOn": "Liens directs en premier",
   "preferDirectOff": "Sans préférence",
+  "otherAddonsCount": "+{count, plural, =1{1 autre addon} other{{count} autres addons}}",
+  "@otherAddonsCount": {"placeholders": {"count": {"type": "int"}}},
   "playerSourceFallback": "Source indisponible, essai de la suivante…",
   "playingFallback": "Lecture depuis une autre source : {title}",
   "@playingFallback": {"placeholders": {"title": {"type": "String"}}},

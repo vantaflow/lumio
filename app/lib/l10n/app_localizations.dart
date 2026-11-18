@@ -1406,6 +1406,12 @@ abstract class AppLocalizations {
   /// **'Sans préférence'**
   String get preferDirectOff;
 
+  /// No description provided for @otherAddonsCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'+{count, plural, =1{1 autre addon} other{{count} autres addons}}'**
+  String otherAddonsCount(int count);
+
   /// No description provided for @playerSourceFallback.
   ///
   /// In fr, this message translates to:

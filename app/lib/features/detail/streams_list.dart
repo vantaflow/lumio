@@ -121,6 +121,30 @@ class StreamsList extends StatelessWidget {
         child: StateView.empty(message: context.l10n.noStreams),
       );
     }
+    // Chaque signature n'apparaît qu'une fois : dans le groupe de son
+    // doublon le mieux noté ; les autres sont masqués et comptés.
+    final tracked = tracker ?? _noHealth;
+    final best = <String, StreamItem>{};
+    final copies = <String, int>{};
+    for (final g in groups) {
+      for (final s in g.items) {
+        final k = s.signature;
+        copies[k] = (copies[k] ?? 0) + 1;
+        final cur = best[k];
+        if (cur == null ||
+            StreamRanker.score(s, prefs, tracked) >
+                StreamRanker.score(cur, prefs, tracked)) {
+          best[k] = s;
+        }
+      }
+    }
+    final visible = {
+      for (final g in groups)
+        g: [
+          for (final s in g.items)
+            if (identical(best[s.signature], s)) s,
+        ],
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -148,7 +172,7 @@ class StreamsList extends StatelessWidget {
                 Text(
                   g.error != null
                       ? context.l10n.noResponse
-                      : context.l10n.streamCount(g.items.length),
+                      : context.l10n.streamCount(visible[g]!.length),
                   style: theme.textTheme.bodySmall,
                 ),
                 if (health[g.addonId] case final h?
@@ -159,16 +183,13 @@ class StreamsList extends StatelessWidget {
               ],
             ),
           ),
-          for (final s in StreamRanker.sort(
-            g.items,
-            prefs,
-            tracker ?? _noHealth,
-          ))
+          for (final s in StreamRanker.sort(visible[g]!, prefs, tracked))
             Padding(
               padding: const EdgeInsets.only(bottom: LumioSpacing.sm),
               child: _StreamRow(
                 item: s,
                 recommended: identical(s, preferred),
+                others: (copies[s.signature] ?? 1) - 1,
                 onSelect: () => onSelect(s),
               ),
             ),
@@ -192,8 +213,11 @@ class _StreamRow extends StatelessWidget {
     required this.item,
     required this.recommended,
     required this.onSelect,
+    this.others = 0,
   });
 
+  /// Même source proposée par d'autres addons (masquée).
+  final int others;
   final StreamItem item;
   final bool recommended;
   final VoidCallback onSelect;
@@ -248,6 +272,11 @@ class _StreamRow extends StatelessWidget {
                   ),
                   if (bits.isNotEmpty)
                     Text(bits, style: theme.textTheme.bodySmall),
+                  if (others > 0)
+                    Text(
+                      context.l10n.otherAddonsCount(others),
+                      style: theme.textTheme.bodySmall,
+                    ),
                 ],
               ),
             ),

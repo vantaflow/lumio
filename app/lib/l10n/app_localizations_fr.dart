@@ -752,6 +752,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get preferDirectOff => 'Sans préférence';
 
   @override
+  String otherAddonsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count autres addons',
+      one: '1 autre addon',
+    );
+    return '+$_temp0';
+  }
+
+  @override
   String get playerSourceFallback =>
       'Source indisponible, essai de la suivante…';
 

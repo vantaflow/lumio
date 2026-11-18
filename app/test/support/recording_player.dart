@@ -61,6 +61,7 @@ class RecordingPlayerController extends Fake implements PlayerController {
     Future<void> Function(StreamItem item)? opener,
     int maxAttempts = 3,
     Duration attemptTimeout = const Duration(minutes: 3),
+    Future<void> Function(StreamItem item)? onAbandon,
   }) {
     fallbackRuns.add([for (final s in ranked) s.title]);
     return runWithFallback<StreamItem>(
