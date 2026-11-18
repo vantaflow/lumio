@@ -46,22 +46,23 @@ void main() {
     });
   });
 
-  group('routage par le proxy', () {
-    final u = Uri.parse('https://h/v.mp4');
-    test('direct par défaut', () => expect(needsProxy(u, const {}), isFalse));
-    test('m3u8 → proxy', () {
-      expect(needsProxy(Uri.parse('https://h/a/b.m3u8?x=1'), const {}), isTrue);
-    });
-    test('Content-Type mpegurl → proxy', () {
-      expect(
-        needsProxy(u, const {}, contentType: 'application/vnd.apple.mpegurl'),
-        isTrue,
-      );
-      expect(needsProxy(u, const {}, contentType: 'audio/x-mpegURL'), isTrue);
-    });
-    test('en-têtes imposés → proxy', () {
-      expect(needsProxy(u, const {'Referer': 'https://r'}), isTrue);
-    });
+  test('source refusée et erreurs de redirection : messages précis', () {
+    expect(
+      explainFailure('x', refused: true),
+      'Source refusée pour des raisons de sécurité.',
+    );
+    expect(
+      explainFailure(const UnsafeUrlException('réseau privé')),
+      contains('refusée pour des raisons de sécurité'),
+    );
+    expect(
+      explainFailure(const TooManyRedirectsException(5)),
+      contains('redirige'),
+    );
+    expect(
+      explainFailure(const ResponseTooLargeException(1)),
+      contains('volumineuse'),
+    );
   });
 
   test('journal LUMIO_PLAYER sans URL', () {

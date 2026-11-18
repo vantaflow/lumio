@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/player/local_proxy.dart';
+import 'package:lumio_core/lumio_core.dart';
 import 'package:lumio_core/testing.dart';
 
 /// Serveur d'essai qui enregistre les en-têtes reçus et gère Range.
@@ -12,6 +14,7 @@ class _Origin {
   }
   final HttpServer server;
   final seen = <String, String>{};
+  final closedEndless = Completer<void>();
   static final data = List<int>.generate(100, (i) => i);
 
   static Future<_Origin> start() async =>
@@ -29,6 +32,35 @@ class _Origin {
       case '/redirect':
         res.statusCode = 302;
         res.headers.set('location', '/file.bin');
+      case '/to-localhost':
+        res.statusCode = 302;
+        res.headers.set('location', 'http://localhost:${server.port}/file.bin');
+      case '/big.m3u8':
+        res.headers.contentType = ContentType(
+          'application',
+          'vnd.apple.mpegurl',
+        );
+        final line = [...List<int>.filled(1024, 0x61), 10];
+        for (var i = 0; i < 6 * 1024; i++) {
+          res.add(line);
+        }
+      case '/endless':
+        res.headers.contentType = ContentType('video', 'mp4');
+        var gone = false;
+        res.done.then<void>((_) {}, onError: (Object _) {}).whenComplete(() {
+          gone = true;
+          if (!closedEndless.isCompleted) closedEndless.complete();
+        });
+        try {
+          while (!gone) {
+            res.add(List<int>.filled(1024, 1));
+            await res.flush();
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+          }
+        } catch (_) {
+          if (!closedEndless.isCompleted) closedEndless.complete();
+        }
+        return;
       case '/hls/master.m3u8':
         res.headers.contentType = ContentType(
           'application',
@@ -146,5 +178,82 @@ void main() {
       proxy.wrap(fake.baseUrl.replace(path: '/a'), allowPrivate: true),
     );
     expect(r.status, 200);
+  });
+
+  test('l\'adresse d\'écoute est 127.0.0.1', () {
+    expect(proxy.address.address, '127.0.0.1');
+    expect(proxy.address.isLoopback, isTrue);
+  });
+
+  test('allowPrivate propagé aux segments réécrits', () async {
+    final on = utf8.decode((await _get(wrap('/hls/master.m3u8'))).body);
+    expect(on, contains('a=1'));
+    final off = proxy.wrap(origin.url('/hls/master.m3u8'));
+    // Sans allowPrivate la cible locale est refusée : on vérifie la
+    // réécriture avec un garde permissif.
+    final lax = await LocalProxy.start(
+      guard: (_, {bool allowPrivate = false}) {},
+    );
+    addTearDown(lax.close);
+    final body = utf8.decode(
+      (await _get(lax.wrap(origin.url('/hls/master.m3u8')))).body,
+    );
+    expect(body, isNot(contains('a=1')));
+    expect(off.queryParameters.containsKey('a'), isFalse);
+  });
+
+  test('redirection vers un hôte privé sans allowPrivate → refusée', () async {
+    final guarded = await LocalProxy.start(
+      guard: (u, {bool allowPrivate = false}) {
+        if (u.host == 'localhost' && !allowPrivate) {
+          throw const UnsafeUrlException('hôte local');
+        }
+      },
+    );
+    addTearDown(guarded.close);
+    final events = <ProxyEvent>[];
+    guarded.events.listen(events.add);
+    final r = await _get(guarded.wrap(origin.url('/to-localhost')));
+    expect(r.status, 403);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(events.any((e) => e.refused), isTrue);
+  });
+
+  test('playlist de plus de 5 Mo → 502 et événement', () async {
+    final events = <ProxyEvent>[];
+    proxy.events.listen(events.add);
+    final r = await _get(wrap('/big.m3u8'));
+    expect(r.status, 502);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(events.any((e) => e.error is ResponseTooLargeException), isTrue);
+  });
+
+  test('HEAD sur .m3u8 : pas de Content-Length amont', () async {
+    final c = HttpClient();
+    addTearDown(() => c.close(force: true));
+    final req = await c.openUrl('HEAD', wrap('/hls/master.m3u8'));
+    final res = await req.close();
+    await res.drain<void>();
+    expect(res.statusCode, 200);
+    expect(res.headers.value('content-length'), anyOf(isNull, '0'));
+  });
+
+  test('cible au schéma non http → 404', () async {
+    final u = proxy.wrap(Uri.parse('file:///etc/passwd'));
+    expect((await _get(u)).status, 404);
+  });
+
+  test('le client qui part ferme la connexion amont', () async {
+    final c = HttpClient();
+    final req = await c.getUrl(wrap('/endless'));
+    final res = await req.close();
+    await res.first;
+    c.close(force: true);
+    expect(proxy.activeUpstreams, greaterThan(0));
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    while (proxy.activeUpstreams > 0 && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(proxy.activeUpstreams, 0);
   });
 }

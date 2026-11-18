@@ -43,9 +43,45 @@ void main() {
     expect(rewriteM3u8(body, playlist, wrap), body);
   });
 
-  test('URI data: et clé METHOD=NONE laissées', () {
-    const body =
-        '#EXT-X-KEY:METHOD=NONE\n#EXT-X-KEY:METHOD=SAMPLE-AES,URI="data:text/plain;base64,AAAA"\n';
+  test('clé METHOD=NONE laissée', () {
+    const body = '#EXT-X-KEY:METHOD=NONE\n';
     expect(rewriteM3u8(body, playlist, wrap), body);
+  });
+
+  test('I-FRAME-STREAM-INF et BYTERANGE', () {
+    const body =
+        '#EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=1,URI="iframe.m3u8"\n'
+        '#EXT-X-BYTERANGE:720@0\n'
+        'media.mp4\n';
+    final out = rewriteM3u8(body, playlist, wrap);
+    expect(out, contains('URI="http://p/x?u=https://h/a/iframe.m3u8"'));
+    expect(out, contains('#EXT-X-BYTERANGE:720@0\n'));
+    expect(out, contains('u=https://h/a/media.mp4'));
+  });
+
+  test('URI= d\'un autre attribut (XURI=) non touché', () {
+    const body = '#EXT-X-FOO:XURI="a.ts",URI="b.ts"\n';
+    final out = rewriteM3u8(body, playlist, wrap);
+    expect(out, contains('XURI="a.ts"'));
+    expect(out, contains('URI="http://p/x?u=https://h/a/b.ts"'));
+  });
+
+  test('schémas non http(s) : segments supprimés, URI= neutralisés', () {
+    const body =
+        '#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="file:///etc/passwd"\n'
+        '#EXT-X-MAP:URI="data:text/plain;base64,AAAA"\n'
+        'concat:a|b\nfile:///etc/hosts\nrtmp://x/y\nseg.ts\n';
+    final seen = <Uri>[];
+    final out = rewriteM3u8(body, playlist, (u) {
+      seen.add(u);
+      return Uri.parse('http://p/x?u=${u.toString()}');
+    });
+    expect(out, isNot(contains('file:')));
+    expect(out, isNot(contains('concat:')));
+    expect(out, isNot(contains('rtmp:')));
+    expect(out, isNot(contains('data:')));
+    expect(out, contains('u=blocked:'));
+    expect(out, contains('u=https://h/a/seg.ts'));
+    expect(seen.where((u) => u.scheme == 'blocked').length, 2);
   });
 }

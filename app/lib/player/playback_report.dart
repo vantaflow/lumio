@@ -8,7 +8,8 @@ import 'package:lumio_core/lumio_core.dart';
 ///
 /// [err] peut être une exception ou le texte d'erreur du moteur ; [httpStatus]
 /// (réponse de la source, relevée par le proxy) prime sur le reste.
-String explainFailure(Object err, {int? httpStatus}) {
+String explainFailure(Object err, {int? httpStatus, bool refused = false}) {
+  if (refused) return _refusedMessage;
   final status = httpStatus ?? _statusFrom(err.toString());
   if (status != null) return _statusMessage(status);
   if (err is TimeoutException) {
@@ -17,8 +18,14 @@ String explainFailure(Object err, {int? httpStatus}) {
   if (err is SocketException) {
     return 'Connexion impossible : vérifiez le réseau.';
   }
-  if (err is UnsafeUrlException) {
-    return 'Adresse refusée par mesure de sécurité.';
+  if (err is UnsafeUrlException || err is InsecureRedirectException) {
+    return _refusedMessage;
+  }
+  if (err is TooManyRedirectsException || err is InvalidRedirectException) {
+    return 'La source redirige de façon incorrecte.';
+  }
+  if (err is ResponseTooLargeException) {
+    return 'La réponse de la source est trop volumineuse.';
   }
   final text = err.toString().toLowerCase();
   if (text.contains('timed out') || text.contains('timeout')) {
@@ -41,6 +48,8 @@ String explainFailure(Object err, {int? httpStatus}) {
   return 'La lecture a échoué.';
 }
 
+const _refusedMessage = 'Source refusée pour des raisons de sécurité.';
+
 String _statusMessage(int s) => switch (s) {
   401 || 403 => 'La source a répondu $s : accès refusé.',
   404 || 410 => 'La source a répondu $s : le fichier n\'existe plus.',
@@ -59,14 +68,6 @@ int? _statusFrom(String text) {
   if (m == null) return null;
   final code = int.parse(m.group(1) ?? m.group(2)!);
   return code >= 400 && code < 600 ? code : null;
-}
-
-/// Un lien est lu via le proxy local si c'est du HLS (`.m3u8` ou type
-/// `mpegurl`) ou si la source impose des en-têtes ; sinon lecture directe.
-bool needsProxy(Uri url, Map<String, String> headers, {String? contentType}) {
-  if (headers.isNotEmpty) return true;
-  if (url.path.toLowerCase().endsWith('.m3u8')) return true;
-  return (contentType ?? '').toLowerCase().contains('mpegurl');
 }
 
 /// Mesure d'une lecture, journalisée `LUMIO_PLAYER {json}` (sans URL

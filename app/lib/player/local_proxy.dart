@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:lumio/player/hls_rewriter.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -25,13 +26,14 @@ class ProxyEvent {
 /// Le secret est tiré au hasard à chaque démarrage : une autre application
 /// locale ne peut pas s'en servir comme relais ouvert ; tout le reste → 404.
 class LocalProxy {
-  LocalProxy._(this._server, this._secret, this._clientFactory) {
+  LocalProxy._(this._server, this._secret, this._clientFactory, this._guard) {
     _server.listen(_handle);
   }
 
   final HttpServer _server;
   final String _secret;
   final HttpClient Function() _clientFactory;
+  final void Function(Uri, {bool allowPrivate}) _guard;
   final _events = StreamController<ProxyEvent>.broadcast();
   final _active = <HttpClient>{};
   bool _closed = false;
@@ -44,6 +46,7 @@ class LocalProxy {
   /// Démarre le proxy. [clientFactory] sert aux tests.
   static Future<LocalProxy> start({
     HttpClient Function()? clientFactory,
+    @visibleForTesting void Function(Uri, {bool allowPrivate})? guard,
   }) async {
     final rnd = Random.secure();
     final secret = [
@@ -58,10 +61,18 @@ class LocalProxy {
           () => HttpClient()
             ..connectionTimeout = _connectTimeout
             ..autoUncompress = false,
+      guard ?? UrlGuard.check,
     );
   }
 
   int get port => _server.port;
+
+  /// Connexions sortantes ouvertes (tests : doit retomber à 0).
+  @visibleForTesting
+  int get activeUpstreams => _active.length;
+
+  /// Adresse d'écoute (toujours la boucle locale IPv4).
+  InternetAddress get address => _server.address;
 
   /// Réponses des sources (statut seulement) : sert à expliquer un échec.
   Stream<ProxyEvent> get events => _events.stream;
@@ -126,8 +137,12 @@ class LocalProxy {
         return;
       }
       final allowPrivate = req.uri.queryParameters['a'] == '1';
+      if (target.scheme != 'http' && target.scheme != 'https') {
+        res.statusCode = HttpStatus.notFound;
+        return;
+      }
       try {
-        UrlGuard.check(target, allowPrivate: allowPrivate);
+        _guard(target, allowPrivate: allowPrivate);
       } on UnsafeUrlException {
         res.statusCode = HttpStatus.forbidden;
         _emit(const ProxyEvent(0, refused: true));
@@ -179,7 +194,7 @@ class LocalProxy {
           throw TooManyRedirectsException(_maxRedirects);
         }
         final next = validateRedirect(current, location);
-        UrlGuard.check(next, allowPrivate: allowPrivate);
+        _guard(next, allowPrivate: allowPrivate);
         if (!(current.scheme == next.scheme &&
             current.host == next.host &&
             current.port == next.port)) {
@@ -198,11 +213,11 @@ class LocalProxy {
 
       _emit(ProxyEvent(up.statusCode));
       final type = up.headers.value(HttpHeaders.contentTypeHeader) ?? '';
-      final isPlaylist =
+      final playlistLike =
           up.statusCode < 400 &&
-          req.method == 'GET' &&
           (type.toLowerCase().contains('mpegurl') ||
               current.path.toLowerCase().endsWith('.m3u8'));
+      final isPlaylist = playlistLike && req.method == 'GET';
 
       res.statusCode = up.statusCode;
       if (isPlaylist) {
@@ -228,6 +243,14 @@ class LocalProxy {
         return;
       }
 
+      if (playlistLike && req.method == 'HEAD') {
+        // La longueur réelle change à la réécriture : ne pas relayer l'amont.
+        await up.listen((_) {}).cancel();
+        res.headers
+          ..set(HttpHeaders.contentTypeHeader, 'application/vnd.apple.mpegurl')
+          ..set(HttpHeaders.cacheControlHeader, 'no-store');
+        return;
+      }
       for (final n in const [
         HttpHeaders.contentTypeHeader,
         HttpHeaders.contentLengthHeader,
@@ -246,7 +269,8 @@ class LocalProxy {
         await up.listen((_) {}).cancel();
         return;
       }
-      // Streaming : addStream annule la source si le lecteur ferme avant.
+      // Streaming : si le lecteur part avant la fin, addStream annule la
+      // lecture amont et le `finally` ferme la connexion à la source.
       await res.addStream(up);
     } on TimeoutException catch (e) {
       _emit(ProxyEvent(0, error: e));
@@ -255,6 +279,18 @@ class LocalProxy {
       _emit(ProxyEvent(0, refused: true, error: e));
       res.statusCode = HttpStatus.forbidden;
     } on SocketException catch (e) {
+      _emit(ProxyEvent(0, error: e));
+      res.statusCode = HttpStatus.badGateway;
+    } on InsecureRedirectException catch (e) {
+      _emit(ProxyEvent(0, refused: true, error: e));
+      res.statusCode = HttpStatus.badGateway;
+    } on TooManyRedirectsException catch (e) {
+      _emit(ProxyEvent(0, error: e));
+      res.statusCode = HttpStatus.badGateway;
+    } on InvalidRedirectException catch (e) {
+      _emit(ProxyEvent(0, error: e));
+      res.statusCode = HttpStatus.badGateway;
+    } on ResponseTooLargeException catch (e) {
       _emit(ProxyEvent(0, error: e));
       res.statusCode = HttpStatus.badGateway;
     } on HttpException catch (e) {

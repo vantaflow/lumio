@@ -56,7 +56,7 @@ class _PlayerSpikeScreenState extends State<PlayerSpikeScreen> {
       var proxied = false;
       try {
         await _ctl.open(item);
-        proxied = needsProxy(url, const {});
+        proxied = true;
         final ms = await _ctl.waitFirstFrame(const Duration(seconds: 30));
         await Future<void>.delayed(const Duration(seconds: 4));
         _log(

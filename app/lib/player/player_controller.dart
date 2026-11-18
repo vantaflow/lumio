@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:lumio/player/local_proxy.dart';
+import 'package:lumio/player/play_router.dart';
 import 'package:lumio/player/playback_report.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:media_kit/media_kit.dart';
@@ -10,7 +9,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 export 'package:lumio/player/playback_report.dart'
-    show PlaybackReport, explainFailure, needsProxy;
+    show PlaybackReport, explainFailure;
 
 /// État de lecture exposé à l'écran.
 enum PlayerPhase { idle, opening, playing, paused, buffering, failed, ended }
@@ -114,6 +113,8 @@ class PlayerController {
   Completer<int>? _firstFrame;
   StreamItem? _item;
   bool _allowPrivate = false;
+  bool _trustedLocal = false;
+  bool _refused = false;
   bool _viaProxy = false;
   bool _playing = false;
   bool _buffering = false;
@@ -129,14 +130,18 @@ class PlayerController {
   }
 
   /// Ouvre [s] ; [allowPrivate] seulement pour un addon autorisé sur le réseau
-  /// privé. Échec : phase `failed` avec message ([PlayerState.error]).
+  /// privé. [trustedLocal] : lecture directe réservée aux URL de nos propres
+  /// composants (torrent), jamais aux données d'un addon. Échec : phase `failed` avec message ([PlayerState.error]).
   Future<void> open(
     StreamItem s, {
     bool allowPrivate = false,
+    bool trustedLocal = false,
     Duration start = Duration.zero,
   }) async {
     _item = s;
     _allowPrivate = allowPrivate;
+    _trustedLocal = trustedLocal;
+    _refused = false;
     _lastStatus = null;
     firstFrameMs = null;
     _opened = false;
@@ -150,27 +155,26 @@ class PlayerController {
       return;
     }
     try {
-      _viaProxy =
-          needsProxy(url, s.requestHeaders) ||
-          needsProxy(url, const {}, contentType: await _probe(url));
-      var playUrl = url;
+      final route = await routePlayback(
+        s,
+        proxy: _proxy,
+        allowPrivate: allowPrivate,
+        trustedLocal: trustedLocal,
+      );
+      _viaProxy = route.kind == PlayRouteKind.proxy;
       if (_viaProxy) {
-        final proxy = await _proxy();
-        _proxySub ??= proxy.events.listen((e) {
+        _proxySub ??= (await _proxy()).events.listen((e) {
           if (e.status != 0) _lastStatus = e.status;
+          if (e.refused) _refused = true;
         });
-        playUrl = proxy.wrap(
-          url,
-          headers: s.requestHeaders,
-          allowPrivate: allowPrivate,
-        );
       }
+      final playUrl = route.url;
       await player.open(
         Media(playUrl.toString(), start: start == Duration.zero ? null : start),
       );
       _armStall();
     } catch (e) {
-      _fail(explainFailure(e, httpStatus: _lastStatus));
+      _fail(explainFailure(e, httpStatus: _lastStatus, refused: _refused));
     }
   }
 
@@ -178,26 +182,12 @@ class PlayerController {
   Future<void> retry() async {
     final s = _item;
     if (s == null) return;
-    await open(s, allowPrivate: _allowPrivate, start: state.position);
-  }
-
-  /// Détecte le HLS sans extension (`Content-Type`) : HEAD court, sans erreur
-  /// remontée (en cas d'échec on lit directement).
-  Future<String?> _probe(Uri url) async {
-    if (url.path.toLowerCase().endsWith('.m3u8')) return null;
-    final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
-    try {
-      UrlGuard.check(url, allowPrivate: _allowPrivate);
-      final req = await client.openUrl('HEAD', url);
-      req.followRedirects = false;
-      final res = await req.close().timeout(const Duration(seconds: 4));
-      await res.listen((_) {}).cancel();
-      return res.headers.value(HttpHeaders.contentTypeHeader);
-    } catch (_) {
-      return null;
-    } finally {
-      client.close(force: true);
-    }
+    await open(
+      s,
+      allowPrivate: _allowPrivate,
+      trustedLocal: _trustedLocal,
+      start: state.position,
+    );
   }
 
   void _onFirstFrame() {
@@ -216,7 +206,7 @@ class PlayerController {
   void _onEngineError(String message) {
     // Le moteur signale aussi des avertissements bénins après une image.
     if (_opened && message.isEmpty) return;
-    _fail(explainFailure(message, httpStatus: _lastStatus));
+    _fail(explainFailure(message, httpStatus: _lastStatus, refused: _refused));
   }
 
   void _fail(String message) {
