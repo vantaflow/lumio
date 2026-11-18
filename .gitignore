@@ -12,3 +12,4 @@ app/build/
 packages/*/.dart_tool/
 .gradle/
 local.properties
+__pycache__/

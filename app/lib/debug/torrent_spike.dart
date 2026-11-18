@@ -170,18 +170,32 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
         'peersMax': peersMax,
       });
 
-      ticker.cancel();
-      await sub.cancel();
-      await engine.stop(id);
-      await engine.dispose();
-      final left = await dir.exists()
-          ? dir.listSync(recursive: true).length
-          : 0;
-      _log({'event': 'done', 'leftoverEntries': left});
       _show('terminé');
     } catch (e, st) {
       _log({'event': 'error', 'error': e.toString(), 'stack': st.toString()});
       _show('erreur : $e');
+    } finally {
+      ticker?.cancel();
+      try {
+        await sub?.cancel();
+      } catch (e) {
+        _log({'event': 'sub_cancel_error', 'error': e.toString()});
+      }
+      try {
+        if (id != null) await engine.stop(id, deleteData: true);
+      } catch (e) {
+        _log({'event': 'stop_error', 'error': e.toString()});
+      }
+      try {
+        await engine.dispose();
+      } catch (e) {
+        _log({'event': 'dispose_error', 'error': e.toString()});
+      }
+      final d = dir;
+      final left = d != null && await d.exists()
+          ? d.listSync(recursive: true).length
+          : 0;
+      _log({'event': 'done', 'leftoverEntries': left});
     }
   }
 
