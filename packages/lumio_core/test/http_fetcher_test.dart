@@ -6,6 +6,7 @@ import 'package:lumio_core/testing.dart';
 import 'package:test/test.dart';
 
 void main() {
+  _validateTests();
   late FakeAddonServer server;
   late IoHttpFetcher fetcher;
 
@@ -154,6 +155,48 @@ void main() {
     expect(seen['b:authorization'], isNull);
     expect(seen['b:cookie'], isNull);
     expect(seen['b:accept'], '*/*');
+  });
+}
+
+void _validateTests() {
+  group('validateRedirect', () {
+    final https = Uri.parse('https://a.example/x/y');
+    final http = Uri.parse('http://a.example/x/y');
+    test('https vers http : refusé', () {
+      expect(
+        () => validateRedirect(https, 'http://b.example/'),
+        throwsA(isA<InsecureRedirectException>()),
+      );
+    });
+    test('https vers https : accepté', () {
+      expect(
+        validateRedirect(https, 'https://b.example/z'),
+        Uri.parse('https://b.example/z'),
+      );
+    });
+    test('http vers https : accepté', () {
+      expect(
+        validateRedirect(http, 'https://b.example/z'),
+        Uri.parse('https://b.example/z'),
+      );
+    });
+    test('ftp : refusé', () {
+      expect(
+        () => validateRedirect(http, 'ftp://b.example/'),
+        throwsA(isA<InsecureRedirectException>()),
+      );
+    });
+    test('chemin relatif résolu', () {
+      expect(validateRedirect(https, '/z'), Uri.parse('https://a.example/z'));
+    });
+    test('absent, vide ou illisible : InvalidRedirectException', () {
+      for (final l in [null, '', 'http://[::1']) {
+        expect(
+          () => validateRedirect(http, l),
+          throwsA(isA<InvalidRedirectException>()),
+        );
+      }
+    });
   });
 }
 

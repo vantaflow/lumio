@@ -111,22 +111,10 @@ class IoHttpFetcher implements HttpFetcher {
         // Corps de redirection ignoré : on coupe la connexion sans le lire.
         await res.listen((_) {}).cancel();
         final location = res.headers.value(HttpHeaders.locationHeader);
-        if (location == null || location.isEmpty) {
-          throw const InvalidRedirectException('en-tête Location absent');
+        if (location != null && location.isNotEmpty && hops >= maxRedirects) {
+          throw TooManyRedirectsException(maxRedirects);
         }
-        if (hops >= maxRedirects) throw TooManyRedirectsException(maxRedirects);
-        final Uri next;
-        try {
-          next = current.resolve(location);
-        } on FormatException {
-          throw const InvalidRedirectException('en-tête Location illisible');
-        }
-        if (next.scheme != 'http' && next.scheme != 'https') {
-          throw InsecureRedirectException(next);
-        }
-        if (current.scheme == 'https' && next.scheme != 'https') {
-          throw InsecureRedirectException(next);
-        }
+        final next = validateRedirect(current, location);
         if (!_sameOrigin(current, next)) sent = _withoutCredentials(sent);
         current = next;
         continue;
@@ -155,3 +143,27 @@ Map<String, String> _withoutCredentials(Map<String, String> h) => {
   for (final e in h.entries)
     if (!_credentialHeaders.contains(e.key.toLowerCase())) e.key: e.value,
 };
+
+/// Résout et valide la cible d'une redirection depuis [from].
+///
+/// Lève [InvalidRedirectException] (absente ou illisible) ou
+/// [InsecureRedirectException] (schéma autre que http/https, ou https vers
+/// http).
+Uri validateRedirect(Uri from, String? location) {
+  if (location == null || location.isEmpty) {
+    throw const InvalidRedirectException('en-tête Location absent');
+  }
+  final Uri next;
+  try {
+    next = from.resolve(location);
+  } on FormatException {
+    throw const InvalidRedirectException('en-tête Location illisible');
+  }
+  if (next.scheme != 'http' && next.scheme != 'https') {
+    throw InsecureRedirectException(next);
+  }
+  if (from.scheme == 'https' && next.scheme != 'https') {
+    throw InsecureRedirectException(next);
+  }
+  return next;
+}
