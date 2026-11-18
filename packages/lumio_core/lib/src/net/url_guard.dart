@@ -26,8 +26,9 @@ class UnsafeUrlException implements Exception {
 /// (IPv4 et IPv6, y compris IPv4 mappées en IPv6 et formes décimales ou
 /// hexadécimales d'IPv4).
 ///
-/// Limite connue : un nom de domaine public qui *résout* vers une adresse
-/// privée n'est pas détecté (pas de résolution DNS ici).
+/// [check] ne résout pas les noms : un domaine public qui *résout* vers une
+/// adresse privée (ex. `192.168.1.1.nip.io`) est refusé à la connexion par
+/// `guardedConnectionFactory`.
 class UrlGuard {
   const UrlGuard._();
 
@@ -74,6 +75,9 @@ class UrlGuard {
     r'^(0x[0-9a-f]+|\d+)(\.(0x[0-9a-f]+|\d+))*$',
     caseSensitive: false,
   );
+
+  /// Vrai si [a] est locale, privée, de lien local ou réservée.
+  static bool isPrivateAddress(InternetAddress a) => _isPrivate(a);
 
   static bool _isPrivate(InternetAddress a) {
     final b = a.rawAddress;

@@ -26,7 +26,14 @@ class ProxyEvent {
 /// Le secret est tiré au hasard à chaque démarrage : une autre application
 /// locale ne peut pas s'en servir comme relais ouvert ; tout le reste → 404.
 class LocalProxy {
-  LocalProxy._(this._server, this._secret, this._clientFactory, this._guard) {
+  LocalProxy._(
+    this._server,
+    this._secret,
+    this._clientFactory,
+    this._guard,
+    this._lookup,
+    this._enforceResolved,
+  ) {
     _server.listen(_handle);
   }
 
@@ -34,10 +41,22 @@ class LocalProxy {
   final String _secret;
   final HttpClient Function() _clientFactory;
   final void Function(Uri, {bool allowPrivate}) _guard;
+  final HostLookup? _lookup;
+  final bool _enforceResolved;
   final _events = StreamController<ProxyEvent>.broadcast();
   final _active = <HttpClient>{};
   bool _closed = false;
 
+  /// En-têtes qu'un addon ne peut pas imposer (le Range du lecteur prime).
+  static const _reservedHeaders = {
+    'host',
+    'content-length',
+    'transfer-encoding',
+    'connection',
+    'range',
+  };
+
+  static const _sniffBytes = 16;
   static const _maxRedirects = 5;
   static const _maxPlaylistBytes = 5 * 1024 * 1024;
   static const _connectTimeout = Duration(seconds: 15);
@@ -47,6 +66,8 @@ class LocalProxy {
   static Future<LocalProxy> start({
     HttpClient Function()? clientFactory,
     @visibleForTesting void Function(Uri, {bool allowPrivate})? guard,
+    @visibleForTesting HostLookup? lookup,
+    @visibleForTesting bool enforceResolvedAddresses = true,
   }) async {
     final rnd = Random.secure();
     final secret = [
@@ -62,6 +83,8 @@ class LocalProxy {
             ..connectionTimeout = _connectTimeout
             ..autoUncompress = false,
       guard ?? UrlGuard.check,
+      lookup,
+      enforceResolvedAddresses,
     );
   }
 
@@ -169,6 +192,12 @@ class LocalProxy {
   ) async {
     final res = req.response;
     final client = _clientFactory();
+    if (_enforceResolved) {
+      client.connectionFactory = guardedConnectionFactory(
+        allowPrivate: allowPrivate,
+        lookup: _lookup,
+      );
+    }
     _active.add(client);
     try {
       final forwarded = <String, String>{
@@ -176,7 +205,8 @@ class LocalProxy {
         'Accept-Encoding': 'identity',
         for (final n in const ['range', 'if-range'])
           if (req.headers.value(n) != null) n: req.headers.value(n)!,
-        ...imposed,
+        for (final e in imposed.entries)
+          if (!_reservedHeaders.contains(e.key.toLowerCase())) e.key: e.value,
       };
 
       var current = target;
@@ -217,12 +247,28 @@ class LocalProxy {
           up.statusCode < 400 &&
           (type.toLowerCase().contains('mpegurl') ||
               current.path.toLowerCase().endsWith('.m3u8'));
-      final isPlaylist = playlistLike && req.method == 'GET';
+      var isPlaylist = playlistLike && req.method == 'GET';
+      Stream<List<int>> body = up;
+      final head = <int>[];
+      if (!isPlaylist &&
+          req.method == 'GET' &&
+          up.statusCode < 400 &&
+          up.statusCode != HttpStatus.partialContent) {
+        // Une playlist servie avec un autre type (video/mp4, text/plain)
+        // doit être réécrite aussi : sinon le lecteur irait chercher les
+        // segments directement, hors garde.
+        final it = StreamIterator<List<int>>(up);
+        while (head.length < _sniffBytes && await it.moveNext()) {
+          head.addAll(it.current);
+        }
+        isPlaylist = _isPlaylistBody(head);
+        body = _chain(head, it);
+      }
 
       res.statusCode = up.statusCode;
       if (isPlaylist) {
         final bytes = <int>[];
-        await for (final chunk in up) {
+        await for (final chunk in body) {
           bytes.addAll(chunk);
           if (bytes.length > _maxPlaylistBytes) {
             throw const ResponseTooLargeException(_maxPlaylistBytes);
@@ -231,7 +277,13 @@ class LocalProxy {
         final text = rewriteM3u8(
           utf8.decode(bytes, allowMalformed: true),
           current,
-          (u) => wrap(u, headers: imposed, allowPrivate: allowPrivate),
+          (u) => wrap(
+            u,
+            headers: sameOrigin(u, current)
+                ? imposed
+                : withoutCredentials(imposed),
+            allowPrivate: allowPrivate,
+          ),
         );
         final out = utf8.encode(text);
         res.statusCode = HttpStatus.ok;
@@ -271,7 +323,7 @@ class LocalProxy {
       }
       // Streaming : si le lecteur part avant la fin, addStream annule la
       // lecture amont et le `finally` ferme la connexion à la source.
-      await res.addStream(up);
+      await res.addStream(body);
     } on TimeoutException catch (e) {
       _emit(ProxyEvent(0, error: e));
       res.statusCode = HttpStatus.gatewayTimeout;
@@ -299,6 +351,41 @@ class LocalProxy {
     } finally {
       _active.remove(client);
       client.close(force: true);
+    }
+  }
+
+  static bool _isPlaylistBody(List<int> head) {
+    var i = 0;
+    if (head.length >= 3 &&
+        head[0] == 0xEF &&
+        head[1] == 0xBB &&
+        head[2] == 0xBF) {
+      i = 3;
+    }
+    const magic = [0x23, 0x45, 0x58, 0x54, 0x4D, 0x33, 0x55]; // #EXTM3U
+    if (head.length < i + magic.length) return false;
+    for (var k = 0; k < magic.length; k++) {
+      if (head[i + k] != magic[k]) return false;
+    }
+    return true;
+  }
+
+  /// [head] déjà lu, puis la suite de [it] ; annuler ferme la lecture amont.
+  static Stream<List<int>> _chain(
+    List<int> head,
+    StreamIterator<List<int>> it,
+  ) async* {
+    try {
+      if (head.isNotEmpty) yield head;
+      while (await it.moveNext()) {
+        yield it.current;
+      }
+    } on HttpException {
+      // Amont coupé (lecteur parti ou source fermée) : fin du flux.
+    } on SocketException {
+      // idem
+    } finally {
+      await it.cancel();
     }
   }
 

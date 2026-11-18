@@ -17,8 +17,9 @@ final blockedPlaylistTarget = Uri.parse('blocked:');
 /// segment est supprimée, un attribut `URI=` pointe vers [blockedPlaylistTarget]
 /// via le proxy (404).
 ///
-/// Les lignes de commentaire sans `URI`, les lignes vides, les `URI="data:…"`
-/// et les fins de ligne (`\n` ou `\r\n`) sont conservés tels quels.
+/// Les lignes de commentaire sans `URI`, les lignes vides et les fins de ligne
+/// (`\n` ou `\r\n`) sont conservés tels quels. Un `URI="data:…"` n'est pas
+/// conservé : son schéma n'est pas http(s), il est donc bloqué comme les autres.
 String rewriteM3u8(String body, Uri playlistUrl, Uri Function(Uri) wrap) {
   String? resolve(String ref) {
     final Uri target;

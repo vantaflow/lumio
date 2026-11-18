@@ -53,6 +53,7 @@ typedef AddonClientFactory = AddonClient Function({required bool allowPrivate});
 
 AddonClient defaultAddonClient({required bool allowPrivate}) => AddonClient(
   IoHttpFetcher(
+    connectionFactory: guardedConnectionFactory(allowPrivate: allowPrivate),
     redirectGuard: (u) => UrlGuard.check(u, allowPrivate: allowPrivate),
   ),
   allowPrivate: allowPrivate,

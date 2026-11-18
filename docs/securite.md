@@ -61,8 +61,10 @@ texte opaque et ne reçoit jamais la phrase secrète.
   qui les a encore, le reste des données reste disponible. Une phrase perdue
   ne se récupère pas.
 - La génération la plus élevée vue, l'origine et les suppressions survivent à
-  l'oubli de la phrase (déconnexion, réinitialisation venue d'un autre
-  appareil). Une empreinte de la phrase (PBKDF2 avec un sel local) permet de
+  l'oubli de la phrase (réinitialisation venue d'un autre appareil, oubli
+  seul) ; la déconnexion du compte les efface avec les métadonnées de
+  synchronisation, et la suppression du compte efface aussi l'empreinte et son
+  sel. Une empreinte de la phrase (PBKDF2 avec un sel local) permet de
   reconnaître la même phrase ressaisie : elle garde alors ces repères et un
   ancien blob rejoué reste ignoré ; seule une phrase réellement nouvelle ouvre
   une nouvelle époque. Une génération au-delà de 2^53 rend le blob illisible.

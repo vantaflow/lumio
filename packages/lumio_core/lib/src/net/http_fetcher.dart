@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'guarded_connection.dart';
+
 /// Réponse HTTP minimale : statut, corps complet (borné) et en-têtes
 /// (noms en minuscules).
 class FetchResponse {
@@ -87,7 +89,15 @@ abstract class HttpPostFetcher implements HttpFetcher {
 /// corps comprises). La taille est comptée au fil du flux : le téléchargement
 /// est interrompu dès que [maxBytes] est dépassé.
 class IoHttpFetcher implements HttpPostFetcher {
-  IoHttpFetcher({this.maxRedirects = 3, this.redirectGuard});
+  IoHttpFetcher({
+    this.maxRedirects = 3,
+    this.redirectGuard,
+    this.connectionFactory,
+  });
+
+  /// Fabrique de connexion du client (voir `guardedConnectionFactory`) :
+  /// refuse à la connexion les noms qui résolvent vers une adresse privée.
+  final ConnectionFactory? connectionFactory;
 
   final int maxRedirects;
 
@@ -105,6 +115,7 @@ class IoHttpFetcher implements HttpPostFetcher {
     void Function(Uri target)? guard,
   }) async {
     final client = HttpClient()..connectionTimeout = timeout;
+    if (connectionFactory != null) client.connectionFactory = connectionFactory;
     try {
       guard?.call(url);
       redirectGuard?.call(url);
@@ -138,6 +149,7 @@ class IoHttpFetcher implements HttpPostFetcher {
     void Function(Uri target)? guard,
   }) async {
     final client = HttpClient()..connectionTimeout = timeout;
+    if (connectionFactory != null) client.connectionFactory = connectionFactory;
     try {
       guard?.call(url);
       redirectGuard?.call(url);
@@ -235,12 +247,19 @@ bool _isConnectTimeout(SocketException e) {
       e.message.toLowerCase().contains('timed out');
 }
 
-bool _sameOrigin(Uri a, Uri b) =>
+bool _sameOrigin(Uri a, Uri b) => sameOrigin(a, b);
+
+/// Même schéma, hôte et port.
+bool sameOrigin(Uri a, Uri b) =>
     a.scheme == b.scheme && a.host == b.host && a.port == b.port;
 
 const _credentialHeaders = {'authorization', 'cookie', 'proxy-authorization'};
 
-Map<String, String> _withoutCredentials(Map<String, String> h) => {
+Map<String, String> _withoutCredentials(Map<String, String> h) =>
+    withoutCredentials(h);
+
+/// Copie de [h] sans Authorization, Cookie ni Proxy-Authorization.
+Map<String, String> withoutCredentials(Map<String, String> h) => {
   for (final e in h.entries)
     if (!_credentialHeaders.contains(e.key.toLowerCase())) e.key: e.value,
 };

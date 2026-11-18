@@ -302,10 +302,15 @@ class AddonSync {
   }
 
   /// Déconnexion : la phrase et les addons en attente quittent l'appareil
-  /// (les addons installés restent).
-  Future<void> forget() => _locked(() async {
+  /// (les addons installés restent). [wipeFingerprint] (suppression du
+  /// compte) efface aussi l'empreinte de la phrase et son sel.
+  Future<void> forget({bool wipeFingerprint = false}) => _locked(() async {
     await _secrets.delete(AddonSyncSecretKeys.passphrase);
     await _secrets.delete(AddonSyncSecretKeys.carry);
+    if (wipeFingerprint) {
+      await _secrets.delete(AddonSyncSecretKeys.fingerprint);
+      await _secrets.delete(AddonSyncSecretKeys.fingerprintSalt);
+    }
   });
 
   // --- envoi -------------------------------------------------------------

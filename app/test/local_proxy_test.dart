@@ -14,6 +14,7 @@ class _Origin {
   }
   final HttpServer server;
   final seen = <String, String>{};
+  Uri? otherSegment;
   final closedEndless = Completer<void>();
   static final data = List<int>.generate(100, (i) => i);
 
@@ -61,6 +62,19 @@ class _Origin {
           if (!closedEndless.isCompleted) closedEndless.complete();
         }
         return;
+      case '/xo.m3u8':
+        res.headers.contentType = ContentType(
+          'application',
+          'vnd.apple.mpegurl',
+        );
+        res.write('#EXTM3U\n#EXTINF:4,\n$otherSegment\n');
+      case '/mp4-playlist':
+        res.headers.contentType = ContentType('video', 'mp4');
+        res.add([0xEF, 0xBB, 0xBF]);
+        res.write('#EXTM3U\n#EXTINF:4,\nseg1.ts\n');
+      case '/text-playlist':
+        res.headers.contentType = ContentType('text', 'plain');
+        res.write('#EXTM3U\n#EXTINF:4,\nseg1.ts\n');
       case '/hls/master.m3u8':
         res.headers.contentType = ContentType(
           'application',
@@ -193,6 +207,7 @@ void main() {
     // réécriture avec un garde permissif.
     final lax = await LocalProxy.start(
       guard: (_, {bool allowPrivate = false}) {},
+      enforceResolvedAddresses: false,
     );
     addTearDown(lax.close);
     final body = utf8.decode(
@@ -209,6 +224,7 @@ void main() {
           throw const UnsafeUrlException('hôte local');
         }
       },
+      enforceResolvedAddresses: false,
     );
     addTearDown(guarded.close);
     final events = <ProxyEvent>[];
@@ -236,6 +252,61 @@ void main() {
     await res.drain<void>();
     expect(res.statusCode, 200);
     expect(res.headers.value('content-length'), anyOf(isNull, '0'));
+  });
+
+  test('segment d une autre origine : Authorization retiré', () async {
+    final other = await _Origin.start();
+    addTearDown(other.close);
+    origin.otherSegment = other.url('/file.bin');
+    final pl = await _get(wrap('/xo.m3u8', h: {'Authorization': 'Bearer s3'}));
+    final line = utf8
+        .decode(pl.body)
+        .split('\n')
+        .firstWhere((l) => l.startsWith('http'));
+    await _get(Uri.parse(line));
+    expect(other.seen.containsKey('authorization'), isFalse);
+    // Même origine : l'en-tête est conservé.
+    await _get(wrap('/file.bin', h: {'Authorization': 'Bearer s3'}));
+    expect(origin.seen['authorization'], 'Bearer s3');
+  });
+
+  test('playlist servie en video/mp4 ou text/plain (BOM) réécrite', () async {
+    for (final path in ['/mp4-playlist', '/text-playlist']) {
+      final body = utf8.decode((await _get(wrap(path))).body);
+      expect(body, contains('/p/'), reason: path);
+      expect(body, isNot(contains('\nseg1.ts')), reason: path);
+    }
+  });
+
+  test('nom public résolvant vers une adresse privée refusé', () async {
+    final rebinding = await LocalProxy.start(
+      lookup: (_) async => [InternetAddress.loopbackIPv4],
+      guard: (_, {bool allowPrivate = false}) {},
+    );
+    addTearDown(rebinding.close);
+    final target = Uri(
+      scheme: 'http',
+      host: 'public.example',
+      port: origin.server.port,
+      path: '/file.bin',
+    );
+    expect((await _get(rebinding.wrap(target))).status, 403);
+    final lax = await LocalProxy.start(
+      lookup: (_) async => [InternetAddress.loopbackIPv4],
+      guard: (_, {bool allowPrivate = false}) {},
+    );
+    addTearDown(lax.close);
+    expect((await _get(lax.wrap(target, allowPrivate: true))).status, 200);
+  });
+
+  test('en-têtes réservés d addon ignorés (Range du lecteur prime)', () async {
+    final r = await _get(
+      wrap('/file.bin', h: {'Range': 'bytes=0-0', 'Host': 'evil.test'}),
+      headers: {'Range': 'bytes=10-19'},
+    );
+    expect(r.status, 206);
+    expect(r.body.length, 10);
+    expect(origin.seen['host'], isNot('evil.test'));
   });
 
   test('cible au schéma non http → 404', () async {

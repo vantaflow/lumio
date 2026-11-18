@@ -13,6 +13,7 @@ export 'src/backup/stremio_import.dart';
 export 'src/cache/ttl_cache.dart';
 export 'src/health/health_tracker.dart';
 export 'src/crypto/secret_box.dart';
+export 'src/net/guarded_connection.dart';
 export 'src/net/http_fetcher.dart';
 export 'src/net/url_guard.dart';
 export 'src/update/update_checker.dart';

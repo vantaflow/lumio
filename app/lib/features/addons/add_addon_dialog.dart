@@ -9,6 +9,7 @@ import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/pairing/pairing_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/data/addon_repository.dart';
+import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -432,8 +433,8 @@ class AddonLogo extends StatelessWidget {
       alignment: Alignment.center,
       child: !safe
           ? fallback
-          : Image.network(
-              logo.toString(),
+          : Image(
+              image: GuardedNetworkImage(logo!, allowPrivate: false),
               width: size,
               height: size,
               fit: BoxFit.cover,

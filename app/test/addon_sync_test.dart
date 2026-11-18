@@ -930,6 +930,19 @@ void main() {
     expect(await a.urls(), [_urlA, _urlB]);
   });
 
+  test('forget(wipeFingerprint) efface empreinte et sel', () async {
+    await a.repo.install(_urlA);
+    await a.signIn();
+    await a.sync.setPassphrase(_pass);
+    expect(a.secrets.snapshot[AddonSyncSecretKeys.fingerprint], isNotNull);
+    expect(a.secrets.snapshot[AddonSyncSecretKeys.fingerprintSalt], isNotNull);
+    await a.sync.forget();
+    expect(a.secrets.snapshot[AddonSyncSecretKeys.fingerprint], isNotNull);
+    await a.sync.forget(wipeFingerprint: true);
+    expect(a.secrets.snapshot[AddonSyncSecretKeys.fingerprint], isNull);
+    expect(a.secrets.snapshot[AddonSyncSecretKeys.fingerprintSalt], isNull);
+  });
+
   test(
     'génération hors limite (2^53) : blob illisible, rien appliqué',
     () async {

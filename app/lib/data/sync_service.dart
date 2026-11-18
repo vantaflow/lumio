@@ -566,7 +566,7 @@ class SyncService {
       await _api.deleteAccount();
       await _store.reset();
     } finally {
-      await addons?.forget();
+      await addons?.forget(wipeFingerprint: true);
     }
     _signedIn = false;
     _failures = 0;

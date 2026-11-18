@@ -408,9 +408,13 @@ class LocalLibrary {
               ),
             );
       }
-      await (_db.delete(
-        _db.localItems,
-      )..where((t) => t.folderPath.equals(dir) & t.id.isNotIn(keep))).go();
+      // Analyse partielle : les éléments non vus ne sont pas forcément
+      // disparus (et gardent leur titre modifié à la main).
+      if (!result.truncated) {
+        await (_db.delete(
+          _db.localItems,
+        )..where((t) => t.folderPath.equals(dir) & t.id.isNotIn(keep))).go();
+      }
       await (_db.update(_db.localFolders)..where((t) => t.path.equals(dir)))
           .write(LocalFoldersCompanion(lastScanAt: Value(stamp)));
     });

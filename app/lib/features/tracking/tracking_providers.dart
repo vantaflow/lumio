@@ -15,7 +15,10 @@ final traktCredentialsProvider = Provider<({String id, String secret})>(
 final simklClientIdProvider = Provider<String>((ref) => config.simklClientId);
 
 final trackingFetcherProvider = Provider<HttpPostFetcher>(
-  (ref) => IoHttpFetcher(redirectGuard: UrlGuard.check),
+  (ref) => IoHttpFetcher(
+    redirectGuard: UrlGuard.check,
+    connectionFactory: guardedConnectionFactory(),
+  ),
 );
 
 /// Horloge du suivi (surchargée dans les tests).

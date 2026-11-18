@@ -88,6 +88,9 @@ class GuardedNetworkImage extends ImageProvider<GuardedNetworkImage> {
       final http =
           fetcher ??
           IoHttpFetcher(
+            connectionFactory: guardedConnectionFactory(
+              allowPrivate: allowPrivate,
+            ),
             redirectGuard: (u) => UrlGuard.check(u, allowPrivate: allowPrivate),
           );
       final res = await http.get(

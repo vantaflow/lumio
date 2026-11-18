@@ -297,6 +297,26 @@ void main() {
       expect(await db.select(db.localItems).get(), hasLength(1));
     });
 
+    test('analyse partielle : les éléments non vus sont gardés', () async {
+      touch('a.mkv');
+      touch('b.mkv');
+      var truncated = false;
+      final l = LocalLibrary(
+        db,
+        scanner: (d) async =>
+            ScanResult(scanLocalFolder(d), truncated: truncated),
+      );
+      await l.addFolder(tmp.path);
+      expect(await db.select(db.localItems).get(), hasLength(2));
+      File('${tmp.path}/b.mkv').deleteSync();
+      truncated = true;
+      await l.scan(tmp.path);
+      expect(await db.select(db.localItems).get(), hasLength(2));
+      truncated = false;
+      await l.scan(tmp.path);
+      expect(await db.select(db.localItems).get(), hasLength(1));
+    });
+
     test('dossiers système, racine et chemin relatif : refusés', () async {
       for (final path in ['/', '/proc', '/sys/kernel', '/dev', '/etc', 'rel']) {
         await expectLater(

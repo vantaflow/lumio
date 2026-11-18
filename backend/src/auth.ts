@@ -10,6 +10,9 @@ export const SESSION_TTL_SEC = 3600;
 export const REFRESH_TTL_SEC = 30 * 24 * 3600;
 export const REQUEST_LIMIT = 5;
 export const REQUEST_WINDOW_SEC = 60;
+export const IP_REQUEST_LIMIT = 20;
+export const IP_REQUEST_WINDOW_SEC = 3600;
+export const MAX_TOKEN_LENGTH = 512;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
@@ -76,6 +79,20 @@ authRoutes.post('/request', async (c) => {
     return c.json({ error: 'Adresse e-mail invalide' }, 400);
   }
   const { now, email: sender } = c.var.deps;
+  const ip = c.req.header('cf-connecting-ip');
+  if (ip) {
+    const rlIp = await rateLimit(
+      c.env.RATE,
+      `auth-ip:${ip}`,
+      IP_REQUEST_LIMIT,
+      IP_REQUEST_WINDOW_SEC,
+      now(),
+    );
+    if (!rlIp.allowed) {
+      c.header('Retry-After', String(rlIp.retryAfterSec));
+      return c.json({ error: 'Trop de demandes, réessayez plus tard' }, 429);
+    }
+  }
   const rl = await rateLimit(c.env.RATE, `auth:${email}`, REQUEST_LIMIT, REQUEST_WINDOW_SEC, now());
   if (!rl.allowed) {
     c.header('Retry-After', String(rl.retryAfterSec));
@@ -111,7 +128,7 @@ authRoutes.post('/request', async (c) => {
 authRoutes.post('/verify', async (c) => {
   const body = await readJson(c);
   const token = typeof body.token === 'string' ? body.token : '';
-  if (!token) return c.json({ error: 'Jeton manquant' }, 400);
+  if (!token || token.length > MAX_TOKEN_LENGTH) return c.json({ error: 'Jeton manquant' }, 400);
   const nowSec = Math.floor(c.var.deps.now() / 1000);
   const hash = await sha256Hex(token);
   // Consommation atomique : un jeton ne sert qu'une fois, même en concurrence.
@@ -130,7 +147,7 @@ authRoutes.post('/verify', async (c) => {
 authRoutes.post('/refresh', async (c) => {
   const body = await readJson(c);
   const refresh = typeof body.refresh === 'string' ? body.refresh : '';
-  if (!refresh) return c.json({ error: 'Jeton manquant' }, 400);
+  if (!refresh || refresh.length > MAX_TOKEN_LENGTH) return c.json({ error: 'Jeton manquant' }, 400);
   const nowSec = Math.floor(c.var.deps.now() / 1000);
   const oldHash = await sha256Hex(refresh);
   // Rotation : l'ancien jeton de rafraîchissement est supprimé atomiquement.

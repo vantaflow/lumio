@@ -92,6 +92,31 @@ describe('limitation de débit', () => {
   });
 });
 
+describe('limitation par IP et jetons trop longs', () => {
+  it('la 21e demande par IP en une heure reçoit 429, même avec des e-mails différents', async () => {
+    const req = (i: number) =>
+      app.request(
+        '/auth/request',
+        {
+          method: 'POST',
+          body: JSON.stringify({ email: `ip${i}@example.com` }),
+          headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.9' },
+        },
+        env,
+      );
+    for (let i = 0; i < 20; i++) expect((await req(i)).status).toBe(202);
+    const res = await req(20);
+    expect(res.status).toBe(429);
+    expect(res.headers.get('Retry-After')).toBeTruthy();
+  });
+
+  it('refuse un jeton de plus de 512 caractères (verify et refresh)', async () => {
+    const long = 'a'.repeat(513);
+    expect((await post('/auth/verify', { token: long })).status).toBe(400);
+    expect((await post('/auth/refresh', { refresh: long })).status).toBe(400);
+  });
+});
+
 describe('session et rafraîchissement', () => {
   it('route protégée sans Bearer ou avec un faux jeton -> 401', async () => {
     expect((await app.request('/me', {}, env)).status).toBe(401);
