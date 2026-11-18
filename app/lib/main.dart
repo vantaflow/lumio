@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/debug/torrent_spike.dart';
+import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/update/update_banner.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const LumioApp());
+  runApp(const ProviderScope(child: LumioApp()));
   SchedulerBinding.instance.addPostFrameCallback((_) {
     // Lu par scripts/box-smoke.sh dans logcat.
     // ignore: avoid_print
@@ -25,13 +28,9 @@ class LumioApp extends StatelessWidget {
     return MaterialApp(
       title: 'Lumio',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6C5CE7),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: LumioTheme.dark(),
+      darkTheme: LumioTheme.dark(),
+      themeMode: ThemeMode.dark,
       shortcuts: {
         ...WidgetsApp.defaultShortcuts,
         // Télécommande Android TV : OK/Entrée active l'élément ciblé.
@@ -48,13 +47,17 @@ class RootScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Column(
         children: [
-          UpdateBanner(),
+          const UpdateBanner(),
           Expanded(
             child: StateView.empty(
               message: 'Lumio est prêt. Ajoutez un addon pour commencer.',
+              actionLabel: 'Gérer les addons',
+              onAction: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AddonsScreen()),
+              ),
             ),
           ),
         ],
