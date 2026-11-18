@@ -47,8 +47,11 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
     final sw = Stopwatch()..start();
     final engine = LibtorrentEngine();
     String? id;
+    Timer? ticker;
+    StreamSubscription<TorrentStatus>? sub;
+    Directory? dir;
     try {
-      final dir = await Directory.systemTemp.createTemp('lumio_spike');
+      dir = await Directory.systemTemp.createTemp('lumio_spike');
       await engine.init(TorrentSettings(savePath: dir.path));
       _log({'event': 'init', 'ms': sw.elapsedMilliseconds});
       id = await engine.add(
@@ -59,12 +62,12 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
       var peersMax = 0;
       var rate = 0;
       var peers = 0;
-      final sub = engine.status(id).listen((s) {
+      sub = engine.status(id).listen((s) {
         rate = s.downloadRate;
         peers = s.peers;
         if (peers > peersMax) peersMax = peers;
       });
-      final ticker = Timer.periodic(const Duration(seconds: 10), (_) {
+      ticker = Timer.periodic(const Duration(seconds: 10), (_) {
         _log({
           'event': 'tick',
           'ms': sw.elapsedMilliseconds,
@@ -75,10 +78,16 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
       });
 
       List<TorrentFile> files = const [];
+      String? firstFilesError;
       while (sw.elapsed < const Duration(minutes: 5)) {
         try {
           files = await engine.files(id);
-        } catch (_) {}
+        } catch (e) {
+          if (firstFilesError == null) {
+            firstFilesError = e.toString();
+            _log({'event': 'files_error', 'error': firstFilesError});
+          }
+        }
         if (files.isNotEmpty) break;
         await Future<void>.delayed(const Duration(milliseconds: 500));
       }
@@ -88,10 +97,6 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
           'reason': 'no_metadata_5min',
           'peers': peersMax,
         });
-        ticker.cancel();
-        await sub.cancel();
-        await engine.stop(id);
-        await engine.dispose();
         _show('ÉCHEC métadonnées');
         return;
       }

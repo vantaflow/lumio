@@ -48,5 +48,40 @@ void main() {
       final e = FakeTorrentEngine();
       expect(() => e.stream('inconnu'), throwsStateError);
     });
+
+    test('files, stream et stop sur id inconnu lèvent une erreur', () async {
+      final e = FakeTorrentEngine();
+      expect(() => e.files('inconnu'), throwsStateError);
+      expect(() => e.stream('inconnu'), throwsStateError);
+      expect(() => e.stop('inconnu'), throwsStateError);
+    });
+
+    test('status est piloté par emitStatus', () async {
+      final e = FakeTorrentEngine();
+      final id = await e.add('c' * 40);
+      final got = <TorrentStatus>[];
+      final sub = e.status(id).listen(got.add);
+      await Future<void>.delayed(Duration.zero);
+      e.emitStatus(
+        id,
+        const TorrentStatus(
+          peers: 9,
+          seeders: 4,
+          downloadRate: 1,
+          uploadRate: 0,
+          progress: 0.5,
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(got.map((s) => s.peers), [3, 9]);
+      await sub.cancel();
+    });
+
+    test('après stop, l\'id devient inconnu', () async {
+      final e = FakeTorrentEngine();
+      final id = await e.add('d' * 40);
+      await e.stop(id);
+      expect(() => e.files(id), throwsStateError);
+    });
   });
 }

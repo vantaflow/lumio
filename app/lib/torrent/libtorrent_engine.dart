@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:libtorrent_flutter/libtorrent_flutter.dart' as lt;
 import 'package:lumio/torrent/torrent_engine.dart';
 
@@ -14,8 +15,13 @@ class LibtorrentEngine implements TorrentEngine {
 
   lt.LibtorrentFlutter get _e => lt.LibtorrentFlutter.instance;
 
+  void _requireReady() {
+    if (!_ready) throw StateError('moteur non initialisé');
+  }
+
   @override
   Future<void> init(TorrentSettings s) async {
+    if (_ready) throw StateError('moteur déjà initialisé');
     _settings = s;
     await lt.LibtorrentFlutter.init(
       downloadLimit: s.downloadLimit,
@@ -28,32 +34,45 @@ class LibtorrentEngine implements TorrentEngine {
   int _id(String id) =>
       int.tryParse(id) ?? (throw StateError('torrent inconnu : $id'));
 
+  void _stopStream(int sid) {
+    try {
+      _e.stopStream(sid);
+    } catch (e) {
+      debugPrint('LibtorrentEngine : stopStream($sid) a échoué : $e');
+    }
+  }
+
   @override
   Future<String> add(String magnetOrInfoHash) async {
-    if (!_ready) throw StateError('moteur non initialisé');
-    final isHash = RegExp(r'^[0-9a-fA-F]{40}$').hasMatch(magnetOrInfoHash);
-    final magnet = isHash
+    _requireReady();
+    final magnet = isInfoHash(magnetOrInfoHash)
         ? magnetFromInfoHash(magnetOrInfoHash)
         : magnetOrInfoHash;
     return _e.addMagnet(magnet, _settings.savePath).toString();
   }
 
   @override
-  Future<List<TorrentFile>> files(String id) async => _e
-      .getFiles(_id(id))
-      .map(
-        (f) => TorrentFile(
-          index: f.index,
-          name: f.name,
-          size: f.size,
-          streamable: f.isStreamable,
-        ),
-      )
-      .toList();
+  Future<List<TorrentFile>> files(String id) async {
+    _requireReady();
+    return _e
+        .getFiles(_id(id))
+        .map(
+          (f) => TorrentFile(
+            index: f.index,
+            name: f.name,
+            size: f.size,
+            streamable: f.isStreamable,
+          ),
+        )
+        .toList();
+  }
 
   @override
   Future<Uri> stream(String id, {int? fileIndex}) async {
+    _requireReady();
     final tid = _id(id);
+    final previous = _streamIds.remove(tid);
+    if (previous != null) _stopStream(previous);
     final info = _e.startStream(
       tid,
       fileIndex: fileIndex ?? -1,
@@ -65,6 +84,7 @@ class LibtorrentEngine implements TorrentEngine {
 
   @override
   Stream<TorrentStatus> status(String id) {
+    _requireReady();
     final tid = _id(id);
     TorrentStatus? map(lt.TorrentInfo? t) => t == null
         ? null
@@ -76,8 +96,8 @@ class LibtorrentEngine implements TorrentEngine {
             progress: t.progress,
             error: t.errorMsg.isEmpty ? null : t.errorMsg,
           );
-    final initial = map(_e.torrents[tid]);
     return Stream<TorrentStatus>.multi((c) {
+      final initial = map(_e.torrents[tid]);
       if (initial != null) c.add(initial);
       final sub = _e.torrentUpdates.listen((all) {
         final s = map(all[tid]);
@@ -89,13 +109,10 @@ class LibtorrentEngine implements TorrentEngine {
 
   @override
   Future<void> stop(String id, {bool deleteData = true}) async {
+    _requireReady();
     final tid = _id(id);
     final sid = _streamIds.remove(tid);
-    if (sid != null) {
-      try {
-        _e.stopStream(sid);
-      } catch (_) {}
-    }
+    if (sid != null) _stopStream(sid);
     _e.removeTorrent(tid, deleteFiles: deleteData);
   }
 
@@ -103,6 +120,12 @@ class LibtorrentEngine implements TorrentEngine {
   Future<void> dispose() async {
     if (!_ready) return;
     _ready = false;
+    for (final sid in _streamIds.values) {
+      _stopStream(sid);
+    }
+    _streamIds.clear();
+    // dispose() natif appelle disposeAll() : arrête les flux et supprime les
+    // torrents restants (données comprises).
     await _e.dispose();
   }
 }

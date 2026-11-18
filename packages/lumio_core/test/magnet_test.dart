@@ -8,4 +8,10 @@ void main() {
   test('39 caractères refusés', () {
     expect(() => magnetFromInfoHash('a' * 39), throwsArgumentError);
   });
+  test('isInfoHash', () {
+    expect(isInfoHash('a' * 40), isTrue);
+    expect(isInfoHash('A' * 40), isTrue);
+    expect(isInfoHash('a' * 39), isFalse);
+    expect(isInfoHash('g' * 40), isFalse);
+  });
 }

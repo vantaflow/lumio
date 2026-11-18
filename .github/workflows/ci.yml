@@ -93,3 +93,4 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: bash scripts/check-licenses.sh
+      - run: bash scripts/test-check-licenses.sh

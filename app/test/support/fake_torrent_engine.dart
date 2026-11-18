@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:lumio/torrent/torrent_engine.dart';
 
 /// Moteur factice déterministe, réutilisé par les tests des écrans torrent.
+/// Mêmes erreurs que l'adaptateur sur identifiant inconnu ; l'état est piloté
+/// par [emitStatus].
 class FakeTorrentEngine implements TorrentEngine {
   FakeTorrentEngine({
     this.fileList = const [
@@ -23,21 +25,37 @@ class FakeTorrentEngine implements TorrentEngine {
   final stopped = <String>[];
   TorrentSettings? settings;
   bool disposed = false;
+  final _live = <String>{};
+  final _controllers = <String, StreamController<TorrentStatus>>{};
 
   @override
   Future<void> init(TorrentSettings s) async => settings = s;
 
   @override
   Future<String> add(String magnetOrInfoHash) async {
-    final m = RegExp(r'^[0-9a-fA-F]{40}$').hasMatch(magnetOrInfoHash)
+    final m = isInfoHash(magnetOrInfoHash)
         ? magnetFromInfoHash(magnetOrInfoHash)
         : magnetOrInfoHash;
     addedMagnets.add(m);
-    return 'fake-${addedMagnets.length}';
+    final id = 'fake-${addedMagnets.length}';
+    _live.add(id);
+    return id;
   }
 
   void _check(String id) {
-    if (!id.startsWith('fake-')) throw StateError('torrent inconnu : $id');
+    if (!_live.contains(id)) throw StateError('torrent inconnu : $id');
+  }
+
+  StreamController<TorrentStatus> _ctrl(String id) => _controllers.putIfAbsent(
+    id,
+    () => StreamController<TorrentStatus>.broadcast(),
+  );
+
+  /// Pousse une mise à jour de statut vers les abonnés de [status].
+  void emitStatus(String id, TorrentStatus s) {
+    _check(id);
+    statusValue = s;
+    _ctrl(id).add(s);
   }
 
   @override
@@ -52,16 +70,32 @@ class FakeTorrentEngine implements TorrentEngine {
     return Uri.parse('http://127.0.0.1:8080/stream/$id/${fileIndex ?? 0}');
   }
 
+  /// Émet d'abord le statut courant, puis les [emitStatus] suivants.
   @override
-  Stream<TorrentStatus> status(String id) async* {
+  Stream<TorrentStatus> status(String id) {
     _check(id);
-    yield statusValue;
+    final c = _ctrl(id);
+    return Stream<TorrentStatus>.multi((m) {
+      m.add(statusValue);
+      final sub = c.stream.listen(m.add, onDone: m.close);
+      m.onCancel = sub.cancel;
+    });
   }
 
   @override
-  Future<void> stop(String id, {bool deleteData = true}) async =>
-      stopped.add(id);
+  Future<void> stop(String id, {bool deleteData = true}) async {
+    _check(id);
+    _live.remove(id);
+    stopped.add(id);
+    await _controllers.remove(id)?.close();
+  }
 
   @override
-  Future<void> dispose() async => disposed = true;
+  Future<void> dispose() async {
+    disposed = true;
+    for (final c in _controllers.values) {
+      await c.close();
+    }
+    _controllers.clear();
+  }
 }

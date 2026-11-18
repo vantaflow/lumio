@@ -1,4 +1,4 @@
-export 'package:lumio_core/lumio_core.dart' show magnetFromInfoHash;
+export 'package:lumio_core/lumio_core.dart' show magnetFromInfoHash, isInfoHash;
 
 class TorrentSettings {
   const TorrentSettings({
