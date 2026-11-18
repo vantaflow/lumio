@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:math';
 
 import 'package:drift/drift.dart';
@@ -9,6 +10,9 @@ import 'package:lumio/data/secret_store.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 typedef SealFn = Future<String> Function(String plaintext, String passphrase);
+
+/// Empreinte d'une phrase pour un sel local (jamais la phrase elle-même).
+typedef FingerprintFn = Future<String> Function(String phrase, List<int> salt);
 typedef OpenFn = Future<String> Function(String sealed, String passphrase);
 
 /// Clés du `SecretStore` propres à la synchronisation des addons.
@@ -20,6 +24,11 @@ abstract final class AddonSyncSecretKeys {
   /// confirmer, échec réseau…) : ils sont gardés dans le blob renvoyé pour ne
   /// pas disparaître des autres appareils. Les adresses sont des secrets.
   static const carry = 'sync.addons_carry';
+
+  /// Empreinte de la dernière phrase saisie et son sel local : survivent à
+  /// l'oubli de la phrase, pour reconnaître la même phrase ressaisie.
+  static const fingerprint = 'sync.addons_fp';
+  static const fingerprintSalt = 'sync.addons_fpsalt';
 }
 
 /// Longueur minimale de la phrase secrète.
@@ -105,10 +114,12 @@ class AddonSync {
     this._repo, {
     SealFn? seal,
     OpenFn? open,
+    FingerprintFn? fingerprint,
     DateTime Function()? now,
     this.retryDelay = const Duration(minutes: 5),
   }) : _seal = seal ?? ((t, p) => SecretBox.seal(t, p)),
        _open = open ?? ((t, p) => SecretBox.open(t, p)),
+       _fingerprint = fingerprint ?? _defaultFingerprint,
        _now = now ?? DateTime.now;
 
   final AppDatabase _db;
@@ -116,12 +127,16 @@ class AddonSync {
   final AddonRepository _repo;
   final SealFn _seal;
   final OpenFn _open;
+  final FingerprintFn _fingerprint;
   final DateTime Function() _now;
   final Duration retryDelay;
 
   /// Au plus 11 000 octets de clair : base64 + enveloppe tiennent sous 16 Ko.
   static const _maxPlainBytes = 11000;
   static const _maxEntries = 200;
+
+  /// Au-delà de 2^53 un entier n'est plus exact : blob illisible.
+  static const _maxGen = 9007199254740992;
   static const _maxUrlLength = 2048;
 
   static const _kPulled = 'addons_pulled';
@@ -205,9 +220,18 @@ class AddonSync {
   /// elle est trop courte.
   Future<AddonProcessResult> setPassphrase(String phrase) => _locked(() async {
     _checkLength(phrase);
-    // Nouvelle clé = nouvelle époque : les numéros de génération d'une autre
-    // phrase ne comptent plus (ses blobs ne s'ouvrent de toute façon pas).
-    if (await passphrase() != phrase) await _del(_kGen);
+    // La même phrase ressaisie (après oubli, réinitialisation distante…)
+    // garde génération, origine et suppressions : un ancien blob rejoué reste
+    // ignoré. Seule une phrase réellement nouvelle ouvre une nouvelle époque
+    // (les blobs de l'autre phrase ne s'ouvrent de toute façon pas).
+    final fp = await _fingerprintOf(phrase);
+    final known = await _secrets.read(AddonSyncSecretKeys.fingerprint);
+    if (known != null && known != fp) {
+      await _del(_kGen);
+      await _del(_kOrigin);
+      await _del(_kRemoved);
+    }
+    await _secrets.write(AddonSyncSecretKeys.fingerprint, fp);
     await _secrets.write(AddonSyncSecretKeys.passphrase, phrase);
     await _del(_kChanging);
     await _del(_kReset);
@@ -226,6 +250,10 @@ class AddonSync {
       throw StateError('phrase courante non validée');
     }
     await _secrets.write(AddonSyncSecretKeys.passphrase, phrase);
+    await _secrets.write(
+      AddonSyncSecretKeys.fingerprint,
+      await _fingerprintOf(phrase),
+    );
     // Jusqu'à l'envoi, un blob de l'ancienne phrase qui arrive ne bloque pas
     // le nouvel envoi.
     await _set(_kChanging, '1');
@@ -247,6 +275,25 @@ class AddonSync {
     await _set(_kReset, '1');
     await _enqueue();
   });
+
+  Future<String> _fingerprintOf(String phrase) async {
+    var raw = await _secrets.read(AddonSyncSecretKeys.fingerprintSalt);
+    if (raw == null) {
+      final r = Random.secure();
+      raw = base64Url.encode([for (var i = 0; i < 16; i++) r.nextInt(256)]);
+      await _secrets.write(AddonSyncSecretKeys.fingerprintSalt, raw);
+    }
+    return _fingerprint(phrase, base64Url.decode(raw));
+  }
+
+  static Future<String> _defaultFingerprint(String phrase, List<int> salt) =>
+      Isolate.run(() async {
+        final key = await SecretBox.pbkdf2(utf8.encode(phrase), [
+          ...utf8.encode('lumio-fp'),
+          ...salt,
+        ], SecretBox.iterations);
+        return base64Url.encode(key);
+      });
 
   void _checkLength(String phrase) {
     if (phrase.runes.length < minPassphraseLength) {
@@ -278,6 +325,7 @@ class AddonSync {
     if (await _get(_kTooLarge) == '$seq') return null;
     final entries = await _entries();
     final gen = await _gen() + 1;
+    if (gen > _maxGen) return null; // compteur épuisé : plus d'envoi
     final device = await _deviceId();
     var removed = await _removedFor(entries);
     String build() => jsonEncode({
@@ -842,6 +890,7 @@ class AddonSync {
     final rem = j['removed'];
     if (gen is! int ||
         gen < 0 ||
+        gen > _maxGen ||
         device is! String ||
         device.length > 64 ||
         list is! List ||

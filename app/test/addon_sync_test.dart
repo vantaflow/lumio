@@ -33,6 +33,9 @@ Future<String> _fakeOpen(String sealed, String pass) async {
   return utf8.decode(base64Url.decode(p[2]));
 }
 
+Future<String> _fakeFingerprint(String phrase, List<int> salt) async =>
+    'fp.${base64Url.encode(salt)}.$phrase';
+
 /// Le serveur : versions, éléments, requêtes tracées.
 class FakeServer implements SyncHttp {
   final items = <String, Map<String, Object?>>{};
@@ -82,7 +85,13 @@ class FakeServer implements SyncHttp {
 }
 
 class Device {
-  Device(this.server, this.manifests, {SealFn? seal, OpenFn? open}) {
+  Device(
+    this.server,
+    this.manifests, {
+    SealFn? seal,
+    OpenFn? open,
+    bool realFingerprint = false,
+  }) {
     db = AppDatabase(NativeDatabase.memory());
     secrets = MemorySecretStore();
     fetcher = FakeAddonFetcher(manifests);
@@ -98,6 +107,7 @@ class Device {
       secrets,
       repo,
       seal: seal ?? _fakeSeal,
+      fingerprint: realFingerprint ? null : _fakeFingerprint,
       open: (s, p) {
         opens++;
         return (open ?? _fakeOpen)(s, p);
@@ -390,6 +400,7 @@ void main() {
       c.repo,
       seal: _fakeSeal,
       open: _fakeOpen,
+      fingerprint: _fakeFingerprint,
       now: () => clock,
     );
     c.store = DriftLocalSyncStore(c.db, addons: c.sync);
@@ -865,4 +876,89 @@ void main() {
       isNotEmpty,
     );
   });
+
+  test('même phrase ressaisie après un faux « réinitialisé » : un ancien blob '
+      'rejoué ne supprime ni ne réinstalle rien', () async {
+    await a.repo.install(_urlA);
+    await a.repo.install(_urlB);
+    await a.signIn();
+    await a.sync.setPassphrase(_pass);
+    await a.cycle();
+    // B est retiré (tombstone), puis réajouté.
+    await a.repo.remove((await a.repo.list()).last.id);
+    await a.cycle();
+    final staleRemoval = Map<String, Object?>.from(server.addonsItem!);
+    await a.repo.install(_urlB);
+    await a.cycle();
+    // Et C ajouté puis retiré : un ancien blob le contient encore.
+    await a.repo.install(_urlC);
+    await a.cycle();
+    final staleWithC = Map<String, Object?>.from(server.addonsItem!);
+    await a.repo.remove((await a.repo.list()).last.id);
+    await a.cycle();
+    expect(await a.urls(), [_urlA, _urlB]);
+
+    // Un serveur sans phrase forge une pierre tombale…
+    server.items['addons/all'] = {
+      'kind': 'addons',
+      'key': 'all',
+      'payload': null,
+      'deleted': 1,
+      'version': ++server.version,
+    };
+    await a.cycle();
+    expect((await a.sync.state()).status, AddonSyncStatus.phraseReset);
+    // … l'utilisateur ressaisit la MÊME phrase…
+    server.items['addons/all'] = {...staleRemoval, 'version': ++server.version};
+    await a.sync.setPassphrase(_pass);
+    await a.cycle();
+    // … et le serveur rejoue d'anciens blobs : rien ne change.
+    for (final stale in [staleRemoval, staleWithC]) {
+      server.items['addons/all'] = {...stale, 'version': ++server.version};
+      await a.cycle();
+      expect(await a.urls(), [_urlA, _urlB]);
+    }
+    expect(
+      a.fetcher.requested.where((u) => u.toString() == _urlC),
+      hasLength(1),
+    );
+    // Même chose après un oubli complet de la phrase.
+    await a.sync.forget();
+    await a.sync.setPassphrase(_pass);
+    server.items['addons/all'] = {...staleRemoval, 'version': ++server.version};
+    await a.cycle();
+    expect(await a.urls(), [_urlA, _urlB]);
+  });
+
+  test(
+    'génération hors limite (2^53) : blob illisible, rien appliqué',
+    () async {
+      await a.repo.install(_urlA);
+      await a.signIn();
+      await a.sync.setPassphrase(_pass);
+      await a.cycle();
+      server.items['addons/all'] = {
+        'kind': 'addons',
+        'key': 'all',
+        'payload': {
+          'blob': await _fakeSeal(
+            jsonEncode({
+              'v': 1,
+              'gen': 9007199254740993,
+              'device': 'x',
+              'entries': [],
+              'removed': [],
+            }),
+            _pass,
+          ),
+        },
+        'deleted': 0,
+        'version': ++server.version,
+      };
+      await b.signIn();
+      await b.sync.setPassphrase(_pass);
+      await b.cycle();
+      expect(await b.urls(), isEmpty);
+    },
+  );
 }

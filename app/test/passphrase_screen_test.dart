@@ -81,7 +81,14 @@ void main() {
     await secrets.write(SyncSecretKeys.email, 'a@example.com');
     final http = _Http();
     final repo = AddonRepository(db, secrets);
-    final sync = AddonSync(db, secrets, repo, seal: _seal, open: _open);
+    final sync = AddonSync(
+      db,
+      secrets,
+      repo,
+      seal: _seal,
+      open: _open,
+      fingerprint: (p, s) async => p,
+    );
     final service = SyncService(
       api: SyncApiClient('https://sync.example.com', secrets, http: http),
       store: DriftLocalSyncStore(db, addons: sync),

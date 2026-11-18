@@ -60,6 +60,15 @@ texte opaque et ne reçoit jamais la phrase secrète.
   tombale) ; les addons doivent être réajoutés ou renvoyés depuis un appareil
   qui les a encore, le reste des données reste disponible. Une phrase perdue
   ne se récupère pas.
+- La génération la plus élevée vue, l'origine et les suppressions survivent à
+  l'oubli de la phrase (déconnexion, réinitialisation venue d'un autre
+  appareil). Une empreinte de la phrase (PBKDF2 avec un sel local) permet de
+  reconnaître la même phrase ressaisie : elle garde alors ces repères et un
+  ancien blob rejoué reste ignoré ; seule une phrase réellement nouvelle ouvre
+  une nouvelle époque. Une génération au-delà de 2^53 rend le blob illisible.
+- Limites de confiance : un appareil tout neuf (aucun repère) fait confiance
+  au premier blob qu'il reçoit ; deux envois de même génération par deux
+  appareils se départagent par le dernier arrivé, sans suppression.
 - Limite : environ 11 Ko de clair (une quarantaine d'addons) ; au-delà, un
   message l'indique et rien n'est envoyé. En cas de modifications simultanées
   sur deux appareils, la dernière envoyée l'emporte (comme pour les autres
