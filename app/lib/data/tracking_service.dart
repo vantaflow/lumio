@@ -71,8 +71,6 @@ class TrackingService {
     String trackerId,
     ScrobbleEvent event,
   ) async {
-    // Simkl n'a pas de lecture en direct : seul un « vu » (stop à 80 %) part.
-    if (trackerId == simklId && !SimklClient.wants(event)) return;
     await queue.submit(profileId, trackerId, event);
   }
 

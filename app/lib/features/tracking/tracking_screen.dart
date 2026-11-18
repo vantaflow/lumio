@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumio/data/tracking_repository.dart'
-    show simklId, trackerIds, traktId;
+import 'package:lumio/data/tracking_repository.dart' show trackerIds, traktId;
 import 'package:lumio/features/tracking/tracking_providers.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -40,35 +39,24 @@ class _Names {
   final String authDone;
 }
 
-_Names _namesOf(AppLocalizations l, String trackerId) => trackerId == simklId
-    ? _Names(
-        title: l.trackingSimkl,
-        notConfigured: l.trackingSimklNotConfigured,
-        connected: l.trackingSimklConnected,
-        reauth: l.trackingSimklReauth,
-        connect: l.trackingSimklConnect,
-        disconnect: l.trackingSimklDisconnect,
-        disconnected: l.trackingSimklDisconnected,
-        authTitle: l.trackingSimklAuthTitle,
-        authDone: l.trackingSimklAuthDone,
-      )
-    : _Names(
-        title: l.trackingTrakt,
-        notConfigured: l.trackingNotConfigured,
-        connected: l.trackingConnected,
-        reauth: l.trackingReauth,
-        connect: l.trackingConnect,
-        disconnect: l.trackingDisconnect,
-        disconnected: l.trackingDisconnected,
-        authTitle: l.trackingAuthTitle,
-        authDone: l.trackingAuthDone,
-      );
+_Names _namesOf(AppLocalizations l, String trackerId) => _Names(
+  title: l.trackingTrakt,
+  notConfigured: l.trackingNotConfigured,
+  connected: l.trackingConnected,
+  reauth: l.trackingReauth,
+  connect: l.trackingConnect,
+  disconnect: l.trackingDisconnect,
+  disconnected: l.trackingDisconnected,
+  authTitle: l.trackingAuthTitle,
+  authDone: l.trackingAuthDone,
+);
 
-/// Clé d'un élément : celles de Trakt sont inchangées, Simkl ajoute un suffixe.
+/// Clé d'un élément : celles de Trakt sont inchangées, un autre service
+/// ajouterait un suffixe.
 Key _key(String base, String trackerId) =>
     ValueKey(trackerId == traktId ? base : '$base-$trackerId');
 
-/// Réglages « Suivi (Trakt, Simkl) » du profil actif : une carte par service
+/// Réglages « Suivi (Trakt) » du profil actif : une carte par service
 /// (état du compte, connexion par code d'appareil), file d'envoi,
 /// autorisation parentale pour un profil enfant.
 class TrackingScreen extends ConsumerWidget {

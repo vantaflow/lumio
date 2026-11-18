@@ -11,9 +11,6 @@ final traktCredentialsProvider = Provider<({String id, String secret})>(
   (ref) => (id: config.traktClientId, secret: config.traktClientSecret),
 );
 
-/// Identifiant de l'application Simkl (surchargé dans les tests).
-final simklClientIdProvider = Provider<String>((ref) => config.simklClientId);
-
 final trackingFetcherProvider = Provider<HttpPostFetcher>(
   (ref) => IoHttpFetcher(
     redirectGuard: UrlGuard.check,
@@ -41,22 +38,12 @@ final trackerFactoryProvider =
     ) {
       final repo = ref.watch(trackingRepositoryProvider);
       final creds = ref.watch(traktCredentialsProvider);
-      final simkl = ref.watch(simklClientIdProvider);
       final fetcher = ref.watch(trackingFetcherProvider);
       final clock = ref.watch(trackingClockProvider);
       return (id, profileId) async {
         final token = profileId.isEmpty
             ? null
             : await repo.token(id, profileId);
-        if (id == simklId) {
-          // Jeton Simkl sans échéance : rien à renouveler ni à persister.
-          return SimklClient(
-            fetcher,
-            clientId: simkl,
-            token: token,
-            now: clock,
-          );
-        }
         return TraktClient(
           fetcher,
           clientId: creds.id,
@@ -86,9 +73,8 @@ final scrobbleQueueProvider = Provider<ScrobbleQueue>(
 
 /// Identifiants du service [id] présents ?
 bool _configured(Ref ref, String id) {
-  if (id == simklId) return ref.watch(simklClientIdProvider).isNotEmpty;
   final creds = ref.watch(traktCredentialsProvider);
-  return id == traktId && creds.id.isNotEmpty && creds.secret.isNotEmpty;
+  return id == traktId && creds.id.isNotEmpty;
 }
 
 final trackingServiceProvider = Provider<TrackingService>((ref) {
