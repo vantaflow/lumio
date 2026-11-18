@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
@@ -300,7 +301,7 @@ class _CatalogRowView extends ConsumerWidget {
       return _ErrorRow(
         title: spec.title,
         message: row.error is AddonException
-            ? (row.error! as AddonException).message
+            ? l10nForError(context.l10n, row.error!)
             : context.l10n.homeRowFailed,
         onRetry: () => ref.read(homeRowsProvider.notifier).retry(rowId),
       );

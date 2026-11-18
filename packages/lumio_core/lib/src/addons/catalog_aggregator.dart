@@ -194,7 +194,11 @@ class CatalogAggregator {
 
   static AddonException _asAddonException(Object e) => e is AddonException
       ? e
-      : AddonException('Erreur inattendue lors du chargement', cause: e);
+      : AddonException(
+          'Erreur inattendue lors du chargement',
+          cause: e,
+          code: AddonErrorCode.unexpected,
+        );
 }
 
 class _Delivered {

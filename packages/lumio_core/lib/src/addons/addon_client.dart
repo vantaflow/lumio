@@ -12,7 +12,10 @@ import 'meta_preview.dart';
 /// [TimeoutException].
 class AddonTimeoutException extends AddonException implements TimeoutException {
   const AddonTimeoutException({this.duration})
-    : super('Délai dépassé : l\'addon ne répond pas');
+    : super(
+        'Délai dépassé : l\'addon ne répond pas',
+        code: AddonErrorCode.timeout,
+      );
 
   @override
   final Duration? duration;
@@ -49,11 +52,15 @@ class AddonClient {
     try {
       json = await _getJson(
         url,
-        (m, {cause}) => ManifestException(m, cause: cause),
+        (m, {cause, code = AddonErrorCode.other, status}) =>
+            ManifestException(m, cause: cause, code: code, status: status),
         isManifest: true,
       );
     } on _NotFound {
-      throw const ManifestException('Addon introuvable (HTTP 404)');
+      throw const ManifestException(
+        'Addon introuvable (HTTP 404)',
+        code: AddonErrorCode.notFound,
+      );
     }
     return AddonManifest.fromJson(json, url);
   }
@@ -124,11 +131,15 @@ class AddonClient {
     try {
       return await _getJson(
         url,
-        (m, {cause}) => AddonException(m, cause: cause),
+        (m, {cause, code = AddonErrorCode.other, status}) =>
+            AddonException(m, cause: cause, code: code, status: status),
       );
     } on _NotFound {
       if (notFoundIsEmpty) return null;
-      throw const AddonException('Ressource introuvable (HTTP 404)');
+      throw const AddonException(
+        'Ressource introuvable (HTTP 404)',
+        code: AddonErrorCode.notFound,
+      );
     }
   }
 
@@ -157,13 +168,23 @@ class AddonClient {
 
   Future<Object?> _getJson(
     Uri url,
-    AddonException Function(String, {Object? cause}) fail, {
+    AddonException Function(
+      String, {
+      Object? cause,
+      AddonErrorCode code,
+      int? status,
+    })
+    fail, {
     bool isManifest = false,
   }) async {
     try {
       UrlGuard.check(url, allowPrivate: allowPrivate);
     } on UnsafeUrlException catch (e) {
-      throw fail('Adresse refusée : ${e.reason}', cause: e);
+      throw fail(
+        'Adresse refusée : ${e.reason}',
+        cause: e,
+        code: AddonErrorCode.addressRefused,
+      );
     }
 
     FetchResponse res;
@@ -185,25 +206,51 @@ class AddonClient {
       } on ResponseTooLargeException catch (e) {
         throw fail(
           'Réponse trop volumineuse (plus de ${maxBytes ~/ (1024 * 1024)} Mo)',
+          code: AddonErrorCode.tooLarge,
           cause: e,
         );
       } on UnsafeUrlException catch (e) {
-        throw fail('Adresse refusée : ${e.reason}', cause: e);
+        throw fail(
+          'Adresse refusée : ${e.reason}',
+          cause: e,
+          code: AddonErrorCode.addressRefused,
+        );
       } on InsecureRedirectException catch (e) {
-        throw fail('Redirection refusée (non sécurisée)', cause: e);
+        throw fail(
+          'Redirection refusée (non sécurisée)',
+          cause: e,
+          code: AddonErrorCode.redirect,
+        );
       } on InvalidRedirectException catch (e) {
-        throw fail('Redirection invalide', cause: e);
+        throw fail(
+          'Redirection invalide',
+          cause: e,
+          code: AddonErrorCode.redirect,
+        );
       } on TooManyRedirectsException catch (e) {
-        throw fail('Trop de redirections', cause: e);
+        throw fail(
+          'Trop de redirections',
+          cause: e,
+          code: AddonErrorCode.redirect,
+        );
       } on HandshakeException catch (e) {
         throw fail(
           'Connexion sécurisée impossible (certificat refusé)',
           cause: e,
+          code: AddonErrorCode.tlsFailed,
         );
       } on SocketException catch (e) {
-        throw fail('Addon injoignable', cause: e);
+        throw fail(
+          'Addon injoignable',
+          cause: e,
+          code: AddonErrorCode.unreachable,
+        );
       } on HttpException catch (e) {
-        throw fail('Addon injoignable', cause: e);
+        throw fail(
+          'Addon injoignable',
+          cause: e,
+          code: AddonErrorCode.unreachable,
+        );
       }
 
       final s = res.status;
@@ -212,9 +259,19 @@ class AddonClient {
         continue;
       }
       if (s == 404) throw const _NotFound();
-      if (s >= 500) throw fail('Addon en erreur (HTTP $s)');
+      if (s >= 500) {
+        throw fail(
+          'Addon en erreur (HTTP $s)',
+          code: AddonErrorCode.serverError,
+          status: s,
+        );
+      }
       if (s < 200 || s >= 300) {
-        throw fail('Réponse refusée par l\'addon (HTTP $s)');
+        throw fail(
+          'Réponse refusée par l\'addon (HTTP $s)',
+          code: AddonErrorCode.refused,
+          status: s,
+        );
       }
       break;
     }
@@ -222,23 +279,36 @@ class AddonClient {
     if (res.body.length > maxBytes) {
       throw fail(
         'Réponse trop volumineuse (plus de ${maxBytes ~/ (1024 * 1024)} Mo)',
+        code: AddonErrorCode.tooLarge,
       );
     }
     try {
       return await _decode(res.body);
     } on FormatException catch (e) {
-      throw fail('Réponse invalide : ce n\'est pas du JSON valide', cause: e);
+      throw fail(
+        'Réponse invalide : ce n\'est pas du JSON valide',
+        cause: e,
+        code: AddonErrorCode.invalidJson,
+      );
     }
   }
 
   AddonException _timeout(
-    AddonException Function(String, {Object? cause}) fail,
+    AddonException Function(
+      String, {
+      Object? cause,
+      AddonErrorCode code,
+      int? status,
+    })
+    fail,
     TimeoutException e,
     bool isManifest,
   ) {
     final ex = AddonTimeoutException(duration: timeout);
     // fetchManifest doit lever une ManifestException : on garde le message FR.
-    return isManifest ? ManifestException(ex.message, cause: ex) : ex;
+    return isManifest
+        ? ManifestException(ex.message, cause: ex, code: AddonErrorCode.timeout)
+        : ex;
   }
 
   Future<void> _pause() => retryDelay > Duration.zero

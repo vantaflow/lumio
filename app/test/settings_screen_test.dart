@@ -16,7 +16,10 @@ import 'package:lumio/data/stream_prefs.dart';
 import 'package:lumio/features/detail/playback_service.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/features/settings/settings_screen.dart';
+import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/l10n/app_localizations_en.dart';
+import 'package:lumio/l10n/app_localizations_fr.dart';
+import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/player/playback_report.dart';
 import 'package:lumio/player/tracks_controller.dart';
@@ -371,4 +374,55 @@ void main() {
       expect(backend.calls, containsAll(['audio:2', 'sub:10']));
     },
   );
+
+  testWidgets('erreurs d\'addon traduites : doublon et injoignable (anglais)', (
+    tester,
+  ) async {
+    final h = _H(tester)..start();
+    final en = AppLocalizationsEn();
+    await h.run(() => h.repo.install(_urlA));
+    final dup = await h.run<Object?>(() async {
+      try {
+        await h.repo.install(_urlA);
+      } on Object catch (e) {
+        return e;
+      }
+      return null;
+    });
+    expect(dup, isA<DuplicateAddonException>());
+    expect(l10nForError(en, dup!), 'This addon is already installed');
+    expect(
+      l10nForError(AppLocalizationsFr(), dup),
+      'Cet addon est déjà installé',
+    );
+
+    final unreachable = AddonClient(_DownFetcher(), retries: 0);
+    final err = await h.run<Object?>(() async {
+      try {
+        await unreachable.fetchManifest(Uri.parse(_urlB));
+      } on Object catch (e) {
+        return e;
+      }
+      return null;
+    });
+    expect(err, isA<ManifestException>());
+    expect(l10nForError(en, err!), 'Addon unreachable');
+    expect(
+      l10nForError(en, const ProfileLimitException()),
+      'Six profiles maximum',
+    );
+    expect(resourceLabel('catalog', en), 'Catalogs');
+    await h.dispose();
+  });
+}
+
+class _DownFetcher implements HttpFetcher {
+  @override
+  Future<FetchResponse> get(
+    Uri url, {
+    Map<String, String> headers = const {},
+    int maxBytes = 5 * 1024 * 1024,
+    Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
+  }) async => throw const SocketException('down');
 }

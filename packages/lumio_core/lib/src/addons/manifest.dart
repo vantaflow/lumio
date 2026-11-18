@@ -1,9 +1,41 @@
+/// Cause d'une [AddonException].
+enum AddonErrorCode {
+  duplicate,
+  privateAddress,
+  invalidAddress,
+  addressRefused,
+  timeout,
+  unreachable,
+  tlsFailed,
+  notFound,
+  serverError,
+  refused,
+  tooLarge,
+  invalidJson,
+  redirect,
+  manifestInvalid,
+  unexpected,
+  other,
+}
+
 /// Erreur de lecture ou de récupération d'un addon (message lisible en
 /// français, sans URL ni jeton).
 class AddonException implements Exception {
-  const AddonException(this.message, {this.cause});
+  const AddonException(
+    this.message, {
+    this.cause,
+    this.code = AddonErrorCode.other,
+    this.status,
+  });
   final String message;
   final Object? cause;
+
+  /// Cause machine, pour traduire le message côté interface (le texte
+  /// français de [message] reste destiné aux journaux).
+  final AddonErrorCode code;
+
+  /// Statut HTTP pour [AddonErrorCode.serverError] / [AddonErrorCode.refused].
+  final int? status;
 
   @override
   String toString() => message;
@@ -11,7 +43,12 @@ class AddonException implements Exception {
 
 /// Manifeste absent, injoignable ou invalide.
 class ManifestException extends AddonException {
-  const ManifestException(super.message, {super.cause});
+  const ManifestException(
+    super.message, {
+    super.cause,
+    super.code = AddonErrorCode.manifestInvalid,
+    super.status,
+  });
 }
 
 class AddonResource {

@@ -836,4 +836,61 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get subtitlesNone => 'Aucun sous-titre';
+
+  @override
+  String get errDuplicate => 'Cet addon est déjà installé';
+
+  @override
+  String get errPrivateAddress =>
+      'Cette adresse pointe vers votre réseau local';
+
+  @override
+  String get errInvalidAddress => 'Adresse invalide';
+
+  @override
+  String get errAddressRefused => 'Adresse refusée';
+
+  @override
+  String get errTimeout => 'Délai dépassé : l\'addon ne répond pas';
+
+  @override
+  String get errUnreachable => 'Addon injoignable';
+
+  @override
+  String get errTls => 'Connexion sécurisée impossible (certificat refusé)';
+
+  @override
+  String get errNotFound => 'Addon ou ressource introuvable';
+
+  @override
+  String errServer(int status) {
+    return 'Addon en erreur (HTTP $status)';
+  }
+
+  @override
+  String errRefused(int status) {
+    return 'Réponse refusée par l\'addon (HTTP $status)';
+  }
+
+  @override
+  String get errTooLarge => 'Réponse trop volumineuse';
+
+  @override
+  String get errInvalidJson =>
+      'Réponse invalide : ce n\'est pas du JSON valide';
+
+  @override
+  String get errRedirect => 'Redirection refusée ou invalide';
+
+  @override
+  String get errManifestInvalid => 'Manifeste invalide';
+
+  @override
+  String get errUnexpected => 'Erreur inattendue lors du chargement';
+
+  @override
+  String get errOther => 'Une erreur est survenue';
+
+  @override
+  String get qualityAuto => 'Automatique';
 }

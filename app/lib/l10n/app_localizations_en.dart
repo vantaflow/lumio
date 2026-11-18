@@ -182,7 +182,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get typeOther => 'Other';
 
   @override
-  String get resCatalog => 'Catalogues';
+  String get resCatalog => 'Catalogs';
 
   @override
   String get resMeta => 'Details';
@@ -827,4 +827,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subtitlesNone => 'No subtitles';
+
+  @override
+  String get errDuplicate => 'This addon is already installed';
+
+  @override
+  String get errPrivateAddress => 'This address points to your local network';
+
+  @override
+  String get errInvalidAddress => 'Invalid address';
+
+  @override
+  String get errAddressRefused => 'Address refused';
+
+  @override
+  String get errTimeout => 'Timed out: the addon is not responding';
+
+  @override
+  String get errUnreachable => 'Addon unreachable';
+
+  @override
+  String get errTls => 'Secure connection failed (certificate rejected)';
+
+  @override
+  String get errNotFound => 'Addon or resource not found';
+
+  @override
+  String errServer(int status) {
+    return 'Addon error (HTTP $status)';
+  }
+
+  @override
+  String errRefused(int status) {
+    return 'Response refused by the addon (HTTP $status)';
+  }
+
+  @override
+  String get errTooLarge => 'Response too large';
+
+  @override
+  String get errInvalidJson => 'Invalid response: not valid JSON';
+
+  @override
+  String get errRedirect => 'Redirect refused or invalid';
+
+  @override
+  String get errManifestInvalid => 'Invalid manifest';
+
+  @override
+  String get errUnexpected => 'Unexpected error while loading';
+
+  @override
+  String get errOther => 'Something went wrong';
+
+  @override
+  String get qualityAuto => 'Automatic';
 }

@@ -438,5 +438,36 @@
   "creditsMediaKit": "media_kit : intégration Flutter du lecteur",
   "creditsLibtorrent": "libtorrent : moteur de torrents (BSD)",
   "settingsNone": "Aucun",
-  "subtitlesNone": "Aucun sous-titre"
+  "subtitlesNone": "Aucun sous-titre",
+  "errDuplicate": "Cet addon est déjà installé",
+  "errPrivateAddress": "Cette adresse pointe vers votre réseau local",
+  "errInvalidAddress": "Adresse invalide",
+  "errAddressRefused": "Adresse refusée",
+  "errTimeout": "Délai dépassé : l'addon ne répond pas",
+  "errUnreachable": "Addon injoignable",
+  "errTls": "Connexion sécurisée impossible (certificat refusé)",
+  "errNotFound": "Addon ou ressource introuvable",
+  "errServer": "Addon en erreur (HTTP {status})",
+  "@errServer": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "errRefused": "Réponse refusée par l'addon (HTTP {status})",
+  "@errRefused": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "errTooLarge": "Réponse trop volumineuse",
+  "errInvalidJson": "Réponse invalide : ce n'est pas du JSON valide",
+  "errRedirect": "Redirection refusée ou invalide",
+  "errManifestInvalid": "Manifeste invalide",
+  "errUnexpected": "Erreur inattendue lors du chargement",
+  "errOther": "Une erreur est survenue",
+  "qualityAuto": "Automatique"
 }

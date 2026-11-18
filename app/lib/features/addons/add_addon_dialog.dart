@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/providers.dart';
@@ -138,7 +139,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     } on AddonException catch (e) {
       if (!mounted || gen != _generation) return;
       setState(() {
-        _error = e.message;
+        _error = l10nForError(context.l10n, e);
         _loading = false;
       });
     } catch (_) {
@@ -186,7 +187,7 @@ class _AddAddonDialogState extends ConsumerState<AddAddonDialog> {
     } on AddonException catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.message;
+        _error = l10nForError(context.l10n, e);
         _installing = false;
       });
     } catch (_) {

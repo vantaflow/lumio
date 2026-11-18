@@ -51,12 +51,12 @@ String _langName(AppLocalizations l, String? code) {
   return code ?? l.settingsNone;
 }
 
-String _qualityName(Quality q) => switch (q) {
+String _qualityName(AppLocalizations l, Quality q) => switch (q) {
   Quality.sd => 'SD',
   Quality.hd720 => '720p',
   Quality.hd1080 => '1080p',
   Quality.uhd2160 => '4K',
-  Quality.unknown => '',
+  Quality.unknown => l.qualityAuto,
 };
 
 const _qualityChoices = [
@@ -216,11 +216,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         id: 'quality',
         icon: Icons.high_quality_outlined,
         title: l.settingsQuality,
-        subtitle: _qualityName(prefs.maxQuality),
+        subtitle: _qualityName(l, prefs.maxQuality),
         onTap: () async {
           final picked = await _choose<Quality>(
             title: l.settingsQuality,
-            options: [for (final q in _qualityChoices) (q, _qualityName(q))],
+            options: [for (final q in _qualityChoices) (q, _qualityName(l, q))],
             current: prefs.maxQuality,
           );
           if (picked != null) await _save(() => editor.setQuality(picked));

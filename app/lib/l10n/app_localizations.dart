@@ -1567,6 +1567,108 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucun sous-titre'**
   String get subtitlesNone;
+
+  /// No description provided for @errDuplicate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cet addon est déjà installé'**
+  String get errDuplicate;
+
+  /// No description provided for @errPrivateAddress.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette adresse pointe vers votre réseau local'**
+  String get errPrivateAddress;
+
+  /// No description provided for @errInvalidAddress.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse invalide'**
+  String get errInvalidAddress;
+
+  /// No description provided for @errAddressRefused.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse refusée'**
+  String get errAddressRefused;
+
+  /// No description provided for @errTimeout.
+  ///
+  /// In fr, this message translates to:
+  /// **'Délai dépassé : l\'addon ne répond pas'**
+  String get errTimeout;
+
+  /// No description provided for @errUnreachable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addon injoignable'**
+  String get errUnreachable;
+
+  /// No description provided for @errTls.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion sécurisée impossible (certificat refusé)'**
+  String get errTls;
+
+  /// No description provided for @errNotFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addon ou ressource introuvable'**
+  String get errNotFound;
+
+  /// No description provided for @errServer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addon en erreur (HTTP {status})'**
+  String errServer(int status);
+
+  /// No description provided for @errRefused.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réponse refusée par l\'addon (HTTP {status})'**
+  String errRefused(int status);
+
+  /// No description provided for @errTooLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réponse trop volumineuse'**
+  String get errTooLarge;
+
+  /// No description provided for @errInvalidJson.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réponse invalide : ce n\'est pas du JSON valide'**
+  String get errInvalidJson;
+
+  /// No description provided for @errRedirect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Redirection refusée ou invalide'**
+  String get errRedirect;
+
+  /// No description provided for @errManifestInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Manifeste invalide'**
+  String get errManifestInvalid;
+
+  /// No description provided for @errUnexpected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Erreur inattendue lors du chargement'**
+  String get errUnexpected;
+
+  /// No description provided for @errOther.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une erreur est survenue'**
+  String get errOther;
+
+  /// No description provided for @qualityAuto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Automatique'**
+  String get qualityAuto;
 }
 
 class _AppLocalizationsDelegate

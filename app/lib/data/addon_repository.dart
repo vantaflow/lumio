@@ -8,14 +8,18 @@ import 'package:lumio_core/lumio_core.dart';
 
 /// Cette URL normalisée est déjà installée.
 class DuplicateAddonException extends AddonException {
-  const DuplicateAddonException() : super('Cet addon est déjà installé');
+  const DuplicateAddonException()
+    : super('Cet addon est déjà installé', code: AddonErrorCode.duplicate);
 }
 
 /// L'adresse désigne l'appareil ou le réseau local : l'installation demande
 /// une confirmation explicite (`allowPrivate: true`).
 class PrivateAddressException extends AddonException {
   const PrivateAddressException({super.cause})
-    : super('Cette adresse pointe vers votre réseau local');
+    : super(
+        'Cette adresse pointe vers votre réseau local',
+        code: AddonErrorCode.privateAddress,
+      );
 }
 
 /// Addon installé. L'URL n'y figure pas : voir [AddonRepository.urlOf].
@@ -168,7 +172,10 @@ class AddonRepository {
   Future<Uri> urlOf(String id) async {
     final url = (await _readSecret(secretKeyFor(id)))?.url;
     if (url == null) {
-      throw const AddonException('URL de l\'addon introuvable');
+      throw const AddonException(
+        'URL de l\'addon introuvable',
+        code: AddonErrorCode.notFound,
+      );
     }
     return url;
   }
@@ -217,7 +224,11 @@ class AddonRepository {
     try {
       return normalizeAddonUrl(rawUrl);
     } on FormatException catch (e) {
-      throw AddonException('Adresse invalide : ${e.message}', cause: e);
+      throw AddonException(
+        'Adresse invalide : ${e.message}',
+        cause: e,
+        code: AddonErrorCode.invalidAddress,
+      );
     }
   }
 
@@ -228,7 +239,11 @@ class AddonRepository {
       if (e.code == UnsafeUrlReason.privateAddress) {
         throw PrivateAddressException(cause: e);
       }
-      throw AddonException('Adresse refusée : ${e.reason}', cause: e);
+      throw AddonException(
+        'Adresse refusée : ${e.reason}',
+        cause: e,
+        code: AddonErrorCode.addressRefused,
+      );
     }
   }
 
