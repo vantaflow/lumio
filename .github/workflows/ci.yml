@@ -65,8 +65,7 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
-    # Le dossier backend/ arrive avec le relais (tâche dédiée) : job ignoré tant
-    # qu'il n'existe pas.
+    # Job actif dès que backend/package-lock.json existe.
     steps:
       - uses: actions/checkout@v4
       - id: has
