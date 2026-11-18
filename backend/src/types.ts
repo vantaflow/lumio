@@ -3,6 +3,7 @@ import type { EmailSender } from './email';
 export interface Bindings {
   DB: D1Database;
   RATE: KVNamespace;
+  ROOMS: DurableObjectNamespace;
 }
 
 /** Dépendances injectables (horloge, e-mail) pour les tests. */

@@ -17,6 +17,10 @@
   ],
   "kv_namespaces": [
     { "binding": "RATE", "id": "00000000000000000000000000000000" }
-  ]
-  // Le Durable Object ROOMS (/room) sera déclaré par la tâche dédiée.
+  ],
+  // Watch-party : une salle = un Durable Object (SQLite non utilisé, simple stockage KV du DO).
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "Room" }]
+  },
+  "migrations": [{ "tag": "v1-rooms", "new_classes": ["Room"] }]
 }

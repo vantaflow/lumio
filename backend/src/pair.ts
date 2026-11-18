@@ -16,12 +16,12 @@ const WINDOW_SEC = 60;
 const CODE_RE = new RegExp(`^[${PAIR_ALPHABET}]{${PAIR_CODE_LENGTH}}$`);
 
 /** Code aléatoire par échantillonnage avec rejet (aucun biais de modulo). */
-export function generateCode(): string {
+export function generateCode(length: number = PAIR_CODE_LENGTH): string {
   const limit = 256 - (256 % PAIR_ALPHABET.length);
   let out = '';
-  while (out.length < PAIR_CODE_LENGTH) {
+  while (out.length < length) {
     for (const b of crypto.getRandomValues(new Uint8Array(16))) {
-      if (b < limit && out.length < PAIR_CODE_LENGTH) out += PAIR_ALPHABET[b % PAIR_ALPHABET.length];
+      if (b < limit && out.length < length) out += PAIR_ALPHABET[b % PAIR_ALPHABET.length];
     }
   }
   return out;

@@ -3613,6 +3613,180 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aucun réseau local commun avec cet appareil.'**
   String get castNetworkError;
+
+  /// No description provided for @partyTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Regarder ensemble'**
+  String get partyTitle;
+
+  /// No description provided for @partyHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lecture synchronisée avec des proches'**
+  String get partyHint;
+
+  /// No description provided for @partyTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Regarder ensemble'**
+  String get partyTooltip;
+
+  /// No description provided for @partyCreate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer une salle'**
+  String get partyCreate;
+
+  /// No description provided for @partyCreateHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous invitez : seules la position et l\'état de lecture sont partagés. Chacun ouvre le titre avec ses propres addons.'**
+  String get partyCreateHint;
+
+  /// No description provided for @partyJoinTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoindre une salle'**
+  String get partyJoinTitle;
+
+  /// No description provided for @partyJoinField.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien d\'invitation'**
+  String get partyJoinField;
+
+  /// No description provided for @partyJoinHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez le lien reçu (lumio://party…).'**
+  String get partyJoinHint;
+
+  /// No description provided for @partyJoinButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoindre'**
+  String get partyJoinButton;
+
+  /// No description provided for @partyConnecting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion à la salle…'**
+  String get partyConnecting;
+
+  /// No description provided for @partyInviteCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code d\'invitation'**
+  String get partyInviteCode;
+
+  /// No description provided for @partyLinkLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien à partager (valable 6 h)'**
+  String get partyLinkLabel;
+
+  /// No description provided for @partyCopyLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier le lien'**
+  String get partyCopyLink;
+
+  /// No description provided for @partyLinkCopied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien copié.'**
+  String get partyLinkCopied;
+
+  /// No description provided for @partyQrLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'QR code du lien d\'invitation'**
+  String get partyQrLabel;
+
+  /// No description provided for @partyParticipants.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 participant} other{{count} participants}}'**
+  String partyParticipants(int count);
+
+  /// No description provided for @partyAllControl.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout le monde peut contrôler'**
+  String get partyAllControl;
+
+  /// No description provided for @partyAllControlHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sinon, seul l\'hôte met en pause ou avance.'**
+  String get partyAllControlHint;
+
+  /// No description provided for @partyOpenTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir le titre'**
+  String get partyOpenTitle;
+
+  /// No description provided for @partyLeave.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter la salle'**
+  String get partyLeave;
+
+  /// No description provided for @partyRoleHost.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes l\'hôte'**
+  String get partyRoleHost;
+
+  /// No description provided for @partyRoleGuest.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous suivez l\'hôte'**
+  String get partyRoleGuest;
+
+  /// No description provided for @partyErrSignedOut.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connectez-vous à votre compte pour utiliser les salles.'**
+  String get partyErrSignedOut;
+
+  /// No description provided for @partyErrInvalidLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce lien d\'invitation n\'est pas valide.'**
+  String get partyErrInvalidLink;
+
+  /// No description provided for @partyErrWrongCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code d\'invitation refusé.'**
+  String get partyErrWrongCode;
+
+  /// No description provided for @partyErrFull.
+  ///
+  /// In fr, this message translates to:
+  /// **'La salle est pleine (8 personnes).'**
+  String get partyErrFull;
+
+  /// No description provided for @partyErrNotFound.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette salle n\'existe plus.'**
+  String get partyErrNotFound;
+
+  /// No description provided for @partyErrRateLimited.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop d\'essais, réessayez dans un moment.'**
+  String get partyErrRateLimited;
+
+  /// No description provided for @partyErrUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de joindre la salle.'**
+  String get partyErrUnavailable;
 }
 
 class _AppLocalizationsDelegate

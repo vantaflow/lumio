@@ -2,10 +2,12 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { authRoutes, requireUser } from './auth';
 import { LogEmailSender } from './email';
+import { roomRoutes } from './room';
 import { pairPageRoutes, pairRoutes } from './pair';
 import { accountRoutes, syncRoutes } from './sync';
 import type { AppEnv, Deps } from './types';
 
+export { Room } from './room';
 export { requireUser };
 export type { AppEnv, Deps };
 
@@ -30,6 +32,7 @@ export function createApp(overrides: Partial<Deps> = {}) {
   app.route('/p', pairPageRoutes);
   app.route('/sync', syncRoutes);
   app.route('/account', accountRoutes);
+  app.route('/', roomRoutes);
 
   app.get('/me', async (c) => c.json({ userId: await requireUser(c) }));
 

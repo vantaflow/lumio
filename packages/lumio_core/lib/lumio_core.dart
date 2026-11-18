@@ -46,3 +46,4 @@ export 'src/cast/ssdp.dart';
 export 'src/cast/dlna_renderer.dart';
 export 'src/cast/cast_server.dart';
 export 'src/cast/cast_session.dart';
+export 'src/party/party_sync.dart';

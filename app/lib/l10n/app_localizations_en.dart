@@ -2087,4 +2087,100 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get castNetworkError => 'No local network shared with this device.';
+
+  @override
+  String get partyTitle => 'Watch together';
+
+  @override
+  String get partyHint => 'Synchronised playback with friends and family';
+
+  @override
+  String get partyTooltip => 'Watch together';
+
+  @override
+  String get partyCreate => 'Create a room';
+
+  @override
+  String get partyCreateHint =>
+      'You invite: only position and play state are shared. Everyone opens the title with their own addons.';
+
+  @override
+  String get partyJoinTitle => 'Join a room';
+
+  @override
+  String get partyJoinField => 'Invitation link';
+
+  @override
+  String get partyJoinHint => 'Paste the link you received (lumio://party…).';
+
+  @override
+  String get partyJoinButton => 'Join';
+
+  @override
+  String get partyConnecting => 'Connecting to the room…';
+
+  @override
+  String get partyInviteCode => 'Invitation code';
+
+  @override
+  String get partyLinkLabel => 'Link to share (valid for 6 h)';
+
+  @override
+  String get partyCopyLink => 'Copy link';
+
+  @override
+  String get partyLinkCopied => 'Link copied.';
+
+  @override
+  String get partyQrLabel => 'Invitation link QR code';
+
+  @override
+  String partyParticipants(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participants',
+      one: '1 participant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get partyAllControl => 'Everyone can control';
+
+  @override
+  String get partyAllControlHint => 'Otherwise only the host pauses or seeks.';
+
+  @override
+  String get partyOpenTitle => 'Open the title';
+
+  @override
+  String get partyLeave => 'Leave the room';
+
+  @override
+  String get partyRoleHost => 'You are the host';
+
+  @override
+  String get partyRoleGuest => 'You follow the host';
+
+  @override
+  String get partyErrSignedOut => 'Sign in to your account to use rooms.';
+
+  @override
+  String get partyErrInvalidLink => 'This invitation link is not valid.';
+
+  @override
+  String get partyErrWrongCode => 'Invitation code refused.';
+
+  @override
+  String get partyErrFull => 'The room is full (8 people).';
+
+  @override
+  String get partyErrNotFound => 'This room no longer exists.';
+
+  @override
+  String get partyErrRateLimited => 'Too many attempts, try again in a moment.';
+
+  @override
+  String get partyErrUnavailable => 'Cannot reach the room.';
 }

@@ -8,6 +8,7 @@ import 'package:lumio/data/sync_providers.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_screen.dart';
+import 'package:lumio/features/party/party_screen.dart';
 import 'package:lumio/features/settings/account_screen.dart';
 import 'package:lumio/features/settings/backup_section.dart';
 import 'package:lumio/features/detail/playback_service.dart'
@@ -210,6 +211,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(builder: (_) => const AccountScreen()),
           ),
+        ),
+        _Tile(
+          id: 'party',
+          icon: Icons.groups_outlined,
+          title: l.partyTitle,
+          subtitle: l.partyHint,
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const PartyScreen())),
         ),
       ],
       _Header(l.settingsBackup),

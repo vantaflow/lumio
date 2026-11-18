@@ -2106,4 +2106,102 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get castNetworkError => 'Aucun réseau local commun avec cet appareil.';
+
+  @override
+  String get partyTitle => 'Regarder ensemble';
+
+  @override
+  String get partyHint => 'Lecture synchronisée avec des proches';
+
+  @override
+  String get partyTooltip => 'Regarder ensemble';
+
+  @override
+  String get partyCreate => 'Créer une salle';
+
+  @override
+  String get partyCreateHint =>
+      'Vous invitez : seules la position et l\'état de lecture sont partagés. Chacun ouvre le titre avec ses propres addons.';
+
+  @override
+  String get partyJoinTitle => 'Rejoindre une salle';
+
+  @override
+  String get partyJoinField => 'Lien d\'invitation';
+
+  @override
+  String get partyJoinHint => 'Collez le lien reçu (lumio://party…).';
+
+  @override
+  String get partyJoinButton => 'Rejoindre';
+
+  @override
+  String get partyConnecting => 'Connexion à la salle…';
+
+  @override
+  String get partyInviteCode => 'Code d\'invitation';
+
+  @override
+  String get partyLinkLabel => 'Lien à partager (valable 6 h)';
+
+  @override
+  String get partyCopyLink => 'Copier le lien';
+
+  @override
+  String get partyLinkCopied => 'Lien copié.';
+
+  @override
+  String get partyQrLabel => 'QR code du lien d\'invitation';
+
+  @override
+  String partyParticipants(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participants',
+      one: '1 participant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get partyAllControl => 'Tout le monde peut contrôler';
+
+  @override
+  String get partyAllControlHint =>
+      'Sinon, seul l\'hôte met en pause ou avance.';
+
+  @override
+  String get partyOpenTitle => 'Ouvrir le titre';
+
+  @override
+  String get partyLeave => 'Quitter la salle';
+
+  @override
+  String get partyRoleHost => 'Vous êtes l\'hôte';
+
+  @override
+  String get partyRoleGuest => 'Vous suivez l\'hôte';
+
+  @override
+  String get partyErrSignedOut =>
+      'Connectez-vous à votre compte pour utiliser les salles.';
+
+  @override
+  String get partyErrInvalidLink => 'Ce lien d\'invitation n\'est pas valide.';
+
+  @override
+  String get partyErrWrongCode => 'Code d\'invitation refusé.';
+
+  @override
+  String get partyErrFull => 'La salle est pleine (8 personnes).';
+
+  @override
+  String get partyErrNotFound => 'Cette salle n\'existe plus.';
+
+  @override
+  String get partyErrRateLimited => 'Trop d\'essais, réessayez dans un moment.';
+
+  @override
+  String get partyErrUnavailable => 'Impossible de joindre la salle.';
 }

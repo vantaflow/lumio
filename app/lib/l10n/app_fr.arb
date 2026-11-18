@@ -1109,5 +1109,41 @@
   "castFailed": "Impossible de diffuser sur cet appareil.",
   "castUnsupported": "Ce flux ne peut pas être diffusé sur un appareil.",
   "castLost": "Appareil de diffusion perdu : la lecture reprend ici.",
-  "castNetworkError": "Aucun réseau local commun avec cet appareil."
+  "castNetworkError": "Aucun réseau local commun avec cet appareil.",
+  "partyTitle": "Regarder ensemble",
+  "partyHint": "Lecture synchronisée avec des proches",
+  "partyTooltip": "Regarder ensemble",
+  "partyCreate": "Créer une salle",
+  "partyCreateHint": "Vous invitez : seules la position et l'état de lecture sont partagés. Chacun ouvre le titre avec ses propres addons.",
+  "partyJoinTitle": "Rejoindre une salle",
+  "partyJoinField": "Lien d'invitation",
+  "partyJoinHint": "Collez le lien reçu (lumio://party…).",
+  "partyJoinButton": "Rejoindre",
+  "partyConnecting": "Connexion à la salle…",
+  "partyInviteCode": "Code d'invitation",
+  "partyLinkLabel": "Lien à partager (valable 6 h)",
+  "partyCopyLink": "Copier le lien",
+  "partyLinkCopied": "Lien copié.",
+  "partyQrLabel": "QR code du lien d'invitation",
+  "partyParticipants": "{count, plural, =1{1 participant} other{{count} participants}}",
+  "@partyParticipants": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "partyAllControl": "Tout le monde peut contrôler",
+  "partyAllControlHint": "Sinon, seul l'hôte met en pause ou avance.",
+  "partyOpenTitle": "Ouvrir le titre",
+  "partyLeave": "Quitter la salle",
+  "partyRoleHost": "Vous êtes l'hôte",
+  "partyRoleGuest": "Vous suivez l'hôte",
+  "partyErrSignedOut": "Connectez-vous à votre compte pour utiliser les salles.",
+  "partyErrInvalidLink": "Ce lien d'invitation n'est pas valide.",
+  "partyErrWrongCode": "Code d'invitation refusé.",
+  "partyErrFull": "La salle est pleine (8 personnes).",
+  "partyErrNotFound": "Cette salle n'existe plus.",
+  "partyErrRateLimited": "Trop d'essais, réessayez dans un moment.",
+  "partyErrUnavailable": "Impossible de joindre la salle."
 }

@@ -6,6 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/cast/cast_button.dart';
 import 'package:lumio/features/cast/player_cast.dart';
+import 'package:lumio/features/party/party_providers.dart';
+import 'package:lumio/features/party/party_screen.dart';
+import 'package:lumio/features/party/party_session.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/progress_repository.dart';
@@ -115,6 +118,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
     this.castDiscover,
     this.castSessionFactory,
     this.castEnabled,
+    this.partyEnabled,
     super.key,
   });
 
@@ -183,6 +187,10 @@ class PlayerScreen extends ConsumerStatefulWidget {
   @visibleForTesting
   final bool? castEnabled;
 
+  /// Force l'affichage du bouton « Regarder ensemble » (tests) ; par défaut
+  /// selon la présence d'un serveur configuré.
+  final bool? partyEnabled;
+
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
 }
@@ -221,6 +229,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   final _torrentStatus = ValueNotifier<TorrentStatus?>(null);
   NetworkWatcher? _watcher;
   late final PlayerCast _cast;
+
+  /// Salle de watch-party active (le lecteur s'y synchronise).
+  PartySession? _partySession;
+  ProviderSubscription<PartySession?>? _partySub;
 
   core.Video? get _next {
     final m = widget.meta;
@@ -450,6 +462,20 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
 
   bool get _castShown => widget.castEnabled ?? castPlatformSupported;
 
+  bool get _partyShown =>
+      widget.partyEnabled ?? ref.read(partyClientProvider) != null;
+
+  /// Bouton « Regarder ensemble » : écran de salle, la lecture continue.
+  Future<void> _openParty() async {
+    _hide?.cancel();
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => PartyScreen(metaId: widget.metaId),
+      ),
+    );
+    if (mounted && !_disposed) _armHide();
+  }
+
   /// Bouton Cast : choix de l'appareil puis transfert de la lecture.
   Future<void> _openCast() async {
     _hide?.cancel();
@@ -520,6 +546,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
       onLost: () => _tellL((l) => l.castLost),
       createSession: widget.castSessionFactory,
     )..addListener(() => mounted ? setState(() {}) : null);
+    _partySub = ref.listenManual<PartySession?>(partySessionProvider, (
+      prev,
+      next,
+    ) {
+      prev?.attach(null);
+      _partySession = next?..attach(_PlayerPartyAdapter(_ctl));
+    }, fireImmediately: true);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _recorder = _newRecorder();
     unawaited(_openFrom(widget.item, alternatives: widget.fallbacks));
@@ -635,6 +668,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   @override
   void dispose() {
     _disposed = true;
+    _partySession?.attach(null);
+    _partySub?.close();
     WidgetsBinding.instance.removeObserver(this);
     _announce(PlaybackAction.stop);
     final st = _ctl.state;
@@ -688,6 +723,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   PlayerPhase? _lastPhase;
   void _onState() {
     final st = _ctl.state;
+    _partySession?.localChanged();
     final p = st.phase;
     if (p == PlayerPhase.playing) {
       _recorder?.tick(st.position, st.duration);
@@ -960,6 +996,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                             onCast: _castShown
                                 ? () => unawaited(_openCast())
                                 : null,
+                            onParty: _partyShown
+                                ? () => unawaited(_openParty())
+                                : null,
                             onPlayPause: () {
                               unawaited(_ctl.playPause());
                               _armHide();
@@ -1081,6 +1120,7 @@ class _Controls extends StatelessWidget {
     required this.tracksNode,
     required this.onTracks,
     required this.onCast,
+    required this.onParty,
     required this.onPlayPause,
     required this.onSeekBy,
     required this.onSeekTo,
@@ -1093,6 +1133,7 @@ class _Controls extends StatelessWidget {
   final FocusNode tracksNode;
   final VoidCallback? onTracks;
   final VoidCallback? onCast;
+  final VoidCallback? onParty;
   final VoidCallback onPlayPause;
   final ValueChanged<Duration> onSeekBy;
   final ValueChanged<Duration> onSeekTo;
@@ -1183,6 +1224,15 @@ class _Controls extends StatelessWidget {
                       label: context.l10n.castTooltip,
                       size: big ? 88 : 56,
                       onPressed: onCast!,
+                    ),
+                  ],
+                  if (onParty != null) ...[
+                    SizedBox(width: gap),
+                    _RoundButton(
+                      icon: Icons.groups_outlined,
+                      label: context.l10n.partyTooltip,
+                      size: big ? 88 : 56,
+                      onPressed: onParty!,
                     ),
                   ],
                 ],
@@ -1401,4 +1451,24 @@ class _ProgressBarState extends State<_ProgressBar> {
       borderRadius: BorderRadius.circular(h / 2),
     ),
   );
+}
+
+/// Le lecteur local vu par la salle de watch-party.
+class _PlayerPartyAdapter implements PartyPlayer {
+  _PlayerPartyAdapter(this._ctl);
+
+  final PlayerController _ctl;
+
+  @override
+  Duration get position => _ctl.state.position;
+
+  @override
+  bool get playing => _ctl.player.state.playing;
+
+  @override
+  Future<void> seek(Duration position) => _ctl.seekTo(position);
+
+  @override
+  Future<void> setPlaying(bool playing) =>
+      playing ? _ctl.player.play() : _ctl.player.pause();
 }

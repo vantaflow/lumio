@@ -15,8 +15,28 @@ comptes existent.
 | POST | `/auth/refresh` | `{refresh}` : rotation du jeton de rafraîchissement, nouvelle session. |
 | GET | `/me` | Identifiant de l'utilisateur, avec `Authorization: Bearer <session>`. |
 
-Les routes de synchronisation (`/sync`), d'appairage (`/pair`) et de salles
-(`/room`) sont prévues et n'existent pas encore.
+## Salles de watch-party (`/rooms`, `/room/{id}`)
+
+Un Durable Object (`Room`, binding `ROOMS`, API d'hibernation) par salle.
+
+- `POST /rooms` (session requise, 10 par heure et par utilisateur) renvoie
+  `{roomId, inviteCode, expiresAt}` : identifiant de 128 bits, code de 8
+  caractères (même alphabet que l'appairage, seul son hachage est stocké),
+  expiration à 6 h.
+- `GET /room/{id}?code=…` (WebSocket) : session **et** code requis, validés avant
+  d'accepter. Le jeton de session ne passe jamais dans l'URL : en-tête
+  `Sec-WebSocket-Protocol: lumio.v1, <jeton>`, ou à défaut premier message
+  `{"type":"auth","token":"…"}` dans les 5 s (sinon fermeture 1008).
+- 8 participants au plus (9e : 409). Codes invalides : 20 par minute et par IP,
+  50 par salle (la salle est alors détruite).
+- Messages `{type: state|join|leave|ping, positionMs, playing, sentAt}` seulement,
+  1 Ko max, clés inconnues refusées ; 20 messages/s par client (1008 au-delà).
+  Hôte seul en contrôle, sauf `POST /room/{id}/control {allControl}` (hôte).
+- La salle se ferme quand elle se vide ou à l'expiration. Aucune URL, aucun
+  flux ni titre ne circule : seul le `metaId` est annoncé aux invités.
+
+Les routes de synchronisation (`/sync`) et d'appairage (`/pair`) sont décrites
+plus haut.
 
 ## Données
 

@@ -49,14 +49,22 @@ export async function requireUser(c: Context<AppEnv>): Promise<string> {
   const header = c.req.header('Authorization') ?? '';
   const m = /^Bearer\s+(\S+)$/i.exec(header);
   if (!m) throw new HTTPException(401, { message: 'Authentification requise' });
-  const nowSec = Math.floor(c.var.deps.now() / 1000);
-  const row = await c.env.DB.prepare(
-    'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?',
-  )
-    .bind(await sha256Hex(m[1]), nowSec)
+  const userId = await userIdForSession(c.env.DB, m[1], Math.floor(c.var.deps.now() / 1000));
+  if (!userId) throw new HTTPException(401, { message: 'Session invalide ou expirée' });
+  return userId;
+}
+
+/** Identifiant utilisateur d'un jeton de session valide, sinon null. */
+export async function userIdForSession(
+  db: D1Database,
+  token: string,
+  nowSec: number,
+): Promise<string | null> {
+  const row = await db
+    .prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?')
+    .bind(await sha256Hex(token), nowSec)
     .first<{ user_id: string }>();
-  if (!row) throw new HTTPException(401, { message: 'Session invalide ou expirée' });
-  return row.user_id;
+  return row?.user_id ?? null;
 }
 
 export const authRoutes = new Hono<AppEnv>();

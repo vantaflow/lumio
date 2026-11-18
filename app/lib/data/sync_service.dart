@@ -294,6 +294,31 @@ class SyncApiClient implements SyncTransport {
     throw const SyncException(SyncErrorCode.signedOut);
   }
 
+  /// Requête authentifiée pour les autres fonctions en ligne (salons) : mêmes
+  /// jetons, même renouvellement automatique sur 401.
+  Future<SyncHttpResponse> authedRequest(
+    String method,
+    Uri url, {
+    String? body,
+  }) => _authed(method, url, body: body);
+
+  /// Jeton de session valide (renouvelé si absent ou si [forceRefresh]), pour
+  /// les connexions WebSocket qui ne peuvent pas se renouveler en cours de route.
+  Future<String> freshSession({bool forceRefresh = false}) async {
+    if (forceRefresh || await _secrets.read(SyncSecretKeys.session) == null) {
+      if (!await isSignedIn()) {
+        throw const SyncException(SyncErrorCode.signedOut);
+      }
+      await _refresh();
+    }
+    final s = await _secrets.read(SyncSecretKeys.session);
+    if (s == null) throw const SyncException(SyncErrorCode.signedOut);
+    return s;
+  }
+
+  /// URL du serveur pour [path] (ex. `/rooms`).
+  Uri urlFor(String path) => _url(path);
+
   // --- SyncTransport -----------------------------------------------------
 
   @override
