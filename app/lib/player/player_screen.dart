@@ -267,7 +267,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
           widget.tracksBackend?.call(_ctl) ??
           MediaKitTracksBackend(_ctl.player),
       store: store,
-      profileId: defaultProfileId,
+      profileId: ref.read(currentProfileIdProvider),
       metaId: widget.metaId ?? '',
       addonSubtitles: widget.subtitles,
       style: style,

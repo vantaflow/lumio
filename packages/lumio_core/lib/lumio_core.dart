@@ -22,3 +22,5 @@ export 'src/subtitles/subtitle_service.dart';
 export 'src/playback/title_settings.dart';
 export 'src/playback/next_episode.dart';
 export 'src/playback/progress_rules.dart';
+export 'src/profiles/content_rating.dart';
+export 'src/profiles/pin.dart';

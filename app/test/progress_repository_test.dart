@@ -102,6 +102,10 @@ void main() {
         NativeDatabase.memory(
           setup: (raw) {
             raw.execute(
+              'CREATE TABLE profiles (id TEXT NOT NULL PRIMARY KEY, '
+              'name TEXT NOT NULL, created_at INTEGER NOT NULL DEFAULT 0)',
+            );
+            raw.execute(
               'CREATE TABLE progress (profile_id TEXT NOT NULL DEFAULT \'default\', '
               'item_id TEXT NOT NULL, position_ms INTEGER NOT NULL DEFAULT 0, '
               'duration_ms INTEGER NOT NULL DEFAULT 0, '

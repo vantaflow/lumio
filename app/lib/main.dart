@@ -5,7 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
+import 'package:lumio/features/profiles/pin_dialog.dart';
+import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/features/update/update_banner.dart';
+import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:media_kit/media_kit.dart';
@@ -45,27 +48,51 @@ class LumioApp extends StatelessWidget {
           ? const PlayerSpikeScreen()
           : _debugTorrent
           ? const TorrentSpikeScreen()
-          : const RootScreen(),
+          : const ProfileGate(child: RootScreen()),
     );
   }
 }
 
-class RootScreen extends StatelessWidget {
+class RootScreen extends ConsumerWidget {
   const RootScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(currentProfileProvider);
     return Scaffold(
       body: Column(
         children: [
           const UpdateBanner(),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(
+                end: LumioSpacing.md,
+                top: LumioSpacing.sm,
+              ),
+              child: TextButton.icon(
+                onPressed: () async {
+                  // Un profil enfant ne peut pas changer de profil sans le
+                  // PIN parent.
+                  if (!await requireParent(context, ref)) return;
+                  ref.read(currentProfileProvider.notifier).select(null);
+                },
+                icon: const Icon(Icons.account_circle_outlined),
+                label: Text(profile?.name ?? 'Profil'),
+              ),
+            ),
+          ),
           Expanded(
             child: StateView.empty(
               message: 'Lumio est prêt. Ajoutez un addon pour commencer.',
               actionLabel: 'Gérer les addons',
-              onAction: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AddonsScreen()),
-              ),
+              onAction: () async {
+                if (!await requireParent(context, ref)) return;
+                if (!context.mounted) return;
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const AddonsScreen()),
+                );
+              },
             ),
           ),
         ],

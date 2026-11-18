@@ -13,6 +13,10 @@ void main() {
         NativeDatabase.memory(
           setup: (raw) {
             raw.execute(
+              'CREATE TABLE profiles (id TEXT NOT NULL PRIMARY KEY, '
+              'name TEXT NOT NULL, created_at INTEGER NOT NULL DEFAULT 0)',
+            );
+            raw.execute(
               'CREATE TABLE settings (key TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL)',
             );
             raw.execute(

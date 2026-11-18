@@ -38,8 +38,53 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _ageLimitMeta = const VerificationMeta(
+    'ageLimit',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, name, createdAt];
+  late final GeneratedColumn<int> ageLimit = GeneratedColumn<int>(
+    'age_limit',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(4),
+  );
+  static const VerificationMeta _isKidMeta = const VerificationMeta('isKid');
+  @override
+  late final GeneratedColumn<bool> isKid = GeneratedColumn<bool>(
+    'is_kid',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_kid" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _lockedMeta = const VerificationMeta('locked');
+  @override
+  late final GeneratedColumn<bool> locked = GeneratedColumn<bool>(
+    'locked',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("locked" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    createdAt,
+    ageLimit,
+    isKid,
+    locked,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -71,6 +116,24 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('age_limit')) {
+      context.handle(
+        _ageLimitMeta,
+        ageLimit.isAcceptableOrUnknown(data['age_limit']!, _ageLimitMeta),
+      );
+    }
+    if (data.containsKey('is_kid')) {
+      context.handle(
+        _isKidMeta,
+        isKid.isAcceptableOrUnknown(data['is_kid']!, _isKidMeta),
+      );
+    }
+    if (data.containsKey('locked')) {
+      context.handle(
+        _lockedMeta,
+        locked.isAcceptableOrUnknown(data['locked']!, _lockedMeta),
+      );
+    }
     return context;
   }
 
@@ -92,6 +155,18 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         DriftSqlType.int,
         data['${effectivePrefix}created_at'],
       )!,
+      ageLimit: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}age_limit'],
+      )!,
+      isKid: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_kid'],
+      )!,
+      locked: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}locked'],
+      )!,
     );
   }
 
@@ -105,10 +180,22 @@ class Profile extends DataClass implements Insertable<Profile> {
   final String id;
   final String name;
   final int createdAt;
+
+  /// Limite d'âge (index de `AgeLimit`, v4) ; 4 = adulte, sans filtre.
+  final int ageLimit;
+
+  /// Profil enfant (v4) : ni réglages ni changement de profil sans le PIN.
+  final bool isKid;
+
+  /// Profil verrouillé (v4) : le PIN parent est demandé pour l'ouvrir.
+  final bool locked;
   const Profile({
     required this.id,
     required this.name,
     required this.createdAt,
+    required this.ageLimit,
+    required this.isKid,
+    required this.locked,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -116,6 +203,9 @@ class Profile extends DataClass implements Insertable<Profile> {
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['created_at'] = Variable<int>(createdAt);
+    map['age_limit'] = Variable<int>(ageLimit);
+    map['is_kid'] = Variable<bool>(isKid);
+    map['locked'] = Variable<bool>(locked);
     return map;
   }
 
@@ -124,6 +214,9 @@ class Profile extends DataClass implements Insertable<Profile> {
       id: Value(id),
       name: Value(name),
       createdAt: Value(createdAt),
+      ageLimit: Value(ageLimit),
+      isKid: Value(isKid),
+      locked: Value(locked),
     );
   }
 
@@ -136,6 +229,9 @@ class Profile extends DataClass implements Insertable<Profile> {
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
+      ageLimit: serializer.fromJson<int>(json['ageLimit']),
+      isKid: serializer.fromJson<bool>(json['isKid']),
+      locked: serializer.fromJson<bool>(json['locked']),
     );
   }
   @override
@@ -145,19 +241,35 @@ class Profile extends DataClass implements Insertable<Profile> {
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'createdAt': serializer.toJson<int>(createdAt),
+      'ageLimit': serializer.toJson<int>(ageLimit),
+      'isKid': serializer.toJson<bool>(isKid),
+      'locked': serializer.toJson<bool>(locked),
     };
   }
 
-  Profile copyWith({String? id, String? name, int? createdAt}) => Profile(
+  Profile copyWith({
+    String? id,
+    String? name,
+    int? createdAt,
+    int? ageLimit,
+    bool? isKid,
+    bool? locked,
+  }) => Profile(
     id: id ?? this.id,
     name: name ?? this.name,
     createdAt: createdAt ?? this.createdAt,
+    ageLimit: ageLimit ?? this.ageLimit,
+    isKid: isKid ?? this.isKid,
+    locked: locked ?? this.locked,
   );
   Profile copyWithCompanion(ProfilesCompanion data) {
     return Profile(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      ageLimit: data.ageLimit.present ? data.ageLimit.value : this.ageLimit,
+      isKid: data.isKid.present ? data.isKid.value : this.isKid,
+      locked: data.locked.present ? data.locked.value : this.locked,
     );
   }
 
@@ -166,37 +278,52 @@ class Profile extends DataClass implements Insertable<Profile> {
     return (StringBuffer('Profile(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('ageLimit: $ageLimit, ')
+          ..write('isKid: $isKid, ')
+          ..write('locked: $locked')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, createdAt);
+  int get hashCode => Object.hash(id, name, createdAt, ageLimit, isKid, locked);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Profile &&
           other.id == this.id &&
           other.name == this.name &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.ageLimit == this.ageLimit &&
+          other.isKid == this.isKid &&
+          other.locked == this.locked);
 }
 
 class ProfilesCompanion extends UpdateCompanion<Profile> {
   final Value<String> id;
   final Value<String> name;
   final Value<int> createdAt;
+  final Value<int> ageLimit;
+  final Value<bool> isKid;
+  final Value<bool> locked;
   final Value<int> rowid;
   const ProfilesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.ageLimit = const Value.absent(),
+    this.isKid = const Value.absent(),
+    this.locked = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProfilesCompanion.insert({
     required String id,
     required String name,
     this.createdAt = const Value.absent(),
+    this.ageLimit = const Value.absent(),
+    this.isKid = const Value.absent(),
+    this.locked = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name);
@@ -204,12 +331,18 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<int>? createdAt,
+    Expression<int>? ageLimit,
+    Expression<bool>? isKid,
+    Expression<bool>? locked,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (createdAt != null) 'created_at': createdAt,
+      if (ageLimit != null) 'age_limit': ageLimit,
+      if (isKid != null) 'is_kid': isKid,
+      if (locked != null) 'locked': locked,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -218,12 +351,18 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Value<String>? id,
     Value<String>? name,
     Value<int>? createdAt,
+    Value<int>? ageLimit,
+    Value<bool>? isKid,
+    Value<bool>? locked,
     Value<int>? rowid,
   }) {
     return ProfilesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
+      ageLimit: ageLimit ?? this.ageLimit,
+      isKid: isKid ?? this.isKid,
+      locked: locked ?? this.locked,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -240,6 +379,15 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     if (createdAt.present) {
       map['created_at'] = Variable<int>(createdAt.value);
     }
+    if (ageLimit.present) {
+      map['age_limit'] = Variable<int>(ageLimit.value);
+    }
+    if (isKid.present) {
+      map['is_kid'] = Variable<bool>(isKid.value);
+    }
+    if (locked.present) {
+      map['locked'] = Variable<bool>(locked.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -252,6 +400,9 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('createdAt: $createdAt, ')
+          ..write('ageLimit: $ageLimit, ')
+          ..write('isKid: $isKid, ')
+          ..write('locked: $locked, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2056,6 +2207,9 @@ typedef $$ProfilesTableCreateCompanionBuilder =
       required String id,
       required String name,
       Value<int> createdAt,
+      Value<int> ageLimit,
+      Value<bool> isKid,
+      Value<bool> locked,
       Value<int> rowid,
     });
 typedef $$ProfilesTableUpdateCompanionBuilder =
@@ -2063,6 +2217,9 @@ typedef $$ProfilesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<int> createdAt,
+      Value<int> ageLimit,
+      Value<bool> isKid,
+      Value<bool> locked,
       Value<int> rowid,
     });
 
@@ -2087,6 +2244,21 @@ class $$ProfilesTableFilterComposer
 
   ColumnFilters<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get ageLimit => $composableBuilder(
+    column: $table.ageLimit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isKid => $composableBuilder(
+    column: $table.isKid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get locked => $composableBuilder(
+    column: $table.locked,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2114,6 +2286,21 @@ class $$ProfilesTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get ageLimit => $composableBuilder(
+    column: $table.ageLimit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isKid => $composableBuilder(
+    column: $table.isKid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get locked => $composableBuilder(
+    column: $table.locked,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProfilesTableAnnotationComposer
@@ -2133,6 +2320,15 @@ class $$ProfilesTableAnnotationComposer
 
   GeneratedColumn<int> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get ageLimit =>
+      $composableBuilder(column: $table.ageLimit, builder: (column) => column);
+
+  GeneratedColumn<bool> get isKid =>
+      $composableBuilder(column: $table.isKid, builder: (column) => column);
+
+  GeneratedColumn<bool> get locked =>
+      $composableBuilder(column: $table.locked, builder: (column) => column);
 }
 
 class $$ProfilesTableTableManager
@@ -2166,11 +2362,17 @@ class $$ProfilesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
+                Value<int> ageLimit = const Value.absent(),
+                Value<bool> isKid = const Value.absent(),
+                Value<bool> locked = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProfilesCompanion(
                 id: id,
                 name: name,
                 createdAt: createdAt,
+                ageLimit: ageLimit,
+                isKid: isKid,
+                locked: locked,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2178,11 +2380,17 @@ class $$ProfilesTableTableManager
                 required String id,
                 required String name,
                 Value<int> createdAt = const Value.absent(),
+                Value<int> ageLimit = const Value.absent(),
+                Value<bool> isKid = const Value.absent(),
+                Value<bool> locked = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProfilesCompanion.insert(
                 id: id,
                 name: name,
                 createdAt: createdAt,
+                ageLimit: ageLimit,
+                isKid: isKid,
+                locked: locked,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

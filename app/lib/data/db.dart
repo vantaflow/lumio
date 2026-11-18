@@ -9,6 +9,15 @@ class Profiles extends Table {
   TextColumn get name => text()();
   IntColumn get createdAt => integer().withDefault(const Constant(0))();
 
+  /// Limite d'âge (index de `AgeLimit`, v4) ; 4 = adulte, sans filtre.
+  IntColumn get ageLimit => integer().withDefault(const Constant(4))();
+
+  /// Profil enfant (v4) : ni réglages ni changement de profil sans le PIN.
+  BoolColumn get isKid => boolean().withDefault(const Constant(false))();
+
+  /// Profil verrouillé (v4) : le PIN parent est demandé pour l'ouvrir.
+  BoolColumn get locked => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -103,7 +112,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -118,6 +127,11 @@ class AppDatabase extends _$AppDatabase {
           'UPDATE progress SET watched = 1 '
           'WHERE duration_ms > 0 AND position_ms * 10 >= duration_ms * 9',
         );
+      }
+      if (from < 4) {
+        await m.addColumn(profiles, profiles.ageLimit);
+        await m.addColumn(profiles, profiles.isKid);
+        await m.addColumn(profiles, profiles.locked);
       }
     },
     beforeOpen: (details) async {

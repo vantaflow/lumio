@@ -2,11 +2,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/db_connection.dart';
+import 'package:lumio/data/profile_repository.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/secret_store.dart';
 import 'package:lumio/data/title_settings_store.dart';
 import 'package:lumio/player/local_proxy.dart';
 import 'package:lumio/player/subtitle_style.dart';
+import 'package:lumio_core/lumio_core.dart' show AgeLimit;
+export 'package:lumio/data/profile_repository.dart'
+    show
+        defaultProfileId,
+        PinResult,
+        Profile,
+        ProfileLimitException,
+        maxProfiles;
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase(openAppDatabase());
@@ -71,15 +80,110 @@ class AddonsController extends AsyncNotifier<List<InstalledAddon>> {
   Future<void> refresh() async => state = AsyncData(await _repo.list());
 }
 
-/// Profil actif (un seul profil « default » pour l'instant).
-const defaultProfileId = 'default';
+final profileRepositoryProvider = Provider<ProfileRepository>(
+  (ref) => ProfileRepository(ref.watch(appDatabaseProvider)),
+);
+
+/// Liste des profils ; le premier profil « Moi » est créé au premier
+/// lancement.
+final profilesProvider =
+    AsyncNotifierProvider<ProfilesController, List<Profile>>(
+      ProfilesController.new,
+    );
+
+class ProfilesController extends AsyncNotifier<List<Profile>> {
+  ProfileRepository get _repo => ref.read(profileRepositoryProvider);
+
+  @override
+  Future<List<Profile>> build() async {
+    await _repo.ensureDefault();
+    return _repo.list();
+  }
+
+  Future<void> reload() async => state = AsyncData(await _repo.list());
+
+  Future<Profile> create(
+    String name, {
+    AgeLimit? limit,
+    bool isKid = false,
+    bool locked = false,
+  }) async {
+    final p = await _repo.create(
+      name,
+      limit: limit,
+      isKid: isKid,
+      locked: locked,
+    );
+    await reload();
+    return p;
+  }
+
+  Future<void> edit(
+    String id, {
+    String? name,
+    AgeLimit? limit,
+    bool? isKid,
+    bool? locked,
+  }) async {
+    await _repo.update(
+      id,
+      name: name,
+      limit: limit,
+      isKid: isKid,
+      locked: locked,
+    );
+    await reload();
+    // Le profil actif suit ses propres modifications.
+    final current = ref.read(currentProfileProvider);
+    if (current?.id == id) {
+      ref.read(currentProfileProvider.notifier).select(await _repo.get(id));
+    }
+  }
+
+  Future<void> delete(String id) async {
+    await _repo.delete(id);
+    await reload();
+    if (ref.read(currentProfileProvider)?.id == id) {
+      ref.read(currentProfileProvider.notifier).select(null);
+    }
+  }
+}
+
+/// Profil actif ; nul tant que l'utilisateur n'a pas choisi (le sélecteur
+/// de profils est alors affiché).
+final currentProfileProvider =
+    NotifierProvider<CurrentProfileController, Profile?>(
+      CurrentProfileController.new,
+    );
+
+class CurrentProfileController extends Notifier<Profile?> {
+  @override
+  Profile? build() => null;
+
+  void select(Profile? profile) {
+    state = profile;
+    final id = profile?.id;
+    final repo = ref.read(profileRepositoryProvider);
+    // Mémorisation best-effort : un échec n'empêche pas de changer de profil.
+    (id == null ? repo.clearActive() : repo.setActive(id)).catchError((_) {});
+  }
+}
+
+/// Identifiant du profil actif (le profil « default » tant qu'aucun n'est
+/// choisi) ; à utiliser par les écrans qui lisent ou écrivent des données de
+/// profil.
+final currentProfileIdProvider = Provider<String>(
+  (ref) =>
+      ref.watch(currentProfileProvider.select((p) => p?.id)) ??
+      defaultProfileId,
+);
 
 /// Réglages par titre du profil actif, préchargés depuis SQLite.
 final titleSettingsStoreProvider = FutureProvider<DriftTitleSettingsStore>((
   ref,
 ) async {
   final store = DriftTitleSettingsStore(ref.watch(appDatabaseProvider));
-  await store.load(defaultProfileId);
+  await store.load(ref.watch(currentProfileIdProvider));
   return store;
 });
 
@@ -93,6 +197,7 @@ final progressRepositoryProvider = Provider<ProgressRepository>(
 
 /// Rangée « Continuer à regarder » du profil actif.
 final continueWatchingProvider = StreamProvider<List<ProgressEntry>>(
-  (ref) =>
-      ref.watch(progressRepositoryProvider).continueWatching(defaultProfileId),
+  (ref) => ref
+      .watch(progressRepositoryProvider)
+      .continueWatching(ref.watch(currentProfileIdProvider)),
 );
