@@ -145,6 +145,7 @@ class ScrobbleQueue {
   final Duration liveEventMaxAge;
 
   bool _flushing = false;
+  bool _dirty = false;
   final _last = <String, ScrobbleEvent>{};
 
   /// Nombre d'entrées en attente.
@@ -188,47 +189,25 @@ class ScrobbleQueue {
   /// Rejoue les entrées échues, dans l'ordre. S'arrête à la première panne
   /// passagère (ordre conservé).
   Future<FlushResult> flush() async {
-    if (_flushing) return FlushResult(remaining: await pending());
+    if (_flushing) {
+      // Un ajout arrive pendant un passage : il sera traité avant la fin.
+      _dirty = true;
+      return FlushResult(remaining: await pending());
+    }
     _flushing = true;
     var sent = 0;
     var dropped = 0;
     var reauth = false;
     var notConfigured = false;
-    final blocked = <String>{};
     try {
-      for (final row in await _store.all()) {
-        final key = '${row.profileId}|${row.trackerId}';
-        if (blocked.contains(key)) continue;
-        if (row.nextAttemptAt.isAfter(_now())) {
-          blocked.add(key);
-          continue;
-        }
-        final live = row.event.action != ScrobbleAction.stop;
-        if (live && _now().difference(row.event.at) > liveEventMaxAge) {
-          await _store.remove(row.id);
-          dropped++;
-          continue;
-        }
-        try {
-          await _send(row.profileId, row.trackerId, row.event);
-          await _store.remove(row.id);
-          sent++;
-        } on TrackerUnavailable {
-          final n = row.attempts + 1;
-          final wait = backoff[(n - 1).clamp(0, backoff.length - 1)];
-          await _store.markFailed(row.id, n, _now().add(wait));
-          blocked.add(key);
-        } on TrackerReauthRequired {
-          reauth = true;
-          blocked.add(key); // gardé : repart après la reconnexion
-        } on TrackerNotConfigured {
-          notConfigured = true;
-          blocked.add(key);
-        } on TrackerRejected {
-          await _store.remove(row.id);
-          dropped++;
-        }
-      }
+      do {
+        _dirty = false;
+        final r = await _pass();
+        sent += r.sent;
+        dropped += r.dropped;
+        reauth = reauth || r.reauthRequired;
+        notConfigured = notConfigured || r.notConfigured;
+      } while (_dirty);
     } finally {
       _flushing = false;
     }
@@ -236,6 +215,53 @@ class ScrobbleQueue {
       sent: sent,
       dropped: dropped,
       remaining: await pending(),
+      reauthRequired: reauth,
+      notConfigured: notConfigured,
+    );
+  }
+
+  Future<FlushResult> _pass() async {
+    var sent = 0;
+    var dropped = 0;
+    var reauth = false;
+    var notConfigured = false;
+    final blocked = <String>{};
+    for (final row in await _store.all()) {
+      final key = '${row.profileId}|${row.trackerId}';
+      if (blocked.contains(key)) continue;
+      if (row.nextAttemptAt.isAfter(_now())) {
+        blocked.add(key);
+        continue;
+      }
+      final live = row.event.action != ScrobbleAction.stop;
+      if (live && _now().difference(row.event.at) > liveEventMaxAge) {
+        await _store.remove(row.id);
+        dropped++;
+        continue;
+      }
+      try {
+        await _send(row.profileId, row.trackerId, row.event);
+        await _store.remove(row.id);
+        sent++;
+      } on TrackerUnavailable {
+        final n = row.attempts + 1;
+        final wait = backoff[(n - 1).clamp(0, backoff.length - 1)];
+        await _store.markFailed(row.id, n, _now().add(wait));
+        blocked.add(key);
+      } on TrackerReauthRequired {
+        reauth = true;
+        blocked.add(key); // gardé : repart après la reconnexion
+      } on TrackerNotConfigured {
+        notConfigured = true;
+        blocked.add(key);
+      } on TrackerRejected {
+        await _store.remove(row.id);
+        dropped++;
+      }
+    }
+    return FlushResult(
+      sent: sent,
+      dropped: dropped,
       reauthRequired: reauth,
       notConfigured: notConfigured,
     );

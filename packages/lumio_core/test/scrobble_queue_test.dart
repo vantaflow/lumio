@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:lumio_core/lumio_core.dart';
 import 'package:test/test.dart';
 
@@ -170,4 +172,20 @@ void main() {
       expect((await store.all()).map((r) => r.profileId), ['p2']);
     },
   );
+
+  test('ajout pendant un passage : traité avant la fin', () async {
+    final gate = Completer<void>();
+    final q = ScrobbleQueue(store, (p, t, e) async {
+      if (sent.isEmpty) await gate.future;
+      sent.add(e);
+    }, now: () => now);
+    final first = q.submit('p', 'trakt', ev(ScrobbleAction.stop, id: 'tt1'));
+    await Future<void>.delayed(Duration.zero);
+    final second = q.submit('p', 'trakt', ev(ScrobbleAction.stop, id: 'tt2'));
+    await Future<void>.delayed(Duration.zero);
+    gate.complete();
+    await Future.wait([first, second]);
+    expect(sent.map((e) => e.imdbId), ['tt1', 'tt2']);
+    expect(await q.pending(), 0);
+  });
 }

@@ -12,7 +12,7 @@ final traktCredentialsProvider = Provider<({String id, String secret})>(
 );
 
 final trackingFetcherProvider = Provider<HttpPostFetcher>(
-  (ref) => IoHttpFetcher(),
+  (ref) => IoHttpFetcher(redirectGuard: UrlGuard.check),
 );
 
 /// Horloge du suivi (surchargée dans les tests).
@@ -47,9 +47,12 @@ final trackerFactoryProvider =
           clientSecret: creds.secret,
           token: token,
           now: clock,
-          onToken: (t) => t == null
-              ? repo.clearToken(id, profileId)
-              : repo.saveToken(id, profileId, t),
+          // Sans profil (autorisation d'appareil) : rien à persister.
+          onToken: profileId.isEmpty
+              ? null
+              : (t) => t == null
+                    ? repo.clearToken(id, profileId)
+                    : repo.saveToken(id, profileId, t),
         );
       };
     });

@@ -337,6 +337,31 @@ void main() {
       expect(net.scrobblePaths, ['/scrobble/stop']);
     });
 
+    test(
+      'deux profils : chaque requête porte le jeton de son profil',
+      () async {
+        c = make();
+        final other = await c.read(profileRepositoryProvider).create('Bob');
+        await secrets.write(
+          'trakt.token.${other.id}',
+          jsonEncode(
+            TrackerToken(
+              access: 'acc-bob',
+              refresh: 'ref-bob',
+              expiresAt: now.add(const Duration(days: 30)),
+            ).toJson(),
+          ),
+        );
+        final svc = c.read(trackingServiceProvider);
+        await svc.onPlayback(play(PlaybackAction.stop, meta: 'tt1'));
+        await svc.onPlayback(
+          play(PlaybackAction.stop, meta: 'tt2', profile: other.id),
+        );
+        final auth = net.posts.map((p) => p.$3['authorization']).toList();
+        expect(auth, ['Bearer acc-0', 'Bearer acc-bob']);
+      },
+    );
+
     test('jeton refusé (401 persistant) : drapeau de reconnexion', () async {
       c = make();
       net.scrobbleStatus = 401;

@@ -42,6 +42,7 @@ void main() {
     onToken: onToken,
     baseUrl: server.baseUrl,
     now: () => now,
+    allowPrivate: true,
   );
 
   TrackerToken valid() => TrackerToken(
@@ -55,6 +56,58 @@ void main() {
     now = DateTime.utc(2023, 11, 14, 23);
   });
   tearDown(() => server.close());
+
+  test('adresse privée refusée par défaut : rien d\'envoyé', () async {
+    final c = TraktClient(
+      IoHttpFetcher(),
+      clientId: 'cid',
+      clientSecret: _secret,
+      token: valid(),
+      baseUrl: server.baseUrl,
+    );
+    await expectLater(c.scrobble(_event()), throwsA(isA<TrackerRejected>()));
+    await expectLater(c.startDeviceAuth(), throwsA(isA<TrackerRejected>()));
+    expect(server.requests, isEmpty);
+  });
+
+  test('deux scrobbles concurrents : un seul renouvellement', () async {
+    server.route('/oauth/token', _tokenJson(access: 'acc-2'));
+    server.route('/scrobble/start', FakeResponse.json({}, status: 201));
+    final c = client(
+      token: TrackerToken(
+        access: 'acc-0',
+        refresh: 'ref-0',
+        expiresAt: now.add(const Duration(minutes: 10)),
+      ),
+    );
+    await Future.wait([c.scrobble(_event()), c.scrobble(_event())]);
+    expect(
+      server.requests.where((r) => r.uri.path == '/oauth/token'),
+      hasLength(1),
+    );
+    expect(
+      server.requests
+          .where((r) => r.uri.path == '/scrobble/start')
+          .map((r) => r.headers['authorization']),
+      everyElement('Bearer acc-2'),
+    );
+  });
+
+  test('401 concurrents : un seul renouvellement', () async {
+    server.route('/oauth/token', _tokenJson(access: 'acc-2'));
+    server.routeWith(
+      '/scrobble/start',
+      (r) => r.headers['authorization'] == 'Bearer acc-2'
+          ? FakeResponse.json({}, status: 201)
+          : FakeResponse.json({}, status: 401),
+    );
+    final c = client(token: valid());
+    await Future.wait([c.scrobble(_event()), c.scrobble(_event())]);
+    expect(
+      server.requests.where((r) => r.uri.path == '/oauth/token'),
+      hasLength(1),
+    );
+  });
 
   group('configuration', () {
     test('identifiants vides : TrackerNotConfigured, rien d\'envoyé', () async {

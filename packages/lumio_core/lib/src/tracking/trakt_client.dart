@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import '../net/http_fetcher.dart';
+import '../net/url_guard.dart';
 import 'tracker.dart';
 
 /// Client Trakt : autorisation d'appareil, renouvellement du jeton et
@@ -19,6 +20,7 @@ class TraktClient implements Tracker {
     Uri? baseUrl,
     DateTime Function()? now,
     this.refreshMargin = const Duration(hours: 1),
+    this.allowPrivate = false,
   }) : _token = token,
        _base = baseUrl ?? Uri.parse('https://api.trakt.tv'),
        _now = now ?? DateTime.now;
@@ -31,6 +33,10 @@ class TraktClient implements Tracker {
 
   /// Renouvelle le jeton s'il expire dans moins de [refreshMargin].
   final Duration refreshMargin;
+
+  /// Autorise une adresse de réseau privé (tests locaux uniquement) ; sinon
+  /// toute requête vers un hôte local ou privé est refusée.
+  final bool allowPrivate;
 
   /// Appelé avec le nouveau jeton après un renouvellement (à persister) ; avec
   /// `null` quand le renouvellement est refusé (jeton à oublier).
@@ -58,9 +64,16 @@ class TraktClient implements Tracker {
     Map<String, Object?> body, {
     String? bearer,
   }) async {
+    final url = _base.replace(path: path);
+    try {
+      UrlGuard.check(url, allowPrivate: allowPrivate);
+    } on UnsafeUrlException {
+      throw const TrackerRejected(0); // adresse refusée : rien n'est envoyé
+    }
     try {
       return await _fetcher.post(
-        _base.replace(path: path),
+        url,
+        guard: (u) => UrlGuard.check(u, allowPrivate: allowPrivate),
         body: utf8.encode(jsonEncode(body)),
         headers: {
           ..._headers,
@@ -194,7 +207,10 @@ class TraktClient implements Tracker {
     if (t.expiresWithin(refreshMargin, _now())) t = await _refresh();
     var r = await _send(e, t);
     if (r.status == 401) {
-      t = await _refresh(); // un seul renouvellement
+      // Un autre appel a déjà renouvelé le jeton : inutile de recommencer.
+      final current = _token;
+      if (current == null) throw const TrackerReauthRequired();
+      t = identical(current, t) ? await _refresh() : current;
       r = await _send(e, t);
       if (r.status == 401) throw const TrackerReauthRequired();
     }
