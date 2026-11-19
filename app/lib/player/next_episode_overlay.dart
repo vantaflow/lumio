@@ -150,7 +150,7 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
         label: context.l10n.playNow,
         height: 76,
         fontSize: 28,
-        horizontalPadding: 40,
+        horizontalPadding: 36,
         onPressed: () => _fire(widget.onPlayNow),
       ),
       TvButton(
@@ -158,7 +158,7 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
         kind: TvButtonKind.secondary,
         height: 76,
         fontSize: 28,
-        horizontalPadding: 40,
+        horizontalPadding: 36,
         onPressed: () => _fire(widget.onCancel),
       ),
     ];
@@ -217,13 +217,18 @@ class _NextEpisodeOverlayState extends State<NextEpisodeOverlay> {
                 ),
                 SizedBox(height: big ? 22 : LumioSpacing.md),
                 if (big)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      tvButtons[0],
-                      const SizedBox(width: 16),
-                      tvButtons[1],
-                    ],
+                  // La maquette déborde de quelques pixels : on réduit d'autant.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        tvButtons[0],
+                        const SizedBox(width: 16),
+                        tvButtons[1],
+                      ],
+                    ),
                   )
                 else
                   Wrap(

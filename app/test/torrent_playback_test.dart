@@ -396,7 +396,7 @@ void main() {
       );
       await t.pump();
       expect(
-        find.text('12 sources · 1.5 Mo/s · 42 % téléchargé'),
+        find.text('12 sources · 1,5 Mo/s · 42 % téléchargé'),
         findsOneWidget,
       );
       n.value = const TorrentStatus(

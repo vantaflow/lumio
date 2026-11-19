@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/torrent/torrent_engine.dart';
 import 'package:lumio/ui/theme.dart';
@@ -8,7 +9,8 @@ import 'package:lumio/ui/theme.dart';
 String formatTorrentRate(AppLocalizations l, int bytesPerSecond) {
   if (bytesPerSecond >= 1024 * 1024) {
     final v = bytesPerSecond / (1024 * 1024);
-    return l.torrentRateMb(v.toStringAsFixed(1));
+    // Séparateur décimal de la langue (« 1,4 Mo/s » en français).
+    return l.torrentRateMb(NumberFormat('0.0', l.localeName).format(v));
   }
   return l.torrentRateKb((bytesPerSecond / 1024).round().toString());
 }

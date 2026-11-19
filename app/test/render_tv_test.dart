@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -37,6 +38,17 @@ import 'package:lumio/features/settings/settings_screen.dart'
 import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/features/tracking/tracking_providers.dart';
+import 'package:drift/native.dart';
+import 'package:lumio/data/db.dart' show AppDatabase;
+import 'package:lumio/data/title_settings_store.dart';
+import 'package:lumio/player/next_episode_overlay.dart';
+import 'package:lumio/player/play_router.dart' show LocalFileSource;
+import 'package:lumio/player/player_controller.dart';
+import 'package:lumio/player/player_screen.dart';
+import 'package:lumio/player/subtitle_style.dart';
+import 'package:lumio/player/tracks_controller.dart';
+import 'package:lumio/torrent/torrent_engine.dart' show TorrentStatus;
+import 'package:lumio/torrent/torrent_overlay.dart';
 import 'package:lumio/features/library/library_screen.dart';
 import 'package:lumio/features/cast/cast_button.dart' show showCastPicker;
 import 'package:lumio/features/profiles/pin_dialog.dart' show showPinDialog;
@@ -1119,6 +1131,125 @@ void main() {
       }
     });
   });
+
+  testWidgets('lot 6 : lecteur', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+
+    Future<void> shot(
+      String name, {
+      PlayerState? state,
+      Widget Function(Widget player)? wrap,
+      Future<void> Function(AppHarness h)? after,
+    }) async {
+      final h = AppHarness(t);
+      final key = GlobalKey();
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final ctl = _RCtl();
+      Widget player = PlayerScreen(
+        item: StreamItem(
+          addonId: 'ad',
+          title: 'Sintel',
+          url: Uri.parse('https://x.test/v.mp4'),
+        ),
+        metaId: 'tt1',
+        controller: ctl,
+        videoBuilder: (_) => const ColoredBox(color: Color(0xFF0B0E12)),
+        tracksBackend: (_) => _RBackend(),
+      );
+      if (wrap != null) player = wrap(player);
+      await h.pump(
+        player,
+        boundary: key,
+        extra: [
+          titleSettingsStoreProvider.overrideWith(
+            (ref) async => DriftTitleSettingsStore(db),
+          ),
+          subtitleStyleStoreProvider.overrideWithValue(SubtitleStyleStore(db)),
+        ],
+      );
+      ctl.emit(
+        state ??
+            const PlayerState(
+              phase: PlayerPhase.playing,
+              position: Duration(minutes: 5, seconds: 12),
+              duration: Duration(minutes: 14, seconds: 48),
+              buffered: Duration(minutes: 8),
+            ),
+      );
+      await h.settle(3);
+      if (after != null) await after(h);
+      await _save(t, key, name);
+      await h.close();
+    }
+
+    await shot('r-TV07');
+    await shot(
+      'r-P10',
+      state: const PlayerState(
+        phase: PlayerPhase.failed,
+        error: "La source a répondu 404 : le fichier n'existe plus.",
+      ),
+    );
+    await shot(
+      'r-P06',
+      wrap: (p) => Stack(
+        children: [
+          p,
+          Material(
+            type: MaterialType.transparency,
+            child: NextEpisodeOverlay(
+              episodeTitle: 'Cosmos Laundromat · S1 É5 · Le retour du mouton',
+              countdown: const Duration(seconds: 8),
+              onPlayNow: () {},
+              onCancel: () {},
+            ),
+          ),
+        ],
+      ),
+    );
+    for (final (n, status) in [
+      ('a', null),
+      (
+        'b',
+        const TorrentStatus(
+          peers: 38,
+          seeders: 12,
+          downloadRate: 1468006,
+          uploadRate: 0,
+          progress: 0.12,
+        ),
+      ),
+      (
+        'c',
+        const TorrentStatus(
+          peers: 6,
+          seeders: 1,
+          downloadRate: 358400,
+          uploadRate: 0,
+          progress: 0.12,
+          error: 'x',
+        ),
+      ),
+    ]) {
+      await shot(
+        'r-P05$n',
+        wrap: (p) => Stack(
+          children: [
+            p,
+            PositionedDirectional(
+              top: 48,
+              end: 48,
+              child: Material(
+                type: MaterialType.transparency,
+                child: TorrentOverlay(status: ValueNotifier(status)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  });
 }
 
 /// Remplit un champ (en mode TV les champs sont en lecture seule : on écrit
@@ -1419,4 +1550,58 @@ class _RPartyHttp implements PartyHttp {
       'expiresAt': 1800000000000,
     }),
   );
+}
+
+class _RCtl extends Fake implements PlayerController {
+  final _state = ValueNotifier<PlayerState>(
+    const PlayerState(phase: PlayerPhase.playing),
+  );
+
+  void emit(PlayerState s) => _state.value = s;
+
+  @override
+  ValueListenable<PlayerState> get stateListenable => _state;
+  @override
+  PlayerState get state => _state.value;
+  @override
+  Future<void> open(
+    StreamItem s, {
+    bool allowPrivate = false,
+    bool trustedLocal = false,
+    LocalFileSource? local,
+    Duration start = Duration.zero,
+  }) async {}
+  @override
+  Future<Duration?> creditsStart() async => null;
+  @override
+  Future<void> seekBy(Duration delta) async {}
+}
+
+class _RBackend implements TracksBackend {
+  @override
+  final audioTracks = const [
+    TrackOption(id: '1', label: 'Français', lang: 'fr'),
+  ];
+  @override
+  final subtitleTracks = const <TrackOption>[];
+  @override
+  String? get selectedAudioId => '1';
+  @override
+  String? get selectedSubtitleId => null;
+  @override
+  Stream<void> get changes => const Stream.empty();
+  @override
+  Future<void> selectAudio(String id) async {}
+  @override
+  Future<void> selectSubtitle(String? id) async {}
+  @override
+  Future<void> loadExternalSubtitle(
+    String path, {
+    String? title,
+    String? lang,
+  }) async {}
+  @override
+  Future<void> setSubtitleDelay(int ms) async {}
+  @override
+  Future<void> applySubtitleStyle(SubtitleStyle style) async {}
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:lumio/features/home/tv_home.dart' show LumioMark;
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/theme.dart';
@@ -86,9 +87,16 @@ class TvOnboardingBrandPanel extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: t.displayLarge?.copyWith(fontSize: 72, height: 1.05),
+              // Colonne de 600 : « bibliothèque, vos » tient à 0,3 px près dans
+              // la maquette, on laisse 4 px de tolérance de mesure.
+              OverflowBox(
+                maxWidth: 604,
+                alignment: AlignmentDirectional.topStart,
+                fit: OverflowBoxFit.deferToChild,
+                child: Text(
+                  title,
+                  style: t.displayLarge?.copyWith(fontSize: 72, height: 1.05),
+                ),
               ),
               const SizedBox(height: 24),
               Text(
@@ -99,6 +107,8 @@ class TvOnboardingBrandPanel extends StatelessWidget {
                   color: context.lumio.textMuted,
                 ),
               ),
+              // Maquette : le <p> garde sa marge basse par défaut (1 em = 30).
+              const SizedBox(height: 30),
             ],
           ),
           dots,
