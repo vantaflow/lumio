@@ -2582,4 +2582,43 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get phoneAddWaiting =>
       'Lien reçu du téléphone : vérifiez l\'aperçu et confirmez ici.';
+
+  @override
+  String get addonInstall => 'Installer';
+
+  @override
+  String get addonConfigure => 'Configurer';
+
+  @override
+  String addonConfigureTitle(Object name) {
+    return 'Configurer $name';
+  }
+
+  @override
+  String get addonOrPhone => 'Ou configurer sur le téléphone';
+
+  @override
+  String get configureHelp =>
+      'OK : valider · Retour : annuler · le lien d\'installation est capté automatiquement';
+
+  @override
+  String get configureUseCopied => 'Utiliser le lien copié';
+
+  @override
+  String get configureNoLink => 'Aucun lien d\'addon dans le presse-papiers.';
+
+  @override
+  String get configureBlocked => 'Page bloquée : elle sort de l\'addon.';
+
+  @override
+  String get configureLoadError =>
+      'La page de configuration ne s\'est pas chargée.';
+
+  @override
+  String get addonSheetRequired =>
+      'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Configurez-le ici avec la télécommande.';
+
+  @override
+  String get addonSheetConfigurable =>
+      'Installez-le tel quel ou choisissez vos réglages avant.';
 }

@@ -4381,6 +4381,72 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Lien reçu du téléphone : vérifiez l\'aperçu et confirmez ici.'**
   String get phoneAddWaiting;
+
+  /// No description provided for @addonInstall.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installer'**
+  String get addonInstall;
+
+  /// No description provided for @addonConfigure.
+  ///
+  /// In fr, this message translates to:
+  /// **'Configurer'**
+  String get addonConfigure;
+
+  /// No description provided for @addonConfigureTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Configurer {name}'**
+  String addonConfigureTitle(Object name);
+
+  /// No description provided for @addonOrPhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ou configurer sur le téléphone'**
+  String get addonOrPhone;
+
+  /// No description provided for @configureHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'OK : valider · Retour : annuler · le lien d\'installation est capté automatiquement'**
+  String get configureHelp;
+
+  /// No description provided for @configureUseCopied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utiliser le lien copié'**
+  String get configureUseCopied;
+
+  /// No description provided for @configureNoLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun lien d\'addon dans le presse-papiers.'**
+  String get configureNoLink;
+
+  /// No description provided for @configureBlocked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Page bloquée : elle sort de l\'addon.'**
+  String get configureBlocked;
+
+  /// No description provided for @configureLoadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'La page de configuration ne s\'est pas chargée.'**
+  String get configureLoadError;
+
+  /// No description provided for @addonSheetRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Configurez-le ici avec la télécommande.'**
+  String get addonSheetRequired;
+
+  /// No description provided for @addonSheetConfigurable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installez-le tel quel ou choisissez vos réglages avant.'**
+  String get addonSheetConfigurable;
 }
 
 class _AppLocalizationsDelegate

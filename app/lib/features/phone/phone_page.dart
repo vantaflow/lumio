@@ -57,6 +57,11 @@ label.l{font-size:14px;color:#F3F5F7;font-weight:600;line-height:1.4}
 .foot{margin-top:auto}
 .ph>section{flex:1}
 .ty{text-align:right}
+.cd2{display:flex;flex-direction:column;gap:10px;padding:12px 0}
+.cd2 .d{font-size:14px;color:#A9B2BF;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cd2 .row .bt{height:44px;font-size:15px;flex:1}
+.rc{height:44px;font-size:14px;padding:0 14px}
+.pn{border-radius:14px;background:#161B22;border:2px solid #FFB84D;padding:14px;display:flex;flex-direction:column;gap:12px}
 .code{letter-spacing:6px;text-align:center;font-size:24px}
 @media (prefers-reduced-motion:reduce){.sw i:after{transition:none}}
 ''';
@@ -75,6 +80,21 @@ const phoneJs = r'''
       send: 'Envoyer à la TV',
       browse: 'Parcourir stremio-addons.net',
       browseHint: 'Sur le site, « Copier le lien » puis revenez ici.',
+      catTitle: 'Catalogue',
+      catHelp: 'Les addons populaires de stremio-addons.net : installez-les ici, la TV confirme.',
+      catFilter: 'Filtrer le catalogue',
+      catEmpty: 'Aucun addon ne correspond.',
+      catLoadError: 'Le catalogue est indisponible pour le moment.',
+      install: 'Installer',
+      configure: 'Configurer',
+      reconfigure: 'Reconfigurer',
+      needsCfg: 'Cet addon demande un réglage : utilisez « Configurer ».',
+      notCfg: "Cet addon n'a pas de page de configuration.",
+      cfgTitle: 'Configurer {n}',
+      cfgOpen: 'Ouvrir la page de configuration',
+      cfgHelp: "Réglez l'addon dans le nouvel onglet, copiez le lien d'installation obtenu, puis revenez le coller ici.",
+      cfgLabel: 'Collez ici le lien produit par la configuration',
+      cfgClose: 'Fermer',
       mine: 'Mes addons · ordre de priorité',
       none: "Aucun addon installé pour l'instant.",
       up: 'Monter',
@@ -118,6 +138,21 @@ const phoneJs = r'''
       send: 'Send to the TV',
       browse: 'Browse stremio-addons.net',
       browseHint: 'On the site, tap “Copy link”, then come back here.',
+      catTitle: 'Catalogue',
+      catHelp: 'Popular addons from stremio-addons.net: install them here, the TV asks you to confirm.',
+      catFilter: 'Filter the catalogue',
+      catEmpty: 'No addon matches.',
+      catLoadError: 'The catalogue is unavailable right now.',
+      install: 'Install',
+      configure: 'Configure',
+      reconfigure: 'Reconfigure',
+      needsCfg: 'This addon needs setup: use “Configure”.',
+      notCfg: 'This addon has no setup page.',
+      cfgTitle: 'Configure {n}',
+      cfgOpen: 'Open the setup page',
+      cfgHelp: 'Set the addon up in the new tab, copy the install link it gives you, then come back and paste it here.',
+      cfgLabel: 'Paste the link produced by the setup',
+      cfgClose: 'Close',
       mine: 'My addons · priority order',
       none: 'No addon installed yet.',
       up: 'Move up',
@@ -158,6 +193,8 @@ const phoneJs = r'''
   var csrf = '';
   var addons = [];
   var confirming = null;
+  var catalog = [];
+  var replaces = null;
   var pollTimer = null;
   var $ = function (id) { return document.getElementById(id); };
 
@@ -168,6 +205,8 @@ const phoneJs = r'''
     var nodes = document.querySelectorAll('[data-t]');
     for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t[nodes[i].getAttribute('data-t')];
     $('u').setAttribute('placeholder', 'https://…/manifest.json');
+    $('cu').setAttribute('placeholder', 'stremio://…/manifest.json');
+    $('cf').setAttribute('placeholder', t.catFilter);
     document.title = 'Lumio';
   }
 
@@ -205,7 +244,7 @@ const phoneJs = r'''
 
   function login(code) {
     return api('POST', '/api/login', { code: code }).then(function (r) {
-      if (r.status === 200) { csrf = r.json.csrf; clearBanner(); showMain(); return loadList(); }
+      if (r.status === 200) { csrf = r.json.csrf; clearBanner(); showMain(); loadCatalog(); return loadList(); }
       if (r.status === 429) {
         var s = parseInt(r.retry || '60', 10);
         showLogin(r.json.error === 'locked' ? fmt(t.locked, { s: s }) : t.rate);
@@ -224,7 +263,7 @@ const phoneJs = r'''
       return;
     }
     api('GET', '/api/session').then(function (r) {
-      if (r.status === 200) { csrf = r.json.csrf; showMain(); loadList(); } else showLogin('');
+      if (r.status === 200) { csrf = r.json.csrf; showMain(); loadCatalog(); loadList(); } else showLogin('');
     }, function () { showLogin(''); });
   }
 
@@ -276,6 +315,10 @@ const phoneJs = r'''
       dn.addEventListener('click', function () { act('POST', a.id + '/move', { delta: 1 }); });
       sw.addEventListener('click', function () { act('POST', a.id + '/enabled', { enabled: !a.enabled }); });
       del.addEventListener('click', function () { confirming = a.id; render(); });
+      var rc = q('rc');
+      rc.textContent = t.reconfigure;
+      rc.setAttribute('aria-label', t.reconfigure + ' : ' + a.name);
+      rc.addEventListener('click', function () { openConfig('/api/addons/' + a.id + '/reconfigure', a.name, a.id); });
       var cf = q('cf');
       if (confirming === a.id) {
         cf.classList.remove('hidden');
@@ -295,6 +338,82 @@ const phoneJs = r'''
       if (r.status >= 400 && r.status !== 404) banner('er', t.generic);
       loadList();
     }, closed);
+  }
+
+  // --- catalogue ---
+  function loadCatalog() {
+    return api('GET', '/api/catalog').then(function (r) {
+      if (r.status === 401) { showLogin(''); return; }
+      if (r.status !== 200) { $('catmsg').textContent = t.catLoadError; show('catmsg', true); return; }
+      catalog = r.json.items || [];
+      show('catmsg', false);
+      renderCatalog();
+    }, closed);
+  }
+  function renderCatalog() {
+    var list = $('cat');
+    while (list.firstChild) list.removeChild(list.firstChild);
+    var f = $('cf').value.trim().toLowerCase();
+    var n = 0;
+    var tpl = $('cat-tpl');
+    catalog.forEach(function (c) {
+      if (f && (c.name || '').toLowerCase().indexOf(f) < 0) return;
+      n++;
+      var li = tpl.content.firstElementChild.cloneNode(true);
+      var q = function (k) { return li.querySelector('.' + k); };
+      var lg = q('lg');
+      lg.textContent = (c.name || '?').charAt(0).toUpperCase();
+      lg.style.background = colorOf(c.name || '?');
+      q('nm').textContent = c.name;
+      q('d').textContent = c.description || '';
+      q('d').classList.toggle('hidden', !c.description);
+      q('ci').textContent = t.install;
+      q('cc').textContent = t.configure;
+      q('ci').setAttribute('aria-label', t.install + ' : ' + c.name);
+      q('cc').setAttribute('aria-label', t.configure + ' : ' + c.name);
+      q('ci').addEventListener('click', function () { installCat(c); });
+      q('cc').addEventListener('click', function () { openConfig('/api/catalog/' + c.id + '/configure', c.name, null); });
+      list.appendChild(li);
+    });
+    $('catnone').classList.toggle('hidden', n > 0);
+  }
+  function installCat(c) {
+    clearBanner();
+    api('POST', '/api/catalog/' + c.id + '/install', {}).then(function (r) {
+      if (r.status === 202) { banner('wt', t.waiting); poll(r.json.request); return; }
+      if (r.status === 401) { showLogin(''); return; }
+      banner('er', r.status === 409 ? t.needsCfg : (r.status === 429 ? t.rate : t.generic));
+    }, closed);
+  }
+  function openConfig(path, name, rep) {
+    clearBanner();
+    api('POST', path, {}).then(function (r) {
+      if (r.status === 401) { showLogin(''); return; }
+      var u = r.json && r.json.url;
+      if (r.status !== 200 || typeof u !== 'string' || !/^https?:\/\//i.test(u)) {
+        banner('er', r.status === 404 ? t.notCfg : (r.status === 429 ? t.rate : t.generic));
+        return;
+      }
+      replaces = rep;
+      $('cfgt').textContent = fmt(t.cfgTitle, { n: name });
+      $('cfglink').setAttribute('href', u);
+      $('cu').value = '';
+      show('cfg', true);
+      $('cfglink').focus();
+    }, closed);
+  }
+  function sendCfg() {
+    var v = $('cu').value.trim();
+    if (!v) { banner('er', t.emptyLink); $('cu').focus(); return; }
+    $('csend').disabled = true;
+    var body = { link: v };
+    if (replaces) body.replaces = replaces;
+    api('POST', '/api/add', body).then(function (r) {
+      $('csend').disabled = false;
+      if (r.status === 202) { banner('wt', t.waiting); show('cfg', false); poll(r.json.request); return; }
+      if (r.status === 401) { showLogin(''); return; }
+      banner('er', r.status === 400 ? t.invalidLink : (r.status === 429 ? t.rate : t.generic));
+    }, function () { $('csend').disabled = false; closed(); });
   }
 
   // --- ajout ---
@@ -334,6 +453,10 @@ const phoneJs = r'''
   }
 
   $('send').addEventListener('click', send);
+  $('csend').addEventListener('click', sendCfg);
+  $('cclose').addEventListener('click', function () { show('cfg', false); });
+  $('cf').addEventListener('input', renderCatalog);
+  $('cu').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendCfg(); });
   $('paste').addEventListener('click', paste);
   $('u').addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
   $('lform').addEventListener('submit', function (e) {
@@ -378,17 +501,29 @@ const _html = r'''<!doctype html>
 <div class="row"><button class="bt b2 f1" id="paste" type="button" data-t="paste"></button><button class="bt b1 f2" id="send" type="button" data-t="send"></button></div>
 <a class="lk" href="https://stremio-addons.net" target="_blank" rel="noopener noreferrer"><span data-t="browse"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
 <div class="sm" data-t="browseHint"></div>
+<div id="cfg" class="pn hidden"><h2 class="hd h20" id="cfgt"></h2><div class="sm" data-t="cfgHelp"></div>
+<a class="lk" id="cfglink" href="about:blank" target="_blank" rel="noopener noreferrer"><span data-t="cfgOpen"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+<label class="l" for="cu" data-t="cfgLabel"></label>
+<input class="in" id="cu" type="text" inputmode="url" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="2048">
+<div class="row"><button class="bt b2 f1" id="cclose" type="button" data-t="cfgClose"></button><button class="bt b1 f2" id="csend" type="button" data-t="send"></button></div></div>
+<h2 class="hd h20" data-t="catTitle"></h2>
+<div class="sm" data-t="catHelp"></div>
+<input class="in" id="cf" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="60" aria-label="Filter">
+<div id="catmsg" class="msg er hidden" role="alert"></div>
+<div id="catnone" class="sm hidden" data-t="catEmpty"></div>
+<ul id="cat" class="col lst"></ul>
 <h2 class="hd h20" data-t="mine"></h2>
 <div id="none" class="sm hidden" data-t="none"></div>
 <ul id="list" class="col lst"></ul>
 <div class="sm foot" id="host"></div>
 </section>
 </div>
+<template id="cat-tpl"><li class="card"><div class="cd2"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div></div></div><div class="d"></div><div class="row"><button type="button" class="bt b1 ci"></button><button type="button" class="bt b2 cc"></button></div></div></li></template>
 <template id="row-tpl"><li class="card"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div><div class="sm sub"></div></div>
 <button type="button" class="ib up"><svg viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2.5" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
 <button type="button" class="ib down"><svg viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
 <button type="button" class="ib del"><svg viewBox="0 0 24 24" fill="none" stroke="#FF7A70" stroke-width="2.5" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></button></div>
-<div class="ct"><button type="button" class="sw" role="switch" aria-checked="true"><i aria-hidden="true"></i><span class="swt"></span></button><span class="ty"></span></div>
+<div class="ct"><button type="button" class="sw" role="switch" aria-checked="true"><i aria-hidden="true"></i><span class="swt"></span></button><button type="button" class="bt b2 rc"></button><span class="ty"></span></div>
 <div class="cf hidden" role="alertdialog"><div class="cft"></div><button type="button" class="bt bd cy"></button><button type="button" class="bt b2 cn"></button></div></li></template>
 <script src="/app.js"></script>
 </body>

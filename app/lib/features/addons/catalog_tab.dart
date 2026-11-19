@@ -285,10 +285,9 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
           Text(
             required ? l.addonSheetRequired : l.addonSheetConfigurable,
             key: const ValueKey('sheet-body'),
-            style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-              fontSize: 26,
-              height: 1.4,
-            ),
+            style: Theme.of(
+              ctx,
+            ).textTheme.bodyMedium?.copyWith(fontSize: 26, height: 1.4),
           ),
           if (configure != null)
             TvButton(

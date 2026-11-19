@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lumio/features/addons/configure_dpad.dart';
 import 'package:lumio/features/addons/configure_policy.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -50,6 +53,7 @@ class _ConfigureAddonScreenState extends State<ConfigureAddonScreen> {
           },
           onPageFinished: (_) {
             if (mounted) setState(() => _loading = false);
+            unawaited(_web.runJavaScript(configureDpadScript));
           },
           onWebResourceError: (e) {
             if (e.isForMainFrame ?? true) {
@@ -106,6 +110,118 @@ class _ConfigureAddonScreenState extends State<ConfigureAddonScreen> {
     _finish(uri);
   }
 
+  Object? _decode(Object raw) {
+    var v = raw;
+    if (v is String) {
+      try {
+        v = jsonDecode(v);
+        if (v is String) v = jsonDecode(v);
+      } catch (_) {
+        return null;
+      }
+    }
+    return v;
+  }
+
+  /// Flèche de la télécommande : le focus se déplace dans la page ; au bord
+  /// de la page, la flèche haut rend la main à l'en-tête.
+  Future<KeyEventResult> _move(String dir) async {
+    try {
+      final r = _decode(
+        await _web.runJavaScriptReturningResult(
+          "window.__lumioNav ? window.__lumioNav('$dir') : 'none'",
+        ),
+      );
+      if (r == 'edge' && dir == 'up' && mounted) {
+        FocusScope.of(context).focusInDirection(TraversalDirection.up);
+      }
+    } catch (_) {
+      // Page en cours de chargement : rien à déplacer.
+    }
+    return KeyEventResult.handled;
+  }
+
+  /// OK : active l'élément ciblé ; les champs et listes passent par les
+  /// fenêtres de la TV (clavier à l'écran, choix).
+  Future<void> _ok() async {
+    final l = context.l10n;
+    try {
+      final raw = await _web.runJavaScriptReturningResult(
+        'window.__lumioOk ? window.__lumioOk() : "{}"',
+      );
+      final r = _decode(raw);
+      if (r is! Map || !mounted) return;
+      if (r['k'] == 'text') {
+        final label = (r['label'] as String?) ?? '';
+        final value = await _askText(
+          label.isEmpty ? widget.name : label,
+          (r['value'] as String?) ?? '',
+          secret: r['secret'] == true,
+        );
+        if (value != null) {
+          await _web.runJavaScript(
+            'window.__lumioSetText(${jsonEncode(value)})',
+          );
+        }
+      } else if (r['k'] == 'select') {
+        final options = [for (final o in (r['options'] as List)) '$o'];
+        final picked = await showTvChoice<int>(
+          context,
+          title: widget.name,
+          options: [for (final (i, o) in options.indexed) (i, o)],
+          current: r['index'] is int && (r['index'] as int) >= 0
+              ? r['index'] as int
+              : null,
+        );
+        if (picked != null) {
+          await _web.runJavaScript('window.__lumioSetSelect($picked)');
+        }
+      }
+    } catch (_) {
+      if (mounted) showTvSnack(context, l.configureLoadError, error: true);
+    }
+  }
+
+  Future<String?> _askText(String label, String initial, {bool secret = false}) {
+    final ctrl = TextEditingController(text: initial);
+    return showTvPanel<String>(
+      context,
+      builder: (ctx) => TvPanel(
+        title: label,
+        width: 900,
+        onBack: () => Navigator.of(ctx).pop(),
+        actions: [
+          TvButton(
+            key: const ValueKey('configure-text-ok'),
+            label: ctx.l10n.continueAction,
+            height: 76,
+            fontSize: 28,
+            onPressed: () => Navigator.of(ctx).pop(ctrl.text),
+          ),
+          TvButton(
+            label: ctx.l10n.cancel,
+            kind: TvButtonKind.ghost,
+            height: 76,
+            fontSize: 28,
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+        ],
+        children: [
+          TvTextField(
+            key: const ValueKey('configure-text'),
+            controller: ctrl,
+            autofocus: true,
+            obscureText: secret,
+            autocorrect: false,
+            enableSuggestions: false,
+            style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(fontSize: 32),
+            onSubmitted: (v) => Navigator.of(ctx).pop(v),
+          ),
+        ],
+      ),
+    ).whenComplete(ctrl.dispose);
+  }
+
   Future<void> _back() async {
     if (await _web.canGoBack()) {
       await _web.goBack();
@@ -149,9 +265,34 @@ class _ConfigureAddonScreenState extends State<ConfigureAddonScreen> {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: WebViewWidget(
-                          key: const ValueKey('configure-web'),
-                          controller: _web,
+                        child: Focus(
+                          autofocus: true,
+                          onKeyEvent: (node, e) {
+                            if (e is KeyUpEvent) return KeyEventResult.ignored;
+                            final k = e.logicalKey;
+                            if (k == LogicalKeyboardKey.arrowDown) {
+                              unawaited(_move('down'));
+                            } else if (k == LogicalKeyboardKey.arrowUp) {
+                              unawaited(_move('up'));
+                            } else if (k == LogicalKeyboardKey.arrowLeft) {
+                              unawaited(_move('left'));
+                            } else if (k == LogicalKeyboardKey.arrowRight) {
+                              unawaited(_move('right'));
+                            } else if (e is KeyDownEvent &&
+                                (k == LogicalKeyboardKey.select ||
+                                    k == LogicalKeyboardKey.enter ||
+                                    k == LogicalKeyboardKey.numpadEnter ||
+                                    k == LogicalKeyboardKey.gameButtonA)) {
+                              unawaited(_ok());
+                            } else {
+                              return KeyEventResult.ignored;
+                            }
+                            return KeyEventResult.handled;
+                          },
+                          child: WebViewWidget(
+                            key: const ValueKey('configure-web'),
+                            controller: _web,
+                          ),
                         ),
                       ),
                       if (_loading)

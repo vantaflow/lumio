@@ -2559,4 +2559,42 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get phoneAddWaiting =>
       'Link received from the phone: check the preview and confirm here.';
+
+  @override
+  String get addonInstall => 'Install';
+
+  @override
+  String get addonConfigure => 'Configure';
+
+  @override
+  String addonConfigureTitle(Object name) {
+    return 'Configure $name';
+  }
+
+  @override
+  String get addonOrPhone => 'Or configure on your phone';
+
+  @override
+  String get configureHelp =>
+      'OK: confirm · Back: cancel · the install link is picked up automatically';
+
+  @override
+  String get configureUseCopied => 'Use the copied link';
+
+  @override
+  String get configureNoLink => 'No addon link on the clipboard.';
+
+  @override
+  String get configureBlocked => 'Page blocked: it leaves the addon.';
+
+  @override
+  String get configureLoadError => 'The setup page did not load.';
+
+  @override
+  String get addonSheetRequired =>
+      'This addon needs setup before it works (debrid key, languages…). Set it up here with the remote.';
+
+  @override
+  String get addonSheetConfigurable =>
+      'Install it as is, or choose your settings first.';
 }

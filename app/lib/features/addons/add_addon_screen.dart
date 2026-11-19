@@ -211,6 +211,11 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
   void _finishPhoneFlow(PhoneAddState state, {String? name}) {
     final id = _phoneReq;
     if (id == null) return;
+    // Reconfiguration : le nouveau lien remplace l'ancien une fois installé.
+    final replaces = _phone?.adds.lookup(id)?.replaces;
+    if (state == PhoneAddState.installed && replaces != null) {
+      unawaited(ref.read(addonsProvider.notifier).remove(replaces));
+    }
     _phone?.adds.resolve(id, state, name: name);
     setState(() {
       _phoneReq = null;

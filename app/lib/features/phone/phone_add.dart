@@ -8,11 +8,15 @@ enum PhoneAddState { waiting, installed, failed, cancelled, expired }
 /// Demande d'ajout. [url] est secrète : elle ne quitte jamais la TV (jamais
 /// renvoyée au téléphone, jamais journalisée).
 class PhoneAddRequest {
-  PhoneAddRequest(this.id, this.url, this.createdAt);
+  PhoneAddRequest(this.id, this.url, this.createdAt, {this.replaces});
 
   final String id;
   final Uri url;
   final DateTime createdAt;
+
+  /// Identifiant (interne) d'un addon installé que ce lien remplace après
+  /// confirmation (reconfiguration). Jamais envoyé au téléphone.
+  final String? replaces;
   PhoneAddState state = PhoneAddState.waiting;
 
   /// Nom de l'addon installé (affiché sur la page, c'est tout).
@@ -44,10 +48,10 @@ class PhoneAddCoordinator {
   ).join();
 
   /// Nouvelle demande ; remplace (et annule) celle qui attendait.
-  PhoneAddRequest submit(Uri url) {
+  PhoneAddRequest submit(Uri url, {String? replaces}) {
     final old = pending.value;
     if (old != null) resolve(old.id, PhoneAddState.cancelled);
-    final r = PhoneAddRequest(_newId(), url, _now());
+    final r = PhoneAddRequest(_newId(), url, _now(), replaces: replaces);
     _all[r.id] = r;
     while (_all.length > 20) {
       _all.remove(_all.keys.first);

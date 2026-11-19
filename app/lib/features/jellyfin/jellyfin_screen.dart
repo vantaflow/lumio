@@ -415,60 +415,62 @@ class _BrowseState extends ConsumerState<JellyfinBrowseScreen> {
     } else {
       // Maquette TV28 (volet Navigation) : lignes de 72, icône dossier ou
       // clap turquoise, titre 30 en gras, « Charger la suite » en bouton gris.
-      body = TvScrollClip(child: ListView(
-        clipBehavior: Clip.none,
-        padding: const EdgeInsets.only(top: 8, bottom: 24),
-        children: [
-          for (final e in shown)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: TvTile(
-                key: ValueKey('jellyfin-item:${e.id}'),
-                minHeight: 72,
-                onSelect: () => e.container
-                    ? Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => JellyfinBrowseScreen(
-                            serverId: widget.serverId,
-                            parentId: e.id,
-                            title: e.name,
+      body = TvScrollClip(
+        child: ListView(
+          clipBehavior: Clip.none,
+          padding: const EdgeInsets.only(top: 8, bottom: 24),
+          children: [
+            for (final e in shown)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: TvTile(
+                  key: ValueKey('jellyfin-item:${e.id}'),
+                  minHeight: 72,
+                  onSelect: () => e.container
+                      ? Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => JellyfinBrowseScreen(
+                              serverId: widget.serverId,
+                              parentId: e.id,
+                              title: e.name,
+                            ),
                           ),
+                        )
+                      : playJellyfinFromWidget(
+                          context,
+                          ref,
+                          serverId: widget.serverId,
+                          itemId: e.id,
                         ),
-                      )
-                    : playJellyfinFromWidget(
-                        context,
-                        ref,
-                        serverId: widget.serverId,
-                        itemId: e.id,
+                  child: Row(
+                    children: [
+                      LumioIconView(
+                        e.container ? LumioIcon.folder : LumioIcon.clapper,
+                        size: 40,
+                        color: context.lumio.secondary,
                       ),
-                child: Row(
-                  children: [
-                    LumioIconView(
-                      e.container ? LumioIcon.folder : LumioIcon.clapper,
-                      size: 40,
-                      color: context.lumio.secondary,
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(child: TvTileText(title: e.name)),
-                  ],
+                      const SizedBox(width: 24),
+                      Expanded(child: TvTileText(title: e.name)),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          if (_hasMore)
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TvButton(
-                key: const ValueKey('jellyfin-more'),
-                kind: TvButtonKind.secondary,
-                label: l.jellyfinLoadMore,
-                height: 76,
-                fontSize: 28,
-                horizontalPadding: 40,
-                onPressed: _more ? null : _loadMore,
+            if (_hasMore)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TvButton(
+                  key: const ValueKey('jellyfin-more'),
+                  kind: TvButtonKind.secondary,
+                  label: l.jellyfinLoadMore,
+                  height: 76,
+                  fontSize: 28,
+                  horizontalPadding: 40,
+                  onPressed: _more ? null : _loadMore,
+                ),
               ),
-            ),
-        ],
-      ));
+          ],
+        ),
+      );
     }
     return TvScreen(
       title: _title.isEmpty ? l.jellyfinLibraries : _title,
@@ -614,67 +616,71 @@ class JellyfinServersScreen extends ConsumerWidget {
               ),
             );
           }
-          return TvScrollClip(child: ListView(
-            clipBehavior: Clip.none,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            children: [
-              for (final s in list)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 96),
-                    padding: const EdgeInsetsDirectional.only(end: 32),
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TvTile(
-                            key: ValueKey('jellyfin-server:${s.id}'),
-                            minHeight: 96,
-                            color: Colors.transparent,
-                            semanticLabel: s.name,
-                            onSelect: () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    JellyfinBrowseScreen(serverId: s.id),
+          return TvScrollClip(
+            child: ListView(
+              clipBehavior: Clip.none,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              children: [
+                for (final s in list)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 96),
+                      padding: const EdgeInsetsDirectional.only(end: 32),
+                      decoration: BoxDecoration(
+                        color: c.surface,
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TvTile(
+                              key: ValueKey('jellyfin-server:${s.id}'),
+                              minHeight: 96,
+                              color: Colors.transparent,
+                              semanticLabel: s.name,
+                              onSelect: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      JellyfinBrowseScreen(serverId: s.id),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  LumioIconView(
+                                    LumioIcon.server,
+                                    size: 40,
+                                    color: c.secondary,
+                                  ),
+                                  const SizedBox(width: 24),
+                                  Expanded(
+                                    child: TvTileText(
+                                      title: s.name,
+                                      subtitle: l.jellyfinSignedInAs(
+                                        s.userName,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                LumioIconView(
-                                  LumioIcon.server,
-                                  size: 40,
-                                  color: c.secondary,
-                                ),
-                                const SizedBox(width: 24),
-                                Expanded(
-                                  child: TvTileText(
-                                    title: s.name,
-                                    subtitle: l.jellyfinSignedInAs(s.userName),
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        TvIconButton(
-                          key: ValueKey('jellyfin-remove:${s.id}'),
-                          lumioIcon: LumioIcon.trash,
-                          iconColor: c.error,
-                          background: c.bg,
-                          label: l.jellyfinRemove(s.name),
-                          onPressed: () => _remove(context, ref, s),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          TvIconButton(
+                            key: ValueKey('jellyfin-remove:${s.id}'),
+                            lumioIcon: LumioIcon.trash,
+                            iconColor: c.error,
+                            background: c.bg,
+                            label: l.jellyfinRemove(s.name),
+                            onPressed: () => _remove(context, ref, s),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
-          ));
+              ],
+            ),
+          );
         },
       ),
     );

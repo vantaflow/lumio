@@ -39,12 +39,50 @@ class PhoneAddonView {
   final bool broken;
 }
 
+/// Addon du catalogue tel que le voit le téléphone : jamais d'adresse de
+/// manifest ni de logo, seulement des textes du catalogue public.
+class PhoneCatalogItem {
+  const PhoneCatalogItem({
+    required this.slug,
+    required this.name,
+    this.description,
+  });
+
+  final String slug;
+  final String name;
+  final String? description;
+}
+
+/// Choix d'installation d'un addon du catalogue. [install] reste sur la TV ;
+/// [configure] est la page publique de configuration (sans clé).
+class PhoneCatalogChoice {
+  const PhoneCatalogChoice({
+    required this.install,
+    required this.required,
+    this.configure,
+  });
+
+  final Uri install;
+  final bool required;
+  final Uri? configure;
+}
+
 /// Opérations de gestion exposées au téléphone (dépôt d'addons existant).
 abstract class PhoneBackend {
   Future<List<PhoneAddonView>> addons();
   Future<void> move(String id, int delta);
   Future<void> setEnabled(String id, bool on);
   Future<void> remove(String id);
+
+  /// Catalogue communautaire (cache de la TV) : textes publics seulement.
+  Future<List<PhoneCatalogItem>> catalog();
+
+  /// Adresse d'installation et page de configuration d'un addon du catalogue.
+  Future<PhoneCatalogChoice?> catalogChoice(String slug);
+
+  /// Page de configuration de BASE d'un addon installé (jamais l'adresse
+  /// installée, qui porte les clés).
+  Future<Uri?> reconfigureUrl(String id);
 }
 
 enum PhoneServerStatus { stopped, starting, listening, noNetwork, error }
@@ -391,6 +429,51 @@ class PhoneServer implements PhoneSession {
         ],
       });
     }
+    if (m == 'GET' && seg.length == 2 && seg[1] == 'catalog') {
+      final list = await backend.catalog();
+      return _json(req, 200, {
+        'items': [
+          for (final c in list.take(200))
+            {
+              'id': _opaque('catalog:${c.slug}'),
+              'name': c.name,
+              if (c.description != null) 'description': c.description,
+            },
+        ],
+      });
+    }
+    if (m == 'POST' &&
+        seg.length == 4 &&
+        seg[1] == 'catalog' &&
+        (seg[3] == 'install' || seg[3] == 'configure')) {
+      await _body(req);
+      PhoneCatalogChoice? choice;
+      for (final c in await backend.catalog()) {
+        if (_opaque('catalog:${c.slug}') == seg[2]) {
+          choice = await backend.catalogChoice(c.slug);
+          break;
+        }
+      }
+      if (choice == null) throw _HttpError(404, 'not_found');
+      if (seg[3] == 'configure') {
+        final cfg = choice.configure;
+        if (cfg == null) throw _HttpError(404, 'not_configurable');
+        return _json(req, 200, {'url': cfg.toString()});
+      }
+      if (choice.required) throw _HttpError(409, 'needs_config');
+      final r = adds.submit(choice.install);
+      return _json(req, 202, {'request': r.id});
+    }
+    if (seg.length == 4 &&
+        seg[1] == 'addons' &&
+        seg[3] == 'reconfigure' &&
+        m == 'POST') {
+      await _body(req);
+      final id = await _resolve(seg[2]);
+      final cfg = await backend.reconfigureUrl(id);
+      if (cfg == null) throw _HttpError(404, 'not_configurable');
+      return _json(req, 200, {'url': cfg.toString()});
+    }
     if (seg.length == 3 && seg[1] == 'addons' && m == 'DELETE') {
       final id = await _resolve(seg[2]);
       await backend.remove(id);
@@ -421,7 +504,10 @@ class PhoneServer implements PhoneSession {
           ? parseInstallLink(link)
           : null;
       if (url == null) throw _HttpError(400, 'invalid_link');
-      final r = adds.submit(url);
+      String? replaces;
+      final rep = body['replaces'];
+      if (rep is String) replaces = await _resolve(rep);
+      final r = adds.submit(url, replaces: replaces);
       return _json(req, 202, {'request': r.id});
     }
     if (m == 'GET' && seg.length == 3 && seg[1] == 'add') {

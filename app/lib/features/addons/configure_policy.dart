@@ -42,7 +42,8 @@ ConfigureNav decideConfigureNavigation(Uri target, {required Uri start}) {
         return m == null ? const ConfigureBlock() : ConfigureInstall(m);
       }
       final sameHost = target.host.toLowerCase() == start.host.toLowerCase();
-      final schemeOk = scheme == 'https' || start.scheme.toLowerCase() == 'http';
+      final schemeOk =
+          scheme == 'https' || start.scheme.toLowerCase() == 'http';
       return sameHost && schemeOk
           ? const ConfigureAllow()
           : const ConfigureBlock();
