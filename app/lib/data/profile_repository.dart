@@ -192,6 +192,20 @@ class ProfileRepository {
 
   // --- PIN parent ------------------------------------------------------
 
+  /// Supprime le PIN parent (et son code de récupération) quand plus aucun
+  /// profil enfant ni verrouillé n'en a besoin. Renvoie vrai s'il a été retiré.
+  Future<bool> pruneOrphanPin() => _serial(() async {
+    if (await _getSetting(_kPinHash) == null) return false;
+    final all = await list();
+    if (all.any((p) => p.isKid || p.locked)) return false;
+    await _db.transaction(() async {
+      await _delSetting(_kPinHash);
+      await _delSetting(_kRecoveryHash);
+      await _delSetting(_kLockout);
+    });
+    return true;
+  });
+
   Future<bool> hasParentPin() async => (await _getSetting(_kPinHash)) != null;
 
   /// Crée le PIN parent et renvoie le code de récupération, à afficher une

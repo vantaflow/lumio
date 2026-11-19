@@ -2558,6 +2558,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Page open while this screen is shown · no external server';
 
   @override
+  String get phoneKeepOpen => 'Keep this screen open while you use your phone.';
+
+  @override
+  String get settingsManagePhonePress => 'Press OK to open the page';
+
+  @override
   String get phoneConnected =>
       'Phone connected · page open while this screen is shown';
 

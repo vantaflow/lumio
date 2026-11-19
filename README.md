@@ -33,7 +33,15 @@ Réglages › Sources › **Ajouter un addon**, trois onglets :
 La page du téléphone n'existe que tant que l'onglet est affiché (arrêt à la
 sortie de l'écran et après 10 minutes sans activité), n'est jamais servie sur
 un VPN ni sur le réseau mobile, est protégée par un code renouvelé à chaque
-ouverture, et ne reçoit jamais l'adresse d'un addon. Détails :
+ouverture, et ne reçoit jamais l'adresse d'un addon.
+
+L'adresse `IP:8790` n'est affichée qu'une fois l'écran « Gérer depuis le
+téléphone » ouvert (OK sur la carte du rail) : tant que cet écran n'est pas
+ouvert, rien n'écoute sur la TV et le navigateur affichera « connexion
+refusée » (ERR_CONNECTION_REFUSED). Cette erreur est produite par le
+navigateur lui-même, Lumio ne peut pas la remplacer par une page : ouvrez
+l'écran sur la TV, laissez-le ouvert pendant que vous utilisez le téléphone,
+puis rechargez la page. Détails :
 `docs/superpowers/specs/2026-11-19-page-web-box-design.md`.
 
 ## Fonctionnalités

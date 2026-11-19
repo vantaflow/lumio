@@ -443,42 +443,111 @@ Color avatarColorOf(List<Profile> list, Profile? p) {
   return _avatarColors[(i < 0 ? 0 : i) % _avatarColors.length];
 }
 
-/// Pastille ronde 60 dp des badges d'avatar (TV35).
+/// Pastille ronde 60 dp des badges d'avatar (TV35), cerclée d'un liseré sombre.
 Widget _avatarBadge(Color bg, LumioIcon icon, double size, Color fg) =>
     Container(
+      key: ValueKey('avatar-badge-${icon.name}'),
       width: 60,
       height: 60,
       alignment: Alignment.center,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: bg),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: bg,
+        border: Border.all(color: const Color(0xFF0B0D10), width: 4),
+      ),
       child: LumioIconView(icon, size: size, color: fg),
     );
 
 /// Avatar focalisable : cercle de 200 dp, anneau à 8 dp, échelle 1,08.
+/// [badges] sont dessinés APRÈS l'anneau de focus (au-dessus), à cheval sur le
+/// bord du rond, et suivent son agrandissement.
 Widget _avatarCard({
   required bool autofocus,
   required String label,
   required VoidCallback onSelect,
   VoidCallback? onFocus,
   required Widget circle,
-}) => SizedBox(
-  width: 200,
-  height: 200,
-  child: OverflowBox(
-    maxWidth: 208,
-    maxHeight: 208,
-    child: FocusableCard(
-      autofocus: autofocus,
-      scale: 1.08,
-      onFocusChange: (f) {
-        if (f) onFocus?.call();
-      },
-      semanticLabel: label,
-      borderRadius: BorderRadius.circular(104),
-      onSelect: onSelect,
-      child: SizedBox(width: 208, height: 208, child: Center(child: circle)),
-    ),
-  ),
+  List<Widget> badges = const [],
+}) => _AvatarCard(
+  autofocus: autofocus,
+  label: label,
+  onSelect: onSelect,
+  onFocus: onFocus,
+  circle: circle,
+  badges: badges,
 );
+
+class _AvatarCard extends StatefulWidget {
+  const _AvatarCard({
+    required this.autofocus,
+    required this.label,
+    required this.onSelect,
+    required this.onFocus,
+    required this.circle,
+    required this.badges,
+  });
+  final bool autofocus;
+  final String label;
+  final VoidCallback onSelect;
+  final VoidCallback? onFocus;
+  final Widget circle;
+  final List<Widget> badges;
+
+  @override
+  State<_AvatarCard> createState() => _AvatarCardState();
+}
+
+class _AvatarCardState extends State<_AvatarCard> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: OverflowBox(
+              maxWidth: 208,
+              maxHeight: 208,
+              child: FocusableCard(
+                autofocus: widget.autofocus,
+                scale: 1.08,
+                onFocusChange: (f) {
+                  if (mounted) setState(() => _focused = f);
+                  if (f) widget.onFocus?.call();
+                },
+                semanticLabel: widget.label,
+                borderRadius: BorderRadius.circular(104),
+                onSelect: widget.onSelect,
+                child: SizedBox(
+                  width: 208,
+                  height: 208,
+                  child: Center(child: widget.circle),
+                ),
+              ),
+            ),
+          ),
+          if (widget.badges.isNotEmpty)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedScale(
+                  scale: _focused ? 1.08 : 1.0,
+                  duration: const Duration(milliseconds: 120),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: widget.badges,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 class _ProfileTile extends StatelessWidget {
   const _ProfileTile({
@@ -549,27 +618,23 @@ class _ProfileTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (manage) ...[
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      child: _avatarBadge(c.bg, LumioIcon.pencil, 30, c.text),
-                    ),
-                    if (locked)
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: _avatarBadge(
-                          c.bg,
-                          LumioIcon.lockSolid,
-                          32,
-                          c.text,
-                        ),
-                      ),
-                  ],
                 ],
               ),
             ),
+            badges: [
+              if (manage)
+                Positioned(
+                  left: 141,
+                  top: -1,
+                  child: _avatarBadge(c.bg, LumioIcon.pencil, 30, c.text),
+                ),
+              if (manage && locked)
+                Positioned(
+                  left: 141,
+                  top: 141,
+                  child: _avatarBadge(c.bg, LumioIcon.lockSolid, 32, c.text),
+                ),
+            ],
           ),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -881,9 +946,15 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
     );
   }
 
-  Widget _chip(String label, bool selected, VoidCallback onTap) {
+  Widget _chip(
+    AgeLimit limit,
+    String label,
+    bool selected,
+    VoidCallback onTap,
+  ) {
     final c = context.lumio;
     return FocusableCard(
+      key: ValueKey('age-chip-${limit.name}'),
       scale: 1.04,
       borderRadius: BorderRadius.circular(32),
       semanticLabel: label,
@@ -891,19 +962,23 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
       child: Container(
         height: 64,
         padding: const EdgeInsets.symmetric(horizontal: 32),
-        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? c.accent : c.surfaceFocus,
           borderRadius: BorderRadius.circular(32),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Manrope',
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-            fontVariations: const [FontVariation.weight(700)],
-            color: selected ? c.onAccent : c.text,
+        // Largeur naturelle : sans cela le conteneur occupait toute la ligne
+        // et les pastilles étaient empilées, collées l'une à l'autre.
+        child: Center(
+          widthFactor: 1,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              fontVariations: const [FontVariation.weight(700)],
+              color: selected ? c.onAccent : c.text,
+            ),
           ),
         ),
       ),
@@ -1059,12 +1134,14 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
             l.ageLimit,
             style: const TextStyle(fontSize: 28, color: Color(0xFFC9D0DA)),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Wrap(
-            spacing: 12,
+            spacing: 16,
+            runSpacing: 16,
             children: [
               for (final (limit, label) in _limits(l))
                 _chip(
+                  limit,
                   label,
                   _limit == limit,
                   () => setState(() => _limit = limit),

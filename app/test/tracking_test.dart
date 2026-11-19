@@ -575,6 +575,24 @@ void main() {
       expect(find.text('ABCD1234'), findsOneWidget);
       expect(find.text('https://trakt.tv/activate'), findsOneWidget);
       expect(find.byType(QrImageView), findsOneWidget);
+      // Le cadre du code ne passe pas sous le QR.
+      final codeBox = t.getRect(
+        find
+            .ancestor(
+              of: find.byKey(const ValueKey('tracking-auth-code')),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final qrBox = t.getRect(
+        find
+            .ancestor(
+              of: find.byType(QrImageView),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      expect(codeBox.right, lessThanOrEqualTo(qrBox.left));
       // L'utilisateur autorise : le prochain sondage rend le jeton.
       net.deviceTokenStatus = 200;
       await h.settle(4);

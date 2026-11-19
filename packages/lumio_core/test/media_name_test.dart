@@ -47,6 +47,15 @@ void main() {
     expect(parseMediaName('sans_extension').title, 'sans extension');
   });
 
+  test('nom de fichier courant : points, année et qualité nettoyés', () {
+    final p = parseMediaName('Big.Buck.Bunny.2008.1080p.mp4');
+    expect(p.title, 'Big Buck Bunny');
+    expect(p.year, 2008);
+    final q = parseMediaName('big-buck-bunny-2008-720p.mkv');
+    expect(q.title, 'big buck bunny');
+    expect(q.year, 2008);
+  });
+
   test('année en tête = partie du titre', () {
     final p = parseMediaName('2012.mp4');
     expect(p.title, '2012');

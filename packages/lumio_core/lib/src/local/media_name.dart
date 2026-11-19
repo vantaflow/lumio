@@ -24,7 +24,7 @@ final _parenYear = RegExp(r'\(((?:19|20)\d{2})\)');
 final _bareYear = RegExp(r'(?<![A-Za-z0-9])((?:19|20)\d{2})(?![A-Za-z0-9])');
 final _tag = RegExp(
   r'(?<![A-Za-z0-9])(?:480p|576p|720p|1080p|1080i|2160p|4k|uhd|x264|x265|'
-  r'h\.?264|h\.?265|hevc|avc|hdr10?|hdr|web-?dl|web-?rip|webrip|blu-?ray|'
+  r'h\.?264|h\.?265|hevc|avc|hdr10?|hdr|web[- ]?dl|web[- ]?rip|blu[- ]?ray|'
   r'bdrip|brrip|dvdrip|hdtv|remux|multi|vostfr|vff|vfq|truefrench|french|'
   r'aac|ac3|dts|proper|repack)(?![A-Za-z0-9])',
   caseSensitive: false,
@@ -44,7 +44,11 @@ ParsedName parseMediaName(String fileName) {
   final fallback = _clean(stem);
 
   final noGroups = stem.replaceAll(_brackets, ' ');
-  final s = noGroups.replaceAll(RegExp(r'[._]'), ' ');
+  var s = noGroups.replaceAll(RegExp(r'[._]'), ' ');
+  // Nom entièrement séparé par des tirets (« big-buck-bunny-2008 »).
+  if (!RegExp(r'[ ._]').hasMatch(stem.trim()) && stem.contains('-')) {
+    s = s.replaceAll('-', ' ');
+  }
 
   int? season, episode, year;
   var cut = s.length;

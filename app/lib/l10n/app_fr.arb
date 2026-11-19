@@ -1441,6 +1441,8 @@
   "phoneOrType": "Ou tapez dans le navigateur du téléphone",
   "phoneCodeLabel": "Code de sécurité :",
   "phoneLive": "Page ouverte tant que cet écran est affiché · aucun serveur externe",
+  "phoneKeepOpen": "Laissez cet écran ouvert pendant que vous utilisez votre téléphone.",
+  "settingsManagePhonePress": "Appuyez sur OK pour ouvrir la page",
   "phoneConnected": "Téléphone connecté · page ouverte tant que cet écran est affiché",
   "phoneLocked": "Trop d'essais : un nouveau code est affiché, nouvel essai possible dans une minute",
   "phoneNoNetworkTitle": "Pas de réseau local",

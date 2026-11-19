@@ -1215,6 +1215,8 @@
   "phoneOrType": "Or type in the phone's browser",
   "phoneCodeLabel": "Security code:",
   "phoneLive": "Page open while this screen is shown · no external server",
+  "phoneKeepOpen": "Keep this screen open while you use your phone.",
+  "settingsManagePhonePress": "Press OK to open the page",
   "phoneConnected": "Phone connected · page open while this screen is shown",
   "phoneLocked": "Too many attempts: a new code is shown, try again in a minute",
   "phoneNoNetworkTitle": "No local network",

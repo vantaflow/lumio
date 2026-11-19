@@ -4376,6 +4376,18 @@ abstract class AppLocalizations {
   /// **'Page ouverte tant que cet écran est affiché · aucun serveur externe'**
   String get phoneLive;
 
+  /// No description provided for @phoneKeepOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Laissez cet écran ouvert pendant que vous utilisez votre téléphone.'**
+  String get phoneKeepOpen;
+
+  /// No description provided for @settingsManagePhonePress.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appuyez sur OK pour ouvrir la page'**
+  String get settingsManagePhonePress;
+
   /// No description provided for @phoneConnected.
   ///
   /// In fr, this message translates to:

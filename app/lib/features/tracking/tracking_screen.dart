@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/tracking_repository.dart' show trackerIds, traktId;
 import 'package:lumio/features/tracking/tracking_providers.dart';
@@ -640,31 +639,39 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SizedBox(
-                        width: 760,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l.trackingAuthStep, style: md),
-                            const SizedBox(height: 24),
-                            SelectableText(
-                              code.verificationUrl.toString(),
-                              key: const ValueKey('tracking-auth-url'),
-                              style: text.titleLarge!.copyWith(
-                                fontSize: 48,
-                                height: 1.15,
-                                color: c.secondary,
+                      // La colonne prend la largeur du cadre du code (864 pour 8
+                      // caractères) : le texte reste borné à 760, le cadre ne
+                      // passe plus sous le QR.
+                      IntrinsicWidth(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minWidth: 760),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 760,
+                                ),
+                                child: Text(l.trackingAuthStep, style: md),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            // Maquette TV26 : le cadre du code garde sa largeur
-                            // (864 pour 8 caractères) même au-delà de la colonne.
-                            OverflowBox(
-                              maxWidth: double.infinity,
-                              alignment: Alignment.centerLeft,
-                              fit: OverflowBoxFit.deferToChild,
-                              child: Semantics(
+                              const SizedBox(height: 24),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 760,
+                                ),
+                                child: SelectableText(
+                                  code.verificationUrl.toString(),
+                                  key: const ValueKey('tracking-auth-url'),
+                                  style: text.titleLarge!.copyWith(
+                                    fontSize: 48,
+                                    height: 1.15,
+                                    color: c.secondary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Semantics(
                                 label: code.userCode,
                                 child: ExcludeSemantics(
                                   child: Container(
@@ -688,40 +695,48 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 36,
-                                  height: 36,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(2),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 4,
-                                      color: c.accent,
-                                      backgroundColor: c.outline,
+                              const SizedBox(height: 24),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 760,
+                                ),
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 36,
+                                      height: 36,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(2),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 4,
+                                          color: c.accent,
+                                          backgroundColor: c.outline,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 16),
+                                    Flexible(
+                                      child: Text(
+                                        l.trackingAuthWaiting,
+                                        style: md,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 16),
-                                Flexible(
-                                  child: Text(l.trackingAuthWaiting, style: md),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            TvButton(
-                              key: const ValueKey('tracking-auth-cancel'),
-                              autofocus: true,
-                              label: l.cancel,
-                              kind: TvButtonKind.secondary,
-                              height: 76,
-                              fontSize: 28,
-                              horizontalPadding: 40,
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ],
+                              ),
+                              const SizedBox(height: 24),
+                              TvButton(
+                                key: const ValueKey('tracking-auth-cancel'),
+                                autofocus: true,
+                                label: l.cancel,
+                                kind: TvButtonKind.secondary,
+                                height: 76,
+                                fontSize: 28,
+                                horizontalPadding: 40,
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 120),

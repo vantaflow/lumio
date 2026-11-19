@@ -387,6 +387,19 @@ void main() {
     expect(f.canRequestFocus, isFalse);
   });
 
+  testWidgets(
+    'TV : le champ n\'a aucun contour interne (pas de boîte double)',
+    (t) async {
+      await _pump(t);
+      final d = t.widget<TextField>(find.byType(TextField)).decoration!;
+      expect(d.border, InputBorder.none);
+      expect(d.enabledBorder, InputBorder.none);
+      expect(d.focusedBorder, InputBorder.none);
+      expect(d.disabledBorder, InputBorder.none);
+      expect(d.filled, isFalse);
+    },
+  );
+
   testWidgets('téléphone : la saisie met à jour la requête', (t) async {
     final s = await _pump(t, tv: false);
     await t.enterText(find.byType(TextField), 'matrix');

@@ -397,7 +397,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   hintStyle: fieldStyle.copyWith(
                     color: const Color(0xFF6F7B8B),
                   ),
+                  // Le thème dessine un contour sur chaque état : sans les
+                  // éteindre tous, une boîte apparaît dans la boîte du champ.
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  filled: false,
                   isCollapsed: true,
                 ),
               ),

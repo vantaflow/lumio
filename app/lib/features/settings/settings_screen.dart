@@ -9,7 +9,6 @@ import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/add_addon_screen.dart';
 import 'package:lumio/features/home/tv_home.dart' show LumioMark;
 import 'package:lumio/features/phone/phone_providers.dart';
-import 'package:lumio/features/phone/phone_server.dart' show PhoneServer;
 import 'package:lumio/features/profiles/profile_picker_screen.dart'
     show kidLabel, switchProfileFlow;
 import 'package:lumio/features/party/party_providers.dart';
@@ -813,9 +812,11 @@ class _PhoneCard extends ConsumerWidget {
     final c = context.lumio;
     final l = context.l10n;
     final ip = ref.watch(lanAddressProvider).value;
+    // Rien n'écoute tant que l'écran n'est pas ouvert : pas d'adresse ici
+    // (elle ne répondrait pas), seulement l'invitation à ouvrir la page.
     final sub = ip == null
         ? l.settingsManagePhoneNoNetwork
-        : '${ip.address}:${PhoneServer.defaultPort}';
+        : l.settingsManagePhonePress;
     return FocusableCard(
       key: const ValueKey('settings-phone'),
       scale: 1.02,

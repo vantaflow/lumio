@@ -371,10 +371,14 @@ void main() {
       );
       await h.settle();
       expect(find.text('Gérer depuis le téléphone'), findsOneWidget);
-      expect(find.text('192.168.0.45:8790'), findsOneWidget);
+      // Rien n'écoute avant OK : la carte n'affiche aucune adresse.
+      expect(find.text('192.168.0.45:8790'), findsNothing);
+      expect(find.text('Appuyez sur OK pour ouvrir la page'), findsOneWidget);
       await t.tap(find.byKey(const ValueKey('settings-phone')));
       await h.settle();
       expect(find.byType(QrImageView), findsOneWidget);
+      expect(find.byKey(const ValueKey('phone-keep-open')), findsOneWidget);
+      expect(find.text('192.168.0.45:8790'), findsOneWidget);
       expect(session.events, contains('start'));
       await h.close();
     },

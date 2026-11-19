@@ -283,7 +283,17 @@ class _PairingState extends State<_Pairing> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
+                Text(
+                  l.phoneKeepOpen,
+                  key: const ValueKey('phone-keep-open'),
+                  style: t.bodyMedium?.copyWith(
+                    fontSize: 28,
+                    height: 1.3,
+                    color: c.text,
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Row(
                   children: [
                     Container(

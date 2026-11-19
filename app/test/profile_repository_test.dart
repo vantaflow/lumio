@@ -124,6 +124,28 @@ void main() {
       expect(await repo.list(), hasLength(1));
     });
 
+    test(
+      'pruneOrphanPin : le PIN disparait quand plus aucun profil enfant ni verrouille',
+      () async {
+        await repo.ensureDefault();
+        final kid = await repo.create('Enfant', isKid: true);
+        await repo.createParentPin('1234');
+        // Un profil enfant existe : le PIN est conserve.
+        expect(await repo.pruneOrphanPin(), isFalse);
+        expect(await repo.hasParentPin(), isTrue);
+        await repo.delete(kid.id);
+        expect(await repo.pruneOrphanPin(), isTrue);
+        expect(await repo.hasParentPin(), isFalse);
+        expect(await repo.pruneOrphanPin(), isFalse);
+        // Un profil verrouille garde le PIN.
+        final l = await repo.create('Verrou', locked: true);
+        await repo.createParentPin('4321');
+        expect(await repo.pruneOrphanPin(), isFalse);
+        await repo.update(l.id, locked: false);
+        expect(await repo.pruneOrphanPin(), isTrue);
+      },
+    );
+
     test('profil actif mémorisé', () async {
       expect(await repo.activeId(), isNull);
       await repo.setActive('x');

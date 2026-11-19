@@ -10,6 +10,7 @@ import 'package:lumio/data/profile_repository.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -52,7 +53,10 @@ class _H {
     }
   }
 
-  Future<ProviderContainer> pump(Widget home) async {
+  Future<ProviderContainer> pump(
+    Widget home, {
+    void Function(ProviderContainer)? before,
+  }) async {
     // Fenêtre de bureau : le pavé du PIN (maquette P01, touches de 96) y tient.
     tester.view.physicalSize = const Size(1280, 1000);
     tester.view.devicePixelRatio = 1;
@@ -64,6 +68,7 @@ class _H {
       ],
     );
     addTearDown(container.dispose);
+    before?.call(container);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -487,6 +492,91 @@ void main() {
       find.text('Contrôle parental indisponible. Réessayez.'),
       findsOneWidget,
     );
+    await h.dispose();
+  });
+
+  testWidgets('éditeur de profil : pastilles de limite d\'âge séparées', (
+    tester,
+  ) async {
+    // La police de test (Ahem) déborde la rangée d'actions ; sur la box elle tient.
+    final prev = FlutterError.onError;
+    FlutterError.onError = (d) {
+      if (!d.toString().contains('overflowed')) prev?.call(d);
+    };
+    addTearDown(() => FlutterError.onError = prev);
+    final h = _H(tester)..start();
+    await h.pump(
+      const Scaffold(
+        body: ProfileEditorDialog(
+          profile: Profile(
+            id: 'k',
+            name: 'Enfants',
+            createdAt: 0,
+            ageLimit: 2,
+            isKid: true,
+            locked: false,
+          ),
+        ),
+      ),
+    );
+    // Police de test (Ahem) très large : fenêtre 1920 comme la box.
+    tester.view.physicalSize = const Size(1920, 1080);
+    await tester.pump();
+    final labels = ['all', 'age7', 'age12', 'age16'];
+    final rects = [
+      for (final l in labels)
+        tester.getRect(find.byKey(ValueKey('age-chip-$l'))),
+    ];
+    for (final r in rects) {
+      expect(r.height, greaterThanOrEqualTo(56));
+    }
+    for (var i = 0; i < rects.length - 1; i++) {
+      final a = rects[i], b = rects[i + 1];
+      final sameRow = (a.center.dy - b.center.dy).abs() < 1;
+      // Sur la même ligne : au moins 16 d'écart horizontal ; sinon écart vertical.
+      final gap = sameRow ? b.left - a.right : b.top - a.bottom;
+      expect(
+        gap,
+        greaterThanOrEqualTo(16),
+        reason: '${labels[i]} / ${labels[i + 1]}',
+      );
+    }
+    await h.dispose();
+  });
+
+  testWidgets('gestion des profils : badges au-dessus de l\'anneau de focus', (
+    tester,
+  ) async {
+    final h = _H(tester)..start();
+    await h.run(() async {
+      await h.repo.ensureDefault();
+      await h.repo.create('Sara', locked: true);
+    });
+    await h.run(() => h.repo.createParentPin('1234'));
+    await h.pump(
+      const ProfilePickerScreen(),
+      before: (c) =>
+          c.read(profileManagementRequestedProvider.notifier).set(true),
+    );
+    final pencil = find.byKey(const ValueKey('avatar-badge-pencil'));
+    final lock = find.byKey(const ValueKey('avatar-badge-lockSolid'));
+    expect(pencil, findsWidgets);
+    expect(lock, findsOneWidget);
+    // Le badge n'est pas dans le sous-arbre de la carte focalisable : l'anneau
+    // de focus ne peut donc ni le recouvrir ni le couper.
+    expect(
+      find.descendant(of: find.byType(FocusableCard), matching: pencil),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(FocusableCard), matching: lock),
+      findsNothing,
+    );
+    // À cheval sur le bord du rond (le centre du badge est sur le cercle).
+    final badge = tester.getCenter(pencil.first);
+    final card = tester.getRect(find.byType(FocusableCard).first);
+    final dist = (badge - card.center).distance;
+    expect(dist, closeTo(100, 12));
     await h.dispose();
   });
 

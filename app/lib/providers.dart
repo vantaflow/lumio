@@ -97,6 +97,7 @@ class ProfilesController extends AsyncNotifier<List<Profile>> {
   @override
   Future<List<Profile>> build() async {
     await _repo.ensureDefault();
+    await _repo.pruneOrphanPin();
     return _repo.list();
   }
 
@@ -132,6 +133,7 @@ class ProfilesController extends AsyncNotifier<List<Profile>> {
       isKid: isKid,
       locked: locked,
     );
+    await _repo.pruneOrphanPin();
     await reload();
     // Le profil actif suit ses propres modifications.
     final current = ref.read(currentProfileProvider);
@@ -142,6 +144,7 @@ class ProfilesController extends AsyncNotifier<List<Profile>> {
 
   Future<void> delete(String id) async {
     await _repo.delete(id);
+    await _repo.pruneOrphanPin();
     await reload();
     if (ref.read(currentProfileProvider)?.id == id) {
       ref.read(currentProfileProvider.notifier).select(null);
