@@ -62,6 +62,14 @@ label.l{font-size:14px;color:#F3F5F7;font-weight:600;line-height:1.4}
 .cd2 .row .bt{height:44px;font-size:15px;flex:1}
 .rc{height:44px;font-size:14px;padding:0 14px}
 .pn{border-radius:14px;background:#161B22;border:2px solid #FFB84D;padding:14px;display:flex;flex-direction:column;gap:12px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chp{height:40px;border-radius:20px;padding:0 14px;border:0;background:#2A3340;color:#F3F5F7;font:inherit;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;flex:none}
+.chp.on{background:#FFB84D;color:#1A1100;font-weight:700}
+.chp:focus-visible{outline:3px solid #FFB84D;outline-offset:2px}
+.lg{position:relative;overflow:hidden}
+.lg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0E1116}
+.bdg{color:#5BD68A;font-size:13px;font-weight:700;flex:none}
+.meta{font-size:13px;color:#A9B2BF}
 .code{letter-spacing:6px;text-align:center;font-size:24px}
 @media (prefers-reduced-motion:reduce){.sw i:after{transition:none}}
 ''';
@@ -82,7 +90,13 @@ const phoneJs = r'''
       browseHint: 'Sur le site, « Copier le lien » puis revenez ici.',
       catTitle: 'Catalogue',
       catHelp: 'Les addons populaires de stremio-addons.net : installez-les ici, la TV confirme.',
-      catFilter: 'Filtrer le catalogue',
+      catMore: 'Plus…',
+      catMoreTitle: 'Plus de catégories',
+      catRefresh: 'Actualiser',
+      catLoadMore: 'Voir plus',
+      catInstalled: 'Installé',
+      catOffline: 'Catalogue hors ligne : copie enregistrée.',
+      catFallback: 'Catalogue réduit : le site est injoignable.',
       catEmpty: 'Aucun addon ne correspond.',
       catLoadError: 'Le catalogue est indisponible pour le moment.',
       install: 'Installer',
@@ -140,7 +154,13 @@ const phoneJs = r'''
       browseHint: 'On the site, tap “Copy link”, then come back here.',
       catTitle: 'Catalogue',
       catHelp: 'Popular addons from stremio-addons.net: install them here, the TV asks you to confirm.',
-      catFilter: 'Filter the catalogue',
+      catMore: 'More…',
+      catMoreTitle: 'More categories',
+      catRefresh: 'Refresh',
+      catLoadMore: 'Show more',
+      catInstalled: 'Installed',
+      catOffline: 'Offline catalogue: saved copy.',
+      catFallback: 'Reduced catalogue: the site is unreachable.',
       catEmpty: 'No addon matches.',
       catLoadError: 'The catalogue is unavailable right now.',
       install: 'Install',
@@ -194,6 +214,7 @@ const phoneJs = r'''
   var addons = [];
   var confirming = null;
   var catalog = [];
+  var cat = { chip: 'popular', more: null, page: 1, hasMore: false, chips: [], moreList: [], busy: false };
   var replaces = null;
   var pollTimer = null;
   var $ = function (id) { return document.getElementById(id); };
@@ -206,7 +227,6 @@ const phoneJs = r'''
     for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t[nodes[i].getAttribute('data-t')];
     $('u').setAttribute('placeholder', 'https://…/manifest.json');
     $('cu').setAttribute('placeholder', 'stremio://…/manifest.json');
-    $('cf').setAttribute('placeholder', t.catFilter);
     document.title = 'Lumio';
   }
 
@@ -244,7 +264,7 @@ const phoneJs = r'''
 
   function login(code) {
     return api('POST', '/api/login', { code: code }).then(function (r) {
-      if (r.status === 200) { csrf = r.json.csrf; clearBanner(); showMain(); loadCatalog(); return loadList(); }
+      if (r.status === 200) { csrf = r.json.csrf; clearBanner(); showMain(); loadCatalog(false, false); return loadList(); }
       if (r.status === 429) {
         var s = parseInt(r.retry || '60', 10);
         showLogin(r.json.error === 'locked' ? fmt(t.locked, { s: s }) : t.rate);
@@ -263,7 +283,7 @@ const phoneJs = r'''
       return;
     }
     api('GET', '/api/session').then(function (r) {
-      if (r.status === 200) { csrf = r.json.csrf; showMain(); loadCatalog(); loadList(); } else showLogin('');
+      if (r.status === 200) { csrf = r.json.csrf; showMain(); loadCatalog(false, false); loadList(); } else showLogin('');
     }, function () { showLogin(''); });
   }
 
@@ -341,30 +361,91 @@ const phoneJs = r'''
   }
 
   // --- catalogue ---
-  function loadCatalog() {
-    return api('GET', '/api/catalog').then(function (r) {
+  function catQuery(page, refresh) {
+    var q = '?page=' + page;
+    if (cat.more) q += '&more=' + encodeURIComponent(cat.more);
+    else q += '&chip=' + encodeURIComponent(cat.chip);
+    if (refresh) q += '&refresh=1';
+    return q;
+  }
+  function loadCatalog(refresh, append) {
+    if (cat.busy) return Promise.resolve();
+    cat.busy = true;
+    var page = append ? cat.page + 1 : 1;
+    return api('GET', '/api/catalog' + catQuery(page, refresh)).then(function (r) {
+      cat.busy = false;
       if (r.status === 401) { showLogin(''); return; }
       if (r.status !== 200) { $('catmsg').textContent = t.catLoadError; show('catmsg', true); return; }
-      catalog = r.json.items || [];
+      var j = r.json;
+      cat.chips = j.chips || [];
+      cat.moreList = j.more || [];
+      cat.page = j.page || 1;
+      cat.hasMore = !!j.hasMore;
+      cat.moreLabel = j.moreLabel || null;
+      cat.note = j.note || null;
+      catalog = append ? catalog.concat(j.items || []) : (j.items || []);
       show('catmsg', false);
       renderCatalog();
-    }, closed);
+    }, function () { cat.busy = false; closed(); });
+  }
+  function chipBtn(label, on, fn, key) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chp' + (on ? ' on' : '');
+    b.textContent = label;
+    if (on) b.setAttribute('aria-pressed', 'true');
+    b.addEventListener('click', fn);
+    if (key) b.setAttribute('data-k', key);
+    return b;
   }
   function renderCatalog() {
+    var ch = $('chips');
+    while (ch.firstChild) ch.removeChild(ch.firstChild);
+    cat.chips.forEach(function (c) {
+      ch.appendChild(chipBtn(c.label, !cat.more && cat.chip === c.id, function () {
+        cat.chip = c.id; cat.more = null; show('morelist', false); loadCatalog(false, false);
+      }, c.id));
+    });
+    ch.appendChild(chipBtn(cat.more && cat.moreLabel ? cat.moreLabel : t.catMore, !!cat.more, function () {
+      var m = $('morelist');
+      m.classList.toggle('hidden');
+    }, 'more'));
+    var rf = chipBtn(t.catRefresh, false, function () { loadCatalog(true, false); }, 'refresh');
+    rf.style.background = 'transparent';
+    ch.appendChild(rf);
+    var ml = $('morelist');
+    while (ml.firstChild) ml.removeChild(ml.firstChild);
+    cat.moreList.forEach(function (c) {
+      ml.appendChild(chipBtn(c.label, cat.more === c.id, function () {
+        cat.more = c.id; show('morelist', false); loadCatalog(false, false);
+      }, c.id));
+    });
+    var note = $('catnote');
+    note.textContent = cat.note === 'offline' ? t.catOffline : (cat.note === 'fallback' ? t.catFallback : '');
+    note.classList.toggle('hidden', !cat.note);
     var list = $('cat');
     while (list.firstChild) list.removeChild(list.firstChild);
-    var f = $('cf').value.trim().toLowerCase();
-    var n = 0;
     var tpl = $('cat-tpl');
     catalog.forEach(function (c) {
-      if (f && (c.name || '').toLowerCase().indexOf(f) < 0) return;
-      n++;
       var li = tpl.content.firstElementChild.cloneNode(true);
       var q = function (k) { return li.querySelector('.' + k); };
       var lg = q('lg');
       lg.textContent = (c.name || '?').charAt(0).toUpperCase();
       lg.style.background = colorOf(c.name || '?');
+      if (c.logo) {
+        var im = document.createElement('img');
+        im.alt = '';
+        im.referrerPolicy = 'no-referrer';
+        im.loading = 'lazy';
+        im.addEventListener('error', function () { if (im.parentNode) im.parentNode.removeChild(im); });
+        im.src = c.logo;
+        lg.appendChild(im);
+      }
       q('nm').textContent = c.name;
+      q('meta').textContent = c.meta || '';
+      q('meta').classList.toggle('hidden', !c.meta);
+      q('bdg').textContent = t.catInstalled;
+      q('bdg').classList.toggle('hidden', !c.installed);
       q('d').textContent = c.description || '';
       q('d').classList.toggle('hidden', !c.description);
       q('ci').textContent = t.install;
@@ -375,7 +456,10 @@ const phoneJs = r'''
       q('cc').addEventListener('click', function () { openConfig('/api/catalog/' + c.id + '/configure', c.name, null); });
       list.appendChild(li);
     });
-    $('catnone').classList.toggle('hidden', n > 0);
+    $('catnone').classList.toggle('hidden', catalog.length > 0);
+    var lm = $('catmore');
+    lm.textContent = t.catLoadMore;
+    lm.classList.toggle('hidden', !cat.hasMore);
   }
   function installCat(c) {
     clearBanner();
@@ -455,7 +539,7 @@ const phoneJs = r'''
   $('send').addEventListener('click', send);
   $('csend').addEventListener('click', sendCfg);
   $('cclose').addEventListener('click', function () { show('cfg', false); });
-  $('cf').addEventListener('input', renderCatalog);
+  $('catmore').addEventListener('click', function () { loadCatalog(false, true); });
   $('cu').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendCfg(); });
   $('paste').addEventListener('click', paste);
   $('u').addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
@@ -508,17 +592,20 @@ const _html = r'''<!doctype html>
 <div class="row"><button class="bt b2 f1" id="cclose" type="button" data-t="cfgClose"></button><button class="bt b1 f2" id="csend" type="button" data-t="send"></button></div></div>
 <h2 class="hd h20" data-t="catTitle"></h2>
 <div class="sm" data-t="catHelp"></div>
-<input class="in" id="cf" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="60" aria-label="Filter">
+<div id="chips" class="chips" role="group"></div>
+<div id="morelist" class="chips hidden" role="group"></div>
+<div id="catnote" class="msg wt hidden" role="status"></div>
 <div id="catmsg" class="msg er hidden" role="alert"></div>
 <div id="catnone" class="sm hidden" data-t="catEmpty"></div>
 <ul id="cat" class="col lst"></ul>
+<button class="bt b2 hidden" id="catmore" type="button"></button>
 <h2 class="hd h20" data-t="mine"></h2>
 <div id="none" class="sm hidden" data-t="none"></div>
 <ul id="list" class="col lst"></ul>
 <div class="sm foot" id="host"></div>
 </section>
 </div>
-<template id="cat-tpl"><li class="card"><div class="cd2"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div></div></div><div class="d"></div><div class="row"><button type="button" class="bt b1 ci"></button><button type="button" class="bt b2 cc"></button></div></div></li></template>
+<template id="cat-tpl"><li class="card"><div class="cd2"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div><div class="meta"></div></div><span class="bdg hidden"></span></div><div class="d"></div><div class="row"><button type="button" class="bt b1 ci"></button><button type="button" class="bt b2 cc"></button></div></div></li></template>
 <template id="row-tpl"><li class="card"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div><div class="sm sub"></div></div>
 <button type="button" class="ib up"><svg viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2.5" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
 <button type="button" class="ib down"><svg viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>

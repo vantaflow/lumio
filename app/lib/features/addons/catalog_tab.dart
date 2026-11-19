@@ -36,7 +36,7 @@ const catalogChips = [
 ];
 
 /// Catégories proposées par « Plus… ».
-const _moreCategories = [
+const catalogMoreCategories = [
   CatalogCategories.httpStreams,
   CatalogCategories.usenet,
   CatalogCategories.asianDrama,
@@ -59,7 +59,7 @@ String chipLabel(String id, AppLocalizations l) => switch (id) {
   _ => id,
 };
 
-String _moreLabel(String category, AppLocalizations l) => switch (category) {
+String catalogMoreLabel(String category, AppLocalizations l) => switch (category) {
   CatalogCategories.httpStreams => l.catHttpStreams,
   CatalogCategories.usenet => l.catUsenet,
   CatalogCategories.asianDrama => l.catAsianDrama,
@@ -70,10 +70,31 @@ String _moreLabel(String category, AppLocalizations l) => switch (category) {
   _ => l.catMisc,
 };
 
-/// Onglet « Catalogue » (maquette TV16) : puces de catégories, grille de
-/// cartes, badge « Installé », note de bas de page.
+/// Ligne d'infos d'une carte (partagée avec le portail du téléphone).
+String catalogCardMeta(CatalogEntry e, AppLocalizations l) {
+  if (e.resources.isNotEmpty || e.types.isNotEmpty) {
+    // Ressources réelles du manifest (collection officielle).
+    final parts = [
+      if (e.resources.contains('catalog')) l.resCatalog,
+      if (e.resources.contains('meta')) l.resMeta,
+      if (e.resources.contains('stream')) l.resStream,
+      if (e.resources.contains('subtitles')) l.resSubtitles,
+    ];
+    return parts.isEmpty
+        ? e.types.map((t) => contentTypeLabel(t, l)).join(' · ')
+        : parts.join(' · ');
+  }
+  final s = e.stars;
+  final v = e.version;
+  if (s != null && v != null) return l.catalogCardMeta('$s', v);
+  if (s != null) return l.catalogCardStars('$s');
+  return v == null ? '' : 'v$v';
+}
+
 enum _SheetChoice { install, configure, phone }
 
+/// Onglet « Catalogue » (maquette TV16) : puces de catégories, grille de
+/// cartes, badge « Installé », note de bas de page.
 class CatalogTab extends ConsumerStatefulWidget {
   const CatalogTab({super.key, required this.onUseLink, this.active = true});
 
@@ -178,7 +199,7 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
     final picked = await showTvChoice<String>(
       context,
       title: l.catMoreTitle,
-      options: [for (final c in _moreCategories) (c, _moreLabel(c, l))],
+      options: [for (final c in catalogMoreCategories) (c, catalogMoreLabel(c, l))],
       current: _more,
     );
     if (picked == null || !mounted) return;
@@ -398,26 +419,6 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
     );
   }
 
-  String _cardMeta(CatalogEntry e, AppLocalizations l) {
-    if (e.resources.isNotEmpty || e.types.isNotEmpty) {
-      // Ressources réelles du manifest (collection officielle).
-      final parts = [
-        if (e.resources.contains('catalog')) l.resCatalog,
-        if (e.resources.contains('meta')) l.resMeta,
-        if (e.resources.contains('stream')) l.resStream,
-        if (e.resources.contains('subtitles')) l.resSubtitles,
-      ];
-      return parts.isEmpty
-          ? e.types.map((t) => contentTypeLabel(t, l)).join(' · ')
-          : parts.join(' · ');
-    }
-    final s = e.stars;
-    final v = e.version;
-    if (s != null && v != null) return l.catalogCardMeta('$s', v);
-    if (s != null) return l.catalogCardStars('$s');
-    return v == null ? '' : 'v$v';
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -458,7 +459,7 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
                     const SizedBox(width: 12),
                     _Chip(
                       key: const ValueKey('chip:more'),
-                      label: _more == null ? l.catMore : _moreLabel(_more!, l),
+                      label: _more == null ? l.catMore : catalogMoreLabel(_more!, l),
                       selected: _more != null,
                       onSelect: _pickMore,
                     ),
@@ -567,7 +568,7 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
               _EntryCard(
                 key: ValueKey('card:${e.slug}'),
                 entry: e,
-                meta: _cardMeta(e, l),
+                meta: catalogCardMeta(e, l),
                 installed: installed.contains(e.name.trim().toLowerCase()),
                 autofocus: widget.active && !_focusedOnce && i == 0,
                 onFocus: () => _focusedOnce = true,

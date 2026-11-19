@@ -43,6 +43,64 @@ class _Backend implements PhoneBackend {
       calls.add('enabled:$id:$on');
   @override
   Future<void> remove(String id) async => calls.add('remove:$id');
+  final catalogCalls = <String>[];
+  @override
+  Future<PhoneCatalogPage> catalog({
+    required String lang,
+    String? chip,
+    String? more,
+    int page = 1,
+    bool refresh = false,
+  }) async {
+    catalogCalls.add('$chip|$more|$page|$refresh');
+    return PhoneCatalogPage(
+      chips: const [('popular', 'Populaires'), ('movies', 'Films et séries')],
+      more: const [('usenet', 'Usenet')],
+      chip: chip ?? 'popular',
+      page: page,
+      hasMore: page < 2,
+      note: 'offline',
+      cards: [
+        PhoneCatalogCard(
+          slug: 'torrentio-x',
+          name: 'Torrentio',
+          meta: '★ 10 · v1.0',
+          installed: false,
+          description: 'Flux',
+          logo: Uri.parse('https://cdn.example/logo.png'),
+        ),
+        PhoneCatalogCard(
+          slug: 'plain',
+          name: 'Plain',
+          meta: 'v2',
+          installed: true,
+          logo: Uri.parse('http://insecure.example/l.png'),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<PhoneCatalogChoice?> catalogChoice(String slug) async {
+    catalogCalls.add('choice:$slug');
+    return switch (slug) {
+      'torrentio-x' => PhoneCatalogChoice(
+        install: Uri.parse('https://secret.example/KEY123/manifest.json'),
+        required: false,
+        configure: Uri.parse('https://secret.example/configure'),
+      ),
+      'plain' => PhoneCatalogChoice(
+        install: Uri.parse('https://plain.example/manifest.json'),
+        required: true,
+      ),
+      _ => null,
+    };
+  }
+
+  @override
+  Future<Uri?> reconfigureUrl(String id) async =>
+      Uri.parse('https://secret.example/configure');
+
 }
 
 class _Clock {
@@ -145,6 +203,126 @@ void main() {
     await f.start();
   });
   tearDown(() => f.close());
+
+  group('catalogue et configuration', () {
+    Future<String> firstId(_Fixture f, String cookie, [int i = 0]) async {
+      final list = await f.req('GET', '/api/catalog', cookie: cookie);
+      return ((list.json['items']! as List)[i] as Map<String, Object?>)['id']!
+          as String;
+    }
+
+    Future<_Resp> post(
+      _Fixture f,
+      String path,
+      String cookie,
+      String csrf, [
+      Object? body,
+    ]) => f.req(
+      'POST',
+      path,
+      body: body ?? {},
+      cookie: cookie,
+      origin: true,
+      headers: {'x-csrf-token': csrf},
+    );
+
+    test('catalogue : mêmes puces, pas d\'adresse de manifest, logo https seul',
+        () async {
+      final (cookie, _) = await f.login();
+      final r = await f.req(
+        'GET',
+        '/api/catalog?chip=movies&page=2&refresh=1',
+        cookie: cookie,
+      );
+      expect(r.status, 200);
+      expect(r.body, isNot(contains('KEY123')));
+      expect(r.body, isNot(contains('manifest.json')));
+      expect(r.json['chips'], hasLength(2));
+      expect(r.json['hasMore'], isFalse);
+      expect(r.json['note'], 'offline');
+      final items = (r.json['items']! as List).cast<Map<String, Object?>>();
+      expect(items[0]['logo'], 'https://cdn.example/logo.png');
+      expect(items[1].containsKey('logo'), isFalse);
+      expect(items[1]['installed'], isTrue);
+      expect(f.backend.catalogCalls.last, 'movies|null|2|true');
+    });
+
+    test('page hors bornes : refusée', () async {
+      final (cookie, _) = await f.login();
+      final r = await f.req('GET', '/api/catalog?page=999', cookie: cookie);
+      expect(r.status, 400);
+    });
+
+    test('installer depuis le portail : la TV reçoit la demande', () async {
+      final (cookie, csrf) = await f.login();
+      final id = await firstId(f, cookie);
+      final r = await post(f, '/api/catalog/$id/install', cookie, csrf);
+      expect(r.status, 202);
+      expect(
+        f.adds.pending.value!.url.toString(),
+        'https://secret.example/KEY123/manifest.json',
+      );
+    });
+
+    test('configuration requise : Installer refusé (409)', () async {
+      final (cookie, csrf) = await f.login();
+      final id = await firstId(f, cookie, 1);
+      expect(
+        (await post(f, '/api/catalog/$id/install', cookie, csrf)).status,
+        409,
+      );
+      expect(
+        (await post(f, '/api/catalog/$id/configure', cookie, csrf)).status,
+        404,
+      );
+    });
+
+    test('Configurer : renvoie la page publique /configure', () async {
+      final (cookie, csrf) = await f.login();
+      final id = await firstId(f, cookie);
+      final c = await post(f, '/api/catalog/$id/configure', cookie, csrf);
+      expect(c.status, 200);
+      expect(c.json['url'], 'https://secret.example/configure');
+    });
+
+    test('identifiant inconnu : 404 ; écriture sans CSRF : 403', () async {
+      final (cookie, csrf) = await f.login();
+      expect(
+        (await post(f, '/api/catalog/inconnu/install', cookie, csrf)).status,
+        404,
+      );
+      final nocsrf = await f.req(
+        'POST',
+        '/api/catalog/inconnu/install',
+        body: {},
+        cookie: cookie,
+        origin: true,
+      );
+      expect(nocsrf.status, 403);
+    });
+
+    test('Reconfigurer : page de base ; le lien renvoyé remplace l\'ancien',
+        () async {
+      final (cookie, csrf) = await f.login();
+      final list = await f.req('GET', '/api/addons', cookie: cookie);
+      final id = ((list.json['addons']! as List).first
+          as Map<String, Object?>)['id']! as String;
+      final c = await post(f, '/api/addons/$id/reconfigure', cookie, csrf);
+      expect(c.json['url'], 'https://secret.example/configure');
+      expect(c.body, isNot(contains('org.alpha')));
+      final a = await post(f, '/api/add', cookie, csrf, {
+        'link': 'stremio://secret.example/NEW/manifest.json',
+        'replaces': id,
+      });
+      expect(a.status, 202);
+      expect(f.adds.pending.value!.replaces, 'org.alpha');
+      final bad = await post(f, '/api/add', cookie, csrf, {
+        'link': 'https://x.example/manifest.json',
+        'replaces': 'zzz',
+      });
+      expect(bad.status, 404);
+    });
+  });
 
   group('démarrage', () {
     test('lié à l\'adresse du réseau local, code à 6 chiffres', () {

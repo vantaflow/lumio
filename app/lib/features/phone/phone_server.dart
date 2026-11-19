@@ -39,18 +39,55 @@ class PhoneAddonView {
   final bool broken;
 }
 
-/// Addon du catalogue tel que le voit le téléphone : jamais d'adresse de
-/// manifest ni de logo, seulement des textes du catalogue public.
-class PhoneCatalogItem {
-  const PhoneCatalogItem({
+/// Carte du catalogue telle que la voit le téléphone : les mêmes données que
+/// la TV (nom, description, logo public, étoiles/version, badge « Installé »),
+/// jamais l'adresse d'un manifest.
+class PhoneCatalogCard {
+  const PhoneCatalogCard({
     required this.slug,
     required this.name,
+    required this.meta,
+    required this.installed,
     this.description,
+    this.logo,
   });
 
   final String slug;
   final String name;
+  final String meta;
+  final bool installed;
   final String? description;
+  final Uri? logo;
+}
+
+/// Une page du catalogue (même source, même cache, même analyse que la TV).
+class PhoneCatalogPage {
+  const PhoneCatalogPage({
+    required this.chips,
+    required this.more,
+    required this.chip,
+    required this.cards,
+    required this.hasMore,
+    required this.page,
+    this.moreSelected,
+    this.moreLabel,
+    this.note,
+  });
+
+  /// (identifiant, libellé) des puces, dans l'ordre de la TV.
+  final List<(String, String)> chips;
+
+  /// (identifiant, libellé) des catégories de « Plus… ».
+  final List<(String, String)> more;
+  final String chip;
+  final String? moreSelected;
+  final String? moreLabel;
+  final List<PhoneCatalogCard> cards;
+  final bool hasMore;
+  final int page;
+
+  /// `offline` ou `fallback` : même information que la note de la TV.
+  final String? note;
 }
 
 /// Choix d'installation d'un addon du catalogue. [install] reste sur la TV ;
@@ -74,8 +111,15 @@ abstract class PhoneBackend {
   Future<void> setEnabled(String id, bool on);
   Future<void> remove(String id);
 
-  /// Catalogue communautaire (cache de la TV) : textes publics seulement.
-  Future<List<PhoneCatalogItem>> catalog();
+  /// Catalogue communautaire : mêmes puces, mêmes cartes et même cache que
+  /// la TV.
+  Future<PhoneCatalogPage> catalog({
+    required String lang,
+    String? chip,
+    String? more,
+    int page = 1,
+    bool refresh = false,
+  });
 
   /// Adresse d'installation et page de configuration d'un addon du catalogue.
   Future<PhoneCatalogChoice?> catalogChoice(String slug);
@@ -430,14 +474,45 @@ class PhoneServer implements PhoneSession {
       });
     }
     if (m == 'GET' && seg.length == 2 && seg[1] == 'catalog') {
-      final list = await backend.catalog();
+      final q = req.uri.queryParameters;
+      final pageNo = int.tryParse(q['page'] ?? '1') ?? 1;
+      if (pageNo < 1 || pageNo > 50) throw _HttpError(400, 'bad_request');
+      final p = await backend.catalog(
+        lang: lang,
+        chip: q['chip'],
+        more: q['more'],
+        page: pageNo,
+        refresh: q['refresh'] == '1',
+      );
+      for (final c in p.cards) {
+        _catalogSlugs[_opaque('catalog:${c.slug}')] = c.slug;
+      }
+      while (_catalogSlugs.length > 600) {
+        _catalogSlugs.remove(_catalogSlugs.keys.first);
+      }
       return _json(req, 200, {
+        'chips': [
+          for (final (id, label) in p.chips) {'id': id, 'label': label},
+        ],
+        'more': [
+          for (final (id, label) in p.more) {'id': id, 'label': label},
+        ],
+        'chip': p.chip,
+        if (p.moreSelected != null) 'moreSelected': p.moreSelected,
+        if (p.moreLabel != null) 'moreLabel': p.moreLabel,
+        'page': p.page,
+        'hasMore': p.hasMore,
+        if (p.note != null) 'note': p.note,
         'items': [
-          for (final c in list.take(200))
+          for (final c in p.cards)
             {
               'id': _opaque('catalog:${c.slug}'),
               'name': c.name,
               if (c.description != null) 'description': c.description,
+              if (c.logo != null && c.logo!.scheme == 'https')
+                'logo': c.logo.toString(),
+              'meta': c.meta,
+              'installed': c.installed,
             },
         ],
       });
@@ -447,13 +522,9 @@ class PhoneServer implements PhoneSession {
         seg[1] == 'catalog' &&
         (seg[3] == 'install' || seg[3] == 'configure')) {
       await _body(req);
-      PhoneCatalogChoice? choice;
-      for (final c in await backend.catalog()) {
-        if (_opaque('catalog:${c.slug}') == seg[2]) {
-          choice = await backend.catalogChoice(c.slug);
-          break;
-        }
-      }
+      final slug = _catalogSlugs[seg[2]];
+      if (slug == null) throw _HttpError(404, 'not_found');
+      final choice = await backend.catalogChoice(slug);
       if (choice == null) throw _HttpError(404, 'not_found');
       if (seg[3] == 'configure') {
         final cfg = choice.configure;
@@ -618,6 +689,10 @@ class PhoneServer implements PhoneSession {
     _secret,
   ).convert(utf8.encode(id)).toString().substring(0, 16);
 
+  /// Identifiant opaque du catalogue -> identifiant du site (rempli à chaque
+  /// page servie, borné).
+  final _catalogSlugs = <String, String>{};
+
   Future<String> _resolve(String opaque) async {
     for (final a in await backend.addons()) {
       if (_opaque(a.id) == opaque) return a.id;
@@ -675,7 +750,7 @@ class PhoneServer implements PhoneSession {
 
   static const _csp =
       "default-src 'none'; script-src 'self'; style-src 'self'; "
-      "connect-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; "
+      "connect-src 'self'; img-src 'self' https:; font-src 'self'; base-uri 'none'; "
       "form-action 'none'; frame-ancestors 'none'";
 
   Future<void> _json(

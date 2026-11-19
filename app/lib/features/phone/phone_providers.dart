@@ -1,12 +1,20 @@
 import 'dart:io';
+import 'dart:ui' show Locale;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/addons/catalog_providers.dart';
-import 'package:lumio/features/addons/catalog_tab.dart' show catalogChips;
+import 'package:lumio/features/addons/catalog_tab.dart'
+    show
+        catalogCardMeta,
+        catalogChips,
+        catalogMoreCategories,
+        catalogMoreLabel,
+        chipLabel;
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/phone/lan_address.dart';
 import 'package:lumio/features/phone/phone_add.dart';
 import 'package:lumio/features/phone/phone_server.dart';
+import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -73,35 +81,60 @@ class AppPhoneBackend implements PhoneBackend {
       _ref.read(addonsProvider.notifier).remove(id);
 
   @override
-  Future<List<PhoneCatalogItem>> catalog() async {
+  Future<PhoneCatalogPage> catalog({
+    required String lang,
+    String? chip,
+    String? more,
+    int page = 1,
+    bool refresh = false,
+  }) async {
+    final l = lookupAppLocalizations(Locale(lang == 'en' ? 'en' : 'fr'));
+    final chipId = catalogChips.any((c) => c.id == chip) ? chip! : 'popular';
+    final moreId = catalogMoreCategories.contains(more) ? more : null;
+    final categories = moreId != null
+        ? [moreId]
+        : catalogChips.firstWhere((c) => c.id == chipId).categories;
     final r = await _ref
         .read(addonCatalogServiceProvider)
-        .list(CatalogQuery(categories: catalogChips.first.categories));
-    return [
-      for (final e in r.value.entries)
-        PhoneCatalogItem(
-          slug: e.slug,
-          name: e.name,
-          description: e.description,
-        ),
-    ];
+        .list(
+          CatalogQuery(categories: categories, page: page),
+          refresh: refresh && page == 1,
+        );
+    final installed = <String>{
+      for (final a in await _ref.read(addonsProvider.future))
+        a.name.trim().toLowerCase(),
+    };
+    return PhoneCatalogPage(
+      chips: [for (final c in catalogChips) (c.id, chipLabel(c.id, l))],
+      more: [for (final c in catalogMoreCategories) (c, catalogMoreLabel(c, l))],
+      chip: chipId,
+      moreSelected: moreId,
+      moreLabel: moreId == null ? null : catalogMoreLabel(moreId, l),
+      page: r.value.page,
+      hasMore: r.value.hasMore,
+      note: switch (r.origin) {
+        CatalogOrigin.staleCache => 'offline',
+        CatalogOrigin.fallback => 'fallback',
+        _ => null,
+      },
+      cards: [
+        for (final e in r.value.entries)
+          PhoneCatalogCard(
+            slug: e.slug,
+            name: e.name,
+            description: e.description,
+            logo: e.logo,
+            meta: catalogCardMeta(e, l),
+            installed: installed.contains(e.name.trim().toLowerCase()),
+          ),
+      ],
+    );
   }
 
   @override
   Future<PhoneCatalogChoice?> catalogChoice(String slug) async {
-    final service = _ref.read(addonCatalogServiceProvider);
-    final page = await service.list(
-      CatalogQuery(categories: catalogChips.first.categories),
-    );
-    CatalogEntry? entry;
-    for (final e in page.value.entries) {
-      if (e.slug == slug) entry = e;
-    }
-    if (entry == null) return null;
-    var instances = entry.instances;
-    if (instances.isEmpty) {
-      instances = (await service.detail(slug)).value.instances;
-    }
+    final d = (await _ref.read(addonCatalogServiceProvider).detail(slug)).value;
+    final instances = d.instances;
     if (instances.isEmpty) return null;
     // Une instance utilisable sans réglage d'abord, sinon la première.
     final pick = instances.firstWhere(

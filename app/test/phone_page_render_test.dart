@@ -74,6 +74,26 @@ class _B implements PhoneBackend {
   @override
   Future<List<PhoneAddonView>> addons() async => items;
   @override
+  Future<PhoneCatalogPage> catalog({
+    required String lang,
+    String? chip,
+    String? more,
+    int page = 1,
+    bool refresh = false,
+  }) async => const PhoneCatalogPage(
+    chips: [],
+    more: [],
+    chip: 'popular',
+    cards: [],
+    hasMore: false,
+    page: 1,
+  );
+  @override
+  Future<PhoneCatalogChoice?> catalogChoice(String slug) async => null;
+  @override
+  Future<Uri?> reconfigureUrl(String id) async => null;
+
+  @override
   Future<void> move(String id, int delta) async {}
   @override
   Future<void> setEnabled(String id, bool on) async {}
