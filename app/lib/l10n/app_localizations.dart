@@ -3733,6 +3733,24 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'L\'ordre décide de la priorité des sources.'**
   String get addonsPriorityHint;
+
+  /// No description provided for @profileAdult.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profil adulte'**
+  String get profileAdult;
+
+  /// No description provided for @profileChange.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer'**
+  String get profileChange;
+
+  /// No description provided for @settingsBackHome.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retour : accueil'**
+  String get settingsBackHome;
 }
 
 class _AppLocalizationsDelegate

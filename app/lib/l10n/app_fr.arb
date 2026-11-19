@@ -1248,5 +1248,8 @@
   },
   "searchMoviesAndSeries": "Films et séries",
   "pinChecking": "Vérification…",
-  "addonsPriorityHint": "L'ordre décide de la priorité des sources."
+  "addonsPriorityHint": "L'ordre décide de la priorité des sources.",
+  "profileAdult": "Profil adulte",
+  "profileChange": "Changer",
+  "settingsBackHome": "Retour : accueil"
 }

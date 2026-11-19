@@ -181,6 +181,7 @@ void main() {
   ) async {
     final h = _H(tester)..start();
     await h.pump(const SettingsScreen());
+    await openSettingsPageFor(tester, 'localFolders', h.settle);
     expect(find.text('Dossiers locaux'), findsWidgets);
     await h.tapTile('localFolders');
     expect(find.textContaining('Aucun dossier'), findsOneWidget);

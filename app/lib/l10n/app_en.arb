@@ -1026,5 +1026,8 @@
   },
   "searchMoviesAndSeries": "Movies and series",
   "pinChecking": "Checking…",
-  "addonsPriorityHint": "The order sets the priority of sources."
+  "addonsPriorityHint": "The order sets the priority of sources.",
+  "profileAdult": "Adult profile",
+  "profileChange": "Change",
+  "settingsBackHome": "Back: home"
 }

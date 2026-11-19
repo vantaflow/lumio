@@ -2172,4 +2172,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addonsPriorityHint => 'The order sets the priority of sources.';
+
+  @override
+  String get profileAdult => 'Adult profile';
+
+  @override
+  String get profileChange => 'Change';
+
+  @override
+  String get settingsBackHome => 'Back: home';
 }

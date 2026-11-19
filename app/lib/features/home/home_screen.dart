@@ -171,10 +171,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Retour télécommande : contenu -> barre haute (page remontée) ; barre
   /// haute -> « Accueil » ; « Accueil » -> confirmation « Quitter Lumio ? ».
   Future<void> _handleBack() async {
-    // ignore: avoid_print
-    print(
-      'LUMIO_PERF back top=${_topBarFocused.value} home=${_topBarNode.hasFocus}',
-    );
     if (!_topBarFocused.value) {
       _backToTop();
       return;

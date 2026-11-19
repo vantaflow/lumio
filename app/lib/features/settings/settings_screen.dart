@@ -4,11 +4,13 @@ import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
+import 'package:lumio/features/addons/add_addon_dialog.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_screen.dart';
+import 'package:lumio/features/home/tv_home.dart' show LumioMark;
 import 'package:lumio/features/profiles/profile_picker_screen.dart'
-    show switchProfileFlow;
+    show kidLabel, switchProfileFlow;
 import 'package:lumio/features/party/party_providers.dart';
 import 'package:lumio/features/party/party_screen.dart';
 import 'package:lumio/features/settings/backup_section.dart';
@@ -84,6 +86,7 @@ const _qualityChoices = [
 
 /// Catégories du rail des réglages (maquette TV10).
 enum SettingsCategory {
+  general,
   sources,
   playback,
   torrents,
@@ -91,7 +94,6 @@ enum SettingsCategory {
   tracking,
   party,
   backup,
-  general,
 }
 
 /// Réglages (maquettes TV10, TV14, TV15, TV47) : rail de catégories à gauche,
@@ -106,7 +108,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   int _versionPresses = 0;
-  SettingsCategory _cat = SettingsCategory.sources;
+  SettingsCategory _cat = SettingsCategory.general;
 
   void _tellFailure() {
     if (!mounted) return;
@@ -152,6 +154,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   ).push(MaterialPageRoute<void>(builder: (_) => screen));
 
   List<SettingsCategory> get _cats => [
+    SettingsCategory.general,
     SettingsCategory.sources,
     SettingsCategory.playback,
     SettingsCategory.torrents,
@@ -159,7 +162,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     SettingsCategory.tracking,
     if (ref.watch(partyClientProvider) != null) SettingsCategory.party,
     SettingsCategory.backup,
-    SettingsCategory.general,
   ];
 
   String _catLabel(AppLocalizations l, SettingsCategory c) => switch (c) {
@@ -199,7 +201,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       label: _catLabel(l, cat),
       selected: _cat == cat,
       autofocus: rememberedCat == null
-          ? cat == SettingsCategory.sources
+          ? cat == SettingsCategory.general
           : rememberedCat == cat.name,
       onFocus: () {
         memory.remember(settingsRouteKey, cat.name, row: 'rail');
@@ -253,27 +255,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               )
             : Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
                     width: 480,
                     color: c.bgAlt,
-                    padding: const EdgeInsets.fromLTRB(72, 72, 32, 0),
-                    child: SingleChildScrollView(
-                      clipBehavior: Clip.none,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 28),
-                            child: title,
+                    padding: const EdgeInsets.fromLTRB(56, 56, 32, 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            const LumioMark(size: 40),
+                            const SizedBox(width: 14),
+                            Expanded(child: title),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _ProfileCard(
+                          onChange: () => switchProfileFlow(
+                            context,
+                            ref,
+                            beforeSelect: () => Navigator.of(
+                              context,
+                            ).popUntil((r) => r.isFirst),
                           ),
-                          for (final cat in cats)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: railItem(cat),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            clipBehavior: Clip.none,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                for (final cat in cats)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: railItem(cat),
+                                  ),
+                              ],
                             ),
-                        ],
-                      ),
+                          ),
+                        ),
+                        Text(
+                          '${l.versionValue(ref.watch(appVersionProvider).value ?? '')}'
+                          ' · ${l.settingsBackHome}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontSize: 24, color: c.textMuted),
+                        ),
+                      ],
                     ),
                   ),
                   Expanded(
@@ -315,7 +345,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         label: '+ ${l.addAddon}',
         height: 72,
         fontSize: 28,
-        onPressed: () => _push(const AddonsScreen()),
+        onPressed: () => showAddAddonDialog(context),
       ),
       children: [
         _Section(l.secAddons),
@@ -658,6 +688,88 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
+/// Carte du profil actif en haut du rail (maquette TV10).
+class _ProfileCard extends ConsumerWidget {
+  const _ProfileCard({required this.onChange});
+
+  final VoidCallback onChange;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.lumio;
+    final l = context.l10n;
+    final p = ref.watch(currentProfileProvider);
+    final name = (p?.name ?? '').trim();
+    final kind = p == null ? '' : (p.isKid ? kidLabel(p, l) : l.profileAdult);
+    return FocusableCard(
+      key: const ValueKey('settings-profile'),
+      scale: 1.02,
+      borderRadius: BorderRadius.circular(22),
+      semanticLabel: '$name, ${l.profileChange}',
+      onSelect: onChange,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: c.accent,
+              ),
+              child: Text(
+                name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+                style: TextStyle(
+                  fontFamily: 'Bricolage Grotesque',
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  color: c.onAccent,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    kind,
+                    style: TextStyle(fontSize: 24, color: c.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              l.profileChange,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: c.secondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Entrée du rail : prend le focus = affiche sa page (maquette `.mi`).
 class _RailItem extends StatelessWidget {
   const _RailItem({
@@ -842,7 +954,8 @@ class _Tile extends ConsumerWidget {
             ),
             const SizedBox(width: 24),
             if (value != null)
-              Flexible(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 680),
                 child: Container(
                   height: 56,
                   padding: const EdgeInsets.symmetric(horizontal: 24),

@@ -5,6 +5,7 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 
 /// Logo Lumio (anneau ambre + point turquoise) des maquettes, 44 dp.
@@ -164,43 +165,87 @@ class TvTopBar extends ConsumerWidget {
     );
   }
 
-  /// Menu de l'avatar : les fonctions qui ne tiennent pas dans la barre.
+  /// Menu de l'avatar (maquette TV43) : s'ouvre sous l'avatar, à droite, sur
+  /// le voile des pop-ups ; Retour le ferme.
   Future<void> _openMenu(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
-    final entries = <(String, VoidCallback)>[
-      (l.homeManageList, onLibrary),
-      (l.homeCalendar, onCalendar),
-      (l.homeCustomize, onCustomize),
-      (l.tvSwitchProfile, () => switchProfileFlow(context, ref)),
+    final entries = <(IconData, String, VoidCallback)>[
+      (Icons.bookmark_border, l.homeManageList, onLibrary),
+      (Icons.event_outlined, l.homeCalendar, onCalendar),
+      (Icons.tune, l.homeCustomize, onCustomize),
+      (
+        Icons.switch_account_outlined,
+        l.tvSwitchProfile,
+        () => switchProfileFlow(context, ref),
+      ),
     ];
-    return showDialog<void>(
+    final c = context.lumio;
+    return showGeneralDialog<void>(
       context: context,
-      builder: (ctx) => Dialog(
-        key: const ValueKey('home-avatar-menu'),
-        child: Padding(
-          padding: const EdgeInsets.all(36),
-          child: SizedBox(
-            width: 560,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < entries.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 16),
-                  TvButton(
-                    autofocus: i == 0,
-                    expand: true,
-                    kind: TvButtonKind.secondary,
-                    height: 80,
-                    fontSize: 30,
-                    label: entries[i].$1,
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      entries[i].$2();
-                    },
-                  ),
-                ],
-              ],
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: const Color(0xC206080C),
+      transitionDuration: const Duration(milliseconds: 120),
+      pageBuilder: (ctx, _, _) => TvScaffold(
+        onBack: () => Navigator.of(ctx).pop(),
+        child: Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 136, right: 96),
+            child: Material(
+              key: const ValueKey('home-avatar-menu'),
+              color: c.surface,
+              borderRadius: BorderRadius.circular(28),
+              child: Container(
+                width: 560,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < entries.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 12),
+                      FocusableCard(
+                        autofocus: i == 0,
+                        scale: 1.02,
+                        borderRadius: BorderRadius.circular(22),
+                        semanticLabel: entries[i].$2,
+                        onSelect: () {
+                          Navigator.of(ctx).pop();
+                          entries[i].$3();
+                        },
+                        child: Container(
+                          height: 88,
+                          padding: const EdgeInsets.symmetric(horizontal: 28),
+                          decoration: BoxDecoration(
+                            color: c.surfaceFocus,
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(entries[i].$1, size: 36, color: c.textMuted),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: Text(
+                                  entries[i].$2,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'Manrope',
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.w700,
+                                    fontVariations: [FontVariation.weight(700)],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),
