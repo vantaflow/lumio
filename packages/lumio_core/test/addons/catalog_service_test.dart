@@ -276,6 +276,33 @@ void main() {
       );
     });
 
+    test(
+      'anime : les addons de catalogue anime de la collection, sans doublon de sous-titres',
+      () async {
+        Map<String, Object?> e(String id, List types, List res) => {
+          'transportUrl': 'https://$id.example/manifest.json',
+          'manifest': {
+            'id': id,
+            'name': id,
+            'types': types,
+            'resources': res,
+          },
+        };
+        site.routes['/addonscollection.json'] = jsonEncode([
+          e('kitsu', ['anime', 'movie'], ['catalog', 'meta', 'subtitles']),
+          e('subs', ['anime', 'movie'], ['subtitles']),
+          e('films', ['movie'], ['catalog', 'meta']),
+        ]);
+        final r = await service.communityAnime();
+        expect([for (final x in r) x.slug], ['kitsu']);
+      },
+    );
+
+    test('anime : site et collection injoignables, liste vide', () async {
+      site.offline = true;
+      expect(await service.communityAnime(), isEmpty);
+    });
+
     test('collection mise en cache pour le prochain repli', () async {
       site.routes['/addons'] = const FetchResponse(status: 503, body: []);
       await service.list(const CatalogQuery());

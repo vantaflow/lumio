@@ -24,6 +24,10 @@ class CatalogChip {
   /// Puce « Officiels » : la collection officielle de Stremio d'abord, puis
   /// les populaires du site (sans doublon).
   bool get official => id == 'official';
+
+  /// Puce « Anime » : les addons de catalogue d'anime de la collection
+  /// communautaire d'abord (Anime Kitsu), puis les résultats du site.
+  bool get anime => id == 'anime';
 }
 
 const catalogChips = [
@@ -162,6 +166,14 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
           official = null;
         }
       }
+      List<CatalogEntry> animeFirst = const [];
+      if (_more == null && catalogChips[_chip].anime) {
+        try {
+          animeFirst = await service.communityAnime(refresh: refresh);
+        } catch (_) {
+          animeFirst = const [];
+        }
+      }
       CatalogResult<CatalogPage> r;
       try {
         r = await service.list(
@@ -180,12 +192,14 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
       setState(() {
         _last = r;
         _entries.addAll(
-          official == null
-              ? r.value.entries
-              : AddonCatalogService.mergeOfficial(
+          official != null
+              ? AddonCatalogService.mergeOfficial(
                   official.value.entries,
                   r.value.entries,
-                ),
+                )
+              : animeFirst.isNotEmpty
+              ? AddonCatalogService.mergeOfficial(animeFirst, r.value.entries)
+              : r.value.entries,
         );
         _loading = false;
       });

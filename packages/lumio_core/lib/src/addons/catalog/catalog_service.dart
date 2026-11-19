@@ -107,6 +107,20 @@ class AddonCatalogService {
     return CatalogResult(cached.value, CatalogOrigin.staleCache, cached.at);
   }
 
+  /// Addons de catalogue d'anime de la collection communautaire de Stremio
+  /// (Anime Kitsu…) : le site ne les classe pas toujours en tête de sa
+  /// catégorie « anime » et la collection officielle n'en contient pas. Types
+  /// `anime` ET ressource `catalog` (les addons de seuls sous-titres sont
+  /// exclus). Liste vide si la collection est injoignable.
+  Future<List<CatalogEntry>> communityAnime({bool refresh = false}) async {
+    final fb = await _collection(refresh: refresh);
+    if (fb == null) return const [];
+    return [
+      for (final e in fb.value.entries)
+        if (e.types.contains('anime') && e.resources.contains('catalog')) e,
+    ];
+  }
+
   /// Officiels d'abord, puis le reste ; une entrée déjà vue (même adresse de
   /// manifest, même identifiant ou même nom) n'apparaît qu'une fois.
   static List<CatalogEntry> mergeOfficial(

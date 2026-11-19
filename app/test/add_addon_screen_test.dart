@@ -132,6 +132,39 @@ void main() {
     await h.close();
   });
 
+  testWidgets('Anime : Anime Kitsu (collection communautaire) en premier', (
+    t,
+  ) async {
+    final site = FakeCatalogSite(
+      cards: _cards,
+      details: _details(),
+      collectionJson:
+          '[{"transportUrl":"https://anime-kitsu.strem.fun/manifest.json",'
+          '"manifest":{"id":"community.anime.kitsu","name":"Anime Kitsu",'
+          '"description":"Catalogue anime","types":["anime","movie"],'
+          '"resources":["catalog","meta"]}}]',
+    );
+    final h = AppHarness(t, size: const Size(1920, 1080));
+    await h.pump(
+      _Launcher(ValueNotifier(null)),
+      extra: [catalogOverride(site)],
+    );
+    await _open(h, t);
+    await t.tap(find.byKey(const ValueKey('chip:anime')));
+    await h.settle();
+    final cards = find.byWidgetPredicate(
+      (w) =>
+          w.key is ValueKey &&
+          '${(w.key! as ValueKey).value}'.startsWith('card:'),
+    );
+    expect(
+      (cards.first.evaluate().single.widget.key! as ValueKey).value,
+      'card:community.anime.kitsu',
+    );
+    expect(find.byKey(const ValueKey('card:alpha')), findsOneWidget);
+    await h.close();
+  });
+
   testWidgets('« Plus… » : catégories supplémentaires', (t) async {
     final site = FakeCatalogSite(cards: _cards, details: _details());
     final h = AppHarness(t, size: const Size(1920, 1080));
