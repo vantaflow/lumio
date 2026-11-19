@@ -209,55 +209,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: TvScaffold(
           onBack: _handleBack,
           child: Scaffold(
-            body: Column(
-              children: [
-                const UpdateBanner(),
-                Focus(
-                  skipTraversal: true,
-                  canRequestFocus: false,
-                  onFocusChange: (f) {
-                    _topBarFocused.value = f;
-                    if (f && _scroll.hasClients && _scroll.offset > 0) {
-                      _scroll.animateTo(
-                        0,
-                        duration: LumioMotion.screen,
-                        curve: Curves.easeOut,
-                      );
-                    }
-                  },
-                  child: tv
-                      ? TvTopBar(
-                          homeNode: _topBarNode,
-                          onMovies: () => _openSearch(type: 'movie'),
-                          onSeries: () => _openSearch(type: 'series'),
-                          onSearch: _openSearch,
-                          onSettings: _openSettings,
-                          onLibrary: _openLibrary,
-                          onCalendar: _openCalendar,
-                          onCustomize: _openEditor,
-                        )
-                      : _TopBar(
-                          customizeNode: _topBarNode,
-                          onCustomize: _openEditor,
-                          onSearch: _openSearch,
-                          onLibrary: _openLibrary,
-                          onCalendar: _openCalendar,
-                          onSettings: _openSettings,
-                        ),
-                ),
-                if (!tv) SourcesReminderCard(onAdd: _openAddons),
-                Expanded(
-                  child: _HomeBody(
-                    tv: tv,
-                    scroll: _scroll,
-                    onOpenAddons: _openAddons,
-                    onAddAddon: _addAddon,
-                    onAddLocal: _addLocalFolder,
-                    onAddJellyfin: _addJellyfin,
-                    onOpenItem: _open,
+            body: RowTraversalGroup(
+              child: Column(
+                children: [
+                  const UpdateBanner(),
+                  Focus(
+                    skipTraversal: true,
+                    canRequestFocus: false,
+                    onFocusChange: (f) {
+                      _topBarFocused.value = f;
+                      if (f && _scroll.hasClients && _scroll.offset > 0) {
+                        _scroll.animateTo(
+                          0,
+                          duration: LumioMotion.screen,
+                          curve: Curves.easeOut,
+                        );
+                      }
+                    },
+                    child: tv
+                        ? TvTopBar(
+                            homeNode: _topBarNode,
+                            onMovies: () => _openSearch(type: 'movie'),
+                            onSeries: () => _openSearch(type: 'series'),
+                            onSearch: _openSearch,
+                            onSettings: _openSettings,
+                            onLibrary: _openLibrary,
+                            onCalendar: _openCalendar,
+                            onCustomize: _openEditor,
+                          )
+                        : _TopBar(
+                            customizeNode: _topBarNode,
+                            onCustomize: _openEditor,
+                            onSearch: _openSearch,
+                            onLibrary: _openLibrary,
+                            onCalendar: _openCalendar,
+                            onSettings: _openSettings,
+                          ),
                   ),
-                ),
-              ],
+                  if (!tv) SourcesReminderCard(onAdd: _openAddons),
+                  Expanded(
+                    child: _HomeBody(
+                      tv: tv,
+                      scroll: _scroll,
+                      onOpenAddons: _openAddons,
+                      onAddAddon: _addAddon,
+                      onAddLocal: _addLocalFolder,
+                      onAddJellyfin: _addJellyfin,
+                      onOpenItem: _open,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -439,33 +441,31 @@ class _HomeBody extends ConsumerWidget {
     final lead = hero == null ? 0 : 1;
     return _HeroPresent(
       present: hero != null,
-      child: RowTraversalGroup(
-        child: ListView.builder(
-          controller: scroll,
-          cacheExtent: 1500,
-          padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
-          itemCount: ids.length + lead,
-          itemBuilder: (context, index) {
-            if (hero != null && index == 0) {
-              return _HomeHero(key: const ValueKey('home-hero'), entry: hero);
-            }
-            final i = index - lead;
-            final id = ids[i];
-            return KeyedSubtree(
-              key: ValueKey(id),
-              child: switch (id) {
-                continueRowId => _ContinueRow(tvTop: hero != null ? 28 : 8),
-                libraryRowId => _LibraryRow(onOpenItem: onOpenItem),
-                localRowId => _LocalRow(onOpenItem: onOpenItem),
-                _ when id.startsWith('jf:') => _JellyfinRowView(
-                  rowId: id,
-                  onOpenItem: onOpenItem,
-                ),
-                _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
-              },
-            );
-          },
-        ),
+      child: ListView.builder(
+        controller: scroll,
+        cacheExtent: 1500,
+        padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
+        itemCount: ids.length + lead,
+        itemBuilder: (context, index) {
+          if (hero != null && index == 0) {
+            return _HomeHero(key: const ValueKey('home-hero'), entry: hero);
+          }
+          final i = index - lead;
+          final id = ids[i];
+          return KeyedSubtree(
+            key: ValueKey(id),
+            child: switch (id) {
+              continueRowId => _ContinueRow(tvTop: hero != null ? 28 : 8),
+              libraryRowId => _LibraryRow(onOpenItem: onOpenItem),
+              localRowId => _LocalRow(onOpenItem: onOpenItem),
+              _ when id.startsWith('jf:') => _JellyfinRowView(
+                rowId: id,
+                onOpenItem: onOpenItem,
+              ),
+              _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
+            },
+          );
+        },
       ),
     );
   }

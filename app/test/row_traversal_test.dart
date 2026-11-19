@@ -87,6 +87,33 @@ void main() {
     expect(_focused(), 'b2');
   });
 
+  testWidgets('bas depuis une carte à droite : le héros (2 boutons à gauche)', (
+    t,
+  ) async {
+    await t.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RowTraversalGroup(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [_row('n', 6), _row('h', 2), _row('c', 6)],
+            ),
+          ),
+        ),
+      ),
+    );
+    FocusManager.instance.rootScope.descendants
+        .firstWhere((n) => n.debugLabel == 'n5')
+        .requestFocus();
+    await t.pump();
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await t.pump();
+    expect(_focused(), 'h1');
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await t.pump();
+    expect(_focused(), 'c1');
+  });
+
   testWidgets('gauche et droite : parcours par défaut', (t) async {
     await t.pumpWidget(
       MaterialApp(
