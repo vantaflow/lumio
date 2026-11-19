@@ -4385,7 +4385,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsManagePhonePress.
   ///
   /// In fr, this message translates to:
-  /// **'Appuyez sur OK pour ouvrir la page'**
+  /// **'Appuyez sur OK'**
   String get settingsManagePhonePress;
 
   /// No description provided for @phoneConnected.

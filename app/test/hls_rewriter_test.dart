@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/player/hls_rewriter.dart';
 
 void main() {
+  pruneTests();
   final playlist = Uri.parse('https://h/a/b.m3u8');
   Uri wrap(Uri u) => Uri.parse('http://p/x?u=${u.toString()}');
 
@@ -83,5 +84,77 @@ void main() {
     expect(out, contains('u=blocked:'));
     expect(out, contains('u=https://h/a/seg.ts'));
     expect(seen.where((u) => u.scheme == 'blocked').length, 2);
+  });
+}
+
+String _master(List<(int bw, String res, String codecs, String audio)> v) {
+  final b = StringBuffer('#EXTM3U\n#EXT-X-VERSION:6\n');
+  for (final g in ['a1', 'a2']) {
+    b.writeln(
+      '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="$g",NAME="English",URI="$g/p.m3u8"',
+    );
+  }
+  b.writeln(
+    '#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="s1",NAME="Fr",URI="s/p.m3u8"',
+  );
+  for (var i = 0; i < v.length; i++) {
+    final e = v[i];
+    b.writeln(
+      '#EXT-X-STREAM-INF:BANDWIDTH=${e.$1},RESOLUTION=${e.$2},'
+      'CODECS="${e.$3}",AUDIO="${e.$4}",SUBTITLES="s1"\nv$i/p.m3u8',
+    );
+  }
+  b.writeln('#EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=1000,URI="i/p.m3u8"');
+  return b.toString();
+}
+
+void pruneTests() {
+  test(
+    'maître à 28 variantes : une seule gardée, Dolby Vision et images clés exclus',
+    () {
+      final v = <(int, String, String, String)>[
+        for (var i = 1; i <= 8; i++)
+          (i * 1000000, '${i * 240}x${i * 135}', 'hvc1.2.4.L120', 'a1'),
+        (20000000, '3840x2160', 'hvc1.2.4.L153', 'a2'),
+        (9000000, '1920x1080', 'dvh1.05.06', 'a2'),
+      ];
+      final out = pruneHlsMaster(_master(v));
+      final infos = out
+          .split('\n')
+          .where((l) => l.startsWith('#EXT-X-STREAM-INF'));
+      expect(infos.length, 1);
+      final three = pruneHlsMaster(_master(v), maxVariants: 3);
+      expect(
+        three
+            .split('\n')
+            .where((l) => l.startsWith('#EXT-X-STREAM-INF'))
+            .length,
+        3,
+      );
+      expect(three, contains('BANDWIDTH=1000000'));
+      expect(out, isNot(contains('dvh1')));
+      expect(out, isNot(contains('3840x2160')));
+      expect(out, isNot(contains('I-FRAME')));
+      // La meilleure variante ≤ 1080 p (8 Mb/s, 1920x1080).
+      expect(out, contains('BANDWIDTH=8000000'));
+      // Seuls les groupes audio référencés restent (a2 n'est plus utilisé).
+      expect(out, contains('GROUP-ID="a1"'));
+      expect(out, isNot(contains('GROUP-ID="a2"')));
+      expect(out, contains('TYPE=SUBTITLES'));
+      // Chaque variante gardée garde son adresse.
+      for (final l in out.split('\n')) {
+        if (l.startsWith('#EXT-X-STREAM-INF')) {
+          final i = out.split('\n').indexOf(l);
+          expect(out.split('\n')[i + 1], startsWith('v'));
+        }
+      }
+    },
+  );
+
+  test('peu de variantes ou pas un maître : inchangé', () {
+    final few = _master([(1000000, '640x360', 'avc1.4d401e', 'a1')]);
+    expect(pruneHlsMaster(few), few);
+    const media = '#EXTM3U\n#EXT-X-TARGETDURATION:4\n#EXTINF:4,\nseg1.ts\n';
+    expect(pruneHlsMaster(media), media);
   });
 }

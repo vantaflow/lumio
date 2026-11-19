@@ -97,14 +97,22 @@ class TvScreen extends StatelessWidget {
                         flex: 2,
                         child: Align(
                           alignment: AlignmentDirectional.centerEnd,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              for (final (i, a) in actions.indexed) ...[
-                                if (i > 0) const SizedBox(width: 28),
-                                Flexible(child: a),
+                          // Largeur naturelle des actions, réduites d'un bloc si
+                          // l'espace manque : avec un Flexible par action, deux
+                          // boutons se partageaient la place à parts égales et le
+                          // libellé du second était coupé (« Ajouter un d… »).
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final (i, a) in actions.indexed) ...[
+                                  if (i > 0) const SizedBox(width: 28),
+                                  a,
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),

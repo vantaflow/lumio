@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flutter/material.dart';
+import 'package:lumio/player/mpv_overrides.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -27,6 +28,7 @@ import 'package:media_kit/media_kit.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+  await primeMpvOverrides();
   final tv = await detectAndroidTv();
   final container = ProviderContainer(
     overrides: [androidTvProvider.overrideWithValue(tv)],

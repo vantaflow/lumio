@@ -14,6 +14,7 @@ class _Origin {
   }
   final HttpServer server;
   final seen = <String, String>{};
+  final ports = <int?>{};
   Uri? otherSegment;
   final closedEndless = Completer<void>();
   static final data = List<int>.generate(100, (i) => i);
@@ -25,6 +26,7 @@ class _Origin {
       Uri(scheme: 'http', host: '127.0.0.1', port: server.port, path: path);
 
   void _handle(HttpRequest req) async {
+    ports.add(req.connectionInfo?.remotePort);
     req.headers.forEach((n, v) => seen[n] = v.join(','));
     final res = req.response;
     switch (req.uri.path) {
@@ -146,6 +148,17 @@ void main() {
     expect(r.status, 206);
     expect(r.body, List<int>.generate(10, (i) => i + 10));
     expect(r.headers.value('content-range'), 'bytes 10-19/100');
+  });
+
+  test('requêtes successives : une seule connexion vers la source', () async {
+    for (var i = 0; i < 5; i++) {
+      final r = await _get(wrap('/file.bin'), headers: {'Range': 'bytes=0-9'});
+      expect(r.status, 206);
+    }
+    // Avant : un client neuf par requête (DNS + TCP + TLS à chaque fois, ~1 s
+    // sur la box) : un maître HLS de 30 playlists dépassait le délai.
+    expect(origin.ports.length, 1);
+    expect(proxy.activeUpstreams, 0);
   });
 
   test('en-tête imposé transmis au serveur', () async {

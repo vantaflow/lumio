@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/player/local_proxy.dart';
+import 'package:lumio/player/mpv_overrides.dart';
 import 'package:lumio/player/play_router.dart';
 import 'package:lumio/player/playback_report.dart';
 import 'package:lumio/player/source_fallback.dart';
@@ -84,8 +85,21 @@ class PlayerController {
     AppLocalizations? l10n,
   }) : l10n = l10n ?? AppLocalizationsFr(),
        _proxy = proxy,
-       player = player ?? Player() {
-    video = VideoController(this.player);
+       player =
+           player ??
+           Player(
+             configuration: PlayerConfiguration(
+               logLevel: mpvLogLevelFor(cachedMpvOverrides),
+             ),
+           ) {
+    final cfg = videoConfigFor(
+      android: Platform.isAndroid,
+      overrides: cachedMpvOverrides,
+    );
+    video = VideoController(
+      this.player,
+      configuration: VideoControllerConfiguration(vo: cfg.vo, hwdec: cfg.hwdec),
+    );
     _subs.addAll([
       this.player.stream.playing.listen((p) {
         _playing = p;
@@ -113,11 +127,58 @@ class PlayerController {
         if (w != null && w > 0) _onFirstFrame();
       }),
       this.player.stream.error.listen(_onEngineError),
+      // Avertissements du moteur (jamais d'adresse) : cause des échecs HLS.
+      this.player.stream.log.listen((l) {
+        // ignore: avoid_print
+        print(
+          'LUMIO_PLAYER ${jsonEncode({'event': 'mpv_log', 'p': l.prefix, 'm': redactEngineMessage(l.text.trim())})}',
+        );
+      }),
     ]);
   }
 
   final Player player;
   late final VideoController video;
+  bool _overridesApplied = false;
+
+  Future<void> _setLavfFormat(String format) async {
+    final p = player.platform;
+    if (p is! NativePlayer) return;
+    try {
+      await p.setProperty('demuxer-lavf-format', format);
+      // Sans `demuxer=lavf`, mpv essaie d'abord son lecteur de listes de
+      // fichiers (« Reading plaintext playlist ») sur toute playlist .m3u8.
+      await p.setProperty('demuxer', format.isEmpty ? '' : 'lavf');
+      // ignore: avoid_print
+      print('LUMIO_PLAYER {"event":"lavf_format","v":"$format"}');
+    } on Object {
+      // Option inconnue : la détection automatique reste en place.
+    }
+  }
+
+  /// Applique une fois `mpv.conf` (réglages avancés, voir [loadMpvOverrides]).
+  Future<void> _applyOverrides() async {
+    if (_overridesApplied) return;
+    _overridesApplied = true;
+    final p = player.platform;
+    if (p is! NativePlayer) return;
+    final o = cachedMpvOverrides;
+    for (final e in o.entries) {
+      if (mpvControllerKeys.contains(e.key)) continue;
+      try {
+        await p.setProperty(e.key, e.value);
+      } on Object {
+        // Option inconnue de ce moteur : ignorée.
+      }
+    }
+    if (o.isNotEmpty) {
+      // ignore: avoid_print
+      print(
+        'LUMIO_PLAYER {"event":"mpv_overrides","keys":${jsonEncode(o.keys.toList())}}',
+      );
+    }
+  }
+
   final Future<LocalProxy> Function() _proxy;
 
   /// Textes des messages d'erreur ; mis à jour par l'écran selon la langue.
@@ -195,6 +256,7 @@ class PlayerController {
     _firstFrame = Completer<int>();
     _sinceOpen = Stopwatch()..start();
     _stall?.cancel();
+    _statsTimer?.cancel();
     _set(
       PlayerState(
         phase: PlayerPhase.opening,
@@ -228,6 +290,8 @@ class PlayerController {
         });
       }
       final playUrl = route.url;
+      await _applyOverrides();
+      await _setLavfFormat(lavfFormatFor(url));
       if (!_gate.accepts(attempt)) return; // série abandonnée entre-temps
       _gate.bindEngine(attempt);
       await player.open(
@@ -265,12 +329,48 @@ class PlayerController {
     final c = _firstFrame;
     if (c == null || c.isCompleted) return;
     firstFrameMs = _sinceOpen?.elapsedMilliseconds;
+    // Journal de diagnostic (jamais d'adresse) : délai et chemin de la lecture.
+    // ignore: avoid_print
+    print(
+      'LUMIO_PLAYER {"event":"first_frame","ms":$firstFrameMs,'
+      '"via_proxy":$_viaProxy}',
+    );
+    _startStats();
     c.complete(firstFrameMs);
     _opened = true;
     _stall?.cancel();
     _notice = null;
     _set(state.copyWith(clearNotice: true));
     _settle(true);
+  }
+
+  Timer? _statsTimer;
+
+  /// Image par image : toutes les 10 s, codec, décodeur matériel et images
+  /// perdues (propriétés libmpv) dans le journal `LUMIO_PLAYER`.
+  void _startStats() {
+    _statsTimer?.cancel();
+    _statsTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      final p = player.platform;
+      if (_disposed || p is! NativePlayer) return;
+      try {
+        final m = <String, String>{};
+        for (final k in const [
+          'video-format',
+          'hwdec-current',
+          'frame-drop-count',
+          'decoder-frame-drop-count',
+          'estimated-vf-fps',
+          'container-fps',
+        ]) {
+          m[k] = await p.getProperty(k);
+        }
+        // ignore: avoid_print
+        print('LUMIO_PLAYER ${jsonEncode({'event': 'stats', ...m})}');
+      } on Object {
+        // Propriété indisponible : sans importance.
+      }
+    });
   }
 
   /// Attend la première image (pour la mesure de la sonde de debug).
@@ -508,6 +608,7 @@ class PlayerController {
     _disposed = true;
     _settle(false);
     _stall?.cancel();
+    _statsTimer?.cancel();
     _wake(false);
     await _proxySub?.cancel();
     for (final s in _subs) {

@@ -2585,7 +2585,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Laissez cet écran ouvert pendant que vous utilisez votre téléphone.';
 
   @override
-  String get settingsManagePhonePress => 'Appuyez sur OK pour ouvrir la page';
+  String get settingsManagePhonePress => 'Appuyez sur OK';
 
   @override
   String get phoneConnected =>

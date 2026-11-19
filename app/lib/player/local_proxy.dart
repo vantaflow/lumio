@@ -44,7 +44,11 @@ class LocalProxy {
   final HostLookup? _lookup;
   final bool _enforceResolved;
   final _events = StreamController<ProxyEvent>.broadcast();
-  final _active = <HttpClient>{};
+  // Clients sortants réutilisés (connexions persistantes) : un par régime
+  // d'adresses privées. Sans cela chaque requête refaisait DNS + TCP + TLS
+  // (~1 s sur la box) et un maître HLS à 30 playlists dépassait le délai.
+  final _pool = <bool, HttpClient>{};
+  final _inflight = <Object>{};
   bool _closed = false;
 
   /// En-têtes qu'un addon ne peut pas imposer (le Range du lecteur prime).
@@ -92,7 +96,7 @@ class LocalProxy {
 
   /// Connexions sortantes ouvertes (tests : doit retomber à 0).
   @visibleForTesting
-  int get activeUpstreams => _active.length;
+  int get activeUpstreams => _inflight.length;
 
   /// Adresse d'écoute (toujours la boucle locale IPv4).
   InternetAddress get address => _server.address;
@@ -124,9 +128,10 @@ class LocalProxy {
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
-    for (final c in _active.toList()) {
+    for (final c in _pool.values) {
       c.close(force: true);
     }
+    _pool.clear();
     await _server.close(force: true);
     await _events.close();
   }
@@ -191,14 +196,18 @@ class LocalProxy {
     bool allowPrivate,
   ) async {
     final res = req.response;
-    final client = _clientFactory();
-    if (_enforceResolved) {
-      client.connectionFactory = guardedConnectionFactory(
-        allowPrivate: allowPrivate,
-        lookup: _lookup,
-      );
-    }
-    _active.add(client);
+    final client = _pool.putIfAbsent(allowPrivate, () {
+      final c = _clientFactory()..idleTimeout = const Duration(seconds: 20);
+      if (_enforceResolved) {
+        c.connectionFactory = guardedConnectionFactory(
+          allowPrivate: allowPrivate,
+          lookup: _lookup,
+        );
+      }
+      return c;
+    });
+    final token = Object();
+    _inflight.add(token);
     try {
       final forwarded = <String, String>{
         'User-Agent': 'Lumio/1.0',
@@ -277,7 +286,7 @@ class LocalProxy {
           }
         }
         final text = rewriteM3u8(
-          utf8.decode(bytes, allowMalformed: true),
+          pruneHlsMaster(utf8.decode(bytes, allowMalformed: true)),
           current,
           (u) => wrap(
             u,
@@ -351,8 +360,7 @@ class LocalProxy {
       _emit(ProxyEvent(0, error: e));
       res.statusCode = HttpStatus.badGateway;
     } finally {
-      _active.remove(client);
-      client.close(force: true);
+      _inflight.remove(token);
     }
   }
 

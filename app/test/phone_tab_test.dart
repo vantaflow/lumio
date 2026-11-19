@@ -373,7 +373,7 @@ void main() {
       expect(find.text('Gérer depuis le téléphone'), findsOneWidget);
       // Rien n'écoute avant OK : la carte n'affiche aucune adresse.
       expect(find.text('192.168.0.45:8790'), findsNothing);
-      expect(find.text('Appuyez sur OK pour ouvrir la page'), findsOneWidget);
+      expect(find.text('Appuyez sur OK'), findsOneWidget);
       await t.tap(find.byKey(const ValueKey('settings-phone')));
       await h.settle();
       expect(find.byType(QrImageView), findsOneWidget);

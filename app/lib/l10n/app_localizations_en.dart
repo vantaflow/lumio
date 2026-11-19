@@ -2561,7 +2561,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneKeepOpen => 'Keep this screen open while you use your phone.';
 
   @override
-  String get settingsManagePhonePress => 'Press OK to open the page';
+  String get settingsManagePhonePress => 'Press OK';
 
   @override
   String get phoneConnected =>
