@@ -213,3 +213,9 @@ Compte rendu complet : `docs/rapports/2026-11-19-test-global-emulateur.md`.
 - Ouvert : la ligne choisie dans « Pistes » reste marquée même quand le moteur a refusé le fichier ; il faudrait n'afficher la sélection qu'après succès (et le message « sous-titre illisible » sur erreur moteur).
 - Ouvert : avec OpenSubtitles v3, le panneau Pistes liste une centaine de sous-titres (codes à 3 lettres ALB, HRV, EST mélangés à des noms de langue, doublons numérotés) ; atteindre « Apparence » demande des dizaines de pressions bas. Proposer : regrouper par langue, langue préférée en tête, plafond (5 par langue), et « Apparence » en tête ou sur un onglet.
 - Ouvert : le pas de la taille (100 %, 164 %) est peu parlant ; préférer S/M/L/XL nommés.
+
+### Passe 6 (2026-11-19, soir)
+- Corrigé et vérifié à l'écran : recherche (1re rangée de résultats entière, « droite » reste dans la rangée), focus de retour sur la carte d'origine, héros « REPRENDRE · S3E3 » à 0 s, appui long sur une carte de « Ma liste » (menu « Ouvrir la fiche » / « Retirer de ma liste »).
+- Corrigé, tests verts, NON revérifié à l'écran : piste interne « fr · auto » masquée dans Pistes ; Retour ne part plus deux fois (la fiche ouverte depuis la recherche ramenait à l'accueil ; un Retour sur l'accueil proposait aussitôt « Quitter Lumio ? » ; au retour d'une fiche l'onglet « Accueil » prenait le focus).
+- Anime : Anime Kitsu absent des puces « Officiels » et « Anime » du catalogue (installé par lien) ; catalogues Kitsu sur l'accueil, fiche et épisodes affichés ; flux de test pour `kitsu:` prêt (addon de test) ; lecture et reprise d'un épisode d'anime non jouées (émulateur instable).
+- Ouvert : « Anime Kitsu » devrait figurer dans la puce « Anime » du catalogue (celle-ci ne propose que des addons de torrents) ; au démarrage à froid de l'émulateur l'écran « Set up Google TV » vole le focus (hors application).
