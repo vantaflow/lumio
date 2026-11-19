@@ -58,6 +58,7 @@ class PhoneServerState {
     this.connected = false,
     this.lockedUntil,
     this.idleStopped = false,
+    this.tooManyTries = false,
   });
 
   final PhoneServerStatus status;
@@ -69,6 +70,9 @@ class PhoneServerState {
   final bool connected;
   final DateTime? lockedUntil;
   final bool idleStopped;
+
+  /// Le serveur s'est arrêté après trop de verrouillages.
+  final bool tooManyTries;
 
   bool get listening => status == PhoneServerStatus.listening;
   String get address => '$host:$port';
@@ -132,6 +136,7 @@ class PhoneServer implements PhoneSession {
     this.fontLoader = _bundleFont,
     this.idleTimeout = const Duration(minutes: 10),
     this.lockDuration = const Duration(seconds: 60),
+    this.bodyTimeout = const Duration(seconds: 5),
     DateTime Function()? now,
     Random? random,
   }) : _now = now ?? DateTime.now,
@@ -140,6 +145,12 @@ class PhoneServer implements PhoneSession {
   static const defaultPort = 8790;
   static const maxBody = 16 * 1024;
   static const maxFailures = 5;
+
+  /// Verrouillages tolérés par ouverture du serveur ; le suivant l'arrête.
+  static const maxLocks = 3;
+  static const maxConnections = 16;
+  static const maxConnectionsPerIp = 4;
+  static const connectionIdleTimeout = Duration(seconds: 15);
   static const rateLimit = 60;
   static const rateWindow = Duration(seconds: 10);
   static const cookieName = 'lumio_sid';
@@ -152,6 +163,9 @@ class PhoneServer implements PhoneSession {
   final int preferredPort;
   final Duration idleTimeout;
   final Duration lockDuration;
+
+  /// Délai total de lecture d'un corps de requête.
+  final Duration bodyTimeout;
   final DateTime Function() _now;
   final Random _random;
 
@@ -175,6 +189,9 @@ class PhoneServer implements PhoneSession {
   ValueListenable<PhoneServerState> get state => _state;
 
   HttpServer? _server;
+  _LimitedServerSocket? _socket;
+  int _locks = 0;
+  bool _stopTooMany = false;
   Timer? _idle;
   final _sessions = <String, _Session>{};
   final _hits = <String, List<DateTime>>{};
@@ -203,12 +220,17 @@ class PhoneServer implements PhoneSession {
       return;
     }
     HttpServer server;
+    _LimitedServerSocket socket;
     try {
+      ServerSocket raw;
       try {
-        server = await HttpServer.bind(addr, preferredPort);
+        raw = await ServerSocket.bind(addr, preferredPort);
       } on SocketException {
-        server = await HttpServer.bind(addr, 0);
+        raw = await ServerSocket.bind(addr, 0);
       }
+      socket = _LimitedServerSocket(raw, maxConnections, maxConnectionsPerIp);
+      server = HttpServer.listenOn(socket);
+      server.idleTimeout = connectionIdleTimeout;
     } on Object {
       if (gen == _generation) {
         _state.value = const PhoneServerState(status: PhoneServerStatus.error);
@@ -217,9 +239,13 @@ class PhoneServer implements PhoneSession {
     }
     if (gen != _generation) {
       await server.close(force: true);
+      await socket.close();
       return;
     }
     _server = server;
+    _socket = socket;
+    _locks = 0;
+    _stopTooMany = false;
     _secret = List.generate(32, (_) => _random.nextInt(256));
     _sessions.clear();
     _hits.clear();
@@ -242,20 +268,24 @@ class PhoneServer implements PhoneSession {
   @override
   Future<void> stop() => _stop(idle: false);
 
-  Future<void> _stop({required bool idle}) async {
+  Future<void> _stop({required bool idle, bool tooMany = false}) async {
     _generation++;
     _idle?.cancel();
     _idle = null;
     final s = _server;
+    final sock = _socket;
     _server = null;
+    _socket = null;
     _sessions.clear();
     _hits.clear();
     adds.cancelPending();
     _state.value = PhoneServerState(
       status: PhoneServerStatus.stopped,
       idleStopped: idle,
+      tooManyTries: tooMany,
     );
     await s?.close(force: true);
+    await sock?.close();
   }
 
   @override
@@ -263,8 +293,11 @@ class PhoneServer implements PhoneSession {
     _idle?.cancel();
     _generation++;
     final s = _server;
+    final sock = _socket;
     _server = null;
+    _socket = null;
     unawaited(s?.close(force: true));
+    unawaited(sock?.close());
     _state.dispose();
   }
 
@@ -280,6 +313,10 @@ class PhoneServer implements PhoneSession {
       await _route(req);
     } on _HttpError catch (e) {
       await _json(req, e.status, {'error': e.code}, headers: e.headers);
+      if (_stopTooMany) {
+        _stopTooMany = false;
+        await _stop(idle: false, tooMany: true);
+      }
     } on Object {
       try {
         await _json(req, 500, {'error': 'internal'});
@@ -307,15 +344,12 @@ class PhoneServer implements PhoneSession {
     final seg = req.uri.pathSegments;
     final m = req.method;
     if (m == 'GET' && seg.isEmpty) {
-      _armIdle();
       return _send(req, 200, 'text/html; charset=utf-8', phoneIndexHtml(lang));
     }
     if (m == 'GET' && seg.length == 1 && seg[0] == 'app.css') {
-      _armIdle();
       return _send(req, 200, 'text/css; charset=utf-8', phoneCss);
     }
     if (m == 'GET' && seg.length == 1 && seg[0] == 'app.js') {
-      _armIdle();
       return _send(req, 200, 'text/javascript; charset=utf-8', phoneJs);
     }
     if (m == 'GET' &&
@@ -324,7 +358,6 @@ class PhoneServer implements PhoneSession {
         seg[1].endsWith('.ttf')) {
       final bytes = await fontLoader(seg[1].substring(0, seg[1].length - 4));
       if (bytes == null) throw _HttpError(404, 'not_found');
-      _armIdle();
       return _sendBytes(req, 'font/ttf', bytes);
     }
     if (seg.isEmpty || seg[0] != 'api') throw _HttpError(404, 'not_found');
@@ -368,8 +401,10 @@ class PhoneServer implements PhoneSession {
       final id = await _resolve(seg[2]);
       if (seg[3] == 'move') {
         final d = body['delta'];
-        if (d != 1 && d != -1) throw _HttpError(400, 'bad_request');
-        await backend.move(id, d! as int);
+        if (d is! int || (d != 1 && d != -1)) {
+          throw _HttpError(400, 'bad_request');
+        }
+        await backend.move(id, d);
         return _json(req, 200, {'ok': true});
       }
       if (seg[3] == 'enabled') {
@@ -447,6 +482,8 @@ class PhoneServer implements PhoneSession {
       _failures++;
       if (_failures >= maxFailures) {
         _failures = 0;
+        _locks++;
+        if (_locks >= maxLocks) _stopTooMany = true;
         _state.value = _state.value.copyWith(
           lockedUntil: _now().add(lockDuration),
           code: _newCode(),
@@ -508,11 +545,7 @@ class PhoneServer implements PhoneSession {
       throw _HttpError(415, 'content_type');
     }
     if (req.contentLength > maxBody) throw _HttpError(413, 'too_large');
-    final bytes = <int>[];
-    await for (final chunk in req) {
-      bytes.addAll(chunk);
-      if (bytes.length > maxBody) throw _HttpError(413, 'too_large');
-    }
+    final bytes = await _readBody(req);
     try {
       final j = jsonDecode(utf8.decode(bytes));
       if (j is Map<String, Object?>) return j;
@@ -520,6 +553,36 @@ class PhoneServer implements PhoneSession {
       // Corps illisible.
     }
     throw _HttpError(400, 'bad_request');
+  }
+
+  /// Lit le corps avec un délai TOTAL (pas par octet) : une connexion qui
+  /// goutte à goutte est coupée (408).
+  Future<List<int>> _readBody(HttpRequest req) {
+    final bytes = <int>[];
+    final done = Completer<List<int>>();
+    late final StreamSubscription<List<int>> sub;
+    final timer = Timer(bodyTimeout, () {
+      if (!done.isCompleted) done.completeError(_HttpError(408, 'timeout'));
+    });
+    void fail(_HttpError e) {
+      if (!done.isCompleted) done.completeError(e);
+    }
+
+    sub = req.listen(
+      (chunk) {
+        bytes.addAll(chunk);
+        if (bytes.length > maxBody) fail(_HttpError(413, 'too_large'));
+      },
+      onDone: () {
+        if (!done.isCompleted) done.complete(bytes);
+      },
+      onError: (Object _) => fail(_HttpError(400, 'bad_request')),
+      cancelOnError: true,
+    );
+    return done.future.whenComplete(() {
+      timer.cancel();
+      unawaited(sub.cancel());
+    });
   }
 
   // --- réponses ---
@@ -573,8 +636,56 @@ class PhoneServer implements PhoneSession {
       ..set('x-frame-options', 'DENY');
     headers.forEach(r.headers.set);
     // Une erreur de corps (413) : on ferme la connexion sans lire la suite.
-    if (status == 413) r.headers.set('connection', 'close');
+    if (status == 413 || status == 408) r.headers.set('connection', 'close');
     r.write(body);
     await r.close();
+  }
+}
+
+/// Socket d'écoute qui refuse (ferme aussitôt) les connexions au-delà de
+/// [maxTotal] actives, ou de [maxPerIp] pour une même adresse.
+class _LimitedServerSocket extends StreamView<Socket> implements ServerSocket {
+  _LimitedServerSocket._(this._inner, Stream<Socket> filtered)
+    : super(filtered);
+
+  factory _LimitedServerSocket(ServerSocket inner, int maxTotal, int maxPerIp) {
+    var total = 0;
+    final perIp = <String, int>{};
+    final filtered = inner.where((s) {
+      final ip = s.remoteAddress.address;
+      if (total >= maxTotal || (perIp[ip] ?? 0) >= maxPerIp) {
+        s.destroy();
+        return false;
+      }
+      total++;
+      perIp[ip] = (perIp[ip] ?? 0) + 1;
+      void release() {
+        total--;
+        final n = (perIp[ip] ?? 1) - 1;
+        if (n <= 0) {
+          perIp.remove(ip);
+        } else {
+          perIp[ip] = n;
+        }
+      }
+
+      s.done.then((_) => release(), onError: (Object _) => release());
+      return true;
+    });
+    return _LimitedServerSocket._(inner, filtered);
+  }
+
+  final ServerSocket _inner;
+
+  @override
+  int get port => _inner.port;
+
+  @override
+  InternetAddress get address => _inner.address;
+
+  @override
+  Future<ServerSocket> close() async {
+    await _inner.close();
+    return this;
   }
 }

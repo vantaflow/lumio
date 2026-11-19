@@ -1208,6 +1208,7 @@
   "phoneNoNetworkTitle": "No local network",
   "phoneNoNetworkBody": "Connect the TV to the home Wi-Fi or Ethernet: the phone page is never served over a VPN or the mobile network.",
   "phoneIdleStopped": "The page closed after 10 minutes without activity.",
+  "phoneTooManyTries": "Too many attempts: the page was closed for safety. Restart it to get a new code.",
   "phoneErrorBody": "The page could not start. Try again.",
   "phoneRestart": "Restart",
   "phoneQrLabel": "QR code of the Lumio page on the local network",

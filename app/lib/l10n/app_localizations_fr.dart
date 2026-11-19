@@ -2565,6 +2565,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'La page s\'est fermée après 10 minutes sans activité.';
 
   @override
+  String get phoneTooManyTries =>
+      'Trop d\'essais : la page est fermée par sécurité. Relancez-la pour obtenir un nouveau code.';
+
+  @override
   String get phoneErrorBody => 'La page n\'a pas pu démarrer. Réessayez.';
 
   @override

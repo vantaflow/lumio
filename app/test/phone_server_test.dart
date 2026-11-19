@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -550,6 +551,18 @@ void main() {
         )).status,
         400,
       );
+      // 1.0 n'est pas un entier : 400, pas 500.
+      expect(
+        (await f.req(
+          'POST',
+          '/api/addons/$id/move',
+          rawBody: '{"delta": 1.0}',
+          cookie: cookie,
+          origin: true,
+          headers: h,
+        )).status,
+        400,
+      );
       expect(f.backend.calls, isEmpty);
     });
   });
@@ -671,6 +684,166 @@ void main() {
       );
       await f.server.stop();
       expect(f.adds.pending.value, isNull);
+    });
+
+    test(
+      'un GET non authentifié ne relance pas le délai d\'inactivité',
+      () async {
+        await f.close();
+        f = _Fixture();
+        await f.start(idle: const Duration(milliseconds: 500));
+        for (var i = 0; i < 5; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+          if (f.st.status != PhoneServerStatus.listening) break;
+          await f.req('GET', '/');
+          await f.req('GET', '/app.js');
+          await f.req('GET', '/api/session');
+        }
+        expect(f.st.status, PhoneServerStatus.stopped);
+        expect(f.st.idleStopped, isTrue);
+      },
+    );
+
+    test('une requête authentifiée relance le délai d\'inactivité', () async {
+      await f.close();
+      f = _Fixture();
+      await f.start(idle: const Duration(milliseconds: 600));
+      final (cookie, _) = await f.login();
+      for (var i = 0; i < 4; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        await f.req('GET', '/api/session', cookie: cookie);
+      }
+      expect(f.st.status, PhoneServerStatus.listening);
+    });
+
+    test('3 verrouillages : arrêt et état « trop d\'essais »', () async {
+      for (var round = 0; round < 3; round++) {
+        expect(f.st.status, PhoneServerStatus.listening, reason: '$round');
+        final wrong = f.st.code == '111111' ? '222222' : '111111';
+        late _Resp last;
+        for (var i = 0; i < 5; i++) {
+          last = await f.req(
+            'POST',
+            '/api/login',
+            body: {'code': wrong},
+            origin: true,
+          );
+        }
+        expect(last.status, 429);
+        f.clock.add(const Duration(seconds: 61));
+        if (round < 2) await Future<void>.delayed(Duration.zero);
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(f.st.status, PhoneServerStatus.stopped);
+      expect(f.st.tooManyTries, isTrue);
+      // Relancer remet le compteur à zéro.
+      await f.server.start();
+      expect(f.st.status, PhoneServerStatus.listening);
+      expect(f.st.tooManyTries, isFalse);
+    });
+  });
+
+  group('connexions lentes', () {
+    Future<Socket> raw() =>
+        Socket.connect(InternetAddress.loopbackIPv4, f.st.port);
+
+    /// Complété une seule fois à la fermeture (ou à l'erreur) du socket.
+    Future<void> closes(Socket so, [void Function(List<int>)? onData]) {
+      final c = Completer<void>();
+      void end() {
+        if (!c.isCompleted) c.complete();
+      }
+
+      // Écrire sur un socket déjà fermé par le serveur fait échouer `done`.
+      so.done.then<void>((_) {}, onError: (Object _) {});
+      so.listen(
+        (d) => onData?.call(d),
+        onDone: end,
+        onError: (Object _) => end(),
+      );
+      return c.future;
+    }
+
+    String head(String extra) =>
+        'POST /api/login HTTP/1.1\r\nHost: ${f.hostHeader}\r\n'
+        'Origin: http://${f.hostHeader}\r\n'
+        'Content-Type: application/json\r\n$extra\r\n';
+
+    test(
+      'Content-Length annoncé, 1 octet envoyé : fermé en 6 s',
+      () async {
+        final so = await raw();
+        final got = StringBuffer();
+        final closed = closes(
+          so,
+          (d) => got.write(utf8.decode(d, allowMalformed: true)),
+        );
+        so.write('${head('Content-Length: 100\r\n')}{');
+        await so.flush();
+        final sw = Stopwatch()..start();
+        await closed.timeout(const Duration(seconds: 6));
+        expect(sw.elapsed, lessThan(const Duration(seconds: 6)));
+        expect(got.toString(), contains('408'));
+        so.destroy();
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    test(
+      'corps chunké lent sans Content-Length : fermé',
+      () async {
+        final so = await raw();
+        final closed = closes(so);
+        so.write('${head('Transfer-Encoding: chunked\r\n')}1\r\n{\r\n');
+        await so.flush();
+        // Un octet toutes les secondes : le délai est global, pas par octet.
+        final drip = Timer.periodic(const Duration(seconds: 1), (_) {
+          try {
+            so.write('1\r\n \r\n');
+          } on Object {
+            // Fermé.
+          }
+        });
+        await closed.timeout(const Duration(seconds: 7));
+        drip.cancel();
+        so.destroy();
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    test('5e connexion d\'une même adresse refusée', () async {
+      final open = <Socket>[];
+      final closedFlags = <bool>[];
+      for (var i = 0; i < 4; i++) {
+        final so = await raw();
+        final idx = closedFlags.length;
+        closedFlags.add(false);
+        so.listen(
+          (_) {},
+          onDone: () => closedFlags[idx] = true,
+          onError: (_) => closedFlags[idx] = true,
+        );
+        open.add(so);
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      Socket? fifth;
+      try {
+        fifth = await raw();
+        await closes(fifth).timeout(const Duration(seconds: 2));
+      } on SocketException {
+        // Refusée dès la connexion : c'est aussi un refus.
+      }
+      expect(closedFlags, everyElement(isFalse));
+      for (final s in [...open, ?fifth]) {
+        s.destroy();
+      }
+    });
+
+    test('au plus 16 connexions actives au total', () async {
+      // Les limites par adresse ne s'appliquent qu'à une même IP : on vérifie
+      // seulement que le plafond total existe.
+      expect(PhoneServer.maxConnections, 16);
+      expect(PhoneServer.maxConnectionsPerIp, 4);
     });
   });
 }

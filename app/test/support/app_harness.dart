@@ -17,6 +17,7 @@ import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/focus/focus_rescue.dart' show appRouteObserver;
 import 'package:lumio/ui/focus/tv_detection.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -192,6 +193,7 @@ class AppHarness {
         container: container,
         child: Consumer(
           builder: (context, ref, _) => MaterialApp(
+            navigatorObservers: [appRouteObserver],
             theme: LumioTheme.dark(tv: tv),
             locale: ref.watch(localeProvider),
             supportedLocales: supportedUiLocales,

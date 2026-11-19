@@ -1437,6 +1437,7 @@
   "phoneNoNetworkTitle": "Pas de réseau local",
   "phoneNoNetworkBody": "Connectez la TV au Wi-Fi ou à l'Ethernet de la maison : la page du téléphone n'est jamais servie sur un VPN ni sur le réseau mobile.",
   "phoneIdleStopped": "La page s'est fermée après 10 minutes sans activité.",
+  "phoneTooManyTries": "Trop d'essais : la page est fermée par sécurité. Relancez-la pour obtenir un nouveau code.",
   "phoneErrorBody": "La page n'a pas pu démarrer. Réessayez.",
   "phoneRestart": "Relancer",
   "phoneQrLabel": "QR code de la page Lumio sur le réseau local",

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lumio/features/phone/phone_server.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -39,7 +41,9 @@ class PhoneTab extends StatelessWidget {
             ),
             _ => _Notice(
               title: context.l10n.addonTabPhone,
-              body: s.idleStopped ? context.l10n.phoneIdleStopped : '',
+              body: s.tooManyTries
+                  ? context.l10n.phoneTooManyTries
+                  : (s.idleStopped ? context.l10n.phoneIdleStopped : ''),
               onRestart: onRestart,
             ),
           };
@@ -47,17 +51,65 @@ class PhoneTab extends StatelessWidget {
       );
 }
 
-class _Pairing extends StatelessWidget {
+class _Pairing extends StatefulWidget {
   const _Pairing({required this.state});
 
   final PhoneServerState state;
+
+  @override
+  State<_Pairing> createState() => _PairingState();
+}
+
+class _PairingState extends State<_Pairing> {
+  Timer? _unlock;
+  bool _expired = false;
+
+  PhoneServerState get state => widget.state;
+
+  @override
+  void initState() {
+    super.initState();
+    _schedule();
+  }
+
+  @override
+  void didUpdateWidget(_Pairing old) {
+    super.didUpdateWidget(old);
+    if (old.state.lockedUntil != state.lockedUntil) {
+      _expired = false;
+      _schedule();
+    }
+  }
+
+  @override
+  void dispose() {
+    _unlock?.cancel();
+    super.dispose();
+  }
+
+  /// Le verrou s'efface de l'écran à son échéance (le serveur ne notifie pas
+  /// la fin du verrou).
+  void _schedule() {
+    _unlock?.cancel();
+    final until = state.lockedUntil;
+    if (until == null) return;
+    final left = until.difference(DateTime.now());
+    if (left <= Duration.zero) {
+      _expired = true;
+      return;
+    }
+    _unlock = Timer(left, () {
+      if (mounted) setState(() => _expired = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final c = context.lumio;
     final t = Theme.of(context).textTheme;
-    final locked = state.lockedUntil != null;
+    final until = state.lockedUntil;
+    final locked = until != null && !_expired && until.isAfter(DateTime.now());
     Widget step(int n, String text) => Row(
       children: [
         Container(

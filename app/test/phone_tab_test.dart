@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,8 +50,7 @@ Override _repo() => addonRepositoryProvider.overrideWith(
 );
 
 class _Setup {
-  _Setup(this.t, {this.tab, this.initial, this.startState})
-    : h = AppHarness(t);
+  _Setup(this.t, {this.tab, this.initial, this.startState}) : h = AppHarness(t);
   final WidgetTester t;
   final PhoneServerState? initial;
   final PhoneServerState? startState;
@@ -211,6 +212,148 @@ void main() {
     await s.h.settle();
     expect(req.state, PhoneAddState.cancelled);
     expect(s.session.events.last, 'stop');
+    await s.h.close();
+  });
+
+  testWidgets('app en pause : serveur arrêté, Relancer à la reprise', (
+    t,
+  ) async {
+    final s = _Setup(t, tab: AddAddonTab.phone);
+    await s.open();
+    expect(s.session.events.where((e) => e == 'start'), hasLength(1));
+    for (final st in [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+    ]) {
+      t.binding.handleAppLifecycleStateChanged(st);
+    }
+    await s.h.settle();
+    expect(s.session.events.last, 'stop');
+    for (final st in [
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]) {
+      t.binding.handleAppLifecycleStateChanged(st);
+    }
+    await s.h.settle();
+    expect(find.byKey(const ValueKey('phone-restart')), findsOneWidget);
+    expect(s.session.events.where((e) => e == 'start'), hasLength(1));
+    await t.tap(find.byKey(const ValueKey('phone-restart')));
+    await s.h.settle();
+    expect(s.session.events.where((e) => e == 'start'), hasLength(2));
+    await s.h.close();
+  });
+
+  testWidgets('écran poussé par-dessus : serveur arrêté, repris au retour', (
+    t,
+  ) async {
+    final s = _Setup(t, tab: AddAddonTab.phone);
+    await s.open();
+    final nav = t.state<NavigatorState>(find.byType(Navigator).first);
+    unawaited(
+      nav.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('SECOND')),
+        ),
+      ),
+    );
+    await s.h.settle();
+    expect(s.session.events.last, 'stop');
+    nav.pop();
+    await s.h.settle();
+    expect(s.session.events.where((e) => e == 'start'), hasLength(2));
+    await s.h.close();
+  });
+
+  testWidgets('retour sur un autre onglet : le serveur ne redémarre pas', (
+    t,
+  ) async {
+    final s = _Setup(t, tab: AddAddonTab.phone);
+    await s.open();
+    await t.tap(find.byKey(const ValueKey('addtab:catalog')));
+    await s.h.settle();
+    final nav = t.state<NavigatorState>(find.byType(Navigator).first);
+    unawaited(
+      nav.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('SECOND')),
+        ),
+      ),
+    );
+    await s.h.settle();
+    nav.pop();
+    await s.h.settle();
+    expect(s.session.events.where((e) => e == 'start'), hasLength(1));
+    await s.h.close();
+  });
+
+  testWidgets('trop d\'essais : message et Relancer sur la TV', (t) async {
+    final s = _Setup(t, tab: AddAddonTab.phone);
+    await s.open();
+    s.session.set(const PhoneServerState(tooManyTries: true));
+    await s.h.settle();
+    expect(find.textContaining('Trop d\'essais'), findsOneWidget);
+    await t.tap(find.byKey(const ValueKey('phone-restart')));
+    await s.h.settle();
+    expect(find.byType(QrImageView), findsOneWidget);
+    await s.h.close();
+  });
+
+  testWidgets('verrou : affiché puis effacé à l\'échéance', (t) async {
+    final s = _Setup(t, tab: AddAddonTab.phone);
+    await s.open();
+    s.session.set(
+      PhoneServerState(
+        status: PhoneServerStatus.listening,
+        host: '192.168.0.45',
+        port: 8790,
+        code: '482913',
+        lockedUntil: DateTime.now().add(const Duration(seconds: 60)),
+      ),
+    );
+    await t.pump();
+    expect(find.textContaining('Trop d\'essais'), findsOneWidget);
+    await t.pump(const Duration(seconds: 61));
+    expect(find.textContaining('Trop d\'essais'), findsNothing);
+    expect(
+      find.textContaining('Page ouverte tant que cet écran'),
+      findsOneWidget,
+    );
+    // Un verrou déjà échu n'est jamais affiché.
+    s.session.set(
+      PhoneServerState(
+        status: PhoneServerStatus.listening,
+        host: '192.168.0.45',
+        port: 8790,
+        code: '111111',
+        lockedUntil: DateTime.now().subtract(const Duration(seconds: 5)),
+      ),
+    );
+    await t.pump();
+    expect(find.textContaining('Trop d\'essais'), findsNothing);
+    await s.h.close();
+  });
+
+  testWidgets('lien privé du téléphone : confirmation d\'adresse locale', (
+    t,
+  ) async {
+    final s = _Setup(t, tab: AddAddonTab.phone);
+    await s.open();
+    final req = s.session.adds.submit(
+      Uri.parse('http://192.168.1.50:7000/manifest.json'),
+    );
+    await s.h.settle();
+    // La TV demande confirmation ; rien n'est installé ni annulé, et le
+    // serveur du téléphone reste en route derrière le dialogue.
+    expect(find.text('Adresse locale'), findsOneWidget);
+    expect(req.state, PhoneAddState.waiting);
+    expect(s.session.events, isNot(contains('stop')));
+    await t.tap(find.text('Annuler'));
+    await s.h.settle();
+    expect(req.state, PhoneAddState.failed);
+    expect(find.byType(QrImageView), findsOneWidget);
     await s.h.close();
   });
 

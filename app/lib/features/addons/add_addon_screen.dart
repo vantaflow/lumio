@@ -19,6 +19,7 @@ import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/common/tv_screen.dart' show tvMarginOf;
 import 'package:lumio/ui/common/tv_text_field.dart';
+import 'package:lumio/ui/focus/focus_rescue.dart' show appRouteObserver;
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
@@ -60,7 +61,8 @@ class AddAddonScreen extends ConsumerStatefulWidget {
   ConsumerState<AddAddonScreen> createState() => _AddAddonScreenState();
 }
 
-class _AddAddonScreenState extends ConsumerState<AddAddonScreen> {
+class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
+    with RouteAware {
   late AddAddonTab _tab;
   final _visited = <AddAddonTab>{};
   String? _linkUrl;
@@ -74,9 +76,24 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen> {
   /// Demande d'ajout venue du téléphone et en cours sur l'onglet « Par lien ».
   String? _phoneReq;
 
+  /// L'application est en arrière-plan : le serveur reste arrêté.
+  bool _backgrounded = false;
+
+  /// Un autre écran est poussé par-dessus : le serveur reste arrêté.
+  bool _covered = false;
+
+  late final AppLifecycleListener _life;
+  ModalRoute<void>? _route;
+
   @override
   void initState() {
     super.initState();
+    _life = AppLifecycleListener(
+      onHide: _onBackground,
+      onPause: _onBackground,
+      onShow: () => _backgrounded = false,
+      onResume: () => _backgrounded = false,
+    );
     _linkUrl = widget.initialUrl;
     _tab =
         widget.initialTab ??
@@ -89,7 +106,47 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final r = ModalRoute.of(context);
+    if (r != _route) {
+      if (_route != null) appRouteObserver.unsubscribe(this);
+      _route = r;
+      if (r != null) appRouteObserver.subscribe(this, r);
+    }
+  }
+
+  void _onBackground() {
+    _backgrounded = true;
+    _suspend();
+  }
+
+  /// Arrête le serveur et abandonne la demande du téléphone en cours.
+  void _suspend() {
+    final id = _phoneReq;
+    if (id != null) {
+      _phone?.adds.resolve(id, PhoneAddState.cancelled);
+      _phoneReq = null;
+    }
+    _sync();
+  }
+
+  @override
+  void didPushNext() {
+    _covered = true;
+    _suspend();
+  }
+
+  @override
+  void didPopNext() {
+    _covered = false;
+    _sync();
+  }
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
+    _life.dispose();
     final p = _phone;
     if (p != null) {
       p.adds.pending.removeListener(_onPending);
@@ -112,7 +169,10 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen> {
   /// Démarre ou arrête le serveur selon l'écran affiché.
   void _sync() {
     if (!mounted) return;
-    final want = _tab == AddAddonTab.phone || _phoneReq != null;
+    final want =
+        !_backgrounded &&
+        !_covered &&
+        (_tab == AddAddonTab.phone || _phoneReq != null);
     if (want) {
       final p = _ensurePhone();
       final st = p.state.value.status;

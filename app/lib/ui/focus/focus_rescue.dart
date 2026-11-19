@@ -1,6 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+/// Observateur de routes partagé : les écrans qui doivent réagir à un autre
+/// écran poussé par-dessus (RouteAware) s'y abonnent.
+final RouteObserver<ModalRoute<void>> appRouteObserver = _PageRouteObserver();
+
+/// Ne signale que les écrans pleine page : un dialogue ou un panneau poussé
+/// par-dessus un écran ne le « recouvre » pas (la confirmation d'adresse
+/// locale doit laisser le serveur du téléphone en route).
+class _PageRouteObserver extends RouteObserver<ModalRoute<void>> {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route is PageRoute) super.didPush(route, previousRoute);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route is PageRoute) super.didPop(route, previousRoute);
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route is PageRoute) super.didRemove(route, previousRoute);
+  }
+}
+
 /// Restaure systématiquement le focus quand une route (écran ou dialogue) se
 /// ferme ou s'ouvre : sans cela, si l'élément focalisé avant l'ouverture a
 /// disparu (liste reconstruite, bouton remplacé), aucun élément n'a le focus

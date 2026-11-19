@@ -118,7 +118,7 @@ class LumioApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       debugShowCheckedModeBanner: false,
-      navigatorObservers: [FocusRescueObserver()],
+      navigatorObservers: [FocusRescueObserver(), appRouteObserver],
       theme: LumioTheme.dark(),
       darkTheme: LumioTheme.dark(),
       themeMode: ThemeMode.dark,

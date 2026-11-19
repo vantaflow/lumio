@@ -4346,6 +4346,12 @@ abstract class AppLocalizations {
   /// **'La page s\'est fermée après 10 minutes sans activité.'**
   String get phoneIdleStopped;
 
+  /// No description provided for @phoneTooManyTries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop d\'essais : la page est fermée par sécurité. Relancez-la pour obtenir un nouveau code.'**
+  String get phoneTooManyTries;
+
   /// No description provided for @phoneErrorBody.
   ///
   /// In fr, this message translates to:
