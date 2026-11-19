@@ -35,6 +35,7 @@ Future<bool> showAddAddonScreen(
   AddAddonTab? initialTab,
   String? portalQuery,
   String? portalName,
+  String? title,
 }) async {
   final ok = await Navigator.of(context).push<bool>(
     MaterialPageRoute<bool>(
@@ -43,6 +44,7 @@ Future<bool> showAddAddonScreen(
         initialTab: initialTab,
         portalQuery: portalQuery,
         portalName: portalName,
+        title: title,
       ),
     ),
   );
@@ -58,11 +60,15 @@ class AddAddonScreen extends ConsumerStatefulWidget {
     this.initialTab,
     this.portalQuery,
     this.portalName,
+    this.title,
     this.debounce = const Duration(milliseconds: 600),
   });
 
   final String? initialUrl;
   final AddAddonTab? initialTab;
+
+  /// Titre de l'écran (par défaut « Ajouter un addon »).
+  final String? title;
 
   /// Ouvre l'onglet du téléphone avec un QR vers la fiche d'un addon précis.
   final String? portalQuery;
@@ -311,7 +317,7 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
                     child: Semantics(
                       header: true,
                       child: Text(
-                        l.addAddon,
+                        widget.title ?? l.addAddon,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: t.headlineLarge?.copyWith(
@@ -372,6 +378,7 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
                       LinkTab(
                         key: ValueKey('link:$_linkSeq'),
                         initialUrl: _linkUrl,
+                        hideLink: _linkUrl != null,
                         debounce: widget.debounce,
                         active: _tab == AddAddonTab.link,
                         onInstalled: (name) {
@@ -470,6 +477,7 @@ class LinkTab extends ConsumerStatefulWidget {
   const LinkTab({
     super.key,
     this.initialUrl,
+    this.hideLink = false,
     required this.onInstalled,
     this.onFailed,
     this.active = true,
@@ -477,6 +485,10 @@ class LinkTab extends ConsumerStatefulWidget {
   });
 
   final String? initialUrl;
+
+  /// Lien reçu du catalogue ou du téléphone : le lien brut n'est jamais
+  /// affiché (nom et serveur seulement dans l'aperçu).
+  final bool hideLink;
 
   /// Appelé avec le nom de l'addon une fois installé.
   final ValueChanged<String> onInstalled;
@@ -500,6 +512,7 @@ class _LinkTabState extends ConsumerState<LinkTab> {
   bool _allowPrivate = false;
   AddonManifest? _preview;
   bool _already = false;
+  InstalledAddon? _same;
   String? _error;
   String? _copiedLink;
 
@@ -562,6 +575,7 @@ class _LinkTabState extends ConsumerState<LinkTab> {
     setState(() {
       _preview = null;
       _already = false;
+      _same = null;
       _error = null;
       _loading = false;
     });
@@ -599,10 +613,12 @@ class _LinkTabState extends ConsumerState<LinkTab> {
       final repo = ref.read(addonRepositoryProvider);
       final m = await repo.preview(text, allowPrivate: _allowPrivate);
       final already = await repo.isInstalled(text);
+      final same = already ? null : await repo.findSameAddon(text, m);
       if (!mounted || gen != _generation) return;
       setState(() {
         _preview = m;
         _already = already;
+        _same = same;
         _loading = false;
       });
     } on PrivateAddressException {
@@ -649,9 +665,19 @@ class _LinkTabState extends ConsumerState<LinkTab> {
       _error = null;
     });
     try {
-      await ref
-          .read(addonRepositoryProvider)
-          .install(_effectiveUrl, allowPrivate: _allowPrivate);
+      final repo = ref.read(addonRepositoryProvider);
+      final same = _same;
+      if (same != null) {
+        // Même addon (même serveur, même identifiant) avec d'autres réglages :
+        // il remplace l'ancien au lieu de créer un doublon.
+        await repo.installReplacing(
+          _effectiveUrl,
+          same.id,
+          allowPrivate: _allowPrivate,
+        );
+      } else {
+        await repo.install(_effectiveUrl, allowPrivate: _allowPrivate);
+      }
       await ref.read(addonsProvider.notifier).refresh();
       if (mounted) widget.onInstalled(name);
     } on AddonException catch (e) {
@@ -689,79 +715,82 @@ class _LinkTabState extends ConsumerState<LinkTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 104,
-                  child: TvTextField(
-                    key: const ValueKey('link-field'),
-                    controller: _controller,
-                    autofocus: widget.active && widget.initialUrl == null,
-                    keyboardType: TextInputType.url,
-                    textInputAction: TextInputAction.done,
-                    onChanged: _onChanged,
-                    onSubmitted: (_) => _schedule(immediate: true),
-                    style: const TextStyle(fontSize: 32, height: 1.25),
-                    decoration: InputDecoration(
-                      hintText: 'https://…/manifest.json',
-                      filled: true,
-                      fillColor: c.surface,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 36,
-                        vertical: 30,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide(color: c.focusRing, width: 4),
+          if (!widget.hideLink)
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 104,
+                    child: TvTextField(
+                      key: const ValueKey('link-field'),
+                      controller: _controller,
+                      autofocus: widget.active && widget.initialUrl == null,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.done,
+                      onChanged: _onChanged,
+                      onSubmitted: (_) => _schedule(immediate: true),
+                      style: const TextStyle(fontSize: 32, height: 1.25),
+                      decoration: InputDecoration(
+                        hintText: 'https://…/manifest.json',
+                        filled: true,
+                        fillColor: c.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 36,
+                          vertical: 30,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide(color: c.focusRing, width: 4),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 24),
-              FocusableCard(
-                key: const ValueKey('link-paste'),
-                scale: 1.04,
-                borderRadius: BorderRadius.circular(24),
-                semanticLabel: l.paste,
-                onSelect: _paste,
-                child: Container(
-                  height: 104,
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: c.surfaceFocus,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Text(
-                    l.paste,
-                    style: const TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 30,
-                      fontWeight: FontWeight.w600,
-                      fontVariations: [FontVariation.weight(600)],
-                      height: 1.2,
+                const SizedBox(width: 24),
+                FocusableCard(
+                  key: const ValueKey('link-paste'),
+                  scale: 1.04,
+                  borderRadius: BorderRadius.circular(24),
+                  semanticLabel: l.paste,
+                  onSelect: _paste,
+                  child: Container(
+                    height: 104,
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.surfaceFocus,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Text(
+                      l.paste,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 30,
+                        fontWeight: FontWeight.w600,
+                        fontVariations: [FontVariation.weight(600)],
+                        height: 1.2,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _error ?? l.addonLinkHelp,
-            key: const ValueKey('link-help'),
-            style: _error == null ? sm : sm?.copyWith(color: c.error),
-          ),
+              ],
+            ),
+          if (!widget.hideLink || _error != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              _error ?? l.addonLinkHelp,
+              key: const ValueKey('link-help'),
+              style: _error == null ? sm : sm?.copyWith(color: c.error),
+            ),
+          ],
           if (_copiedLink != null) ...[
             const SizedBox(height: 16),
             TvButton(
@@ -783,6 +812,10 @@ class _LinkTabState extends ConsumerState<LinkTab> {
             const SizedBox(height: 48),
             _PreviewCard(
               manifest: _preview!,
+              server: widget.hideLink
+                  ? Uri.tryParse(_effectiveUrl)?.host
+                  : null,
+              replaces: _same?.name,
               already: _already,
               installing: _installing,
               onInstall: _install,
@@ -807,9 +840,17 @@ class _PreviewCard extends StatelessWidget {
     required this.already,
     required this.installing,
     required this.onInstall,
+    this.server,
+    this.replaces,
   });
 
   final AddonManifest manifest;
+
+  /// Serveur (domaine) affiché quand le lien brut est masqué.
+  final String? server;
+
+  /// Nom de l'addon existant que celui-ci va remplacer.
+  final String? replaces;
   final bool already;
   final bool installing;
   final VoidCallback onInstall;
@@ -884,6 +925,22 @@ class _PreviewCard extends StatelessWidget {
               height: 1.4,
               color: c.textMuted,
             ),
+          ),
+        ],
+        if (server != null && server!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            l.addonServerLine(server!),
+            key: const ValueKey('preview-server'),
+            style: t.bodySmall?.copyWith(fontSize: 24, color: c.textMuted),
+          ),
+        ],
+        if (replaces != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            l.addonReplacesNote(replaces!),
+            key: const ValueKey('preview-replaces'),
+            style: t.bodySmall?.copyWith(fontSize: 24, color: c.accent),
           ),
         ],
         const SizedBox(height: 16),

@@ -86,6 +86,56 @@ class AddonCatalogService {
     throw failure;
   }
 
+  /// Collection officielle de Stremio, même cache de 24 h et mêmes replis
+  /// (cache périmé si le réseau manque ; erreur sinon).
+  Future<CatalogResult<CatalogPage>> official({bool refresh = false}) async {
+    const key = 'official';
+    final cached = await _read(key, (j) => CatalogPage.fromJson(j));
+    if (!refresh && cached != null && _fresh(cached.at)) {
+      return CatalogResult(cached.value, CatalogOrigin.cache, cached.at);
+    }
+    try {
+      final page = await _source.officialCollection();
+      final at = _now();
+      await _store.write(key, jsonEncode(page.toJson()), at);
+      return CatalogResult(page, CatalogOrigin.network, at);
+    } on CatalogParseException {
+      if (cached == null) rethrow;
+    } on CatalogUnavailableException {
+      if (cached == null) rethrow;
+    }
+    return CatalogResult(cached.value, CatalogOrigin.staleCache, cached.at);
+  }
+
+  /// Officiels d'abord, puis le reste ; une entrée déjà vue (même adresse de
+  /// manifest, même identifiant ou même nom) n'apparaît qu'une fois.
+  static List<CatalogEntry> mergeOfficial(
+    List<CatalogEntry> official,
+    List<CatalogEntry> others,
+  ) {
+    final urls = <String>{};
+    final slugs = <String>{};
+    final names = <String>{};
+    final out = <CatalogEntry>[];
+    bool add(CatalogEntry e) {
+      final u = [for (final i in e.instances) i.manifestUrl.toString()];
+      if (u.any(urls.contains) ||
+          slugs.contains(e.slug) ||
+          names.contains(e.name.trim().toLowerCase())) {
+        return false;
+      }
+      urls.addAll(u);
+      slugs.add(e.slug);
+      names.add(e.name.trim().toLowerCase());
+      out.add(e);
+      return true;
+    }
+
+    official.forEach(add);
+    others.forEach(add);
+    return out;
+  }
+
   Future<CatalogResult<CatalogDetail>> detail(
     String slug, {
     bool refresh = false,

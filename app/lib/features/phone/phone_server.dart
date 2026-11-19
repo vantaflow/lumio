@@ -56,8 +56,11 @@ class PhoneCatalogCard {
     required this.installed,
     this.description,
     this.logo,
+    this.setup = false,
   });
 
+  /// L'addon se règle avant l'installation (réglage possible ou requis).
+  final bool setup;
   final String slug;
   final String name;
   final String meta;
@@ -523,6 +526,7 @@ class PhoneServer implements PhoneSession {
                 'logo': c.logo.toString(),
               'meta': c.meta,
               'installed': c.installed,
+              'setup': c.setup,
             },
         ],
       });

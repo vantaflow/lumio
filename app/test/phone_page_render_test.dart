@@ -131,7 +131,7 @@ void e2e() {
       final dom = ok.stdout as String;
       expect(dom, contains('Source Alpha'));
       expect(dom, contains('Direct Plus'));
-      expect(dom, contains('Bonne santé'));
+      expect(dom, contains('Fonctionne bien'));
       // Mauvais code : la page reste sur la saisie du code.
       final bad = await Process.run(chrome, [
         '--headless=new',

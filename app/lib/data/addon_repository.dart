@@ -181,6 +181,46 @@ class AddonRepository {
     return url;
   }
 
+  /// Addon déjà installé qui est le MÊME addon que [manifest] (même hôte et
+  /// même identifiant de manifest) mais avec une autre adresse (réglages
+  /// différents) : l'installer en plus créerait un doublon. `null` sinon.
+  Future<InstalledAddon?> findSameAddon(
+    String rawUrl,
+    AddonManifest manifest,
+  ) async {
+    final url = _normalize(rawUrl);
+    for (final a in await list()) {
+      final m = a.manifest;
+      if (m == null || m.id != manifest.id) continue;
+      final Uri other;
+      try {
+        other = await urlOf(a.id);
+      } on AddonException {
+        continue;
+      }
+      if (other.host == url.host && other.port == url.port) return a;
+    }
+    return null;
+  }
+
+  /// Installe [rawUrl] à la place de l'addon [oldId] (même rang dans la
+  /// liste) ; l'ancien n'est retiré qu'une fois le nouveau installé.
+  Future<InstalledAddon> installReplacing(
+    String rawUrl,
+    String oldId, {
+    bool allowPrivate = false,
+  }) async {
+    final before = [for (final a in await list()) a.id];
+    final added = await install(rawUrl, allowPrivate: allowPrivate);
+    final order = [
+      for (final id in before)
+        if (id == oldId) added.id else id,
+    ];
+    await remove(oldId);
+    await reorder(order);
+    return added;
+  }
+
   /// Vrai si cette adresse (normalisée) est déjà installée.
   Future<bool> isInstalled(String rawUrl) =>
       _hashExists(_hash(_normalize(rawUrl)));

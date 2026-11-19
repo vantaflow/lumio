@@ -2386,6 +2386,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catPopular => 'Popular';
 
   @override
+  String addonServerLine(String host) {
+    return 'Server: $host';
+  }
+
+  @override
+  String addonReplacesNote(String name) {
+    return 'Replaces the version of “$name” already installed.';
+  }
+
+  @override
+  String get unknownTitle => 'Unknown title';
+
+  @override
+  String get catOfficial => 'Official';
+
+  @override
   String get catMoviesSeries => 'Movies and series';
 
   @override
@@ -2474,7 +2490,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get chooseInstanceTitle => 'Choose an instance';
+  String get chooseInstanceTitle => 'Choose a server';
 
   @override
   String get instanceNeedsSetup => 'needs setup';

@@ -4070,6 +4070,30 @@ abstract class AppLocalizations {
   /// **'Populaires'**
   String get catPopular;
 
+  /// No description provided for @addonServerLine.
+  ///
+  /// In fr, this message translates to:
+  /// **'Serveur : {host}'**
+  String addonServerLine(String host);
+
+  /// No description provided for @addonReplacesNote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Remplace la version déjà installée de « {name} ».'**
+  String addonReplacesNote(String name);
+
+  /// No description provided for @unknownTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Titre inconnu'**
+  String get unknownTitle;
+
+  /// No description provided for @catOfficial.
+  ///
+  /// In fr, this message translates to:
+  /// **'Officiels'**
+  String get catOfficial;
+
   /// No description provided for @catMoviesSeries.
   ///
   /// In fr, this message translates to:
@@ -4235,13 +4259,13 @@ abstract class AppLocalizations {
   /// No description provided for @chooseInstanceTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Choisir une instance'**
+  /// **'Choisir un serveur'**
   String get chooseInstanceTitle;
 
   /// No description provided for @instanceNeedsSetup.
   ///
   /// In fr, this message translates to:
-  /// **'à configurer'**
+  /// **'à régler'**
   String get instanceNeedsSetup;
 
   /// No description provided for @addonLinkHelp.

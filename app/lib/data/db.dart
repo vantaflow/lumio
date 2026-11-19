@@ -79,6 +79,21 @@ class Progress extends Table {
   /// nulle si inconnue.
   TextColumn get certification => text().nullable()();
 
+  /// Titre affiché dans « Continuer » (v12) : mémorisé au moment de la lecture
+  /// pour ne jamais afficher un identifiant brut ; nul pour les anciennes
+  /// lignes (repli sur une requête meta).
+  TextColumn get title => text().nullable()();
+
+  /// Adresse de l'affiche (v12).
+  TextColumn get poster => text().nullable()();
+
+  /// Type du titre : `movie`, `series`… (v12).
+  TextColumn get mediaType => text().nullable()();
+
+  /// Saison et épisode de [itemId] pour une série (v12).
+  IntColumn get season => integer().nullable()();
+  IntColumn get episode => integer().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {profileId, itemId};
 }
@@ -176,7 +191,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -241,6 +256,36 @@ class AppDatabase extends _$AppDatabase {
       // tables de la file d'envoi disparaissent ; les données de l'utilisateur
       // (profils, ma liste, progression, addons) ne sont pas touchées.
       if (from < 11) await _dropSyncAndSimkl();
+      // v12 : titre, affiche, type, saison et épisode mémorisés dans la
+      // progression (une base déjà à jour n'est pas retouchée).
+      if (from < 12) {
+        final cols = {
+          for (final r in await customSelect(
+            'PRAGMA table_info(progress)',
+          ).get())
+            r.read<String>('name'),
+        };
+        if (cols.isEmpty) {
+          // Base très ancienne sans table `progress` : créée au modèle courant.
+          await m.createTable(progress);
+        } else {
+          if (!cols.contains('title')) {
+            await m.addColumn(progress, progress.title);
+          }
+          if (!cols.contains('poster')) {
+            await m.addColumn(progress, progress.poster);
+          }
+          if (!cols.contains('media_type')) {
+            await m.addColumn(progress, progress.mediaType);
+          }
+          if (!cols.contains('season')) {
+            await m.addColumn(progress, progress.season);
+          }
+          if (!cols.contains('episode')) {
+            await m.addColumn(progress, progress.episode);
+          }
+        }
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

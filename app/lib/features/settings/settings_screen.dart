@@ -331,6 +331,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           onOpen: () => showAddAddonScreen(
                             context,
                             initialTab: AddAddonTab.phone,
+                            title: l.settingsManagePhone,
                           ),
                         ),
                         const SizedBox(height: 14),

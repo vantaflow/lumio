@@ -775,10 +775,15 @@ class _HomeHeroState extends ConsumerState<_HomeHero> {
   late Future<ContinueInfo> _info = _describe();
   bool? _inList;
 
-  Future<ContinueInfo> _describe() => ref
-      .read(continuePlaybackProvider)
-      .describe(widget.entry)
-      .catchError((Object _) => ContinueInfo(title: widget.entry.metaId));
+  Future<ContinueInfo> _describe() {
+    final unknown = context.l10n.unknownTitle;
+    return ref
+        .read(continuePlaybackProvider)
+        .describe(widget.entry)
+        .catchError(
+          (Object _) => ContinueInfo(title: widget.entry.title ?? unknown),
+        );
+  }
 
   @override
   void didUpdateWidget(_HomeHero old) {
@@ -826,7 +831,7 @@ class _HomeHeroState extends ConsumerState<_HomeHero> {
     return FutureBuilder<ContinueInfo>(
       future: _info,
       builder: (context, snap) {
-        final info = snap.data ?? ContinueInfo(title: e.metaId);
+        final info = snap.data ?? ContinueInfo(title: e.title ?? '');
         final left = e.duration - e.position;
         final parts = [
           l.heroResume.toUpperCase(),
@@ -1028,9 +1033,14 @@ class _ContinueCard extends StatefulWidget {
 class _ContinueCardState extends State<_ContinueCard> {
   late Future<ContinueInfo> _info = _describe();
 
-  Future<ContinueInfo> _describe() => widget.playback
-      .describe(widget.entry)
-      .catchError((Object _) => ContinueInfo(title: widget.entry.metaId));
+  Future<ContinueInfo> _describe() {
+    final unknown = context.l10n.unknownTitle;
+    return widget.playback
+        .describe(widget.entry)
+        .catchError(
+          (Object _) => ContinueInfo(title: widget.entry.title ?? unknown),
+        );
+  }
 
   @override
   void didUpdateWidget(_ContinueCard old) {
@@ -1056,7 +1066,7 @@ class _ContinueCardState extends State<_ContinueCard> {
       child: FutureBuilder<ContinueInfo>(
         future: _info,
         builder: (context, snap) {
-          final info = snap.data ?? ContinueInfo(title: e.metaId);
+          final info = snap.data ?? ContinueInfo(title: e.title ?? '');
           if (isTvLayout(context)) {
             return TvMediaCard(
               title: info.title,

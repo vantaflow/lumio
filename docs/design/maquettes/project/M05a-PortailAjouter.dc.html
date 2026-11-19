@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Portail · Ajouter</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.ph{width:390px;height:844px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:16px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.sm{font-size:14px;color:#A9B2BF;line-height:1.4}
+.chip{flex:none;height:36px;padding:0 14px;border-radius:18px;background:#1C222B;border:0;color:#F3F5F7;font:600 14px 'Manrope',sans-serif}
+.card{display:flex;gap:12px;align-items:center;background:#161B22;border-radius:16px;padding:12px}
+.lg{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font:700 20px 'Bricolage Grotesque',sans-serif;color:#0E1116;flex:none}
+.bt{height:40px;padding:0 14px;border-radius:20px;border:0;font:700 14px 'Manrope',sans-serif;flex:none}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#A9B2BF;background:none;border:0;font-family:inherit}
+</style>
+</helmet>
+<div class="ph">
+<div style="padding:20px 20px 12px;display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;align-items:center;gap:10px"><svg width="28" height="28" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" fill="none" stroke="#FFB84D" stroke-width="9"/><circle cx="36" cy="36" r="10" fill="#4FD1C5"/></svg><span class="hd" style="font-size:20px">Lumio</span></div>
+<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#5BD68A;font-weight:600"><span style="width:8px;height:8px;border-radius:4px;background:#5BD68A"></span>Connecté à votre TV</span>
+</div>
+<div style="padding:0 20px">
+<h1 class="hd" style="font-size:26px">Ajouter un addon</h1>
+<p class="sm" style="margin:6px 0 14px">Choisissez un addon, appuyez sur Installer, puis confirmez sur la TV.</p>
+<label for="q" class="sm" style="display:none">Chercher</label>
+<div id="q" style="height:44px;border-radius:12px;background:#161B22;border:1px solid #2A3340;display:flex;align-items:center;gap:8px;padding:0 12px;color:#7E8896;font-size:15px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7E8896" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Chercher un addon</div>
+<div style="display:flex;gap:8px;margin:12px 0;overflow:hidden"><button class="chip" style="background:#FFB84D;color:#1A1100">Officiels</button><button class="chip">Populaires</button><button class="chip">Films et séries</button><button class="chip">Sous-titres</button><button class="chip">Plus…</button></div>
+</div>
+<div style="flex:1;padding:0 20px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+<div class="card"><div class="lg" style="background:#4FD1C5">C</div><div style="flex:1;min-width:0"><div style="font-weight:700">Cinemeta</div><div class="sm">Catalogues de films et séries</div></div><span style="font-size:13px;font-weight:700;color:#5BD68A">Installé</span></div>
+<div class="card"><div class="lg" style="background:#FFB84D">O</div><div style="flex:1;min-width:0"><div style="font-weight:700">OpenSubtitles</div><div class="sm">Sous-titres dans votre langue</div></div><button class="bt" style="background:#FFB84D;color:#1A1100">Installer</button></div>
+<div class="card"><div class="lg" style="background:#C9A0F0">W</div><div style="flex:1;min-width:0"><div style="font-weight:700">WatchHub</div><div class="sm">Où regarder légalement</div></div><button class="bt" style="background:#FFB84D;color:#1A1100">Installer</button></div>
+<div class="card"><div class="lg" style="background:#FF8A7A">A</div><div style="flex:1;min-width:0"><div style="font-weight:700">Anime Kitsu</div><div class="sm">Catalogue d'anime</div></div><button class="bt" style="background:#2A3340;color:#F3F5F7">Régler</button></div>
+<button style="margin-top:4px;background:none;border:1px dashed #3A4452;border-radius:16px;color:#F3F5F7;height:52px;font:600 15px 'Manrope',sans-serif">J'ai déjà un lien d'addon</button>
+</div>
+<div style="height:64px;border-top:1px solid #1C222B;display:flex;align-items:center;background:#0B0E12">
+<button class="tab" style="color:#FFB84D"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFB84D" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Ajouter</button>
+<button class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Mes addons</button>
+</div>
+<div style="position:absolute;left:20px;right:20px;bottom:76px;background:#2A3340;border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFB84D" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/></svg><span><b>Regardez la TV</b> : confirmez l'installation de Cinemeta.</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

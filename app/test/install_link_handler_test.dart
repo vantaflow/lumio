@@ -138,7 +138,9 @@ void main() {
 
     expect(find.text('Ajouter un addon'), findsOneWidget);
     expect(find.text('Alpha'), findsOneWidget);
-    expect(find.text(_urlA), findsOneWidget);
+    // Lien reçu de l'extérieur : jamais affiché brut (nom et serveur).
+    expect(find.text(_urlA), findsNothing);
+    expect(find.text('Serveur : a.example.com'), findsOneWidget);
     expect(await h.run(h.addons.list), isEmpty);
     await h.dispose();
   });

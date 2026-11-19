@@ -95,6 +95,32 @@ void main() {
   }
 
   test(
+    'titre, affiche et épisode mémorisés, gardés aux écritures suivantes',
+    () async {
+      await repo.save(
+        'p',
+        'tt1',
+        'tt1:2:3',
+        _min * 10,
+        _min * 100,
+        title: 'Une série',
+        poster: 'https://img.example/p.jpg',
+        mediaType: 'series',
+        season: 2,
+        episode: 3,
+      );
+      // Écriture sans titre (lecture lancée sans fiche) : l'existant est gardé.
+      await repo.save('p', 'tt1', 'tt1:2:3', _min * 20, _min * 100);
+      final e = (await repo.get('p', 'tt1:2:3'))!;
+      expect(e.title, 'Une série');
+      expect(e.poster, 'https://img.example/p.jpg');
+      expect((e.mediaType, e.season, e.episode), ('series', 2, 3));
+      final cont = (await repo.continueWatching('p').first).single;
+      expect(cont.title, 'Une série');
+    },
+  );
+
+  test(
     'migration v2 vers v3 : ajoute metaId et watched, garde les lignes',
     () async {
       driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;

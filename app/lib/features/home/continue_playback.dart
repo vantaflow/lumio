@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/features/settings/settings_providers.dart'
+    show localeProvider;
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/jellyfin_repository.dart'
     show isJellyfinId, parseJellyfinId;
@@ -87,32 +89,57 @@ class DefaultContinuePlayback implements ContinuePlayback {
     return f;
   }
 
+  /// Libellé « SxEy » d'après la saison et l'épisode mémorisés.
+  static String? _storedEpisode(ProgressEntry e) =>
+      e.season != null && e.episode != null
+      ? 'S${e.season}E${e.episode}'
+      : null;
+
+  String get _unknown =>
+      lookupAppLocalizations(_ref.read(localeProvider)).unknownTitle;
+
   @override
   Future<ContinueInfo> describe(ProgressEntry entry) async {
     if (isLocalId(entry.metaId)) {
       final item = await _ref.read(localLibraryProvider).item(entry.metaId);
       return ContinueInfo(
-        title: item?.displayTitle ?? entry.metaId,
+        title: item?.displayTitle ?? entry.title ?? _unknown,
         subtitle: item?.episodeLabel,
       );
     }
     if (isJellyfinId(entry.metaId)) return _describeJellyfin(entry);
-    final meta = await _meta(entry);
-    return ContinueInfo(
-      title: meta.name,
-      subtitle: episodeLabel(meta, entry.videoId),
-      poster: meta.poster,
-    );
+    // Titre et affiche mémorisés à la lecture : aucune requête.
+    final stored = entry.title;
+    if (stored != null && stored.isNotEmpty) {
+      return ContinueInfo(
+        title: stored,
+        subtitle: _storedEpisode(entry),
+        poster: Uri.tryParse(entry.poster ?? ''),
+      );
+    }
+    // Ancienne ligne : requête meta ; jamais d'identifiant brut affiché.
+    try {
+      final meta = await _meta(entry);
+      final name = meta.name.trim();
+      final raw = name.isEmpty || name == entry.metaId;
+      return ContinueInfo(
+        title: raw ? _unknown : name,
+        subtitle: episodeLabel(meta, entry.videoId),
+        poster: meta.poster,
+      );
+    } catch (_) {
+      return ContinueInfo(title: _unknown);
+    }
   }
 
   Future<ContinueInfo> _describeJellyfin(ProgressEntry entry) async {
     final ids = parseJellyfinId(entry.metaId);
-    if (ids == null) return ContinueInfo(title: entry.metaId);
+    if (ids == null) return ContinueInfo(title: entry.title ?? _unknown);
     final repo = _ref.read(jellyfinRepositoryProvider);
     final server = await repo.server(ids.serverId);
     final client = await repo.client(ids.serverId);
     if (server == null || client == null) {
-      return ContinueInfo(title: entry.metaId);
+      return ContinueInfo(title: entry.title ?? _unknown);
     }
     final it = await client.item(ids.itemId);
     return ContinueInfo(

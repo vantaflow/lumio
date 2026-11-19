@@ -1141,6 +1141,12 @@
   "addonTabLink": "By link",
   "addonTabPhone": "From your phone",
   "catPopular": "Popular",
+  "addonServerLine": "Server: {host}",
+  "@addonServerLine": {"placeholders": {"host": {"type": "String"}}},
+  "addonReplacesNote": "Replaces the version of “{name}” already installed.",
+  "@addonReplacesNote": {"placeholders": {"name": {"type": "String"}}},
+  "unknownTitle": "Unknown title",
+  "catOfficial": "Official",
   "catMoviesSeries": "Movies and series",
   "catTorrents": "Torrents",
   "catDebrid": "Debrid",
@@ -1184,7 +1190,7 @@
       "stars": {}
     }
   },
-  "chooseInstanceTitle": "Choose an instance",
+  "chooseInstanceTitle": "Choose a server",
   "instanceNeedsSetup": "needs setup",
   "addonLinkHelp": "manifest.json link or stremio:// link. A link copied on this device is offered automatically.",
   "addonPreviewLabel": "PREVIEW · v{version}",

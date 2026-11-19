@@ -94,12 +94,32 @@ class AppPhoneBackend implements PhoneBackend {
     final categories = moreId != null
         ? [moreId]
         : catalogChips.firstWhere((c) => c.id == chipId).categories;
-    final r = await _ref
-        .read(addonCatalogServiceProvider)
-        .list(
-          CatalogQuery(categories: categories, page: page),
-          refresh: refresh && page == 1,
-        );
+    final service = _ref.read(addonCatalogServiceProvider);
+    CatalogResult<CatalogPage>? official;
+    if (chipId == 'official' && moreId == null && page == 1) {
+      try {
+        official = await service.official(refresh: refresh);
+      } catch (_) {}
+    }
+    var r = CatalogResult(
+      CatalogPage(entries: const [], total: 0),
+      CatalogOrigin.network,
+      DateTime.now(),
+    );
+    try {
+      r = await service.list(
+        CatalogQuery(categories: categories, page: page),
+        refresh: refresh && page == 1,
+      );
+    } catch (_) {
+      if (official == null) rethrow;
+    }
+    final entries = official == null
+        ? r.value.entries
+        : AddonCatalogService.mergeOfficial(
+            official.value.entries,
+            r.value.entries,
+          );
     final installed = <String>{
       for (final a in await _ref.read(addonsProvider.future))
         a.name.trim().toLowerCase(),
@@ -120,13 +140,16 @@ class AppPhoneBackend implements PhoneBackend {
         _ => null,
       },
       cards: [
-        for (final e in r.value.entries)
+        for (final e in entries)
           PhoneCatalogCard(
             slug: e.slug,
             name: e.name,
             description: e.description,
             logo: e.logo,
             meta: catalogCardMeta(e, l),
+            setup: e.instances.any(
+              (i) => i.configurable || i.configurationRequired,
+            ),
             installed: installed.contains(e.name.trim().toLowerCase()),
           ),
       ],
@@ -135,6 +158,21 @@ class AppPhoneBackend implements PhoneBackend {
 
   @override
   Future<PhoneCatalogCard?> catalogCard(String slug) async {
+    final off = await _officialEntry(slug);
+    if (off != null) {
+      final installed = <String>{
+        for (final a in await _ref.read(addonsProvider.future))
+          a.name.trim().toLowerCase(),
+      };
+      return PhoneCatalogCard(
+        slug: off.slug,
+        name: off.name,
+        description: off.description,
+        logo: off.logo,
+        meta: '',
+        installed: installed.contains(off.name.trim().toLowerCase()),
+      );
+    }
     final d = (await _ref.read(addonCatalogServiceProvider).detail(slug)).value;
     final installed = <String>{
       for (final a in await _ref.read(addonsProvider.future))
@@ -152,8 +190,12 @@ class AppPhoneBackend implements PhoneBackend {
 
   @override
   Future<PhoneCatalogChoice?> catalogChoice(String slug) async {
-    final d = (await _ref.read(addonCatalogServiceProvider).detail(slug)).value;
-    final instances = d.instances;
+    final off = await _officialEntry(slug);
+    final instances =
+        off?.instances ??
+        (await _ref.read(addonCatalogServiceProvider).detail(slug))
+            .value
+            .instances;
     if (instances.isEmpty) return null;
     // Une instance utilisable sans réglage d'abord, sinon la première.
     final pick = instances.firstWhere(
@@ -165,6 +207,18 @@ class AppPhoneBackend implements PhoneBackend {
       required: pick.configurationRequired,
       configure: pick.configureUrl,
     );
+  }
+
+  /// Entrée de la collection officielle (déjà en cache après l'affichage de
+  /// la puce « Officiels ») ; `null` pour un addon du site.
+  Future<CatalogEntry?> _officialEntry(String slug) async {
+    try {
+      final r = await _ref.read(addonCatalogServiceProvider).official();
+      for (final e in r.value.entries) {
+        if (e.slug == slug) return e;
+      }
+    } catch (_) {}
+    return null;
   }
 
   @override

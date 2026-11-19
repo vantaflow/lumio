@@ -1,6 +1,8 @@
 // Page web servie par la box : HTML, CSS et JS embarqués (aucune ressource
-// externe, aucun `innerHTML`), maquette M04. Les textes sont en français et
-// en anglais ; la langue est celle de l'application.
+// externe, aucun `innerHTML`, aucun style en ligne), maquettes M05a (Ajouter),
+// M05b (Régler) et M05c (Mes addons). Deux onglets en bas seulement ; chaque
+// écran dit quoi faire ensuite, sans jargon. Textes en français et en anglais ;
+// la langue est celle de l'application.
 
 String phoneIndexHtml(String lang) {
   final l = lang == 'en' ? 'en' : 'fr';
@@ -13,65 +15,76 @@ const phoneCss = r'''
 @font-face{font-family:'Bricolage Grotesque';src:url(/fonts/bricolage.ttf) format('truetype');font-weight:200 800;font-display:swap}
 html,body{margin:0;background:#0E1116}
 body{color:#F3F5F7;font-family:'Manrope',system-ui,sans-serif;font-size:16px;-webkit-text-size-adjust:100%}
-.ph{max-width:480px;min-height:100vh;margin:0 auto;padding:24px 20px;display:flex;flex-direction:column;gap:16px}
+.ph{max-width:480px;min-height:100vh;margin:0 auto;padding:20px 20px 150px;display:flex;flex-direction:column;gap:14px}
 .hd{font-family:'Bricolage Grotesque','Manrope',system-ui,sans-serif;font-weight:700;margin:0}
-.sm{font-size:14px;color:#A9B2BF;line-height:1.4}
+.sm{font-size:14px;color:#A9B2BF;line-height:1.45}
 label.l{font-size:14px;color:#F3F5F7;font-weight:600;line-height:1.4}
-.in{height:52px;width:100%;border-radius:14px;background:#161B22;border:2px solid #3A4452;padding:0 14px;font:inherit;font-size:15px;color:#F3F5F7}
+.in{height:52px;width:100%;border-radius:12px;background:#161B22;border:2px solid #3A4452;padding:0 14px;font:inherit;font-size:15px;color:#F3F5F7}
 .in::placeholder{color:#A9B2BF;opacity:1}
-.in:focus-visible,.bt:focus-visible,.ib:focus-visible,.lk:focus-visible,.sw:focus-visible{outline:3px solid #FFB84D;outline-offset:2px}
-.bt{height:52px;border-radius:26px;border:0;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer}
+.in:focus-visible,.bt:focus-visible,.ib:focus-visible,.lk:focus-visible,.sw:focus-visible,.chp:focus-visible,.tab:focus-visible,.gh:focus-visible,.bk:focus-visible,.tg:focus-visible{outline:3px solid #FFB84D;outline-offset:2px}
+.bt{height:52px;border-radius:26px;border:0;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;width:100%}
 .bt:disabled{opacity:.5;cursor:default}
 .b2{background:#2A3340;color:#F3F5F7}
 .b1{background:#FFB84D;color:#1A1100}
+.bd{background:#FF7A70;color:#1A1100}
 .row{display:flex;gap:10px}
-.lk{display:flex;align-items:center;justify-content:space-between;height:56px;border-radius:14px;background:#161B22;padding:0 16px;color:#F3F5F7;text-decoration:none;font-weight:600}
-.card{border-radius:14px;background:#161B22;padding:0 12px}
-.ar{display:flex;align-items:center;gap:12px;min-height:64px}
+.lk{display:inline-flex;align-items:center;gap:6px;color:#4FD1C5;font-weight:700;font-size:14px;text-decoration:none;min-height:44px}
+.col{display:flex;flex-direction:column;gap:14px}
+.hidden{display:none!important}
+.h22{font-size:22px}.h26{font-size:26px}
+.mt4{margin-top:4px}.mt8{margin-top:8px}
+.lst{list-style:none;margin:0;padding:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px}
+.on-tv{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#5BD68A;font-weight:600}
+.dot{width:8px;height:8px;border-radius:4px;background:#5BD68A;flex:none;display:inline-block}
+.dot.am{background:#FFB84D}.dot.rd{background:#FF7A70}.dot.gr{background:#7E8896}
+.sch{height:44px;border-radius:12px;background:#161B22;border:2px solid #2A3340;padding:0 12px 0 40px;width:100%;font:inherit;font-size:15px;color:#F3F5F7}
+.sch::placeholder{color:#A9B2BF;opacity:1}
+.sw0{position:relative}
+.sw0 svg{position:absolute;left:12px;top:13px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chp{height:40px;border-radius:20px;padding:0 14px;border:0;background:#1C222B;color:#F3F5F7;font:inherit;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;flex:none}
+.chp.on{background:#FFB84D;color:#1A1100;font-weight:700}
+.card{border-radius:16px;background:#161B22;padding:12px;display:flex;flex-direction:column;gap:10px}
+.ar{display:flex;align-items:center;gap:12px;min-height:48px}
 .ar.off .nm{opacity:.55}
-.lg{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0E1116;font-family:'Bricolage Grotesque',system-ui,sans-serif;flex:none}
+.lg{position:relative;overflow:hidden;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#0E1116;font-family:'Bricolage Grotesque',system-ui,sans-serif;flex:none}
+.lg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0E1116}
 .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tx{flex:1;min-width:0}
-.ib{width:44px;height:44px;border-radius:22px;background:#2A3340;border:0;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer;padding:0}
+.d1{font-size:14px;color:#A9B2BF;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bdg{color:#5BD68A;font-size:13px;font-weight:700;flex:none}
+.cb{height:40px;width:auto;padding:0 16px;font-size:14px;flex:none}
+.gh{background:none;border:2px dashed #3A4452;border-radius:16px;color:#F3F5F7;height:52px;font:600 15px 'Manrope',system-ui,sans-serif;width:100%;cursor:pointer}
+.pn{border-radius:16px;background:#161B22;border:2px solid #FFB84D;padding:14px;display:flex;flex-direction:column;gap:12px}
+.ib{height:40px;padding:0 14px;border-radius:20px;background:#1C222B;border:0;color:#F3F5F7;font:600 13px 'Manrope',system-ui,sans-serif;cursor:pointer}
 .ib:disabled{opacity:.35;cursor:default}
-.ib svg{width:18px;height:18px}
-.ct{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 0 12px;font-size:14px;color:#A9B2BF}
-.sw{display:flex;align-items:center;gap:10px;border:0;background:none;color:inherit;font:inherit;font-size:14px;padding:0;cursor:pointer;min-height:44px}
-.sw i{width:44px;height:26px;border-radius:13px;background:#3A4452;position:relative;flex:none}
-.sw i:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:10px;background:#F3F5F7;transition:left .15s}
-.sw[aria-checked=true] i{background:#FFB84D}
-.sw[aria-checked=true] i:after{left:21px}
-.cf{display:flex;flex-direction:column;gap:10px;padding:12px 0}
-.cf .bt{height:44px;font-size:15px}
-.bd{background:#FF7A70;color:#1A1100}
-.msg{border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.4;background:#161B22}
+.ib.dg{color:#FF7A70}
+.ib.md{background:#2A3340}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.tg{width:44px;height:26px;border-radius:13px;position:relative;flex:none;border:0;background:#3A4452;cursor:pointer;padding:0}
+.tg i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:10px;background:#F3F5F7;transition:left .15s}
+.tg[aria-checked=true]{background:#FFB84D}
+.tg[aria-checked=true] i{left:21px}
+.st{display:flex;gap:14px}
+.n{width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none;background:#2A3340;color:#F3F5F7}
+.st.act .n{background:#FFB84D;color:#1A1100}
+.st.done .n{background:#5BD68A;color:#0E1116}
+.stt{font-weight:700}
+.bk{width:40px;height:40px;border-radius:20px;background:#1C222B;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:none}
+.msg{border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.4;background:#2A3340}
 .msg.ok{border:2px solid #5BD68A}
 .msg.er{border:2px solid #FF7A70}
 .msg.wt{border:2px solid #FFB84D}
-.brand{display:flex;align-items:center;gap:10px}
-.hidden{display:none!important}
-.col{display:flex;flex-direction:column;gap:16px}
-.h22{font-size:22px}.h26{font-size:26px}.h20{font-size:20px;margin:8px 0 0}
-.mt4{margin-top:4px}.f1{flex:1}.f2{flex:2}
-.lst{list-style:none;margin:0;padding:0}
-.foot{margin-top:auto}
-.ph>section{flex:1}
-.ty{text-align:right}
-.cd2{display:flex;flex-direction:column;gap:10px;padding:12px 0}
-.cd2 .d{font-size:14px;color:#A9B2BF;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.cd2 .row .bt{height:44px;font-size:15px;flex:1}
-.rc{height:44px;font-size:14px;padding:0 14px}
-.pn{border-radius:14px;background:#161B22;border:2px solid #FFB84D;padding:14px;display:flex;flex-direction:column;gap:12px}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
-.chp{height:40px;border-radius:20px;padding:0 14px;border:0;background:#2A3340;color:#F3F5F7;font:inherit;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;flex:none}
-.chp.on{background:#FFB84D;color:#1A1100;font-weight:700}
-.chp:focus-visible{outline:3px solid #FFB84D;outline-offset:2px}
-.lg{position:relative;overflow:hidden}
-.lg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0E1116}
-.bdg{color:#5BD68A;font-size:13px;font-weight:700;flex:none}
-.meta{font-size:13px;color:#A9B2BF}
+.toast{position:fixed;left:20px;right:20px;bottom:80px;max-width:440px;margin:0 auto;z-index:5}
+.nav{position:fixed;left:0;right:0;bottom:0;height:64px;border-top:1px solid #1C222B;background:#0B0E12;display:flex;z-index:4}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 12px 'Manrope',system-ui,sans-serif;color:#A9B2BF;background:none;border:0;cursor:pointer}
+.tab svg{stroke:#A9B2BF}
+.tab.on{color:#FFB84D}
+.tab.on svg{stroke:#FFB84D}
 .code{letter-spacing:6px;text-align:center;font-size:24px}
-@media (prefers-reduced-motion:reduce){.sw i:after{transition:none}}
+@media (prefers-reduced-motion:reduce){.tg i{transition:none}}
 ''';
 
 const phoneJs = r'''
@@ -79,38 +92,44 @@ const phoneJs = r'''
   'use strict';
   var T = {
     fr: {
-      brand: 'Lumio · votre TV',
+      onTv: 'Connecté à votre TV',
       addTitle: 'Ajouter un addon',
-      addHelp: "Collez le lien : l'aperçu s'affiche, vous confirmez sur la TV.",
+      addHelp: 'Choisissez un addon, appuyez sur Installer, puis confirmez sur la TV.',
+      search: 'Chercher un addon',
+      haveLink: "J'ai déjà un lien d'addon",
+      linkTitle: "Installer avec un lien",
+      linkHelp: "Collez le lien de l'addon (il commence par https:// ou stremio://). La TV vous demandera de confirmer.",
       linkLabel: "Lien de l'addon",
-      paste: 'Coller',
-      pasteHint: 'Appuyez longuement dans le champ, puis choisissez Coller.',
-      send: 'Envoyer à la TV',
-      browse: 'Parcourir stremio-addons.net',
-      browseHint: 'Sur le site, « Copier le lien » puis revenez ici.',
-      catTitle: 'Catalogue',
-      catHelp: 'Les addons populaires de stremio-addons.net : installez-les ici, la TV confirme.',
+      browse: 'Chercher des addons sur stremio-addons.net',
+      browseHint: 'Sur ce site, appuyez sur « Copier le lien », puis revenez ici.',
+      pasteHint: 'Appuyez longuement dans le champ, puis choisissez « Coller ».',
+      sendTv: 'Installer sur la TV',
+      tvConfirm: 'Vous confirmerez sur la TV. Le lien reste sur la TV, chiffré.',
+      close: 'Fermer',
       catMore: 'Plus…',
-      catMoreTitle: 'Plus de catégories',
       catRefresh: 'Actualiser',
       catLoadMore: 'Voir plus',
       catInstalled: 'Installé',
-      catOffline: 'Catalogue hors ligne : copie enregistrée.',
-      catFallback: 'Catalogue réduit : le site est injoignable.',
+      catOffline: 'Pas de connexion : voici la dernière liste enregistrée.',
+      catFallback: 'Liste réduite : le site des addons ne répond pas pour le moment.',
       catEmpty: 'Aucun addon ne correspond.',
-      catLoadError: 'Le catalogue est indisponible pour le moment.',
+      catLoadError: "La liste des addons n'est pas disponible pour le moment. Réessayez dans un instant.",
       install: 'Installer',
-      configure: 'Configurer',
-      reconfigure: 'Reconfigurer',
-      needsCfg: 'Cet addon demande un réglage : utilisez « Configurer ».',
-      notCfg: "Cet addon n'a pas de page de configuration.",
-      cfgTitle: 'Configurer {n}',
-      cfgOpen: 'Ouvrir la page de configuration',
-      cfgHelp: "Réglez l'addon dans le nouvel onglet, copiez le lien d'installation obtenu, puis revenez le coller ici.",
-      cfgLabel: 'Collez ici le lien produit par la configuration',
-      cfgClose: 'Fermer',
-      mine: 'Mes addons · ordre de priorité',
-      none: "Aucun addon installé pour l'instant.",
+      setup: 'Régler',
+      change: 'Changer les réglages',
+      cfgBefore: "Régler avant d'installer",
+      cfgIntro: "Cet addon a besoin de quelques choix (langue, catalogues…). Trois étapes :",
+      s1: 'Ouvrez la page de réglage',
+      s1d: "Elle s'ouvre dans un nouvel onglet.",
+      reopen: 'Rouvrir la page ↗',
+      s2: 'Faites vos choix, puis copiez le lien',
+      s2d: 'En bas de la page, appuyez sur « Copier le lien » (ou « Installer », puis copiez l’adresse affichée).',
+      s3: 'Revenez ici et collez-le',
+      cfgLabel: "Lien de l'addon réglé",
+      cfgHint: 'Lumio reconnaît les liens stremio:// et https://…/manifest.json.',
+      mineTitle: 'Mes addons',
+      mineHelp: "Le premier de la liste est consulté en premier pour trouver une vidéo.",
+      none: "Vous n'avez pas encore d'addon. Allez dans « Ajouter » pour en choisir un.",
       up: 'Monter',
       down: 'Descendre',
       del: 'Supprimer',
@@ -118,92 +137,106 @@ const phoneJs = r'''
       confirmDel: 'Supprimer « {n} » ?',
       enabled: 'Activé',
       disabled: 'Désactivé',
-      broken: 'Illisible',
-      reliable: 'Bonne santé',
-      slow: 'Lente',
-      failing: 'Hors ligne',
-      unknown: 'Santé inconnue',
-      connected: 'Connecté à {h} · la page se ferme quand vous quittez l’écran sur la TV.',
+      broken: 'Illisible : supprimez-le puis réinstallez-le',
+      reliable: 'Fonctionne bien',
+      slow: 'Lent',
+      failing: 'Ne répond pas',
+      unknown: 'Pas encore testé',
       loginTitle: 'Code de sécurité',
       loginHelp: 'Saisissez le code à 6 chiffres affiché sur la TV.',
       loginBtn: 'Se connecter',
-      badCode: 'Code incorrect. Regardez le code affiché sur la TV.',
-      locked: 'Trop d’essais. Réessayez dans {s} s avec le nouveau code affiché sur la TV.',
-      waiting: 'En attente de confirmation sur la TV…',
-      installed: 'Installé : {n}. Retrouvez-le dans la liste ci-dessous.',
-      installedNoName: 'Addon installé.',
-      failed: "L'installation n'a pas abouti. Vérifiez le lien et réessayez.",
-      cancelled: 'Annulé sur la TV.',
-      expired: 'Pas de confirmation sur la TV : demande expirée.',
-      invalidLink: "Ce lien n'est pas un lien d'addon (https://…/manifest.json ou stremio://…).",
+      badCode: 'Ce code est incorrect. Regardez le code affiché sur la TV.',
+      locked: 'Trop d’essais. Attendez {s} secondes, puis saisissez le nouveau code affiché sur la TV.',
+      waiting: 'Regardez la TV : confirmez l’installation de {n}.',
+      waitingLink: 'Regardez la TV : confirmez l’installation.',
+      installed: '{n} est installé. Retrouvez-le dans « Mes addons ».',
+      installedNoName: 'Addon installé. Retrouvez-le dans « Mes addons ».',
+      failed: "L'installation n'a pas marché. Vérifiez le lien, puis réessayez.",
+      cancelled: "Vous avez refusé sur la TV : rien n'a été installé.",
+      expired: "La TV n'a pas reçu de confirmation à temps. Appuyez de nouveau sur Installer.",
+      invalidLink: "Ce lien ne ressemble pas à un lien d'addon. Il commence par https:// ou stremio:// et finit souvent par manifest.json.",
       emptyLink: "Collez d'abord le lien de l'addon.",
-      closed: "La TV a fermé la page. Rouvrez « Depuis le téléphone » sur la TV, puis rescannez le code.",
-      generic: 'Une erreur est survenue. Réessayez.',
-      rate: 'Trop de requêtes, patientez un instant.',
+      closed: "La connexion avec la TV est coupée. Sur la TV, ouvrez « Gérer depuis le téléphone » et scannez à nouveau le code.",
+      generic: 'Un problème est survenu. Réessayez dans un instant.',
+      rate: 'Un peu de patience : réessayez dans quelques secondes.',
+      notCfg: "Cet addon n'a pas de page de réglage : appuyez sur Installer.",
+      tabAdd: 'Ajouter',
+      tabMine: 'Mes addons',
+      back: 'Retour',
       types: { movie: 'Films', series: 'Séries', anime: 'Anime', tv: 'TV', channel: 'Chaînes', other: 'Autre' }
     },
     en: {
-      brand: 'Lumio · your TV',
+      onTv: 'Connected to your TV',
       addTitle: 'Add an addon',
-      addHelp: 'Paste the link: the preview shows on the TV and you confirm there.',
+      addHelp: 'Pick an addon, tap Install, then confirm on the TV.',
+      search: 'Search addons',
+      haveLink: 'I already have an addon link',
+      linkTitle: 'Install with a link',
+      linkHelp: 'Paste the addon link (it starts with https:// or stremio://). The TV will ask you to confirm.',
       linkLabel: 'Addon link',
-      paste: 'Paste',
-      pasteHint: 'Long-press in the field, then choose Paste.',
-      send: 'Send to the TV',
-      browse: 'Browse stremio-addons.net',
-      browseHint: 'On the site, tap “Copy link”, then come back here.',
-      catTitle: 'Catalogue',
-      catHelp: 'Popular addons from stremio-addons.net: install them here, the TV asks you to confirm.',
+      browse: 'Find addons on stremio-addons.net',
+      browseHint: 'On that site, tap “Copy link”, then come back here.',
+      pasteHint: 'Long-press in the field, then choose “Paste”.',
+      sendTv: 'Install on the TV',
+      tvConfirm: 'You will confirm on the TV. The link stays on the TV, encrypted.',
+      close: 'Close',
       catMore: 'More…',
-      catMoreTitle: 'More categories',
       catRefresh: 'Refresh',
       catLoadMore: 'Show more',
       catInstalled: 'Installed',
-      catOffline: 'Offline catalogue: saved copy.',
-      catFallback: 'Reduced catalogue: the site is unreachable.',
+      catOffline: 'No connection: here is the last saved list.',
+      catFallback: 'Short list: the addon website is not answering right now.',
       catEmpty: 'No addon matches.',
-      catLoadError: 'The catalogue is unavailable right now.',
+      catLoadError: 'The addon list is not available right now. Try again in a moment.',
       install: 'Install',
-      configure: 'Configure',
-      reconfigure: 'Reconfigure',
-      needsCfg: 'This addon needs setup: use “Configure”.',
-      notCfg: 'This addon has no setup page.',
-      cfgTitle: 'Configure {n}',
-      cfgOpen: 'Open the setup page',
-      cfgHelp: 'Set the addon up in the new tab, copy the install link it gives you, then come back and paste it here.',
-      cfgLabel: 'Paste the link produced by the setup',
-      cfgClose: 'Close',
-      mine: 'My addons · priority order',
-      none: 'No addon installed yet.',
+      setup: 'Set up',
+      change: 'Change settings',
+      cfgBefore: 'Set up before installing',
+      cfgIntro: 'This addon needs a few choices (language, catalogues…). Three steps:',
+      s1: 'Open the setup page',
+      s1d: 'It opens in a new tab.',
+      reopen: 'Reopen the page ↗',
+      s2: 'Make your choices, then copy the link',
+      s2d: 'At the bottom of the page, tap “Copy link” (or “Install”, then copy the address shown).',
+      s3: 'Come back here and paste it',
+      cfgLabel: 'Link of the set-up addon',
+      cfgHint: 'Lumio understands stremio:// and https://…/manifest.json links.',
+      mineTitle: 'My addons',
+      mineHelp: 'The first one in the list is asked first to find a video.',
+      none: 'You have no addon yet. Go to “Add” to pick one.',
       up: 'Move up',
       down: 'Move down',
       del: 'Delete',
       cancel: 'Cancel',
       confirmDel: 'Delete “{n}”?',
-      enabled: 'Enabled',
-      disabled: 'Disabled',
-      broken: 'Unreadable',
-      reliable: 'Healthy',
+      enabled: 'On',
+      disabled: 'Off',
+      broken: 'Unreadable: delete it, then install it again',
+      reliable: 'Working well',
       slow: 'Slow',
-      failing: 'Offline',
-      unknown: 'Health unknown',
-      connected: 'Connected to {h} · the page closes when you leave the screen on the TV.',
+      failing: 'Not answering',
+      unknown: 'Not tested yet',
       loginTitle: 'Security code',
       loginHelp: 'Enter the 6-digit code shown on the TV.',
       loginBtn: 'Sign in',
-      badCode: 'Wrong code. Check the code shown on the TV.',
-      locked: 'Too many attempts. Try again in {s} s with the new code shown on the TV.',
-      waiting: 'Waiting for confirmation on the TV…',
-      installed: 'Installed: {n}. You will find it in the list below.',
-      installedNoName: 'Addon installed.',
-      failed: "The installation did not complete. Check the link and try again.",
-      cancelled: 'Cancelled on the TV.',
-      expired: 'No confirmation on the TV: request expired.',
-      invalidLink: 'That is not an addon link (https://…/manifest.json or stremio://…).',
+      badCode: 'That code is wrong. Check the code shown on the TV.',
+      locked: 'Too many tries. Wait {s} seconds, then enter the new code shown on the TV.',
+      waiting: 'Look at the TV: confirm the installation of {n}.',
+      waitingLink: 'Look at the TV: confirm the installation.',
+      installed: '{n} is installed. Find it in “My addons”.',
+      installedNoName: 'Addon installed. Find it in “My addons”.',
+      failed: 'The installation did not work. Check the link, then try again.',
+      cancelled: 'You declined on the TV: nothing was installed.',
+      expired: 'The TV did not get a confirmation in time. Tap Install again.',
+      invalidLink: 'That does not look like an addon link. It starts with https:// or stremio:// and often ends with manifest.json.',
       emptyLink: 'Paste the addon link first.',
-      closed: 'The TV closed the page. Reopen “From your phone” on the TV, then scan the code again.',
-      generic: 'Something went wrong. Try again.',
-      rate: 'Too many requests, wait a moment.',
+      closed: 'The connection with the TV was lost. On the TV, open “Manage from your phone” and scan the code again.',
+      generic: 'Something went wrong. Try again in a moment.',
+      rate: 'Please wait a few seconds and try again.',
+      notCfg: 'This addon has no setup page: tap Install.',
+      tabAdd: 'Add',
+      tabMine: 'My addons',
+      back: 'Back',
       types: { movie: 'Movies', series: 'Series', anime: 'Anime', tv: 'TV', channel: 'Channels', other: 'Other' }
     }
   };
@@ -215,9 +248,10 @@ const phoneJs = r'''
   var confirming = null;
   var catalog = [];
   var deepAddon = null, deepRef = null;
-  var cat = { chip: 'popular', more: null, page: 1, hasMore: false, chips: [], moreList: [], busy: false };
+  var cat = { chip: 'official', more: null, page: 1, hasMore: false, chips: [], moreList: [], busy: false };
   var replaces = null;
   var pollTimer = null;
+  var query = '';
   var $ = function (id) { return document.getElementById(id); };
 
   function fmt(s, o) {
@@ -226,8 +260,10 @@ const phoneJs = r'''
   function i18n() {
     var nodes = document.querySelectorAll('[data-t]');
     for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t[nodes[i].getAttribute('data-t')];
-    $('u').setAttribute('placeholder', 'https://…/manifest.json');
-    $('cu').setAttribute('placeholder', 'stremio://…/manifest.json');
+    var ph = document.querySelectorAll('[data-p]');
+    for (var j = 0; j < ph.length; j++) ph[j].setAttribute('placeholder', t[ph[j].getAttribute('data-p')]);
+    var al = document.querySelectorAll('[data-a]');
+    for (var k = 0; k < al.length; k++) al[k].setAttribute('aria-label', t[al[k].getAttribute('data-a')]);
     document.title = 'Lumio';
   }
 
@@ -248,20 +284,34 @@ const phoneJs = r'''
   function show(id, on) { $(id).classList.toggle('hidden', !on); }
   function banner(kind, text) {
     var b = $('msg');
-    b.className = 'msg ' + kind;
+    b.className = 'msg toast ' + kind;
     b.textContent = text;
     b.classList.remove('hidden');
   }
   function clearBanner() { $('msg').classList.add('hidden'); $('msg').textContent = ''; }
 
   function showLogin(err) {
-    show('login', true); show('main', false);
+    show('login', true); show('main', false); show('nav', false); show('ontv', false);
     var e = $('lerr');
     e.textContent = err || '';
     e.classList.toggle('hidden', !err);
   }
-  function showMain() { show('login', false); show('main', true); }
+  function showMain() { show('login', false); show('main', true); show('nav', true); show('ontv', true); selectTab(currentTab); }
   function closed() { stopPoll(); showMain(); banner('er', t.closed); }
+
+  // --- onglets et écrans ---
+  var currentTab = 'add';
+  function selectTab(name) {
+    currentTab = name;
+    show('v-cfg', false);
+    show('v-add', name === 'add');
+    show('v-mine', name === 'mine');
+    $('tab-add').classList.toggle('on', name === 'add');
+    $('tab-mine').classList.toggle('on', name === 'mine');
+    $('tab-add').setAttribute('aria-current', name === 'add' ? 'page' : 'false');
+    $('tab-mine').setAttribute('aria-current', name === 'mine' ? 'page' : 'false');
+    window.scrollTo(0, 0);
+  }
 
   function login(code) {
     return api('POST', '/api/login', { code: code }).then(function (r) {
@@ -276,7 +326,6 @@ const phoneJs = r'''
 
   function boot() {
     i18n();
-    $('host').textContent = fmt(t.connected, { h: location.hostname });
     var ma = /[#&]addon=([A-Za-z0-9._-]{1,80})/.exec(location.hash);
     if (ma) deepAddon = ma[1];
     var mr = /[#&]reconf=([0-9a-f]{12})/.exec(location.hash);
@@ -292,7 +341,7 @@ const phoneJs = r'''
     }, function () { showLogin(''); });
   }
 
-  // --- liste ---
+  // --- Mes addons ---
   function colorOf(name) {
     var n = 0;
     for (var i = 0; i < name.length; i++) n += name.charCodeAt(i);
@@ -307,11 +356,6 @@ const phoneJs = r'''
       openDeepRef();
     }, closed);
   }
-  function typesLabel(a) {
-    var out = [];
-    for (var i = 0; i < a.types.length; i++) out.push(t.types[a.types[i]] || a.types[i]);
-    return out.join(' · ');
-  }
   function render() {
     var list = $('list');
     while (list.firstChild) list.removeChild(list.firstChild);
@@ -324,26 +368,35 @@ const phoneJs = r'''
       lg.textContent = (a.name || '?').charAt(0).toUpperCase();
       lg.style.background = colorOf(a.name || '?');
       q('nm').textContent = a.name;
-      var sub = a.broken ? t.broken : (t[a.health] || t.unknown);
-      q('sub').textContent = sub;
-      q('ty').textContent = typesLabel(a);
-      li.classList.toggle('off', !a.enabled);
+      var word, dotc;
+      if (a.broken) { word = t.broken; dotc = 'rd'; }
+      else if (!a.enabled) { word = t.disabled; dotc = 'gr'; }
+      else if (a.health === 'reliable') { word = t.reliable; dotc = ''; }
+      else if (a.health === 'slow') { word = t.slow; dotc = 'am'; }
+      else if (a.health === 'failing') { word = t.failing; dotc = 'rd'; }
+      else { word = t.unknown; dotc = 'gr'; }
+      q('dot').className = 'dot ' + dotc;
+      q('sub').textContent = word;
+      li.querySelector('.ar').classList.toggle('off', !a.enabled);
       var up = q('up'), dn = q('down'), del = q('del'), sw = q('sw');
+      up.textContent = '↑ ' + t.up;
+      dn.textContent = '↓ ' + t.down;
+      del.textContent = t.del;
       up.setAttribute('aria-label', t.up + ' : ' + a.name);
       dn.setAttribute('aria-label', t.down + ' : ' + a.name);
       del.setAttribute('aria-label', t.del + ' : ' + a.name);
       up.disabled = i === 0;
       dn.disabled = i === addons.length - 1;
       sw.setAttribute('aria-checked', a.enabled ? 'true' : 'false');
-      sw.setAttribute('aria-label', a.name + ' · ' + t.enabled);
-      q('swt').textContent = a.enabled ? t.enabled : t.disabled;
+      sw.setAttribute('aria-label', a.name + ' · ' + (a.enabled ? t.enabled : t.disabled));
       up.addEventListener('click', function () { act('POST', a.id + '/move', { delta: -1 }); });
       dn.addEventListener('click', function () { act('POST', a.id + '/move', { delta: 1 }); });
       sw.addEventListener('click', function () { act('POST', a.id + '/enabled', { enabled: !a.enabled }); });
       del.addEventListener('click', function () { confirming = a.id; render(); });
       var rc = q('rc');
-      rc.textContent = t.reconfigure;
-      rc.setAttribute('aria-label', t.reconfigure + ' : ' + a.name);
+      rc.textContent = t.change;
+      rc.setAttribute('aria-label', t.change + ' : ' + a.name);
+      rc.classList.toggle('hidden', !!a.broken);
       rc.addEventListener('click', function () { openConfig('/api/addons/' + a.id + '/reconfigure', a.name, a.id); });
       var cf = q('cf');
       if (confirming === a.id) {
@@ -363,10 +416,11 @@ const phoneJs = r'''
       if (r.status === 429) { banner('er', t.rate); return; }
       if (r.status >= 400 && r.status !== 404) banner('er', t.generic);
       loadList();
+      if (method === 'DELETE') loadCatalog(false, false);
     }, closed);
   }
 
-  // --- catalogue ---
+  // --- Ajouter : catalogue ---
   function catQuery(page, refresh) {
     var q = '?page=' + page;
     if (cat.more) q += '&more=' + encodeURIComponent(cat.more);
@@ -394,7 +448,7 @@ const phoneJs = r'''
       renderCatalog();
     }, function () { cat.busy = false; closed(); });
   }
-  // Lien du QR de la TV : fiche d'un addon précis du catalogue.
+  // Lien du QR de la TV : réglage d'un addon précis du catalogue.
   function openDeepAddon() {
     if (!deepAddon) return;
     var slug = deepAddon;
@@ -403,14 +457,10 @@ const phoneJs = r'''
       if (r.status === 401) { showLogin(''); return; }
       var it = r.json && r.json.item;
       if (r.status !== 200 || !it) { banner('er', t.catLoadError); return; }
-      var box = $('deep');
-      while (box.firstChild) box.removeChild(box.firstChild);
-      box.appendChild(buildCard(it));
-      show('deep', true);
       openConfig('/api/catalog/' + it.id + '/configure', it.name, null);
     }, closed);
   }
-  // Lien du QR de la TV : reconfigurer un addon installé (référence non secrète).
+  // Lien du QR de la TV : changer les réglages d'un addon installé.
   function openDeepRef() {
     if (!deepRef) return;
     for (var i = 0; i < addons.length; i++) {
@@ -435,33 +485,38 @@ const phoneJs = r'''
   }
   function buildCard(c) {
     var tpl = $('cat-tpl');
-      var li = tpl.content.firstElementChild.cloneNode(true);
-      var q = function (k) { return li.querySelector('.' + k); };
-      var lg = q('lg');
-      lg.textContent = (c.name || '?').charAt(0).toUpperCase();
-      lg.style.background = colorOf(c.name || '?');
-      if (c.logo) {
-        var im = document.createElement('img');
-        im.alt = '';
-        im.referrerPolicy = 'no-referrer';
-        im.loading = 'lazy';
-        im.addEventListener('error', function () { if (im.parentNode) im.parentNode.removeChild(im); });
-        im.src = c.logo;
-        lg.appendChild(im);
-      }
-      q('nm').textContent = c.name;
-      q('meta').textContent = c.meta || '';
-      q('meta').classList.toggle('hidden', !c.meta);
-      q('bdg').textContent = t.catInstalled;
-      q('bdg').classList.toggle('hidden', !c.installed);
-      q('d').textContent = c.description || '';
-      q('d').classList.toggle('hidden', !c.description);
-      q('ci').textContent = t.install;
-      q('cc').textContent = t.configure;
-      q('ci').setAttribute('aria-label', t.install + ' : ' + c.name);
-      q('cc').setAttribute('aria-label', t.configure + ' : ' + c.name);
-      q('ci').addEventListener('click', function () { installCat(c); });
-      q('cc').addEventListener('click', function () { openConfig('/api/catalog/' + c.id + '/configure', c.name, null); });
+    var li = tpl.content.firstElementChild.cloneNode(true);
+    var q = function (k) { return li.querySelector('.' + k); };
+    var lg = q('lg');
+    lg.textContent = (c.name || '?').charAt(0).toUpperCase();
+    lg.style.background = colorOf(c.name || '?');
+    if (c.logo) {
+      var im = document.createElement('img');
+      im.alt = '';
+      im.referrerPolicy = 'no-referrer';
+      im.loading = 'lazy';
+      im.addEventListener('error', function () { if (im.parentNode) im.parentNode.removeChild(im); });
+      im.src = c.logo;
+      lg.appendChild(im);
+    }
+    q('nm').textContent = c.name;
+    q('d1').textContent = c.description || c.meta || '';
+    q('d1').classList.toggle('hidden', !(c.description || c.meta));
+    q('bdg').textContent = t.catInstalled;
+    q('bdg').classList.toggle('hidden', !c.installed);
+    var b = q('cb');
+    b.classList.toggle('hidden', !!c.installed);
+    if (c.setup) {
+      b.textContent = t.setup;
+      b.classList.add('b2');
+      b.setAttribute('aria-label', t.setup + ' : ' + c.name);
+      b.addEventListener('click', function () { openConfig('/api/catalog/' + c.id + '/configure', c.name, null); });
+    } else {
+      b.textContent = t.install;
+      b.classList.add('b1');
+      b.setAttribute('aria-label', t.install + ' : ' + c.name);
+      b.addEventListener('click', function () { installCat(c); });
+    }
     return li;
   }
   function renderCatalog() {
@@ -473,12 +528,9 @@ const phoneJs = r'''
       }, c.id));
     });
     ch.appendChild(chipBtn(cat.more && cat.moreLabel ? cat.moreLabel : t.catMore, !!cat.more, function () {
-      var m = $('morelist');
-      m.classList.toggle('hidden');
+      $('morelist').classList.toggle('hidden');
     }, 'more'));
-    var rf = chipBtn(t.catRefresh, false, function () { loadCatalog(true, false); }, 'refresh');
-    rf.style.background = 'transparent';
-    ch.appendChild(rf);
+    ch.appendChild(chipBtn(t.catRefresh, false, function () { loadCatalog(true, false); }, 'refresh'));
     var ml = $('morelist');
     while (ml.firstChild) ml.removeChild(ml.firstChild);
     cat.moreList.forEach(function (c) {
@@ -491,8 +543,14 @@ const phoneJs = r'''
     note.classList.toggle('hidden', !cat.note);
     var list = $('cat');
     while (list.firstChild) list.removeChild(list.firstChild);
-    catalog.forEach(function (c) { list.appendChild(buildCard(c)); });
-    $('catnone').classList.toggle('hidden', catalog.length > 0);
+    var shown = 0;
+    catalog.forEach(function (c) {
+      var hay = ((c.name || '') + ' ' + (c.description || '')).toLowerCase();
+      if (query && hay.indexOf(query) < 0) return;
+      shown++;
+      list.appendChild(buildCard(c));
+    });
+    $('catnone').classList.toggle('hidden', shown > 0);
     var lm = $('catmore');
     lm.textContent = t.catLoadMore;
     lm.classList.toggle('hidden', !cat.hasMore);
@@ -500,10 +558,23 @@ const phoneJs = r'''
   function installCat(c) {
     clearBanner();
     api('POST', '/api/catalog/' + c.id + '/install', {}).then(function (r) {
-      if (r.status === 202) { banner('wt', t.waiting); poll(r.json.request); return; }
+      if (r.status === 202) { banner('wt', fmt(t.waiting, { n: c.name })); poll(r.json.request); return; }
       if (r.status === 401) { showLogin(''); return; }
-      banner('er', r.status === 409 ? t.needsCfg : (r.status === 429 ? t.rate : t.generic));
+      if (r.status === 409) { openConfig('/api/catalog/' + c.id + '/configure', c.name, null); return; }
+      banner('er', r.status === 429 ? t.rate : t.generic);
     }, closed);
+  }
+
+  // --- Régler (écran dédié en 3 étapes) ---
+  var cfgUrl = null;
+  function setSteps() {
+    var has = $('cu').value.trim().length > 0;
+    var s1 = $('s1'), s2 = $('s2'), s3 = $('s3');
+    s1.className = 'st done';
+    s2.className = 'st ' + (has ? 'done' : 'act');
+    s3.className = 'st ' + (has ? 'act' : '');
+    $('s1n').textContent = '✓';
+    $('s2n').textContent = has ? '✓' : '2';
   }
   function openConfig(path, name, rep) {
     clearBanner();
@@ -515,11 +586,15 @@ const phoneJs = r'''
         return;
       }
       replaces = rep;
-      $('cfgt').textContent = fmt(t.cfgTitle, { n: name });
+      cfgUrl = u;
+      $('cfgt').textContent = name;
       $('cfglink').setAttribute('href', u);
       $('cu').value = '';
-      show('cfg', true);
-      $('cfglink').focus();
+      setSteps();
+      show('v-add', false); show('v-mine', false); show('v-cfg', true);
+      window.scrollTo(0, 0);
+      // Ouverture automatique ; si le navigateur la bloque, « Rouvrir la page ».
+      try { window.open(u, '_blank', 'noopener,noreferrer'); } catch (e) { /* bloqué */ }
     }, closed);
   }
   function sendCfg() {
@@ -530,13 +605,13 @@ const phoneJs = r'''
     if (replaces) body.replaces = replaces;
     api('POST', '/api/add', body).then(function (r) {
       $('csend').disabled = false;
-      if (r.status === 202) { banner('wt', t.waiting); show('cfg', false); poll(r.json.request); return; }
+      if (r.status === 202) { banner('wt', t.waitingLink); selectTab(replaces ? 'mine' : 'add'); $('cu').value = ''; poll(r.json.request); return; }
       if (r.status === 401) { showLogin(''); return; }
       banner('er', r.status === 400 ? t.invalidLink : (r.status === 429 ? t.rate : t.generic));
     }, function () { $('csend').disabled = false; closed(); });
   }
 
-  // --- ajout ---
+  // --- Installation par lien ---
   function stopPoll() { if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; } }
   function poll(id) {
     stopPoll();
@@ -549,8 +624,10 @@ const phoneJs = r'''
         if (s === 'installed') {
           banner('ok', r.json.name ? fmt(t.installed, { n: r.json.name }) : t.installedNoName);
           $('u').value = '';
+          show('linkbox', false);
           loadList();
-        } else banner(s === 'cancelled' ? 'er' : 'er', t[s] || t.failed);
+          loadCatalog(false, false);
+        } else banner('er', t[s] || t.failed);
       }, closed);
     }, 1500);
   }
@@ -559,26 +636,29 @@ const phoneJs = r'''
     if (!v) { banner('er', t.emptyLink); $('u').focus(); return; }
     $('send').disabled = true;
     api('POST', '/api/add', { link: v }).then(function (r) {
-      if (r.status === 202) { banner('wt', t.waiting); poll(r.json.request); return; }
+      if (r.status === 202) { banner('wt', t.waitingLink); poll(r.json.request); return; }
       $('send').disabled = false;
       if (r.status === 401) { showLogin(''); return; }
       banner('er', r.status === 400 ? t.invalidLink : (r.status === 429 ? t.rate : t.generic));
     }, function () { $('send').disabled = false; closed(); });
   }
-  function paste() {
-    if (navigator.clipboard && navigator.clipboard.readText) {
-      navigator.clipboard.readText().then(function (x) { $('u').value = (x || '').trim(); $('u').focus(); },
-        function () { banner('wt', t.pasteHint); $('u').focus(); });
-    } else { banner('wt', t.pasteHint); $('u').focus(); }
-  }
 
   $('send').addEventListener('click', send);
   $('csend').addEventListener('click', sendCfg);
-  $('cclose').addEventListener('click', function () { show('cfg', false); });
-  $('catmore').addEventListener('click', function () { loadCatalog(false, true); });
+  $('cback').addEventListener('click', function () { selectTab(currentTab); });
+  $('cu').addEventListener('input', setSteps);
   $('cu').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendCfg(); });
-  $('paste').addEventListener('click', paste);
+  $('catmore').addEventListener('click', function () { loadCatalog(false, true); });
+  $('have').addEventListener('click', function () {
+    var box = $('linkbox');
+    box.classList.toggle('hidden');
+    if (!box.classList.contains('hidden')) { $('u').focus(); }
+  });
+  $('lclose').addEventListener('click', function () { show('linkbox', false); });
   $('u').addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+  $('q').addEventListener('input', function () { query = $('q').value.trim().toLowerCase(); renderCatalog(); });
+  $('tab-add').addEventListener('click', function () { selectTab('add'); });
+  $('tab-mine').addEventListener('click', function () { selectTab('mine'); loadList(); });
   $('lform').addEventListener('submit', function (e) {
     e.preventDefault();
     var c = $('code').value.replace(/\D/g, '');
@@ -603,8 +683,9 @@ const _html = r'''<!doctype html>
 </head>
 <body>
 <div class="ph">
-<div class="brand"><svg width="28" height="28" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" fill="none" stroke="#FFB84D" stroke-width="9"/><circle cx="36" cy="36" r="10" fill="#4FD1C5"/></svg><span class="hd h22" data-t="brand">Lumio</span></div>
-<div id="msg" class="msg hidden" role="status" aria-live="polite"></div>
+<div class="top"><div class="brand"><svg width="28" height="28" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" fill="none" stroke="#FFB84D" stroke-width="9"/><circle cx="36" cy="36" r="10" fill="#4FD1C5"/></svg><span class="hd h22">Lumio</span></div>
+<span class="on-tv hidden" id="ontv"><span class="dot" aria-hidden="true"></span><span data-t="onTv"></span></span></div>
+<div id="msg" class="msg toast hidden" role="status" aria-live="polite"></div>
 <section id="login" class="col hidden">
 <div><h1 class="hd h26" data-t="loginTitle"></h1><div class="sm mt4" data-t="loginHelp"></div></div>
 <form id="lform" class="col" autocomplete="off">
@@ -615,20 +696,9 @@ const _html = r'''<!doctype html>
 </form>
 </section>
 <section id="main" class="col hidden">
-<div><h1 class="hd h26" data-t="addTitle"></h1><div class="sm mt4" data-t="addHelp"></div></div>
-<label class="l" for="u" data-t="linkLabel"></label>
-<input class="in" id="u" type="text" inputmode="url" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="2048" placeholder="https://…/manifest.json">
-<div class="row"><button class="bt b2 f1" id="paste" type="button" data-t="paste"></button><button class="bt b1 f2" id="send" type="button" data-t="send"></button></div>
-<a class="lk" href="https://stremio-addons.net" target="_blank" rel="noopener noreferrer"><span data-t="browse"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
-<div class="sm" data-t="browseHint"></div>
-<div id="cfg" class="pn hidden"><h2 class="hd h20" id="cfgt"></h2><div class="sm" data-t="cfgHelp"></div>
-<a class="lk" id="cfglink" href="about:blank" target="_blank" rel="noopener noreferrer"><span data-t="cfgOpen"></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B2BF" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
-<label class="l" for="cu" data-t="cfgLabel"></label>
-<input class="in" id="cu" type="text" inputmode="url" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="2048">
-<div class="row"><button class="bt b2 f1" id="cclose" type="button" data-t="cfgClose"></button><button class="bt b1 f2" id="csend" type="button" data-t="send"></button></div></div>
-<ul id="deep" class="col lst hidden"></ul>
-<h2 class="hd h20" data-t="catTitle"></h2>
-<div class="sm" data-t="catHelp"></div>
+<div id="v-add" class="col">
+<div><h1 class="hd h26" data-t="addTitle"></h1><p class="sm mt4" data-t="addHelp"></p></div>
+<div class="sw0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7E8896" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="sch" id="q" type="search" autocomplete="off" autocapitalize="none" spellcheck="false" data-p="search" data-a="search"></div>
 <div id="chips" class="chips" role="group"></div>
 <div id="morelist" class="chips hidden" role="group"></div>
 <div id="catnote" class="msg wt hidden" role="status"></div>
@@ -636,19 +706,45 @@ const _html = r'''<!doctype html>
 <div id="catnone" class="sm hidden" data-t="catEmpty"></div>
 <ul id="cat" class="col lst"></ul>
 <button class="bt b2 hidden" id="catmore" type="button"></button>
-<h2 class="hd h20" data-t="mine"></h2>
+<button class="gh" id="have" type="button" data-t="haveLink"></button>
+<div id="linkbox" class="pn hidden"><h2 class="hd h22" data-t="linkTitle"></h2><div class="sm" data-t="linkHelp"></div>
+<label class="l" for="u" data-t="linkLabel"></label>
+<input class="in" id="u" type="text" inputmode="url" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="2048" placeholder="https://…/manifest.json">
+<div class="sm" data-t="pasteHint"></div>
+<button class="bt b1" id="send" type="button" data-t="sendTv"></button>
+<div class="sm" data-t="tvConfirm"></div>
+<a class="lk" href="https://stremio-addons.net" target="_blank" rel="noopener noreferrer"><span data-t="browse"></span></a>
+<div class="sm" data-t="browseHint"></div>
+<button class="bt b2" id="lclose" type="button" data-t="close"></button></div>
+</div>
+<div id="v-cfg" class="col hidden">
+<div class="row"><button class="bk" id="cback" type="button" data-a="back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div><div class="sm" data-t="cfgBefore"></div><h1 class="hd h22" id="cfgt"></h1></div></div>
+<p class="sm" data-t="cfgIntro"></p>
+<div class="st done" id="s1"><div class="n" id="s1n">✓</div><div class="f1"><div class="stt" data-t="s1"></div><div class="sm" data-t="s1d"></div><a class="lk" id="cfglink" href="about:blank" target="_blank" rel="noopener noreferrer"><span data-t="reopen"></span></a></div></div>
+<div class="st act" id="s2"><div class="n" id="s2n">2</div><div class="f1"><div class="stt" data-t="s2"></div><div class="sm" data-t="s2d"></div></div></div>
+<div class="st" id="s3"><div class="n">3</div><div class="f1"><div class="stt" data-t="s3"></div>
+<label class="l sm mt8" for="cu" data-t="cfgLabel"></label>
+<input class="in" id="cu" type="text" inputmode="url" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="2048" placeholder="stremio://…/manifest.json">
+<div class="sm mt4" data-t="cfgHint"></div></div></div>
+<button class="bt b1" id="csend" type="button" data-t="sendTv"></button>
+<div class="sm" data-t="tvConfirm"></div>
+</div>
+<div id="v-mine" class="col hidden">
+<div><h1 class="hd h26" data-t="mineTitle"></h1><p class="sm mt4" data-t="mineHelp"></p></div>
 <div id="none" class="sm hidden" data-t="none"></div>
 <ul id="list" class="col lst"></ul>
-<div class="sm foot" id="host"></div>
+</div>
 </section>
 </div>
-<template id="cat-tpl"><li class="card"><div class="cd2"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div><div class="meta"></div></div><span class="bdg hidden"></span></div><div class="d"></div><div class="row"><button type="button" class="bt b1 ci"></button><button type="button" class="bt b2 cc"></button></div></div></li></template>
-<template id="row-tpl"><li class="card"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div><div class="sm sub"></div></div>
-<button type="button" class="ib up"><svg viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2.5" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
-<button type="button" class="ib down"><svg viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
-<button type="button" class="ib del"><svg viewBox="0 0 24 24" fill="none" stroke="#FF7A70" stroke-width="2.5" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg></button></div>
-<div class="ct"><button type="button" class="sw" role="switch" aria-checked="true"><i aria-hidden="true"></i><span class="swt"></span></button><button type="button" class="bt b2 rc"></button><span class="ty"></span></div>
-<div class="cf hidden" role="alertdialog"><div class="cft"></div><button type="button" class="bt bd cy"></button><button type="button" class="bt b2 cn"></button></div></li></template>
+<nav id="nav" class="nav hidden" aria-label="Lumio">
+<button class="tab on" id="tab-add" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-t="tabAdd"></span></button>
+<button class="tab" id="tab-mine" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span data-t="tabMine"></span></button>
+</nav>
+<template id="cat-tpl"><li class="card"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div><div class="d1"></div></div><span class="bdg hidden"></span><button type="button" class="bt cb"></button></div></li></template>
+<template id="row-tpl"><li class="card"><div class="ar"><div class="lg" aria-hidden="true"></div><div class="tx"><div class="nm"></div><div class="sm"><span class="dot"></span> <span class="sub"></span></div></div>
+<button type="button" class="tg sw" role="switch" aria-checked="true"><i aria-hidden="true"></i></button></div>
+<div class="acts"><button type="button" class="ib up"></button><button type="button" class="ib down"></button><button type="button" class="ib md rc"></button><button type="button" class="ib dg del"></button></div>
+<div class="cf hidden col" role="alertdialog"><div class="cft"></div><button type="button" class="bt bd cy"></button><button type="button" class="bt b2 cn"></button></div></li></template>
 <script src="/app.js"></script>
 </body>
 </html>

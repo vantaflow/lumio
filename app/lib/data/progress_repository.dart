@@ -16,6 +16,11 @@ class ProgressEntry {
     required this.watched,
     required this.updatedAt,
     this.certification,
+    this.title,
+    this.poster,
+    this.mediaType,
+    this.season,
+    this.episode,
   });
 
   final String profileId;
@@ -32,6 +37,14 @@ class ProgressEntry {
 
   /// Certification d'âge du titre ; nulle si inconnue (masqué aux enfants).
   final String? certification;
+
+  /// Titre, affiche, type, saison et épisode mémorisés à la lecture ; nuls
+  /// pour une ancienne ligne.
+  final String? title;
+  final String? poster;
+  final String? mediaType;
+  final int? season;
+  final int? episode;
 }
 
 /// Progression locale (SQLite) : reprise, « vu » et rangée « Continuer ».
@@ -55,6 +68,11 @@ class ProgressRepository {
     Duration dur, {
     String? nextVideoId,
     String? certification,
+    String? title,
+    String? poster,
+    String? mediaType,
+    int? season,
+    int? episode,
   }) async {
     final stamp = _now().millisecondsSinceEpoch;
     final watched = ProgressRules.isWatched(pos, dur);
@@ -71,6 +89,11 @@ class ProgressRepository {
               watched: Value(watched),
               updatedAt: Value(stamp),
               certification: Value.absentIfNull(certification),
+              title: Value.absentIfNull(_clean(title)),
+              poster: Value.absentIfNull(_clean(poster)),
+              mediaType: Value.absentIfNull(_clean(mediaType)),
+              season: Value.absentIfNull(season),
+              episode: Value.absentIfNull(episode),
             ),
           );
       if (!watched || nextVideoId == null) return;
@@ -107,9 +130,17 @@ class ProgressRepository {
               watched: const Value(false),
               updatedAt: Value(stamp + 1),
               certification: Value.absentIfNull(certification),
+              title: Value.absentIfNull(_clean(title)),
+              poster: Value.absentIfNull(_clean(poster)),
+              mediaType: Value.absentIfNull(_clean(mediaType)),
             ),
           );
     });
+  }
+
+  static String? _clean(String? v) {
+    final t = v?.trim();
+    return t == null || t.isEmpty ? null : t;
   }
 
   Future<ProgressEntry?> get(String profileId, String videoId) async {
@@ -175,6 +206,11 @@ class ProgressRepository {
     watched: r.watched,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(r.updatedAt, isUtc: true),
     certification: r.certification,
+    title: r.title,
+    poster: r.poster,
+    mediaType: r.mediaType,
+    season: r.season,
+    episode: r.episode,
   );
 }
 

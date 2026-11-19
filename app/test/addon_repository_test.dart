@@ -48,6 +48,27 @@ void main() {
   tearDown(() => db.close());
 
   test(
+    'même addon (hôte + id) avec d autres réglages : remplace, même rang',
+    () async {
+      const other = 'https://films.example.com/reglages-fr/manifest.json';
+      const third = 'https://autre.example.org/manifest.json';
+      fetcher.manifests[other] = sampleManifest();
+      fetcher.manifests[third] = sampleManifest(id: 'x.autre', name: 'Autre');
+      final first = await repo.install(_url);
+      await repo.install(third);
+      final m = await repo.preview(other);
+      expect((await repo.findSameAddon(other, m))?.id, first.id);
+      // Autre hôte, même id : pas le même addon.
+      expect(await repo.findSameAddon(third, m), isNull);
+      final added = await repo.installReplacing(other, first.id);
+      final list = await repo.list();
+      expect(list.map((a) => a.id), [added.id, 'x.autre']);
+      expect((await repo.urlOf(added.id)).toString(), other);
+      expect(list, hasLength(2));
+    },
+  );
+
+  test(
     'install valide : listé avec nom et types, URL jamais dans SQLite',
     () async {
       final a = await repo.install(_url);

@@ -56,11 +56,18 @@ enum PlayerKeyAction {
   volumeUp,
   volumeDown,
   showControls,
+
+  /// Commandes masquées, flèche haut : affiche les commandes ET met le focus
+  /// sur « Pistes » (accès direct aux pistes et sous-titres).
+  focusTracks,
   none,
 }
 
 const seekStep = Duration(seconds: 10);
-const controlsHideDelay = Duration(seconds: 4);
+
+/// Les commandes restent visibles 6 s après la dernière touche (télécommande :
+/// le temps de naviguer jusqu'à « Pistes »).
+const controlsHideDelay = Duration(seconds: 6);
 
 /// Traduit une touche selon l'état de la superposition : commandes masquées,
 /// gauche/droite = ∓10 s, haut/bas = volume, OK = afficher ; commandes
@@ -83,8 +90,8 @@ PlayerKeyAction mapPlayerKey(
   if (controlsVisible) return PlayerKeyAction.none;
   if (key == LogicalKeyboardKey.arrowLeft) return PlayerKeyAction.seekBack;
   if (key == LogicalKeyboardKey.arrowRight) return PlayerKeyAction.seekForward;
-  if (key == LogicalKeyboardKey.arrowUp) return PlayerKeyAction.volumeUp;
-  if (key == LogicalKeyboardKey.arrowDown) return PlayerKeyAction.volumeDown;
+  if (key == LogicalKeyboardKey.arrowUp) return PlayerKeyAction.focusTracks;
+  if (key == LogicalKeyboardKey.arrowDown) return PlayerKeyAction.showControls;
   if (key == LogicalKeyboardKey.enter ||
       key == LogicalKeyboardKey.select ||
       key == LogicalKeyboardKey.numpadEnter ||
@@ -253,6 +260,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     final certification = widget.meta?.certification;
     // Lu ici : `ref` n'est plus utilisable quand dispose() écrit la sortie.
     final repo = ref.read(progressRepositoryProvider);
+    final meta = widget.meta;
+    core.Video? video;
+    for (final v in meta?.videos ?? const <core.Video>[]) {
+      if (v.id == id) video = v;
+    }
     return ProgressRecorder(
       onError: () => _tellL((l) => l.progressNotSaved),
       save: (pos, dur) => repo.save(
@@ -263,6 +275,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         dur,
         nextVideoId: nextId,
         certification: certification,
+        title: meta?.name,
+        poster: meta?.poster?.toString(),
+        mediaType: meta?.type,
+        season: video?.season,
+        episode: video?.episode,
       ),
     );
   }
@@ -878,11 +895,16 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     });
   }
 
-  void _showControls({bool focusPlay = false}) {
+  void _showControls({bool focusPlay = false, bool focusTracks = false}) {
     _setControls(true);
-    if (focusPlay) {
+    if (focusPlay || focusTracks) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _playNode.requestFocus();
+        if (!mounted) return;
+        if (focusTracks && _tracks != null) {
+          _tracksNode.requestFocus();
+        } else {
+          _playNode.requestFocus();
+        }
       });
     }
     _armHide();
@@ -950,6 +972,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         unawaited(_ctl.setVolume(_ctl.state.volume - 10));
       case PlayerKeyAction.showControls:
         _showControls(focusPlay: true);
+      case PlayerKeyAction.focusTracks:
+        _showControls(focusTracks: true);
     }
     return KeyEventResult.handled;
   }

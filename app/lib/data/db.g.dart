@@ -1400,6 +1400,55 @@ class $ProgressTable extends Progress
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _posterMeta = const VerificationMeta('poster');
+  @override
+  late final GeneratedColumn<String> poster = GeneratedColumn<String>(
+    'poster',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _mediaTypeMeta = const VerificationMeta(
+    'mediaType',
+  );
+  @override
+  late final GeneratedColumn<String> mediaType = GeneratedColumn<String>(
+    'media_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _seasonMeta = const VerificationMeta('season');
+  @override
+  late final GeneratedColumn<int> season = GeneratedColumn<int>(
+    'season',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _episodeMeta = const VerificationMeta(
+    'episode',
+  );
+  @override
+  late final GeneratedColumn<int> episode = GeneratedColumn<int>(
+    'episode',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     profileId,
@@ -1410,6 +1459,11 @@ class $ProgressTable extends Progress
     metaId,
     watched,
     certification,
+    title,
+    poster,
+    mediaType,
+    season,
+    episode,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1476,6 +1530,36 @@ class $ProgressTable extends Progress
         ),
       );
     }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    }
+    if (data.containsKey('poster')) {
+      context.handle(
+        _posterMeta,
+        poster.isAcceptableOrUnknown(data['poster']!, _posterMeta),
+      );
+    }
+    if (data.containsKey('media_type')) {
+      context.handle(
+        _mediaTypeMeta,
+        mediaType.isAcceptableOrUnknown(data['media_type']!, _mediaTypeMeta),
+      );
+    }
+    if (data.containsKey('season')) {
+      context.handle(
+        _seasonMeta,
+        season.isAcceptableOrUnknown(data['season']!, _seasonMeta),
+      );
+    }
+    if (data.containsKey('episode')) {
+      context.handle(
+        _episodeMeta,
+        episode.isAcceptableOrUnknown(data['episode']!, _episodeMeta),
+      );
+    }
     return context;
   }
 
@@ -1517,6 +1601,26 @@ class $ProgressTable extends Progress
         DriftSqlType.string,
         data['${effectivePrefix}certification'],
       ),
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
+      poster: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}poster'],
+      ),
+      mediaType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}media_type'],
+      ),
+      season: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}season'],
+      ),
+      episode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}episode'],
+      ),
     );
   }
 
@@ -1543,6 +1647,21 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
   /// Certification d'âge du titre (v5), pour le filtre des profils enfants ;
   /// nulle si inconnue.
   final String? certification;
+
+  /// Titre affiché dans « Continuer » (v12) : mémorisé au moment de la lecture
+  /// pour ne jamais afficher un identifiant brut ; nul pour les anciennes
+  /// lignes (repli sur une requête meta).
+  final String? title;
+
+  /// Adresse de l'affiche (v12).
+  final String? poster;
+
+  /// Type du titre : `movie`, `series`… (v12).
+  final String? mediaType;
+
+  /// Saison et épisode de [itemId] pour une série (v12).
+  final int? season;
+  final int? episode;
   const ProgressData({
     required this.profileId,
     required this.itemId,
@@ -1552,6 +1671,11 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     required this.metaId,
     required this.watched,
     this.certification,
+    this.title,
+    this.poster,
+    this.mediaType,
+    this.season,
+    this.episode,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1565,6 +1689,21 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     map['watched'] = Variable<bool>(watched);
     if (!nullToAbsent || certification != null) {
       map['certification'] = Variable<String>(certification);
+    }
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    if (!nullToAbsent || poster != null) {
+      map['poster'] = Variable<String>(poster);
+    }
+    if (!nullToAbsent || mediaType != null) {
+      map['media_type'] = Variable<String>(mediaType);
+    }
+    if (!nullToAbsent || season != null) {
+      map['season'] = Variable<int>(season);
+    }
+    if (!nullToAbsent || episode != null) {
+      map['episode'] = Variable<int>(episode);
     }
     return map;
   }
@@ -1581,6 +1720,21 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       certification: certification == null && nullToAbsent
           ? const Value.absent()
           : Value(certification),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
+      poster: poster == null && nullToAbsent
+          ? const Value.absent()
+          : Value(poster),
+      mediaType: mediaType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mediaType),
+      season: season == null && nullToAbsent
+          ? const Value.absent()
+          : Value(season),
+      episode: episode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(episode),
     );
   }
 
@@ -1598,6 +1752,11 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       metaId: serializer.fromJson<String>(json['metaId']),
       watched: serializer.fromJson<bool>(json['watched']),
       certification: serializer.fromJson<String?>(json['certification']),
+      title: serializer.fromJson<String?>(json['title']),
+      poster: serializer.fromJson<String?>(json['poster']),
+      mediaType: serializer.fromJson<String?>(json['mediaType']),
+      season: serializer.fromJson<int?>(json['season']),
+      episode: serializer.fromJson<int?>(json['episode']),
     );
   }
   @override
@@ -1612,6 +1771,11 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       'metaId': serializer.toJson<String>(metaId),
       'watched': serializer.toJson<bool>(watched),
       'certification': serializer.toJson<String?>(certification),
+      'title': serializer.toJson<String?>(title),
+      'poster': serializer.toJson<String?>(poster),
+      'mediaType': serializer.toJson<String?>(mediaType),
+      'season': serializer.toJson<int?>(season),
+      'episode': serializer.toJson<int?>(episode),
     };
   }
 
@@ -1624,6 +1788,11 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     String? metaId,
     bool? watched,
     Value<String?> certification = const Value.absent(),
+    Value<String?> title = const Value.absent(),
+    Value<String?> poster = const Value.absent(),
+    Value<String?> mediaType = const Value.absent(),
+    Value<int?> season = const Value.absent(),
+    Value<int?> episode = const Value.absent(),
   }) => ProgressData(
     profileId: profileId ?? this.profileId,
     itemId: itemId ?? this.itemId,
@@ -1635,6 +1804,11 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     certification: certification.present
         ? certification.value
         : this.certification,
+    title: title.present ? title.value : this.title,
+    poster: poster.present ? poster.value : this.poster,
+    mediaType: mediaType.present ? mediaType.value : this.mediaType,
+    season: season.present ? season.value : this.season,
+    episode: episode.present ? episode.value : this.episode,
   );
   ProgressData copyWithCompanion(ProgressCompanion data) {
     return ProgressData(
@@ -1652,6 +1826,11 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       certification: data.certification.present
           ? data.certification.value
           : this.certification,
+      title: data.title.present ? data.title.value : this.title,
+      poster: data.poster.present ? data.poster.value : this.poster,
+      mediaType: data.mediaType.present ? data.mediaType.value : this.mediaType,
+      season: data.season.present ? data.season.value : this.season,
+      episode: data.episode.present ? data.episode.value : this.episode,
     );
   }
 
@@ -1665,7 +1844,12 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           ..write('updatedAt: $updatedAt, ')
           ..write('metaId: $metaId, ')
           ..write('watched: $watched, ')
-          ..write('certification: $certification')
+          ..write('certification: $certification, ')
+          ..write('title: $title, ')
+          ..write('poster: $poster, ')
+          ..write('mediaType: $mediaType, ')
+          ..write('season: $season, ')
+          ..write('episode: $episode')
           ..write(')'))
         .toString();
   }
@@ -1680,6 +1864,11 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     metaId,
     watched,
     certification,
+    title,
+    poster,
+    mediaType,
+    season,
+    episode,
   );
   @override
   bool operator ==(Object other) =>
@@ -1692,7 +1881,12 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           other.updatedAt == this.updatedAt &&
           other.metaId == this.metaId &&
           other.watched == this.watched &&
-          other.certification == this.certification);
+          other.certification == this.certification &&
+          other.title == this.title &&
+          other.poster == this.poster &&
+          other.mediaType == this.mediaType &&
+          other.season == this.season &&
+          other.episode == this.episode);
 }
 
 class ProgressCompanion extends UpdateCompanion<ProgressData> {
@@ -1704,6 +1898,11 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
   final Value<String> metaId;
   final Value<bool> watched;
   final Value<String?> certification;
+  final Value<String?> title;
+  final Value<String?> poster;
+  final Value<String?> mediaType;
+  final Value<int?> season;
+  final Value<int?> episode;
   final Value<int> rowid;
   const ProgressCompanion({
     this.profileId = const Value.absent(),
@@ -1714,6 +1913,11 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     this.metaId = const Value.absent(),
     this.watched = const Value.absent(),
     this.certification = const Value.absent(),
+    this.title = const Value.absent(),
+    this.poster = const Value.absent(),
+    this.mediaType = const Value.absent(),
+    this.season = const Value.absent(),
+    this.episode = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProgressCompanion.insert({
@@ -1725,6 +1929,11 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     this.metaId = const Value.absent(),
     this.watched = const Value.absent(),
     this.certification = const Value.absent(),
+    this.title = const Value.absent(),
+    this.poster = const Value.absent(),
+    this.mediaType = const Value.absent(),
+    this.season = const Value.absent(),
+    this.episode = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : itemId = Value(itemId);
   static Insertable<ProgressData> custom({
@@ -1736,6 +1945,11 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     Expression<String>? metaId,
     Expression<bool>? watched,
     Expression<String>? certification,
+    Expression<String>? title,
+    Expression<String>? poster,
+    Expression<String>? mediaType,
+    Expression<int>? season,
+    Expression<int>? episode,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1747,6 +1961,11 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
       if (metaId != null) 'meta_id': metaId,
       if (watched != null) 'watched': watched,
       if (certification != null) 'certification': certification,
+      if (title != null) 'title': title,
+      if (poster != null) 'poster': poster,
+      if (mediaType != null) 'media_type': mediaType,
+      if (season != null) 'season': season,
+      if (episode != null) 'episode': episode,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1760,6 +1979,11 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     Value<String>? metaId,
     Value<bool>? watched,
     Value<String?>? certification,
+    Value<String?>? title,
+    Value<String?>? poster,
+    Value<String?>? mediaType,
+    Value<int?>? season,
+    Value<int?>? episode,
     Value<int>? rowid,
   }) {
     return ProgressCompanion(
@@ -1771,6 +1995,11 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
       metaId: metaId ?? this.metaId,
       watched: watched ?? this.watched,
       certification: certification ?? this.certification,
+      title: title ?? this.title,
+      poster: poster ?? this.poster,
+      mediaType: mediaType ?? this.mediaType,
+      season: season ?? this.season,
+      episode: episode ?? this.episode,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1802,6 +2031,21 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     if (certification.present) {
       map['certification'] = Variable<String>(certification.value);
     }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (poster.present) {
+      map['poster'] = Variable<String>(poster.value);
+    }
+    if (mediaType.present) {
+      map['media_type'] = Variable<String>(mediaType.value);
+    }
+    if (season.present) {
+      map['season'] = Variable<int>(season.value);
+    }
+    if (episode.present) {
+      map['episode'] = Variable<int>(episode.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1819,6 +2063,11 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
           ..write('metaId: $metaId, ')
           ..write('watched: $watched, ')
           ..write('certification: $certification, ')
+          ..write('title: $title, ')
+          ..write('poster: $poster, ')
+          ..write('mediaType: $mediaType, ')
+          ..write('season: $season, ')
+          ..write('episode: $episode, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4382,6 +4631,11 @@ typedef $$ProgressTableCreateCompanionBuilder =
       Value<String> metaId,
       Value<bool> watched,
       Value<String?> certification,
+      Value<String?> title,
+      Value<String?> poster,
+      Value<String?> mediaType,
+      Value<int?> season,
+      Value<int?> episode,
       Value<int> rowid,
     });
 typedef $$ProgressTableUpdateCompanionBuilder =
@@ -4394,6 +4648,11 @@ typedef $$ProgressTableUpdateCompanionBuilder =
       Value<String> metaId,
       Value<bool> watched,
       Value<String?> certification,
+      Value<String?> title,
+      Value<String?> poster,
+      Value<String?> mediaType,
+      Value<int?> season,
+      Value<int?> episode,
       Value<int> rowid,
     });
 
@@ -4443,6 +4702,31 @@ class $$ProgressTableFilterComposer
 
   ColumnFilters<String> get certification => $composableBuilder(
     column: $table.certification,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get poster => $composableBuilder(
+    column: $table.poster,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mediaType => $composableBuilder(
+    column: $table.mediaType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get season => $composableBuilder(
+    column: $table.season,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get episode => $composableBuilder(
+    column: $table.episode,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4495,6 +4779,31 @@ class $$ProgressTableOrderingComposer
     column: $table.certification,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get poster => $composableBuilder(
+    column: $table.poster,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mediaType => $composableBuilder(
+    column: $table.mediaType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get season => $composableBuilder(
+    column: $table.season,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get episode => $composableBuilder(
+    column: $table.episode,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProgressTableAnnotationComposer
@@ -4535,6 +4844,21 @@ class $$ProgressTableAnnotationComposer
     column: $table.certification,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get poster =>
+      $composableBuilder(column: $table.poster, builder: (column) => column);
+
+  GeneratedColumn<String> get mediaType =>
+      $composableBuilder(column: $table.mediaType, builder: (column) => column);
+
+  GeneratedColumn<int> get season =>
+      $composableBuilder(column: $table.season, builder: (column) => column);
+
+  GeneratedColumn<int> get episode =>
+      $composableBuilder(column: $table.episode, builder: (column) => column);
 }
 
 class $$ProgressTableTableManager
@@ -4576,6 +4900,11 @@ class $$ProgressTableTableManager
                 Value<String> metaId = const Value.absent(),
                 Value<bool> watched = const Value.absent(),
                 Value<String?> certification = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<String?> poster = const Value.absent(),
+                Value<String?> mediaType = const Value.absent(),
+                Value<int?> season = const Value.absent(),
+                Value<int?> episode = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProgressCompanion(
                 profileId: profileId,
@@ -4586,6 +4915,11 @@ class $$ProgressTableTableManager
                 metaId: metaId,
                 watched: watched,
                 certification: certification,
+                title: title,
+                poster: poster,
+                mediaType: mediaType,
+                season: season,
+                episode: episode,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4598,6 +4932,11 @@ class $$ProgressTableTableManager
                 Value<String> metaId = const Value.absent(),
                 Value<bool> watched = const Value.absent(),
                 Value<String?> certification = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<String?> poster = const Value.absent(),
+                Value<String?> mediaType = const Value.absent(),
+                Value<int?> season = const Value.absent(),
+                Value<int?> episode = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProgressCompanion.insert(
                 profileId: profileId,
@@ -4608,6 +4947,11 @@ class $$ProgressTableTableManager
                 metaId: metaId,
                 watched: watched,
                 certification: certification,
+                title: title,
+                poster: poster,
+                mediaType: mediaType,
+                season: season,
+                episode: episode,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

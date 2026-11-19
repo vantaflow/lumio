@@ -67,6 +67,12 @@ Future<void> _open(AppHarness h, WidgetTester t) async {
   await h.settle();
 }
 
+/// Requêtes vers le site des addons (la collection officielle est à part).
+List<Uri> _siteRequests(FakeCatalogSite s) => [
+  for (final u in s.requests)
+    if (u.host != 'api.strem.io') u,
+];
+
 void main() {
   testWidgets('catalogue : cartes, badge Installé, onglets', (t) async {
     final site = FakeCatalogSite(cards: _cards, details: _details());
@@ -98,9 +104,9 @@ void main() {
     expect(find.text('★ 120 · v1.0.0'), findsOneWidget);
     expect(find.text('Installé'), findsNothing);
     // Une seule requête de liste, sans filtre de catégorie, User-Agent propre.
-    expect(site.requests, hasLength(1));
+    expect(_siteRequests(site), hasLength(1));
     expect(
-      site.requests.single.queryParametersAll.containsKey('categories'),
+      _siteRequests(site).single.queryParametersAll.containsKey('categories'),
       isFalse,
     );
     await h.close();
@@ -216,6 +222,50 @@ void main() {
     await h.close();
   });
 
+  testWidgets('Officiels : première puce, Cinemeta en premier et focalisé', (
+    t,
+  ) async {
+    final site = FakeCatalogSite(
+      cards: _cards,
+      details: _details(),
+      officialJson:
+          '[{"transportUrl":"https://v3-cinemeta.strem.io/manifest.json",'
+          '"manifest":{"id":"com.linvo.cinemeta","name":"Cinemeta",'
+          '"description":"Catalogues officiels","types":["movie","series"],'
+          '"resources":["catalog","meta"]}}]',
+    );
+    final h = AppHarness(t, size: const Size(1920, 1080));
+    await h.pump(
+      _Launcher(ValueNotifier(null)),
+      extra: [catalogOverride(site)],
+    );
+    await _open(h, t);
+    expect(find.text('Officiels'), findsOneWidget);
+    final cards = find.byWidgetPredicate(
+      (w) =>
+          w.key is ValueKey &&
+          '${(w.key! as ValueKey).value}'.startsWith('card:'),
+    );
+    expect(
+      (cards.first.evaluate().single.widget.key! as ValueKey).value,
+      'card:com.linvo.cinemeta',
+    );
+    // Les populaires suivent, sans doublon.
+    expect(find.byKey(const ValueKey('card:alpha')), findsOneWidget);
+    // Focus initial : la première carte (Cinemeta), pas un addon de torrents.
+    final focused = FocusManager.instance.primaryFocus!.context!;
+    var inCard = false;
+    focused.visitAncestorElements((e) {
+      if (e.widget.key == const ValueKey('card:com.linvo.cinemeta')) {
+        inCard = true;
+        return false;
+      }
+      return true;
+    });
+    expect(inCard, isTrue);
+    await h.close();
+  });
+
   testWidgets('plusieurs instances : choix du domaine', (t) async {
     final site = FakeCatalogSite(cards: _cards, details: _details());
     final h = AppHarness(t, size: const Size(1920, 1080));
@@ -229,9 +279,9 @@ void main() {
     await _open(h, t);
     await t.tap(find.byKey(const ValueKey('card:beta')));
     await h.settle();
-    expect(find.text('Choisir une instance'), findsOneWidget);
+    expect(find.text('Choisir un serveur'), findsOneWidget);
     expect(find.text('beta-one.example.org'), findsOneWidget);
-    expect(find.text('beta-two.example.net · à configurer'), findsOneWidget);
+    expect(find.text('beta-two.example.net · à régler'), findsOneWidget);
     await t.tap(find.text('beta-one.example.org'));
     await h.settle();
     expect(find.text('APERÇU · v1.0.0'), findsOneWidget);
@@ -290,7 +340,7 @@ void main() {
   );
 
   testWidgets(
-    'instance configurable mais pas obligatoire : Installer reste possible',
+    'configurable mais pas obligatoire : une seule confirmation (aperçu)',
     (t) async {
       final site = FakeCatalogSite(
         cards: [_cards.first],
@@ -309,11 +359,11 @@ void main() {
       await _open(h, t);
       await t.tap(find.byKey(const ValueKey('card:alpha')));
       await h.settle();
-      expect(find.byKey(const ValueKey('sheet-install')), findsOneWidget);
-      expect(find.text('Configurer depuis le portail'), findsOneWidget);
-      await t.tap(find.byKey(const ValueKey('sheet-install')));
-      await h.settle();
+      expect(find.byKey(const ValueKey('sheet-install')), findsNothing);
       expect(find.byKey(const ValueKey('link-install')), findsOneWidget);
+      // Le lien brut n'est pas affiché : nom et serveur seulement.
+      expect(find.byKey(const ValueKey('link-field')), findsNothing);
+      expect(find.byKey(const ValueKey('preview-server')), findsOneWidget);
       await h.close();
     },
   );
@@ -389,11 +439,11 @@ void main() {
       extra: [catalogOverride(site)],
     );
     await _open(h, t);
-    expect(site.requests, hasLength(1));
+    expect(_siteRequests(site), hasLength(1));
     await t.ensureVisible(find.byKey(const ValueKey('catalog-refresh')));
     await t.tap(find.byKey(const ValueKey('catalog-refresh')));
     await h.settle();
-    expect(site.requests, hasLength(2));
+    expect(_siteRequests(site), hasLength(2));
     await h.close();
   });
 

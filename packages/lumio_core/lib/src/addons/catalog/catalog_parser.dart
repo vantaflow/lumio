@@ -211,7 +211,10 @@ class AddonCatalogParser {
   }
 
   /// Collection officielle (`addonscollection.json`).
-  static CatalogPage parseCollection(String json) {
+  ///
+  /// [skipLocal] écarte les entrées dont l'adresse est locale (le « Local
+  /// Files » de la collection officielle pointe vers 127.0.0.1).
+  static CatalogPage parseCollection(String json, {bool skipLocal = false}) {
     final Object? data;
     try {
       data = jsonDecode(json);
@@ -227,7 +230,11 @@ class AddonCatalogParser {
       // illisible est écartée sans gêner les autres.
       try {
         final entry = _collectionEntry(e);
-        if (entry != null) entries.add(entry);
+        if (entry == null) continue;
+        if (skipLocal && _isLocalHost(entry.instances.first.manifestUrl.host)) {
+          continue;
+        }
+        entries.add(entry);
       } catch (_) {
         continue;
       }
@@ -240,6 +247,9 @@ class AddonCatalogParser {
     }
     return CatalogPage(entries: entries, total: entries.length);
   }
+
+  static bool _isLocalHost(String h) =>
+      h == 'localhost' || h == '::1' || h.startsWith('127.') || h == '0.0.0.0';
 
   static CatalogEntry? _collectionEntry(Object? e) {
     if (e is! Map) return null;

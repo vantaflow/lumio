@@ -12,6 +12,7 @@ class FakeCatalogSite implements HttpFetcher {
     this.cards = const [],
     this.details = const {},
     this.collectionJson,
+    this.officialJson,
     this.offline = false,
     this.siteDown = false,
     this.pageSize = 10,
@@ -23,6 +24,9 @@ class FakeCatalogSite implements HttpFetcher {
   /// slug → instances (url, configurable, configurationRequired).
   Map<String, List<(String, bool, bool)>> details;
   String? collectionJson;
+
+  /// Collection officielle de Stremio (`addonsofficialcollection.json`).
+  String? officialJson;
   bool offline;
 
   /// Le site répond 503 (la collection officielle reste joignable).
@@ -73,6 +77,9 @@ class FakeCatalogSite implements HttpFetcher {
       body = listHtml(int.tryParse(url.queryParameters['page'] ?? '') ?? 1);
     } else if (url.path.startsWith('/addons/')) {
       body = detailHtml(url.pathSegments.last);
+    } else if (url.path == '/addonsofficialcollection.json' &&
+        officialJson != null) {
+      body = officialJson!;
     } else if (url.path == '/addonscollection.json' && collectionJson != null) {
       body = collectionJson!;
     } else {

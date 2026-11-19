@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/db.dart';
@@ -81,7 +81,7 @@ void main() {
     await db
         .into(db.settings)
         .insert(SettingsCompanion.insert(key: 'x', value: 'y'));
-    expect(db.schemaVersion, 11);
+    expect(db.schemaVersion, 12);
     await db.close();
   });
 
@@ -91,6 +91,63 @@ void main() {
         .customSelect("SELECT name FROM sqlite_master WHERE name LIKE 'sync%'")
         .get();
     expect(r, isEmpty);
+    await db.close();
+  });
+
+  test('v11 -> v12 : titre et affiche ajoutés, progression gardée', () async {
+    final old = raw.sqlite3.openInMemory();
+    // Tables d'une base réelle v11 (modèle courant), sauf `progress` : celle
+    // d'avant la v12, sans titre ni affiche.
+    final tmp = AppDatabase(NativeDatabase.memory());
+    await tmp.customSelect('SELECT 1').get();
+    final ddl = await tmp
+        .customSelect(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND sql IS NOT NULL "
+          "AND name <> 'progress' AND name NOT LIKE 'sqlite_%'",
+        )
+        .get();
+    for (final r in ddl) {
+      old.execute(r.read<String>('sql'));
+    }
+    await tmp.close();
+    old.execute('''
+      CREATE TABLE progress (profile_id TEXT NOT NULL DEFAULT 'default',
+        item_id TEXT NOT NULL, position_ms INTEGER NOT NULL DEFAULT 0,
+        duration_ms INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL DEFAULT 0,
+        meta_id TEXT NOT NULL DEFAULT '', watched INTEGER NOT NULL DEFAULT 0,
+        certification TEXT, PRIMARY KEY (profile_id, item_id));
+      PRAGMA user_version = 11;
+    ''');
+    old.execute(
+      'INSERT INTO progress (profile_id, item_id, position_ms, duration_ms, '
+      "updated_at, meta_id) VALUES ('p1', 'tt0458339', 66000, 888000, 5, 'tt0458339')",
+    );
+
+    final db = AppDatabase(NativeDatabase.opened(old));
+    final row = (await db.select(db.progress).get()).single;
+    expect(row.itemId, 'tt0458339');
+    expect(row.positionMs, 66000);
+    expect(row.title, isNull);
+    expect(row.poster, isNull);
+    expect(row.season, isNull);
+    await db
+        .into(db.progress)
+        .insertOnConflictUpdate(
+          ProgressCompanion.insert(
+            profileId: const Value('p1'),
+            itemId: 'tt1:1:2',
+            title: const Value('Une série'),
+            poster: const Value('https://img.example/p.jpg'),
+            mediaType: const Value('series'),
+            season: const Value(1),
+            episode: const Value(2),
+          ),
+        );
+    final n = await (db.select(
+      db.progress,
+    )..where((t) => t.itemId.equals('tt1:1:2'))).getSingle();
+    expect((n.title, n.season, n.episode), ('Une série', 1, 2));
+    expect(db.schemaVersion, 12);
     await db.close();
   });
 }

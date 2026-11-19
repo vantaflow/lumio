@@ -1370,6 +1370,12 @@
   "addonTabLink": "Par lien",
   "addonTabPhone": "Depuis le téléphone",
   "catPopular": "Populaires",
+  "addonServerLine": "Serveur : {host}",
+  "@addonServerLine": {"placeholders": {"host": {"type": "String"}}},
+  "addonReplacesNote": "Remplace la version déjà installée de « {name} ».",
+  "@addonReplacesNote": {"placeholders": {"name": {"type": "String"}}},
+  "unknownTitle": "Titre inconnu",
+  "catOfficial": "Officiels",
   "catMoviesSeries": "Films et séries",
   "catTorrents": "Torrents",
   "catDebrid": "Débrideurs",
@@ -1413,8 +1419,8 @@
       "stars": {}
     }
   },
-  "chooseInstanceTitle": "Choisir une instance",
-  "instanceNeedsSetup": "à configurer",
+  "chooseInstanceTitle": "Choisir un serveur",
+  "instanceNeedsSetup": "à régler",
   "addonLinkHelp": "Lien manifest.json ou lien stremio://. Un lien copié sur cet appareil est proposé automatiquement.",
   "addonPreviewLabel": "APERÇU · v{version}",
   "@addonPreviewLabel": {

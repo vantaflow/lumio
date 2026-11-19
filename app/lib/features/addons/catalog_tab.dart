@@ -20,9 +20,14 @@ class CatalogChip {
   const CatalogChip(this.id, this.categories);
   final String id;
   final List<String> categories;
+
+  /// Puce « Officiels » : la collection officielle de Stremio d'abord, puis
+  /// les populaires du site (sans doublon).
+  bool get official => id == 'official';
 }
 
 const catalogChips = [
+  CatalogChip('official', []),
   CatalogChip('popular', []),
   CatalogChip('movies', [CatalogCategories.movies, CatalogCategories.tvShows]),
   CatalogChip('torrents', [CatalogCategories.torrents]),
@@ -46,6 +51,7 @@ const catalogMoreCategories = [
 ];
 
 String chipLabel(String id, AppLocalizations l) => switch (id) {
+  'official' => l.catOfficial,
   'popular' => l.catPopular,
   'movies' => l.catMoviesSeries,
   'torrents' => l.catTorrents,
@@ -144,13 +150,43 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
       _page = 1;
     });
     try {
-      final r = await ref
-          .read(addonCatalogServiceProvider)
-          .list(CatalogQuery(categories: _categories), refresh: refresh);
+      final service = ref.read(addonCatalogServiceProvider);
+      final wantOfficial = _more == null && catalogChips[_chip].official;
+      // Officiels : la collection de Stremio d'abord ; si le site est
+      // injoignable, elle s'affiche seule.
+      CatalogResult<CatalogPage>? official;
+      if (wantOfficial) {
+        try {
+          official = await service.official(refresh: refresh);
+        } catch (_) {
+          official = null;
+        }
+      }
+      CatalogResult<CatalogPage> r;
+      try {
+        r = await service.list(
+          CatalogQuery(categories: _categories),
+          refresh: refresh,
+        );
+      } catch (_) {
+        if (official == null) rethrow;
+        r = CatalogResult(
+          CatalogPage(entries: const [], total: 0),
+          official.origin,
+          official.fetchedAt,
+        );
+      }
       if (!mounted || gen != _gen) return;
       setState(() {
         _last = r;
-        _entries.addAll(r.value.entries);
+        _entries.addAll(
+          official == null
+              ? r.value.entries
+              : AddonCatalogService.mergeOfficial(
+                  official.value.entries,
+                  r.value.entries,
+                ),
+        );
         _loading = false;
       });
     } catch (e) {
@@ -172,6 +208,7 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
           .list(CatalogQuery(categories: _categories, page: _page + 1));
       if (!mounted || gen != _gen) return;
       final known = {for (final e in _entries) e.slug};
+      final names = {for (final e in _entries) e.name.trim().toLowerCase()};
       setState(() {
         _page++;
         _last = CatalogResult(
@@ -184,7 +221,11 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
           r.origin,
           r.fetchedAt,
         );
-        _entries.addAll(r.value.entries.where((e) => known.add(e.slug)));
+        _entries.addAll(
+          r.value.entries.where(
+            (e) => known.add(e.slug) && names.add(e.name.trim().toLowerCase()),
+          ),
+        );
         _loadingMore = false;
       });
     } catch (_) {
@@ -253,7 +294,9 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
       );
     }
     if (pick == null || !mounted) return;
-    if (!pick.configurable && !pick.configurationRequired) {
+    // Une seule confirmation : l'aperçu (puis Installer). La fiche n'apparaît
+    // que si l'addon ne marche pas sans réglage préalable.
+    if (!pick.configurationRequired) {
       widget.onUseLink(pick.manifestUrl.toString());
       return;
     }

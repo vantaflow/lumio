@@ -2408,6 +2408,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get catPopular => 'Populaires';
 
   @override
+  String addonServerLine(String host) {
+    return 'Serveur : $host';
+  }
+
+  @override
+  String addonReplacesNote(String name) {
+    return 'Remplace la version déjà installée de « $name ».';
+  }
+
+  @override
+  String get unknownTitle => 'Titre inconnu';
+
+  @override
+  String get catOfficial => 'Officiels';
+
+  @override
   String get catMoviesSeries => 'Films et séries';
 
   @override
@@ -2496,10 +2512,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get chooseInstanceTitle => 'Choisir une instance';
+  String get chooseInstanceTitle => 'Choisir un serveur';
 
   @override
-  String get instanceNeedsSetup => 'à configurer';
+  String get instanceNeedsSetup => 'à régler';
 
   @override
   String get addonLinkHelp =>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Portail · Régler un addon</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+.ph{width:390px;height:844px;background:#0E1116;color:#F3F5F7;font-family:'Manrope',sans-serif;font-size:16px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden}
+.hd{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;margin:0}
+.sm{font-size:14px;color:#A9B2BF;line-height:1.45}
+.st{display:flex;gap:14px}
+.n{width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none}
+.bt{height:48px;border-radius:24px;border:0;font:700 15px 'Manrope',sans-serif;width:100%}
+</style>
+</helmet>
+<div class="ph">
+<div style="padding:20px 20px 8px;display:flex;align-items:center;gap:12px"><button aria-label="Retour" style="width:40px;height:40px;border-radius:20px;background:#1C222B;border:0;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F3F5F7" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div><div class="sm" style="font-size:13px">Régler avant d'installer</div><div class="hd" style="font-size:22px">Anime Kitsu</div></div></div>
+<p class="sm" style="padding:0 20px;margin:4px 0 18px">Cet addon a besoin de quelques choix (langue, catalogues…). Trois étapes :</p>
+<div style="padding:0 20px;display:flex;flex-direction:column;gap:22px;flex:1">
+<div class="st"><div class="n" style="background:#5BD68A;color:#0E1116"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0E1116" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></div><div style="flex:1"><div style="font-weight:700">Ouvrez la page de réglage</div><div class="sm">Elle s'ouvre dans un nouvel onglet.</div><a href="#" style="display:inline-flex;margin-top:8px;color:#4FD1C5;font-weight:700;font-size:14px;text-decoration:none">Rouvrir la page ↗</a></div></div>
+<div class="st"><div class="n" style="background:#FFB84D;color:#1A1100">2</div><div style="flex:1"><div style="font-weight:700">Faites vos choix, puis copiez le lien</div><div class="sm">En bas de la page, appuyez sur <b style="color:#F3F5F7">« Copier le lien »</b> (ou « Installer », puis copiez l'adresse affichée).</div></div></div>
+<div class="st"><div class="n" style="background:#2A3340;color:#F3F5F7">3</div><div style="flex:1"><div style="font-weight:700">Revenez ici et collez-le</div>
+<label for="lien" class="sm" style="display:block;margin:8px 0 6px">Lien de l'addon réglé</label>
+<div id="lien" style="height:52px;border-radius:12px;background:#161B22;border:2px solid #FFB84D;display:flex;align-items:center;padding:0 12px;font-size:14px;color:#7E8896">Appuyez longuement ici › Coller</div>
+<div class="sm" style="margin-top:6px;font-size:13px">Lumio reconnaît les liens stremio:// et https://…/manifest.json.</div>
+</div></div>
+</div>
+<div style="padding:16px 20px 24px"><button class="bt" style="background:#FFB84D;color:#1A1100">Installer sur la TV</button><div class="sm" style="text-align:center;margin-top:10px;font-size:13px">Vous confirmerez sur la TV. Le lien reste sur la TV, chiffré.</div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

@@ -114,6 +114,7 @@ class AddonCatalogSource {
     this._fetcher, {
     Uri? site,
     Uri? collectionUrl,
+    Uri? officialCollectionUrl,
     RateLimiter? limiter,
     this.timeout = const Duration(seconds: 10),
     this.maxListBytes = 512 * 1024,
@@ -123,11 +124,18 @@ class AddonCatalogSource {
        collectionUrl =
            collectionUrl ??
            Uri.parse('https://api.strem.io/addonscollection.json'),
+       officialCollectionUrl =
+           officialCollectionUrl ??
+           Uri.parse('https://api.strem.io/addonsofficialcollection.json'),
        _limiter = limiter ?? RateLimiter();
 
   final HttpFetcher _fetcher;
   final Uri site;
   final Uri collectionUrl;
+
+  /// Collection OFFICIELLE de Stremio (Cinemeta, OpenSubtitles v3…) : proposée
+  /// à l'installation, jamais installée d'office.
+  final Uri officialCollectionUrl;
   final RateLimiter _limiter;
   final Duration timeout;
 
@@ -162,6 +170,13 @@ class AddonCatalogSource {
   Future<CatalogPage> collection() async {
     final body = await _get(collectionUrl, maxCollectionBytes);
     return Isolate.run(() => AddonCatalogParser.parseCollection(body));
+  }
+
+  Future<CatalogPage> officialCollection() async {
+    final body = await _get(officialCollectionUrl, maxCollectionBytes);
+    return Isolate.run(
+      () => AddonCatalogParser.parseCollection(body, skipLocal: true),
+    );
   }
 
   Future<String> _get(Uri url, int maxBytes) async {

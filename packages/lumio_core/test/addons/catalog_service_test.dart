@@ -36,6 +36,7 @@ class FakeSite implements HttpFetcher {
 }
 
 void main() {
+  group('collection officielle', officialTests);
   late FakeSite site;
   late MemoryCatalogCacheStore store;
   late DateTime now;
@@ -346,5 +347,77 @@ void main() {
         expect((await s.read('k'))?.data, 'v');
       },
     );
+  });
+}
+
+void officialTests() {
+  late FakeSite site;
+  late MemoryCatalogCacheStore store;
+  late DateTime now;
+  late AddonCatalogService service;
+
+  setUp(() {
+    site = FakeSite();
+    store = MemoryCatalogCacheStore();
+    now = DateTime.utc(2026, 11, 19, 12);
+    site.routes['/addonsofficialcollection.json'] = fx(
+      'addonsofficialcollection.json',
+    );
+    service = AddonCatalogService(
+      AddonCatalogSource(
+        site,
+        limiter: RateLimiter(minInterval: Duration.zero),
+      ),
+      store,
+      now: () => now,
+    );
+  });
+
+  test('officiels : Cinemeta et OpenSubtitles v3, sans Local Files', () async {
+    final r = await service.official();
+    expect(r.origin, CatalogOrigin.network);
+    expect(r.value.entries.map((e) => e.name), [
+      'Cinemeta',
+      'OpenSubtitles v3',
+    ]);
+    expect(
+      site.requests.single.toString(),
+      'https://api.strem.io/addonsofficialcollection.json',
+    );
+  });
+
+  test('officiels : cache de 24 h puis cache périmé hors ligne', () async {
+    await service.official();
+    await service.official();
+    expect(site.requests, hasLength(1));
+    now = now.add(const Duration(hours: 30));
+    site.offline = true;
+    final r = await service.official();
+    expect(r.origin, CatalogOrigin.staleCache);
+    expect(r.value.entries, hasLength(2));
+  });
+
+  test('officiels : hors ligne sans cache = erreur', () async {
+    site.offline = true;
+    await expectLater(
+      service.official(),
+      throwsA(isA<CatalogUnavailableException>()),
+    );
+  });
+
+  test('fusion : officiels en premier, doublons retirés', () async {
+    final off = (await service.official()).value.entries;
+    CatalogEntry e(String slug, String name) =>
+        CatalogEntry(slug: slug, name: name);
+    final merged = AddonCatalogService.mergeOfficial(off, [
+      e('cinemeta', 'Cinemeta'),
+      e('torrentio', 'Torrentio'),
+      e('com.linvo.cinemeta', 'Autre nom'),
+    ]);
+    expect(merged.map((x) => x.name), [
+      'Cinemeta',
+      'OpenSubtitles v3',
+      'Torrentio',
+    ]);
   });
 }

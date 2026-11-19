@@ -15,6 +15,17 @@ void main() {
     expect(a(LogicalKeyboardKey.enter, false), PlayerKeyAction.showControls);
     expect(a(LogicalKeyboardKey.select, false), PlayerKeyAction.showControls);
   });
+  test('commandes masquées : haut = Pistes, bas = afficher', () {
+    expect(a(LogicalKeyboardKey.arrowUp, false), PlayerKeyAction.focusTracks);
+    expect(
+      a(LogicalKeyboardKey.arrowDown, false),
+      PlayerKeyAction.showControls,
+    );
+    expect(a(LogicalKeyboardKey.arrowUp, true), PlayerKeyAction.none);
+  });
+  test('les commandes restent 6 s', () {
+    expect(controlsHideDelay, const Duration(seconds: 6));
+  });
   test('Espace bascule la lecture, commandes visibles ou non', () {
     expect(a(LogicalKeyboardKey.space, false), PlayerKeyAction.togglePlay);
     expect(a(LogicalKeyboardKey.space, true), PlayerKeyAction.togglePlay);
