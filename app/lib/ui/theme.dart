@@ -223,7 +223,16 @@ abstract final class LumioTheme {
           ? BorderSide(color: c.focusRing, width: lumioFocusWidth)
           : null,
     );
-    const minSize = Size(lumioTouchMin, lumioTouchMin);
+    // TV : boutons des maquettes (hauteur 76, marges 40, texte 28 gras).
+    final minSize = tv
+        ? const Size(88, 76)
+        : const Size(lumioTouchMin, lumioTouchMin);
+    final btnPad = WidgetStatePropertyAll<EdgeInsetsGeometry?>(
+      tv ? const EdgeInsets.symmetric(horizontal: 40, vertical: 12) : null,
+    );
+    final btnText = WidgetStatePropertyAll<TextStyle?>(
+      tv ? body(label, 1.2, FontWeight.w700) : null,
+    );
     const pill = StadiumBorder();
 
     return ThemeData(
@@ -258,11 +267,20 @@ abstract final class LumioTheme {
         ),
         titleTextStyle: display(h2, 1.2),
         contentTextStyle: body(bodySz, 1.4),
+        barrierColor: const Color(0xC206080C),
+        insetPadding: tv
+            ? const EdgeInsets.symmetric(horizontal: 96, vertical: 48)
+            : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        actionsPadding: tv
+            ? const EdgeInsets.fromLTRB(36, 8, 36, 32)
+            : const EdgeInsets.fromLTRB(24, 0, 24, 16),
       ),
       dividerTheme: DividerThemeData(color: c.outline, space: 1),
       filledButtonTheme: FilledButtonThemeData(
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll(minSize),
+          padding: btnPad,
+          textStyle: btnText,
+          minimumSize: WidgetStatePropertyAll(minSize),
           shape: const WidgetStatePropertyAll(pill),
           backgroundColor: WidgetStatePropertyAll(c.accent),
           foregroundColor: WidgetStatePropertyAll(c.onAccent),
@@ -271,7 +289,9 @@ abstract final class LumioTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll(minSize),
+          padding: btnPad,
+          textStyle: btnText,
+          minimumSize: WidgetStatePropertyAll(minSize),
           shape: const WidgetStatePropertyAll(pill),
           backgroundColor: WidgetStatePropertyAll(c.surfaceFocus),
           foregroundColor: WidgetStatePropertyAll(c.text),
@@ -280,15 +300,18 @@ abstract final class LumioTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll(minSize),
+          padding: btnPad,
+          textStyle: btnText,
+          minimumSize: WidgetStatePropertyAll(minSize),
           shape: const WidgetStatePropertyAll(pill),
+          backgroundColor: tv ? WidgetStatePropertyAll(c.surfaceFocus) : null,
           foregroundColor: WidgetStatePropertyAll(c.text),
           side: focusSide,
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll(minSize),
+          minimumSize: WidgetStatePropertyAll(minSize),
           foregroundColor: WidgetStatePropertyAll(c.text),
           side: focusSide,
         ),

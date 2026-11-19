@@ -3721,6 +3721,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Films et séries'**
   String get searchMoviesAndSeries;
+
+  /// No description provided for @pinChecking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérification…'**
+  String get pinChecking;
+
+  /// No description provided for @addonsPriorityHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'ordre décide de la priorité des sources.'**
+  String get addonsPriorityHint;
 }
 
 class _AppLocalizationsDelegate

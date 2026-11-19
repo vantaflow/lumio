@@ -66,3 +66,24 @@ String _capital(String s) {
   final t = s.trim();
   return t.isEmpty ? t : t[0].toUpperCase() + t.substring(1);
 }
+
+/// Capacités d'un addon (« Catalogues · Flux · Sous-titres ») d'après son
+/// manifeste : plus fiable que les types de contenu (un addon de sous-titres
+/// déclare « film, série » mais ne propose ni catalogue ni flux).
+String addonCapabilities(
+  List<String> resourceNames,
+  bool hasCatalogs,
+  List<String> types, [
+  AppLocalizations? l,
+]) {
+  l ??= AppLocalizationsFr();
+  final parts = <String>[
+    if (hasCatalogs) l.resCatalog,
+    if (resourceNames.contains('stream')) l.resStream,
+    if (resourceNames.contains('subtitles')) l.resSubtitles,
+  ];
+  if (parts.isEmpty) {
+    return types.map((t) => contentTypeLabel(t, l!)).join(' · ');
+  }
+  return parts.join(' · ');
+}

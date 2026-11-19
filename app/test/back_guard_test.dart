@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/title_settings_store.dart';
@@ -78,7 +80,7 @@ void main() {
     final h = AppHarness(t);
     await h.pump(const AddonsScreen());
     final f = FocusManager.instance.primaryFocus!;
-    expect(f.context!.findAncestorWidgetOfExactType<FilledButton>(), isNotNull);
+    expect(f.context!.findAncestorWidgetOfExactType<TvButton>(), isNotNull);
     await h.close();
   });
 
@@ -94,24 +96,10 @@ void main() {
       ],
     );
     final f = FocusManager.instance.primaryFocus!;
-    expect(f.context!.findAncestorWidgetOfExactType<FilledButton>(), isNull);
-    expect(f.context!.findAncestorWidgetOfExactType<Switch>(), isNotNull);
-    // Le focus est dans la tuile du second addon, pas du premier.
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('second')),
-        matching: find.byWidgetPredicate((w) => w is Switch),
-      ),
-      findsOneWidget,
-    );
-    final tileOfFocus = f.context!.findAncestorWidgetOfExactType<Card>()!;
-    expect(
-      find.descendant(
-        of: find.byWidget(tileOfFocus),
-        matching: find.text('Addon second'),
-      ),
-      findsOneWidget,
-    );
+    expect(f.context!.findAncestorWidgetOfExactType<TvButton>(), isNull);
+    // Le focus est sur l'interrupteur du second addon, pas du premier.
+    final card = f.context!.findAncestorWidgetOfExactType<FocusableCard>()!;
+    expect(card.key, const ValueKey('addon-switch:second'));
     await h.close();
   });
 

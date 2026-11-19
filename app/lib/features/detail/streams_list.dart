@@ -31,7 +31,7 @@ String sizeLabel(int bytes, [AppLocalizations? l]) {
 
 /// Icône aimant (flux torrent) : un fer à cheval aux pôles marqués.
 class MagnetIcon extends StatelessWidget {
-  const MagnetIcon({super.key, this.size = 22, this.color});
+  const MagnetIcon({super.key, this.size = 34, this.color});
 
   final double size;
   final Color? color;
@@ -165,7 +165,7 @@ class StreamsList extends StatelessWidget {
                 const SizedBox(width: LumioSpacing.md),
                 Icon(
                   g.error != null ? Icons.error_outline : Icons.check_circle,
-                  size: 16,
+                  size: 28,
                   color: g.error != null ? lumio.error : lumio.success,
                 ),
                 const SizedBox(width: 4),
@@ -246,19 +246,19 @@ class _StreamRow extends StatelessWidget {
           '${recommended ? ', ${context.l10n.recommendedSemantic}' : ''}',
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: LumioSpacing.md,
-          vertical: LumioSpacing.sm,
+          horizontal: LumioSpacing.lg,
+          vertical: LumioSpacing.md,
         ),
         decoration: BoxDecoration(
           color: recommended ? lumio.surfaceRaised : lumio.surface,
-          borderRadius: BorderRadius.circular(LumioRadius.md),
+          borderRadius: BorderRadius.circular(LumioRadius.lg),
           border: Border.all(color: recommended ? lumio.accent : lumio.outline),
         ),
         child: Row(
           children: [
             item.isTorrent
                 ? const MagnetIcon()
-                : Icon(Icons.link, color: lumio.secondary, size: 22),
+                : Icon(Icons.link, color: lumio.secondary, size: 34),
             const SizedBox(width: LumioSpacing.md),
             Expanded(
               child: Column(
@@ -285,7 +285,7 @@ class _StreamRow extends StatelessWidget {
             if (item.isTorrent && seeders != null) ...[
               Icon(
                 Icons.arrow_upward,
-                size: 16,
+                size: 28,
                 color: seeders >= healthySeeders
                     ? lumio.success
                     : lumio.warning,

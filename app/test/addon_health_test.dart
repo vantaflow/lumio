@@ -13,6 +13,8 @@ import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/features/detail/streams_list.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -190,6 +192,9 @@ void main() {
     }
 
     Future<void> pumpAddons(WidgetTester t, List<InstalledAddon> addons) async {
+      t.view.physicalSize = const Size(1600, 900);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
       db = AppDatabase(NativeDatabase.memory());
       tracker = HealthTracker();
       service = AddonHealthService(tracker, AppSettingsStore(db));
@@ -325,11 +330,15 @@ void main() {
       await t.pump();
       final iconButton = find.ancestor(
         of: find.byIcon(Icons.restart_alt),
-        matching: find.byType(IconButton),
+        matching: find.byType(TvIconButton),
       );
-      final node = t.widget<IconButton>(iconButton);
+      final node = t.widget<TvIconButton>(iconButton);
       expect(node.onPressed, isNotNull);
-      expect(node.focusNode?.canRequestFocus ?? true, isTrue);
+      // Une carte focalisable (anneau de focus) : atteignable à la télécommande.
+      expect(
+        find.descendant(of: iconButton, matching: find.byType(FocusableCard)),
+        findsOneWidget,
+      );
       await done(t);
     });
 

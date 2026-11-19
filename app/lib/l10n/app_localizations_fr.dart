@@ -2185,4 +2185,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get searchMoviesAndSeries => 'Films et séries';
+
+  @override
+  String get pinChecking => 'Vérification…';
+
+  @override
+  String get addonsPriorityHint =>
+      'L\'ordre décide de la priorité des sources.';
 }

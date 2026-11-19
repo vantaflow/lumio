@@ -55,6 +55,7 @@ Future<void> main() async {
       return AppExitResponse.exit;
     },
   );
+  _startPerfLog();
   runApp(
     UncontrolledProviderScope(container: container, child: const LumioApp()),
   );
@@ -62,6 +63,36 @@ Future<void> main() async {
     // Lu par scripts/box-smoke.sh dans logcat.
     // ignore: avoid_print
     print('LUMIO_READY');
+  });
+}
+
+/// `--dart-define=LUMIO_PERF=1` : écrit dans logcat (`LUMIO_PERF`) les images
+/// de plus de 50 ms (construction / rastérisation) et les touches reçues, pour
+/// mesurer la lenteur des transitions sur la box (audit D10).
+const _perf = String.fromEnvironment('LUMIO_PERF') == '1';
+
+void _startPerfLog() {
+  if (!_perf) return;
+  SchedulerBinding.instance.addTimingsCallback((timings) {
+    for (final t in timings) {
+      if (t.totalSpan.inMilliseconds > 50) {
+        // ignore: avoid_print
+        print(
+          'LUMIO_PERF frame build=${t.buildDuration.inMilliseconds}ms '
+          'raster=${t.rasterDuration.inMilliseconds}ms '
+          'total=${t.totalSpan.inMilliseconds}ms',
+        );
+      }
+    }
+  });
+  ServicesBinding.instance.keyboard.addHandler((e) {
+    if (e is KeyDownEvent) {
+      // ignore: avoid_print
+      print(
+        'LUMIO_PERF key ${e.logicalKey.keyLabel} ${e.logicalKey.debugName}',
+      );
+    }
+    return false;
   });
 }
 

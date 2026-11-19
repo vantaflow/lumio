@@ -17,7 +17,9 @@ import 'package:lumio/features/search/search_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/common/tv_screen.dart' show tvMargin;
 import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_row.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
@@ -223,21 +225,19 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
   Widget build(BuildContext context) {
     return TvScaffold(
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_meta?.name ?? widget.preview.name),
-          backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: switch (_phase) {
+            _Phase.loading => const StateView.loading(),
+            _Phase.error => StateView.error(
+              message: context.l10n.detailLoadError,
+              onRetry: _load,
+            ),
+            _Phase.refused => StateView.empty(
+              message: context.l10n.notAllowedForProfile,
+            ),
+            _Phase.ready => _body(context, _meta!),
+          },
         ),
-        body: switch (_phase) {
-          _Phase.loading => const StateView.loading(),
-          _Phase.error => StateView.error(
-            message: context.l10n.detailLoadError,
-            onRetry: _load,
-          ),
-          _Phase.refused => StateView.empty(
-            message: context.l10n.notAllowedForProfile,
-          ),
-          _Phase.ready => _body(context, _meta!),
-        },
       ),
     );
   }
@@ -309,12 +309,12 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                width: 480,
+                width: c.maxWidth >= 1500 ? 720 : 480,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    LumioSpacing.xl,
-                    LumioSpacing.md,
-                    LumioSpacing.md,
+                  padding: EdgeInsets.fromLTRB(
+                    c.maxWidth >= 1500 ? tvMargin : LumioSpacing.xl,
+                    c.maxWidth >= 1500 ? 56 : LumioSpacing.md,
+                    LumioSpacing.lg,
                     LumioSpacing.xl,
                   ),
                   child: info,
@@ -322,7 +322,12 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
               ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
+                  padding: EdgeInsets.fromLTRB(
+                    12,
+                    c.maxWidth >= 1500 ? 56 : 0,
+                    c.maxWidth >= 1500 ? tvMargin : 0,
+                    LumioSpacing.xl,
+                  ),
                   children: [sources],
                 ),
               ),
@@ -377,8 +382,8 @@ class _Info extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(LumioRadius.md),
             child: SizedBox(
-              width: 240,
-              height: 360,
+              width: 260,
+              height: 390,
               child: Image(
                 image: GuardedNetworkImage(
                   meta.poster!,
@@ -395,39 +400,65 @@ class _Info extends StatelessWidget {
           header: true,
           child: Text(
             meta.name,
-            style: theme.textTheme.headlineMedium?.copyWith(color: lumio.text),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.headlineLarge?.copyWith(
+              color: lumio.text,
+              fontSize: MediaQuery.sizeOf(context).width >= 1500 ? 56 : null,
+            ),
           ),
         ),
         if (line.isNotEmpty) ...[
           const SizedBox(height: LumioSpacing.xs),
-          Text(line, style: theme.textTheme.bodyMedium),
+          Text(
+            line,
+            style: theme.textTheme.bodyMedium?.copyWith(color: lumio.textMuted),
+          ),
         ],
         if (meta.description != null) ...[
           const SizedBox(height: LumioSpacing.md),
           Text(
             meta.description!,
-            maxLines: 8,
+            maxLines: 6,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyLarge?.copyWith(color: lumio.text),
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: lumio.text,
+              fontSize: MediaQuery.sizeOf(context).width >= 1500 ? 28 : null,
+            ),
           ),
         ],
         const SizedBox(height: LumioSpacing.lg),
+        // Ligne unique : le libellé ne passe plus sur deux lignes (D9).
         Wrap(
-          spacing: LumioSpacing.md,
-          runSpacing: LumioSpacing.sm,
+          spacing: LumioSpacing.lg,
+          runSpacing: LumioSpacing.md,
           children: [
-            FilledButton.icon(
-              autofocus: true,
+            TvButton(
+              key: const ValueKey('detail-play'),
+              autofocus: canPlay,
               onPressed: canPlay ? onPlay : null,
-              icon: const Icon(Icons.play_arrow),
-              label: Text(context.l10n.autoPlayBest),
+              icon: Icon(Icons.play_arrow, size: 36, color: lumio.onAccent),
+              height: 80,
+              horizontalPadding: 40,
+              fontSize: 30,
+              label: context.l10n.autoPlayBest,
             ),
-            OutlinedButton.icon(
+            TvButton(
+              key: const ValueKey('detail-list'),
+              autofocus: !canPlay,
               onPressed: onToggleList,
-              icon: Icon(inList ? Icons.check : Icons.add),
-              label: Text(
-                inList ? context.l10n.removeFromList : context.l10n.addToList,
+              kind: TvButtonKind.secondary,
+              height: 80,
+              horizontalPadding: 36,
+              fontSize: 30,
+              icon: Icon(
+                inList ? Icons.check : Icons.add,
+                size: 34,
+                color: lumio.text,
               ),
+              label: inList
+                  ? context.l10n.removeFromList
+                  : context.l10n.addToList,
             ),
           ],
         ),
@@ -492,31 +523,24 @@ class _Sources extends StatelessWidget {
             title: context.l10n.seasonsTitle,
             restorationId: 'detail-seasons',
             routeKey: detailRouteKey,
-            itemExtent: 150,
-            height: 56 + 72,
-            horizontalPadding: LumioSpacing.lg,
+            itemExtent: 200,
+            height: 64 + 2 * 14,
+            verticalPadding: 14,
+            horizontalPadding: 12,
             items: [
               for (final s in seasons)
                 SizedBox(
-                  width: 150,
-                  child: FocusableCard(
-                    onSelect: () => onSeason(s),
-                    semanticLabel: seasonLabel(s, context.l10n),
-                    child: Container(
-                      height: 56,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: s == season ? lumio.accent : lumio.surfaceRaised,
-                        borderRadius: BorderRadius.circular(LumioRadius.md),
-                      ),
-                      child: Text(
-                        seasonLabel(s, context.l10n),
-                        style: TextStyle(
-                          color: s == season ? lumio.onAccent : lumio.text,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                  width: 200,
+                  child: TvButton(
+                    kind: s == season
+                        ? TvButtonKind.primary
+                        : TvButtonKind.secondary,
+                    height: 64,
+                    horizontalPadding: 20,
+                    fontSize: 26,
+                    scale: 1.04,
+                    label: seasonLabel(s, context.l10n),
+                    onPressed: () => onSeason(s),
                   ),
                 ),
             ],
@@ -528,21 +552,22 @@ class _Sources extends StatelessWidget {
                 : seasonLabel(season!, context.l10n),
             restorationId: 'detail-episodes',
             routeKey: detailRouteKey,
-            itemExtent: 280,
-            height: 112 + 72,
-            horizontalPadding: LumioSpacing.lg,
+            itemExtent: 340,
+            height: 132 + 2 * 14,
+            verticalPadding: 14,
+            horizontalPadding: 12,
             items: [
               for (final v in episodes)
                 SizedBox(
                   key: ValueKey('episode:${v.id}'),
-                  width: 280,
+                  width: 340,
                   child: FocusableCard(
                     onSelect: () => onEpisode(v),
                     semanticLabel:
                         '${_episodeCode(v, context.l10n)} ${v.title}'
                         ', ${watched.contains(v.id) ? context.l10n.watchedSemantic : context.l10n.unwatchedSemantic}',
                     child: Container(
-                      height: 112,
+                      height: 132,
                       padding: const EdgeInsets.all(LumioSpacing.md),
                       decoration: BoxDecoration(
                         color: lumio.surface,
@@ -561,13 +586,15 @@ class _Sources extends StatelessWidget {
                                 _episodeCode(v, context.l10n),
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   color: lumio.accent,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const Spacer(),
                               if (watched.contains(v.id))
                                 Icon(
                                   Icons.check_circle,
-                                  size: 20,
+                                  size: 30,
                                   color: lumio.success,
                                   semanticLabel: context.l10n.watchedBadge,
                                 ),
@@ -580,6 +607,7 @@ class _Sources extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: lumio.text,
+                              fontSize: 26,
                             ),
                           ),
                         ],
@@ -591,7 +619,7 @@ class _Sources extends StatelessWidget {
           ),
         if (!noEpisodes)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: LumioSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

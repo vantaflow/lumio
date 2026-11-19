@@ -8,15 +8,20 @@ import 'package:lumio/features/addons/health_pill.dart';
 import 'package:lumio/features/addons/health_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
+import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart' show AddonHealth;
 
 /// Clé de la mémoire du focus de l'écran des addons.
 const addonsRouteKey = 'addons';
 
-/// Gestion des addons : liste ordonnable (l'ordre est la priorité des
-/// sources), activation, suppression avec confirmation, ajout.
+/// Gestion des addons (maquettes TV10 Sources, P09) : liste ordonnable (l'ordre
+/// est la priorité des sources), activation, suppression avec confirmation,
+/// ajout.
 class AddonsScreen extends ConsumerWidget {
   const AddonsScreen({super.key});
 
@@ -30,25 +35,23 @@ class AddonsScreen extends ConsumerWidget {
     if (!(addons.value?.any((a) => a.id == remembered) ?? false)) {
       remembered = null;
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.l10n.addonsTitle),
-        actions: [
-          if (addons.value?.isNotEmpty ?? false)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: LumioSpacing.sm),
-              child: FilledButton.icon(
-                // Action principale : focus d'emblée, sauf si un addon était
-                // focalisé avant (retour d'un sous-écran).
-                autofocus: remembered == null,
-                onPressed: add,
-                icon: const Icon(Icons.add),
-                label: Text(context.l10n.addAddon),
-              ),
-            ),
-        ],
-      ),
-      body: addons.when(
+    return TvScreen(
+      title: context.l10n.addonsTitle,
+      subtitle: context.l10n.addonsPriorityHint,
+      actions: [
+        if (addons.value?.isNotEmpty ?? false)
+          TvButton(
+            key: const ValueKey('addons-add'),
+            // Action principale : focus d'emblée, sauf si un addon était
+            // focalisé avant (retour d'un sous-écran).
+            autofocus: remembered == null,
+            height: 76,
+            fontSize: 28,
+            label: '+ ${context.l10n.addAddon}',
+            onPressed: add,
+          ),
+      ],
+      child: addons.when(
         loading: () => const StateView.loading(),
         error: (_, _) => StateView.error(
           message: context.l10n.addonsLoadError,
@@ -78,9 +81,9 @@ class _AddonList extends ConsumerWidget {
         ref.watch(healthSnapshotProvider).value ??
         const <String, AddonHealth>{};
     return ListView.separated(
-      padding: const EdgeInsets.all(LumioSpacing.md),
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 24),
       itemCount: list.length,
-      separatorBuilder: (_, _) => const SizedBox(height: LumioSpacing.sm),
+      separatorBuilder: (_, _) => const SizedBox(height: 14),
       itemBuilder: (context, i) {
         final a = list[i];
         return _AddonTile(
@@ -127,29 +130,14 @@ class _AddonList extends ConsumerWidget {
     }
   }
 
-  Future<bool> _confirmDelete(BuildContext context, String name) async {
-    final c = context.lumio;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(ctx.l10n.removeAddonTitle),
-        content: Text(ctx.l10n.removeAddonBody(name)),
-        actions: [
-          TextButton(
-            autofocus: true,
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(ctx.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: c.error),
-            child: Text(ctx.l10n.delete),
-          ),
-        ],
-      ),
-    );
-    return ok ?? false;
-  }
+  Future<bool> _confirmDelete(BuildContext context, String name) =>
+      showTvConfirm(
+        context,
+        title: context.l10n.removeAddonTitle,
+        body: context.l10n.removeAddonBody(name),
+        confirmLabel: context.l10n.delete,
+        destructive: true,
+      );
 }
 
 class _AddonTile extends StatelessWidget {
@@ -189,113 +177,111 @@ class _AddonTile extends StatelessWidget {
     final c = context.lumio;
     final theme = Theme.of(context);
     final m = addon.manifest;
-    final types =
-        m?.types.map((t) => contentTypeLabel(t, context.l10n)).join(' · ') ??
-        '';
+    final types = m == null
+        ? ''
+        : addonCapabilities(
+            [for (final r in m.resources) r.name],
+            m.catalogs.isNotEmpty,
+            m.types,
+            context.l10n,
+          );
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
       onFocusChange: (f) {
         if (f) onFocus();
       },
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: LumioSpacing.md,
-            vertical: LumioSpacing.sm,
-          ),
-          child: Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: LumioSpacing.sm,
-            runSpacing: LumioSpacing.xs,
-            children: [
-              Row(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Row(
+          children: [
+            AddonLogo(logo: addon.logo, name: addon.name, size: 64),
+            const SizedBox(width: 24),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AddonLogo(logo: addon.logo),
-                  const SizedBox(width: LumioSpacing.md),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minWidth: 120,
-                      maxWidth: 360,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          addon.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        Text(
-                          m == null
-                              ? context.l10n.addonBroken
-                              : '$types · v${m.version}',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: m == null ? c.error : null,
-                          ),
-                        ),
-                        if (!addon.enabled)
-                          Text(
-                            context.l10n.addonDisabled,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: c.warning,
-                            ),
-                          ),
-                        if (m != null)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              top: LumioSpacing.xs,
-                            ),
-                            child: HealthPill(health: health, showDetail: true),
-                          ),
-                      ],
+                  Text(
+                    addon.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (m != null) ...[
-                    IconButton(
-                      tooltip: context.l10n.moveAddonUp(addon.name),
-                      onPressed: canMoveUp ? onMoveUp : null,
-                      icon: const Icon(Icons.arrow_upward),
+                  Text(
+                    m == null
+                        ? context.l10n.addonBroken
+                        : '$types · v${m.version}'
+                              '${addon.enabled ? '' : ' · ${context.l10n.addonDisabled}'}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 24,
+                      color: m == null ? c.error : c.textMuted,
                     ),
-                    IconButton(
-                      tooltip: context.l10n.moveAddonDown(addon.name),
-                      onPressed: canMoveDown ? onMoveDown : null,
-                      icon: const Icon(Icons.arrow_downward),
-                    ),
-                    if (health.samples > 0)
-                      IconButton(
-                        tooltip: context.l10n.resetHealth(addon.name),
-                        onPressed: onResetHealth,
-                        icon: const Icon(Icons.restart_alt),
-                      ),
-                    Semantics(
-                      label: context.l10n.enableAddon(addon.name),
-                      child: Switch(
-                        autofocus: autofocus,
-                        value: addon.enabled,
-                        onChanged: onToggle,
-                      ),
-                    ),
-                  ],
-                  IconButton(
-                    autofocus: autofocus && m == null,
-                    tooltip: context.l10n.deleteAddon(addon.name),
-                    onPressed: onDelete,
-                    icon: Icon(Icons.delete_outline, color: c.error),
                   ),
+                  if (m != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: HealthPill(health: health, showDetail: true),
+                    ),
                 ],
               ),
+            ),
+            const SizedBox(width: 16),
+            if (m != null) ...[
+              TvIconButton(
+                size: 64,
+                label: context.l10n.moveAddonUp(addon.name),
+                icon: Icons.arrow_upward,
+                onPressed: canMoveUp ? onMoveUp : null,
+              ),
+              const SizedBox(width: 12),
+              TvIconButton(
+                size: 64,
+                label: context.l10n.moveAddonDown(addon.name),
+                icon: Icons.arrow_downward,
+                onPressed: canMoveDown ? onMoveDown : null,
+              ),
+              if (health.samples > 0) ...[
+                const SizedBox(width: 12),
+                TvIconButton(
+                  size: 64,
+                  label: context.l10n.resetHealth(addon.name),
+                  icon: Icons.restart_alt,
+                  onPressed: onResetHealth,
+                ),
+              ],
+              const SizedBox(width: 20),
+              FocusableCard(
+                key: ValueKey('addon-switch:${addon.id}'),
+                autofocus: autofocus,
+                scale: 1.06,
+                borderRadius: BorderRadius.circular(30),
+                semanticLabel: context.l10n.enableAddon(addon.name),
+                onSelect: () => onToggle(!addon.enabled),
+                child: Semantics(
+                  toggled: addon.enabled,
+                  child: TvSwitch(value: addon.enabled),
+                ),
+              ),
+              const SizedBox(width: 20),
             ],
-          ),
+            TvIconButton(
+              key: ValueKey('addon-delete:${addon.id}'),
+              size: 64,
+              label: context.l10n.deleteAddon(addon.name),
+              icon: Icons.delete_outline,
+              onPressed: onDelete,
+            ),
+          ],
         ),
       ),
     );

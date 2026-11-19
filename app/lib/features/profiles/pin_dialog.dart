@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -74,11 +75,26 @@ class _PinDialogState extends State<PinDialog> {
   bool _busy = false;
   bool _locked = false;
   String? _message;
+  final _cancelNode = FocusNode(debugLabel: 'Pin.cancel');
 
   @override
   void initState() {
     super.initState();
     _checkLock();
+  }
+
+  @override
+  void dispose() {
+    _cancelNode.dispose();
+    super.dispose();
+  }
+
+  /// Verrouillé : le pavé numérique devient inactif ; le focus passe à
+  /// « Annuler » au lieu de se perdre (audit D3).
+  void _focusCancel() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _cancelNode.requestFocus();
+    });
   }
 
   Future<void> _checkLock() async {
@@ -88,6 +104,7 @@ class _PinDialogState extends State<PinDialog> {
       _locked = true;
       _message = _lockMessage(remaining, context.l10n);
     });
+    _focusCancel();
   }
 
   void _cancel() => Navigator.of(context).pop();
@@ -148,6 +165,7 @@ class _PinDialogState extends State<PinDialog> {
           _locked = true;
           _message = _lockMessage(remaining, context.l10n);
         });
+        _focusCancel();
     }
   }
 
@@ -172,24 +190,27 @@ class _PinDialogState extends State<PinDialog> {
   Widget build(BuildContext context) {
     final c = context.lumio;
     final theme = Theme.of(context);
+    final big = MediaQuery.sizeOf(context).width >= 720;
     return Dialog(
-      backgroundColor: c.surfaceRaised,
+      backgroundColor: c.surface,
       child: TvScaffold(
         onBack: _cancel,
         child: Focus(
           canRequestFocus: false,
           onKeyEvent: _onKey,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
+            constraints: BoxConstraints(maxWidth: big ? 760 : 440),
             child: Padding(
-              padding: const EdgeInsets.all(LumioSpacing.lg),
+              padding: EdgeInsets.all(big ? 40 : LumioSpacing.lg),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       widget.title,
-                      style: theme.textTheme.headlineMedium,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontSize: big ? 34 : null,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     if (widget.subtitle != null) ...[
@@ -198,38 +219,52 @@ class _PinDialogState extends State<PinDialog> {
                         widget.subtitle!,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: c.textMuted,
+                          fontSize: big ? 26 : null,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ],
                     const SizedBox(height: LumioSpacing.lg),
-                    _Dots(filled: _digits.length),
+                    _Dots(filled: _digits.length, big: big),
                     const SizedBox(height: LumioSpacing.sm),
                     SizedBox(
-                      height: 48,
+                      height: big ? 56 : 48,
                       child: Center(
                         child: Text(
-                          _message ?? '',
+                          // Le calcul du PIN prend plusieurs secondes sur une
+                          // box lente : on le dit au lieu de rester muet.
+                          _busy && _message == null
+                              ? context.l10n.pinChecking
+                              : (_message ?? ''),
                           key: const ValueKey('pin-message'),
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: c.error,
+                            fontSize: big ? 26 : null,
+                            fontWeight: FontWeight.w600,
+                            color: _busy && _message == null
+                                ? c.textMuted
+                                : c.error,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
                     ),
                     _Pad(
-                      enabled: true,
+                      big: big,
+                      enabled: !_locked,
+                      cancelNode: _cancelNode,
                       onDigit: _add,
                       onErase: _erase,
                       onCancel: _cancel,
                     ),
                     if (widget.allowForgot) ...[
                       const SizedBox(height: LumioSpacing.sm),
-                      TextButton(
+                      TvButton(
+                        kind: TvButtonKind.nav,
+                        height: big ? 76 : 56,
+                        fontSize: big ? 28 : 18,
+                        label: context.l10n.pinForgot,
                         onPressed: () =>
                             Navigator.of(context).pop(const PinEntry.forgot()),
-                        child: Text(context.l10n.pinForgot),
                       ),
                     ],
                   ],
@@ -244,8 +279,9 @@ class _PinDialogState extends State<PinDialog> {
 }
 
 class _Dots extends StatelessWidget {
-  const _Dots({required this.filled});
+  const _Dots({required this.filled, this.big = false});
   final int filled;
+  final bool big;
 
   @override
   Widget build(BuildContext context) {
@@ -259,13 +295,18 @@ class _Dots extends StatelessWidget {
           for (var i = 0; i < 4; i++)
             Container(
               key: ValueKey('dot-$i'),
-              width: 24,
-              height: 24,
-              margin: const EdgeInsets.symmetric(horizontal: LumioSpacing.sm),
+              width: big ? 30 : 24,
+              height: big ? 30 : 24,
+              margin: EdgeInsets.symmetric(
+                horizontal: big ? 13 : LumioSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: i < filled ? c.accent : Colors.transparent,
-                border: Border.all(color: c.accent, width: 2),
+                border: Border.all(
+                  color: i < filled ? c.accent : c.textMuted,
+                  width: big ? 3 : 2,
+                ),
               ),
             ),
         ],
@@ -276,13 +317,17 @@ class _Dots extends StatelessWidget {
 
 class _Pad extends StatelessWidget {
   const _Pad({
+    required this.big,
     required this.enabled,
+    required this.cancelNode,
     required this.onDigit,
     required this.onErase,
     required this.onCancel,
   });
 
+  final bool big;
   final bool enabled;
+  final FocusNode cancelNode;
   final void Function(String) onDigit;
   final VoidCallback onErase;
   final VoidCallback onCancel;
@@ -296,15 +341,17 @@ class _Pad extends StatelessWidget {
       String? semantic,
       bool autofocus = false,
       bool alwaysEnabled = false,
+      FocusNode? node,
     }) => Padding(
-      padding: const EdgeInsets.all(LumioSpacing.sm),
+      padding: EdgeInsets.all(big ? 8 : LumioSpacing.sm),
       child: FocusableCard(
         autofocus: autofocus,
+        focusNode: node,
         enabled: enabled || alwaysEnabled,
         semanticLabel: semantic ?? l.digitSemantic(label),
         onSelect: onTap,
-        borderRadius: BorderRadius.circular(LumioRadius.sm),
-        child: _KeyFace(label: label),
+        borderRadius: BorderRadius.circular(big ? 20 : LumioRadius.sm),
+        child: _KeyFace(label: label, big: big),
       ),
     );
     return Column(
@@ -327,7 +374,13 @@ class _Pad extends StatelessWidget {
           children: [
             key(l.kbErase, onErase, semantic: l.eraseLastDigit),
             key('0', () => onDigit('0')),
-            key(l.cancel, onCancel, semantic: l.cancel, alwaysEnabled: true),
+            key(
+              l.cancel,
+              onCancel,
+              semantic: l.cancel,
+              alwaysEnabled: true,
+              node: cancelNode,
+            ),
           ],
         ),
       ],
@@ -336,26 +389,27 @@ class _Pad extends StatelessWidget {
 }
 
 class _KeyFace extends StatelessWidget {
-  const _KeyFace({required this.label});
+  const _KeyFace({required this.label, this.big = false});
   final String label;
+  final bool big;
 
   @override
   Widget build(BuildContext context) {
     final c = context.lumio;
     final isDigit = label.length == 1;
     return Container(
-      width: 88,
-      height: 72,
+      width: big ? 140 : 88,
+      height: big ? 96 : 72,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: c.surfaceFocus,
-        borderRadius: BorderRadius.circular(LumioRadius.sm),
+        borderRadius: BorderRadius.circular(big ? 20 : LumioRadius.sm),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: c.text,
-          fontSize: isDigit ? 28 : 16,
+          fontSize: big ? (isDigit ? 44 : 28) : (isDigit ? 28 : 16),
           fontWeight: FontWeight.w700,
         ),
       ),

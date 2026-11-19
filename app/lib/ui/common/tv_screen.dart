@@ -88,7 +88,10 @@ class TvScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    for (final a in actions) ...[const SizedBox(width: 24), a],
+                    for (final a in actions) ...[
+                      const SizedBox(width: 24),
+                      Flexible(child: a),
+                    ],
                   ],
                 ),
               ),
@@ -382,21 +385,25 @@ class TvIconButton extends StatelessWidget {
     final c = context.lumio;
     return Opacity(
       opacity: onPressed == null ? 0.35 : 1,
-      child: FocusableCard(
-        enabled: onPressed != null,
-        scale: 1.06,
-        borderRadius: BorderRadius.circular(size / 2),
-        semanticLabel: label,
-        onSelect: onPressed ?? () {},
-        child: Container(
-          width: size,
-          height: size,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: c.surfaceFocus,
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: FocusableCard(
+          enabled: onPressed != null,
+          scale: 1.06,
+          borderRadius: BorderRadius.circular(size / 2),
+          semanticLabel: label,
+          onSelect: onPressed ?? () {},
+          child: Container(
+            width: size,
+            height: size,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: c.surfaceFocus,
+            ),
+            child: Icon(icon, size: size * 0.5, color: c.text),
           ),
-          child: Icon(icon, size: size * 0.5, color: c.text),
         ),
       ),
     );

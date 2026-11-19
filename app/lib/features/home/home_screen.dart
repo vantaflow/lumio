@@ -171,6 +171,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Retour télécommande : contenu -> barre haute (page remontée) ; barre
   /// haute -> « Accueil » ; « Accueil » -> confirmation « Quitter Lumio ? ».
   Future<void> _handleBack() async {
+    // ignore: avoid_print
+    print(
+      'LUMIO_PERF back top=${_topBarFocused.value} home=${_topBarNode.hasFocus}',
+    );
     if (!_topBarFocused.value) {
       _backToTop();
       return;
@@ -1031,52 +1035,75 @@ class _ErrorRow extends StatelessWidget {
 }
 
 /// Confirmation de sortie (Retour depuis « Accueil »).
-class _QuitDialog extends StatelessWidget {
+class _QuitDialog extends StatefulWidget {
   const _QuitDialog();
+
+  @override
+  State<_QuitDialog> createState() => _QuitDialogState();
+}
+
+class _QuitDialogState extends State<_QuitDialog> {
+  // Un Retour télécommande peut arriver deux fois (touche puis geste système) :
+  // pendant 700 ms le Retour ne ferme pas la confirmation qu'il vient d'ouvrir.
+  bool _armed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(const Duration(milliseconds: 700), () {
+      if (mounted) setState(() => _armed = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final c = context.lumio;
     final t = Theme.of(context).textTheme;
-    return Dialog(
-      key: const ValueKey('quit-dialog'),
-      backgroundColor: c.surfaceRaised,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: SizedBox(
-          width: 720,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l.quitTitle,
-                style: t.headlineMedium?.copyWith(fontSize: 44),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l.quitBody,
-                style: t.bodyLarge?.copyWith(color: c.textMuted, fontSize: 30),
-              ),
-              const SizedBox(height: 40),
-              Row(
-                children: [
-                  TvButton(
-                    autofocus: true,
-                    label: l.cancel,
-                    kind: TvButtonKind.secondary,
-                    onPressed: () => Navigator.of(context).pop(false),
+    return PopScope(
+      canPop: _armed,
+      child: Dialog(
+        key: const ValueKey('quit-dialog'),
+        backgroundColor: c.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: Padding(
+          padding: const EdgeInsets.all(48),
+          child: SizedBox(
+            width: 720,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.quitTitle,
+                  style: t.headlineMedium?.copyWith(fontSize: 44),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l.quitBody,
+                  style: t.bodyLarge?.copyWith(
+                    color: c.textMuted,
+                    fontSize: 30,
                   ),
-                  const SizedBox(width: 24),
-                  TvButton(
-                    label: l.quitAction,
-                    onPressed: () => Navigator.of(context).pop(true),
-                  ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 40),
+                Row(
+                  children: [
+                    TvButton(
+                      autofocus: true,
+                      label: l.cancel,
+                      kind: TvButtonKind.secondary,
+                      onPressed: () => Navigator.of(context).pop(false),
+                    ),
+                    const SizedBox(width: 24),
+                    TvButton(
+                      label: l.quitAction,
+                      onPressed: () => Navigator.of(context).pop(true),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

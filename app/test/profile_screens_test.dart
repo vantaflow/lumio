@@ -52,6 +52,10 @@ class _H {
   }
 
   Future<ProviderContainer> pump(Widget home) async {
+    // Fenêtre de bureau : le pavé du PIN (maquette P01, touches de 96) y tient.
+    tester.view.physicalSize = const Size(1280, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final container = ProviderContainer(
       overrides: [
         appDatabaseProvider.overrideWithValue(db),

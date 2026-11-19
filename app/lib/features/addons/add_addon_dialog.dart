@@ -352,7 +352,7 @@ class _Preview extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AddonLogo(logo: manifest.logo, size: 64),
+          AddonLogo(logo: manifest.logo, name: manifest.name, size: 64),
           const SizedBox(width: LumioSpacing.md),
           Expanded(
             child: Column(
@@ -423,14 +423,46 @@ class _Chip extends StatelessWidget {
 
 /// Logo d'addon avec repli sur une icône (logo absent ou illisible).
 class AddonLogo extends StatelessWidget {
-  const AddonLogo({super.key, required this.logo, this.size = 48});
+  const AddonLogo({super.key, required this.logo, this.size = 48, this.name});
   final Uri? logo;
   final double size;
+
+  /// Nom de l'addon : sa première lettre sert de logo de repli (maquettes
+  /// TV10 / P09 : pastille colorée), au lieu d'une icône ou d'un texte
+  /// alternatif qui déborde.
+  final String? name;
+
+  static const _palette = [
+    Color(0xFF4FD1C5),
+    Color(0xFFFFB84D),
+    Color(0xFFFF8A65),
+    Color(0xFF5BD68A),
+    Color(0xFF64B5F6),
+    Color(0xFFE6C17A),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final c = context.lumio;
-    final fallback = Icon(Icons.extension_outlined, color: c.accent);
+    final letter = (name ?? '').trim();
+    final Widget fallback = letter.isEmpty
+        ? Icon(Icons.extension_outlined, color: c.accent, size: size * 0.5)
+        : ColoredBox(
+            color:
+                _palette[letter.runes.fold<int>(0, (a, b) => a + b) %
+                    _palette.length],
+            child: Center(
+              child: Text(
+                letter.characters.first.toUpperCase(),
+                style: TextStyle(
+                  fontFamily: 'Bricolage Grotesque',
+                  fontSize: size * 0.5,
+                  fontWeight: FontWeight.w700,
+                  color: c.onAccent,
+                ),
+              ),
+            ),
+          );
     // Le logo vient de l'addon : adresse locale ou réseau privé = pas chargé.
     var safe = logo != null;
     if (safe) {
@@ -445,7 +477,7 @@ class AddonLogo extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: c.surfaceRaised,
-        borderRadius: BorderRadius.circular(LumioRadius.sm),
+        borderRadius: BorderRadius.circular(size / 6 + 4),
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,

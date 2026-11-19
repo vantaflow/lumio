@@ -1246,5 +1246,7 @@
       }
     }
   },
-  "searchMoviesAndSeries": "Films et séries"
+  "searchMoviesAndSeries": "Films et séries",
+  "pinChecking": "Vérification…",
+  "addonsPriorityHint": "L'ordre décide de la priorité des sources."
 }

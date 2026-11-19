@@ -8,6 +8,8 @@ import 'package:lumio/data/db.dart';
 import 'package:lumio/data/secret_store.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -117,7 +119,11 @@ void main() {
     );
     await h.pumpScreen();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Ajouter un addon'));
+    await tester.tap(
+      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
+          ? find.byKey(const ValueKey('addons-add'))
+          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
+    );
     await h.settle();
     expect(find.text('Installer'), findsOneWidget);
     expect(
@@ -147,7 +153,11 @@ void main() {
     final h = _Harness(tester);
     await h.start();
     await h.pumpScreen();
-    await tester.tap(find.widgetWithText(FilledButton, 'Ajouter un addon'));
+    await tester.tap(
+      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
+          ? find.byKey(const ValueKey('addons-add'))
+          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
+    );
     await h.settle();
 
     await tester.enterText(find.byType(TextField), 'https://nul.example.com/x');
@@ -168,7 +178,11 @@ void main() {
     final h = _Harness(tester);
     await h.start();
     await h.pumpScreen();
-    await tester.tap(find.widgetWithText(FilledButton, 'Ajouter un addon'));
+    await tester.tap(
+      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
+          ? find.byKey(const ValueKey('addons-add'))
+          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
+    );
     await h.settle();
 
     await tester.enterText(find.byType(TextField), _lan);
@@ -214,15 +228,15 @@ void main() {
         if (t.data == 'Alpha' || t.data == 'Bravo') t.data!,
     ];
     expect(order(), ['Alpha', 'Bravo']);
-    expect(find.textContaining('Films · Séries'), findsOneWidget);
+    expect(find.textContaining('Catalogues · Flux'), findsNWidgets(2));
 
     await tester.tap(find.byTooltip('Monter Bravo'));
     await h.settle();
     expect(order(), ['Bravo', 'Alpha']);
 
-    await tester.tap(find.byType(Switch).first);
+    await tester.tap(find.byType(TvSwitch).first);
     await h.settle();
-    expect(find.text('Désactivé'), findsOneWidget);
+    expect(find.textContaining('Désactivé'), findsOneWidget);
 
     // Annuler la suppression ne retire rien.
     await tester.tap(find.byTooltip('Supprimer Bravo'));
@@ -234,7 +248,12 @@ void main() {
 
     await tester.tap(find.byTooltip('Supprimer Bravo'));
     await h.settle();
-    await tester.tap(find.widgetWithText(TextButton, 'Supprimer'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(TvPanel),
+        matching: find.text('Supprimer'),
+      ),
+    );
     await h.settle();
     expect(order(), ['Alpha']);
     expect(h.secrets.snapshot, hasLength(1));
@@ -261,7 +280,7 @@ void main() {
     ).hideCurrentSnackBar();
     await h.settle();
 
-    await tester.tap(find.byType(Switch).first);
+    await tester.tap(find.byType(TvSwitch).first);
     await h.settle();
     expect(msg, findsOneWidget);
     ScaffoldMessenger.of(
@@ -271,7 +290,12 @@ void main() {
 
     await tester.tap(find.byTooltip('Supprimer Alpha'));
     await h.settle();
-    await tester.tap(find.widgetWithText(TextButton, 'Supprimer'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(TvPanel),
+        matching: find.text('Supprimer'),
+      ),
+    );
     await h.settle();
     expect(msg, findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -286,7 +310,11 @@ void main() {
     await h.start();
     await tester.runAsync(() => h.repo.install(_urlA));
     await h.pumpScreen();
-    await tester.tap(find.widgetWithText(FilledButton, 'Ajouter un addon'));
+    await tester.tap(
+      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
+          ? find.byKey(const ValueKey('addons-add'))
+          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
+    );
     await h.settle();
     await tester.enterText(
       find.byType(TextField),
@@ -312,10 +340,15 @@ void main() {
     await tester.runAsync(() => h.secrets.delete('addon_url:${a.id}'));
     await h.pumpScreen();
     expect(find.textContaining('Addon illisible'), findsOneWidget);
-    expect(find.byType(Switch), findsNothing);
+    expect(find.byType(TvSwitch), findsNothing);
     await tester.tap(find.byTooltip('Supprimer a'));
     await h.settle();
-    await tester.tap(find.widgetWithText(TextButton, 'Supprimer'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(TvPanel),
+        matching: find.text('Supprimer'),
+      ),
+    );
     await h.settle();
     expect(find.textContaining('Aucun addon installé'), findsOneWidget);
     await h.dispose();

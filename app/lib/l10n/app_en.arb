@@ -1024,5 +1024,7 @@
       }
     }
   },
-  "searchMoviesAndSeries": "Movies and series"
+  "searchMoviesAndSeries": "Movies and series",
+  "pinChecking": "Checking…",
+  "addonsPriorityHint": "The order sets the priority of sources."
 }

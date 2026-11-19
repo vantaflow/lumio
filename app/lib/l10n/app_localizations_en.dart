@@ -2166,4 +2166,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchMoviesAndSeries => 'Movies and series';
+
+  @override
+  String get pinChecking => 'Checking…';
+
+  @override
+  String get addonsPriorityHint => 'The order sets the priority of sources.';
 }

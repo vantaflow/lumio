@@ -13,7 +13,7 @@ enum TvButtonKind {
   /// Pastille de navigation : transparente, texte atténué.
   nav,
 
-  /// Pastille de navigation de l'écran courant.
+  /// Pastille de navigation de l'écran courant (ambre, maquette TV05).
   navSelected,
 }
 
@@ -59,7 +59,7 @@ class TvButton extends StatelessWidget {
       TvButtonKind.primary => (c.accent, c.onAccent, FontWeight.w700),
       TvButtonKind.secondary => (c.surfaceFocus, c.text, FontWeight.w600),
       TvButtonKind.nav => (Colors.transparent, c.textMuted, FontWeight.w600),
-      TvButtonKind.navSelected => (c.surfaceFocus, c.text, FontWeight.w600),
+      TvButtonKind.navSelected => (c.accent, c.onAccent, FontWeight.w700),
     };
     final radius = BorderRadius.circular(height / 2);
     return FocusableCard(
