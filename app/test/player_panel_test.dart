@@ -142,4 +142,66 @@ void main() {
       expect(FocusManager.instance.primaryFocus?.debugLabel, 'player-tracks');
     },
   );
+
+  testWidgets(
+    'commandes visibles, focus sur la racine : une flèche va aux boutons',
+    (t) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final store = DriftTitleSettingsStore(db);
+      await t.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appDatabaseProvider.overrideWithValue(db),
+            titleSettingsStoreProvider.overrideWith((ref) async => store),
+            subtitleStyleStoreProvider.overrideWithValue(
+              SubtitleStyleStore(db),
+            ),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(extensions: const [LumioColors.dark]),
+            home: Scaffold(
+              body: FocusScope(
+                child: Row(
+                  children: [
+                    // Un voisin à droite qui ne doit JAMAIS recevoir le focus.
+                    Expanded(
+                      child: PlayerScreen(
+                        item: StreamItem(
+                          addonId: 'ad',
+                          title: 'Film',
+                          url: Uri.parse('https://x.test/v.mp4'),
+                        ),
+                        metaId: 'tt1',
+                        controller: FakeCtl(),
+                        videoBuilder: (_) =>
+                            const ColoredBox(color: Colors.black),
+                        tracksBackend: (_) => Backend(),
+                      ),
+                    ),
+                    const Focus(
+                      debugLabel: 'voisin',
+                      child: SizedBox(width: 50, height: 50),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final button = find.bySemanticsLabel('Pistes et sous-titres');
+      for (var i = 0; i < 20 && button.evaluate().isEmpty; i++) {
+        await t.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)),
+        );
+        await t.pump();
+      }
+      expect(button, findsOneWidget);
+      expect(FocusManager.instance.primaryFocus?.debugLabel, 'player-root');
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await t.pump();
+      expect(FocusManager.instance.primaryFocus?.debugLabel, 'player-play');
+    },
+  );
 }

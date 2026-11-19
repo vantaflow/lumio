@@ -954,6 +954,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     if (!v) _root.requestFocus();
   }
 
+  static bool _isArrow(LogicalKeyboardKey k) =>
+      k == LogicalKeyboardKey.arrowLeft ||
+      k == LogicalKeyboardKey.arrowRight ||
+      k == LogicalKeyboardKey.arrowUp ||
+      k == LogicalKeyboardKey.arrowDown;
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
     // Panneau ouvert : il gère seul les touches (flèches = navigation).
@@ -961,7 +967,16 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     final action = mapPlayerKey(event.logicalKey, controlsVisible: _controls);
     switch (action) {
       case PlayerKeyAction.none:
-        if (_controls) _armHide();
+        if (_controls) {
+          _armHide();
+          // Commandes visibles mais focus resté sur la racine (après un
+          // ±10 s commandes masquées) : une flèche amène le focus sur
+          // « Lecture » au lieu de le laisser partir hors du lecteur.
+          if (_root.hasPrimaryFocus && _isArrow(event.logicalKey)) {
+            _playNode.requestFocus();
+            return KeyEventResult.handled;
+          }
+        }
         return KeyEventResult.ignored;
       case PlayerKeyAction.togglePlay:
         if (!_partyBlocks()) unawaited(_ctl.playPause());

@@ -150,6 +150,7 @@ void main() {
       extra: [catalogOverride(site)],
     );
     await _open(h, t);
+    await t.ensureVisible(find.byKey(const ValueKey('chip:anime')));
     await t.tap(find.byKey(const ValueKey('chip:anime')));
     await h.settle();
     final cards = find.byWidgetPredicate(
