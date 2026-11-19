@@ -62,11 +62,31 @@ class TvScaffold extends StatelessWidget {
               },
             ),
         },
-        child: FocusScope(child: child),
+        // Le relâchement de Retour est absorbé : sinon Android le renvoie au
+        // système (onBackPressed) APRÈS que l'appui a déjà fermé l'écran, et
+        // un second retour part (la fiche ouverte depuis la recherche ramenait
+        // à l'accueil, un retour sur l'accueil proposait « Quitter Lumio ? »).
+        child: FocusScope(
+          child: Focus(
+            canRequestFocus: false,
+            skipTraversal: true,
+            onKeyEvent: (_, event) =>
+                event is KeyUpEvent && _backKeys.contains(event.logicalKey)
+                ? KeyEventResult.handled
+                : KeyEventResult.ignored,
+            child: child,
+          ),
+        ),
       ),
     );
   }
 }
+
+final _backKeys = {
+  LogicalKeyboardKey.goBack,
+  LogicalKeyboardKey.escape,
+  LogicalKeyboardKey.gameButtonB,
+};
 
 /// Gère le retour système pour un panneau/superposition : tant que
 /// [isOpen], Retour appelle [onClose] au lieu de quitter l'écran.

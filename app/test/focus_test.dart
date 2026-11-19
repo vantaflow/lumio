@@ -330,6 +330,33 @@ void main() {
     expect(open, isFalse);
   });
 
+  testWidgets(
+    'TvScaffold : le relâchement de Retour ne remonte pas au système',
+    (t) async {
+      var ups = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: Focus(
+            canRequestFocus: false,
+            onKeyEvent: (_, e) {
+              if (e is KeyUpEvent) ups++;
+              return KeyEventResult.ignored;
+            },
+            child: TvScaffold(
+              onBack: () {},
+              child: const Focus(autofocus: true, child: SizedBox()),
+            ),
+          ),
+        ),
+      );
+      await t.pump();
+      await t.sendKeyEvent(LogicalKeyboardKey.escape);
+      expect(ups, 0);
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      expect(ups, 1);
+    },
+  );
+
   testWidgets('TvScaffold : touche média appelle onPlayPause', (t) async {
     var n = 0;
     await t.pumpWidget(
