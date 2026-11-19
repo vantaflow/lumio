@@ -46,3 +46,8 @@ export 'src/cast/dlna_renderer.dart';
 export 'src/cast/cast_server.dart';
 export 'src/cast/cast_session.dart';
 export 'src/party/party_sync.dart';
+export 'src/addons/catalog/catalog_models.dart';
+export 'src/addons/catalog/catalog_parser.dart';
+export 'src/addons/catalog/catalog_cache.dart';
+export 'src/addons/catalog/catalog_source.dart';
+export 'src/addons/catalog/catalog_service.dart';
