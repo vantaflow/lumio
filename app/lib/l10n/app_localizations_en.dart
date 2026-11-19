@@ -2515,7 +2515,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneStep2 => 'Scan the code: this TV\'s Lumio page opens';
 
   @override
-  String get phoneStep3 => 'Paste a link, then confirm here on the TV';
+  String get phoneStep3 => 'Pick an addon, tap Install, then confirm here on the TV';
 
   @override
   String get phoneOrType => 'Or type in the phone\'s browser';

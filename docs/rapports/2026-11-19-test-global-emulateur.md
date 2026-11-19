@@ -30,3 +30,31 @@ Note de conduite : pendant le test, un addon Torrentio a été installé sur l'�
 
 ## Limites et reste à faire
 Sous-titres (F), favoris (G), reprise après force-stop et fin de lecture (H), séries multi-saisons, « épisode suivant », anime, plusieurs films récents/anciens issus de Cinemeta (non installé : pas de catalogue grand public sans lui), défilement en rafales. Ne se vérifie que sur la vraie box : image vidéo, fluidité, sous-titres rendus sur l'image, HEVC.
+
+
+## Passe 2 (même soirée) : correctifs et étapes jouées
+Correctifs livrés (commit « catalogue Officiels, titre mémorisé, lecteur 6 s, portail v2 (M05) »), revérifiés sur l'émulateur avec un APK release neuf :
+
+| Point | Correctif | Vérifié sur l'émulateur |
+|---|---|---|
+| 1a | Puce « Officiels » en premier (https://api.strem.io/addonsofficialcollection.json, « Local Files » 127.0.0.1 écarté), fusionnée sans doublon avec les Populaires, cache 24 h et garde réseau partagés ; rien n'est pré-installé. Tests : 4 (core) + 1 (écran). | Oui : Cinemeta et OpenSubtitles v3 installés depuis le catalogue ; badge « Installé ». |
+| 1b | Base v12 : titre, affiche, type, saison, épisode dans `progress` ; repli meta pour les anciennes lignes ; jamais d'identifiant brut (« Titre inconnu »). Tests : migration v11 vers v12 sur base réaliste, dépôt, 3 pour `describe`. | Oui : ancienne ligne tt0458339 = « Titre inconnu » sans addon meta, puis « Captain America: The First Avenger » avec affiche après Cinemeta ; Tenzing (nouvelle lecture) = titre + affiche, « 7 min restantes ». |
+| 1c | Commandes 6 s ; flèche haut (commandes masquées) = affiche et focalise « Pistes » ; flèche bas = commandes ; gauche/droite déplacent déjà de 10 s en réveillant. | Oui : haut puis OK ouvre « Pistes et sous-titres » ; commandes masquées après 6 s. |
+| 1d | Portail v2 (maquettes M05a/b/c) : 2 onglets, cartes avec un seul bouton Installer/Régler, écran Régler en 3 étapes, « Mes addons » avec états en mots, vocabulaire grand public, un seul bouton d'envoi ; la TV n'affiche plus le lien (nom + « Serveur : domaine ») ; même hôte + même id = remplacement avec note, rang conservé ; « Gérer depuis le téléphone » titre l'écran ; « instance » devient « serveur » ; une seule confirmation (fiche seulement si réglage requis). | Oui, dans la fenêtre Chrome (390 px émulés) : captures Ajouter, lien, Mes addons, Régler ; remplacement de « Films libres (test) » via un lien du même hôte : 1 seul exemplaire, même rang. |
+| 1e | Focus initial = première carte (Cinemeta). | Oui. |
+
+### Étapes
+| Étape | Résultat |
+|---|---|
+| F. Sous-titres | PARTIEL. Le panneau Pistes est atteint (flèche haut) et liste les sous-titres des addons (OpenSubtitles v3 + addon de test), mais les libellés « Addon · en » sont indistincts (une trentaine d'entrées, doublons). Choix d'un sous-titre : l'écran « La lecture a échoué. » est apparu et l'émulateur, très lent, a ensuite mal répondu aux touches (BACK a fini par ramener à la fiche) ; cause non établie (aucune trace utile dans logcat ; hypothèse : erreur du moteur à l'ajout du fichier traitée comme fatale après le premier affichage). NON résolu. Réglages taille/décalage/fond et langue préférée : NON joués. |
+| G. Ma liste | OK : ajout depuis la fiche de Tenzing (bouton devenu « Retirer de ma liste »), présence dans la rangée « Ma liste » de l'accueil et dans le héros. Retrait et ajout depuis l'accueil : non joués. |
+| H. Reprise | PARTIEL : lecture de Tenzing 45 s puis retour, « Continuer » = titre + affiche + barre. Force-stop puis relance : « Captain America » (ancienne ligne) conservé avec titre et affiche. Reprise de Tenzing après force-stop, série (épisode suivant), fin de lecture : NON joués (l'émulateur emulator-5580 a disparu du tunnel pendant la relance ; consigne : ne pas le redémarrer). |
+| I. Défilement | PARTIEL : 8 pressions bas d'affilée sur l'accueil rempli (Cinemeta + addon de test, ~12 rangées) sans à-coup ni plantage ; pas de FATAL ni d'exception Flutter dans logcat (seuls les « Failed to decode image » connus). Maintien `--longpress`, fiche série multi-saisons, Ma liste, recherche : NON joués. |
+| Titres variés (2 films récents, 1 ancien, 1 série, 1 anime) | NON joués : seuls Tenzing (2026) et Captain America (2011) ont été ouverts. |
+
+### Défauts restants
+1. Sous-titres : libellés indistincts dans « Pistes » ; échec de lecture après choix d'un sous-titre d'addon (à reproduire sur la vraie box).
+2. Après installation d'un addon de métadonnées, une carte « Continuer » déjà affichée garde « Titre inconnu » jusqu'au prochain démarrage.
+3. Carte du catalogue : le badge « Installé » chevauche un nom long (« OpenSubtitles v3 »).
+4. Portail : « Changer les réglages » s'affiche aussi pour un addon sans page de réglage (message « pas de page de réglage » au clic).
+5. Fiche de lecture : le titre du lecteur est le nom du flux (« Flux de test (contenu libre) ») et non celui du film.

@@ -1431,7 +1431,7 @@
   "addonLinkTrust": "Installez uniquement des sources de confiance : le lien peut contenir une clé personnelle, gardée chiffrée sur cet appareil.",
   "phoneStep1": "Téléphone sur le même Wi-Fi que la TV",
   "phoneStep2": "Scannez le code : la page Lumio de cette TV s'ouvre",
-  "phoneStep3": "Collez un lien, puis confirmez ici sur la TV",
+  "phoneStep3": "Choisissez un addon, appuyez sur Installer, puis confirmez ici sur la TV",
   "phoneOrType": "Ou tapez dans le navigateur du téléphone",
   "phoneCodeLabel": "Code de sécurité :",
   "phoneLive": "Page ouverte tant que cet écran est affiché · aucun serveur externe",

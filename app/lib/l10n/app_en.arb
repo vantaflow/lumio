@@ -1202,7 +1202,7 @@
   "addonLinkTrust": "Only install sources you trust: the link may contain a personal key, kept encrypted on this device.",
   "phoneStep1": "Phone on the same Wi-Fi as the TV",
   "phoneStep2": "Scan the code: this TV's Lumio page opens",
-  "phoneStep3": "Paste a link, then confirm here on the TV",
+  "phoneStep3": "Pick an addon, tap Install, then confirm here on the TV",
   "phoneOrType": "Or type in the phone's browser",
   "phoneCodeLabel": "Security code:",
   "phoneLive": "Page open while this screen is shown · no external server",
