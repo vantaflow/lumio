@@ -384,7 +384,7 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
             Expanded(child: _body(l, c, t, installed)),
             if (MediaQuery.sizeOf(context).height >= 700) ...[
               const SizedBox(height: 16),
@@ -472,9 +472,13 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
       );
     }
     final hasMore = _last?.value.hasMore ?? false;
-    return SingleChildScrollView(
+    // Découpe verticale (la grille ne doit pas déborder sur l'en-tête ni sur la
+    // note), mais large sur les côtés pour laisser voir l'anneau de focus.
+    return ClipRect(
+      clipper: const _GridClipper(),
+      child: SingleChildScrollView(
       clipBehavior: Clip.none,
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(top: 12, bottom: 24),
       child: Wrap(
         spacing: 32,
         runSpacing: 32,
@@ -497,6 +501,7 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
             ),
         ],
       ),
+    ),
     );
   }
 
@@ -505,6 +510,17 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(x.day)}/${two(x.month)}/${x.year}';
   }
+}
+
+class _GridClipper extends CustomClipper<Rect> {
+  const _GridClipper();
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTRB(-60, 0, size.width + 60, size.height);
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Rect> oldClipper) => false;
 }
 
 /// Puce de catégorie (maquette TV16 `.ch`) : 52 de haut, texte 24 ; la puce
