@@ -390,7 +390,8 @@ void main() {
     await t.tap(find.byKey(const ValueKey('addtab:phone')));
     await h.settle();
     expect(find.byKey(const ValueKey('addtab:phone-body')), findsOneWidget);
-    expect(find.text('Bientôt disponible'), findsOneWidget);
+    expect(find.byKey(const ValueKey('phone-qr')), findsOneWidget);
+    expect(find.text('192.168.0.45:8790'), findsOneWidget);
     await h.close();
   });
 }

@@ -4280,17 +4280,107 @@ abstract class AppLocalizations {
   /// **'Installez uniquement des sources de confiance : le lien peut contenir une clé personnelle, gardée chiffrée sur cet appareil.'**
   String get addonLinkTrust;
 
-  /// No description provided for @phoneTabSoonTitle.
+  /// No description provided for @phoneStep1.
   ///
   /// In fr, this message translates to:
-  /// **'Bientôt disponible'**
-  String get phoneTabSoonTitle;
+  /// **'Téléphone sur le même Wi-Fi que la TV'**
+  String get phoneStep1;
 
-  /// No description provided for @phoneTabSoonBody.
+  /// No description provided for @phoneStep2.
   ///
   /// In fr, this message translates to:
-  /// **'L\'ajout depuis le téléphone arrive : une page servie par la box pour envoyer le lien depuis votre téléphone. En attendant, utilisez le catalogue ou l\'onglet « Par lien ».'**
-  String get phoneTabSoonBody;
+  /// **'Scannez le code : la page Lumio de cette TV s\'ouvre'**
+  String get phoneStep2;
+
+  /// No description provided for @phoneStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez un lien, puis confirmez ici sur la TV'**
+  String get phoneStep3;
+
+  /// No description provided for @phoneOrType.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ou tapez dans le navigateur du téléphone'**
+  String get phoneOrType;
+
+  /// No description provided for @phoneCodeLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code de sécurité :'**
+  String get phoneCodeLabel;
+
+  /// No description provided for @phoneLive.
+  ///
+  /// In fr, this message translates to:
+  /// **'Page ouverte tant que cet écran est affiché · aucun serveur externe'**
+  String get phoneLive;
+
+  /// No description provided for @phoneConnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléphone connecté · page ouverte tant que cet écran est affiché'**
+  String get phoneConnected;
+
+  /// No description provided for @phoneLocked.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trop d\'essais : un nouveau code est affiché, nouvel essai possible dans une minute'**
+  String get phoneLocked;
+
+  /// No description provided for @phoneNoNetworkTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pas de réseau local'**
+  String get phoneNoNetworkTitle;
+
+  /// No description provided for @phoneNoNetworkBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connectez la TV au Wi-Fi ou à l\'Ethernet de la maison : la page du téléphone n\'est jamais servie sur un VPN ni sur le réseau mobile.'**
+  String get phoneNoNetworkBody;
+
+  /// No description provided for @phoneIdleStopped.
+  ///
+  /// In fr, this message translates to:
+  /// **'La page s\'est fermée après 10 minutes sans activité.'**
+  String get phoneIdleStopped;
+
+  /// No description provided for @phoneErrorBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'La page n\'a pas pu démarrer. Réessayez.'**
+  String get phoneErrorBody;
+
+  /// No description provided for @phoneRestart.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relancer'**
+  String get phoneRestart;
+
+  /// No description provided for @phoneQrLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'QR code de la page Lumio sur le réseau local'**
+  String get phoneQrLabel;
+
+  /// No description provided for @settingsManagePhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérer depuis le téléphone'**
+  String get settingsManagePhone;
+
+  /// No description provided for @settingsManagePhoneNoNetwork.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réseau local indisponible'**
+  String get settingsManagePhoneNoNetwork;
+
+  /// No description provided for @phoneAddWaiting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien reçu du téléphone : vérifiez l\'aperçu et confirmez ici.'**
+  String get phoneAddWaiting;
 }
 
 class _AppLocalizationsDelegate

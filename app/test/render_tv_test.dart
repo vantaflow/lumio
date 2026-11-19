@@ -1349,6 +1349,20 @@ void main() {
     await h2.settle();
     await _save(t, k2, 'r-TV08');
     await h2.close();
+
+    // TV09 : onglet « Depuis le téléphone ».
+    final h3 = AppHarness(t);
+    final k3 = GlobalKey();
+    await h3.pump(
+      RepaintBoundary(
+        key: k3,
+        child: const AddAddonScreen(initialTab: AddAddonTab.phone),
+      ),
+      extra: [catalogOverride(site)],
+    );
+    await h3.settle();
+    await _save(t, k3, 'r-TV09');
+    await h3.close();
   });
 }
 

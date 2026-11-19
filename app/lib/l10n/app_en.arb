@@ -1197,6 +1197,21 @@
     }
   },
   "addonLinkTrust": "Only install sources you trust: the link may contain a personal key, kept encrypted on this device.",
-  "phoneTabSoonTitle": "Coming soon",
-  "phoneTabSoonBody": "Adding from your phone is coming: a page served by the box to send the link from your phone. Meanwhile, use the catalogue or the “By link” tab."
+  "phoneStep1": "Phone on the same Wi-Fi as the TV",
+  "phoneStep2": "Scan the code: this TV's Lumio page opens",
+  "phoneStep3": "Paste a link, then confirm here on the TV",
+  "phoneOrType": "Or type in the phone's browser",
+  "phoneCodeLabel": "Security code:",
+  "phoneLive": "Page open while this screen is shown · no external server",
+  "phoneConnected": "Phone connected · page open while this screen is shown",
+  "phoneLocked": "Too many attempts: a new code is shown, try again in a minute",
+  "phoneNoNetworkTitle": "No local network",
+  "phoneNoNetworkBody": "Connect the TV to the home Wi-Fi or Ethernet: the phone page is never served over a VPN or the mobile network.",
+  "phoneIdleStopped": "The page closed after 10 minutes without activity.",
+  "phoneErrorBody": "The page could not start. Try again.",
+  "phoneRestart": "Restart",
+  "phoneQrLabel": "QR code of the Lumio page on the local network",
+  "settingsManagePhone": "Manage from your phone",
+  "settingsManagePhoneNoNetwork": "Local network unavailable",
+  "phoneAddWaiting": "Link received from the phone: check the preview and confirm here."
 }

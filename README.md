@@ -14,11 +14,32 @@ sans synchronisation ni compte.
 Lumio est un projet indépendant, **non affilié à Stremio**. « Compatible avec
 le protocole d'addons » décrit uniquement l'interopérabilité technique.
 
+## Ajouter un addon
+
+Réglages › Sources › **Ajouter un addon**, trois onglets :
+
+- **Catalogue** : les addons du site communautaire stremio-addons.net
+  (hors ligne : dernière liste en cache ou liste officielle de secours).
+- **Par lien** : collez ou tapez le lien `manifest.json` (ou `stremio://`),
+  l'aperçu s'affiche, puis **Installer**.
+- **Depuis le téléphone** : sur le Wi-Fi de la maison, sans serveur externe.
+  Scannez le QR affiché sur la TV (ou tapez l'adresse `IP:8790` dans le
+  navigateur du téléphone et saisissez le code à 6 chiffres), collez le lien
+  d'addon dans la page, **Envoyer à la TV**, puis confirmez l'installation
+  sur la TV. La même page permet de réordonner, activer/désactiver et
+  supprimer vos addons. La carte « Gérer depuis le téléphone » du rail des
+  Réglages ouvre directement cet onglet.
+
+La page du téléphone n'existe que tant que l'onglet est affiché (arrêt à la
+sortie de l'écran et après 10 minutes sans activité), n'est jamais servie sur
+un VPN ni sur le réseau mobile, est protégée par un code renouvelé à chaque
+ouverture, et ne reçoit jamais l'adresse d'un addon. Détails :
+`docs/superpowers/specs/2026-11-19-page-web-box-design.md`.
+
 ## Fonctionnalités
 
 - **Addons** : protocole d'addons (catalogues, fiches, flux, sous-titres),
-  agrégation de plusieurs addons. L'ajout depuis un téléphone sera fait plus
-  tard par une page web servie par la box.
+  agrégation de plusieurs addons (voir « Ajouter un addon » ci-dessous).
 - **Lecture** : lecteur plein écran pensé pour la télécommande (D-pad) et la
   souris, pistes, sous-titres, reprise, épisode suivant.
 - **Torrents** : moteur intégré (libtorrent), lecture de magnets en streaming,

@@ -2526,9 +2526,60 @@ class AppLocalizationsFr extends AppLocalizations {
       'Installez uniquement des sources de confiance : le lien peut contenir une clé personnelle, gardée chiffrée sur cet appareil.';
 
   @override
-  String get phoneTabSoonTitle => 'Bientôt disponible';
+  String get phoneStep1 => 'Téléphone sur le même Wi-Fi que la TV';
 
   @override
-  String get phoneTabSoonBody =>
-      'L\'ajout depuis le téléphone arrive : une page servie par la box pour envoyer le lien depuis votre téléphone. En attendant, utilisez le catalogue ou l\'onglet « Par lien ».';
+  String get phoneStep2 =>
+      'Scannez le code : la page Lumio de cette TV s\'ouvre';
+
+  @override
+  String get phoneStep3 => 'Collez un lien, puis confirmez ici sur la TV';
+
+  @override
+  String get phoneOrType => 'Ou tapez dans le navigateur du téléphone';
+
+  @override
+  String get phoneCodeLabel => 'Code de sécurité :';
+
+  @override
+  String get phoneLive =>
+      'Page ouverte tant que cet écran est affiché · aucun serveur externe';
+
+  @override
+  String get phoneConnected =>
+      'Téléphone connecté · page ouverte tant que cet écran est affiché';
+
+  @override
+  String get phoneLocked =>
+      'Trop d\'essais : un nouveau code est affiché, nouvel essai possible dans une minute';
+
+  @override
+  String get phoneNoNetworkTitle => 'Pas de réseau local';
+
+  @override
+  String get phoneNoNetworkBody =>
+      'Connectez la TV au Wi-Fi ou à l\'Ethernet de la maison : la page du téléphone n\'est jamais servie sur un VPN ni sur le réseau mobile.';
+
+  @override
+  String get phoneIdleStopped =>
+      'La page s\'est fermée après 10 minutes sans activité.';
+
+  @override
+  String get phoneErrorBody => 'La page n\'a pas pu démarrer. Réessayez.';
+
+  @override
+  String get phoneRestart => 'Relancer';
+
+  @override
+  String get phoneQrLabel => 'QR code de la page Lumio sur le réseau local';
+
+  @override
+  String get settingsManagePhone => 'Gérer depuis le téléphone';
+
+  @override
+  String get settingsManagePhoneNoNetwork => 'Réseau local indisponible';
+
+  @override
+  String get phoneAddWaiting =>
+      'Lien reçu du téléphone : vérifiez l\'aperçu et confirmez ici.';
 }

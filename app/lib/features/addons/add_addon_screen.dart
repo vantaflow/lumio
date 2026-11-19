@@ -7,6 +7,12 @@ import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/addon_logo.dart';
 import 'package:lumio/features/addons/catalog_tab.dart';
+import 'package:lumio/features/phone/phone_add.dart';
+import 'package:lumio/features/phone/phone_providers.dart';
+import 'package:lumio/features/phone/phone_server.dart';
+import 'package:lumio/features/phone/phone_tab.dart';
+import 'package:lumio/features/settings/settings_providers.dart'
+    show localeProvider;
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
@@ -25,10 +31,12 @@ import 'package:lumio_core/lumio_core.dart';
 Future<bool> showAddAddonScreen(
   BuildContext context, {
   String? initialUrl,
+  AddAddonTab? initialTab,
 }) async {
   final ok = await Navigator.of(context).push<bool>(
     MaterialPageRoute<bool>(
-      builder: (_) => AddAddonScreen(initialUrl: initialUrl),
+      builder: (_) =>
+          AddAddonScreen(initialUrl: initialUrl, initialTab: initialTab),
     ),
   );
   return ok ?? false;
@@ -36,47 +44,150 @@ Future<bool> showAddAddonScreen(
 
 enum AddAddonTab { catalog, link, phone }
 
-class AddAddonScreen extends StatefulWidget {
+class AddAddonScreen extends ConsumerStatefulWidget {
   const AddAddonScreen({
     super.key,
     this.initialUrl,
+    this.initialTab,
     this.debounce = const Duration(milliseconds: 600),
   });
 
   final String? initialUrl;
+  final AddAddonTab? initialTab;
   final Duration debounce;
 
   @override
-  State<AddAddonScreen> createState() => _AddAddonScreenState();
+  ConsumerState<AddAddonScreen> createState() => _AddAddonScreenState();
 }
 
-class _AddAddonScreenState extends State<AddAddonScreen> {
+class _AddAddonScreenState extends ConsumerState<AddAddonScreen> {
   late AddAddonTab _tab;
   final _visited = <AddAddonTab>{};
   String? _linkUrl;
   int _linkSeq = 0;
 
+  /// Serveur de la page du téléphone : n'existe et n'écoute que pendant que
+  /// l'onglet « Depuis le téléphone » est affiché (ou qu'une demande du
+  /// téléphone attend la confirmation sur la TV).
+  PhoneSession? _phone;
+
+  /// Demande d'ajout venue du téléphone et en cours sur l'onglet « Par lien ».
+  String? _phoneReq;
+
   @override
   void initState() {
     super.initState();
     _linkUrl = widget.initialUrl;
-    _tab = widget.initialUrl == null ? AddAddonTab.catalog : AddAddonTab.link;
+    _tab =
+        widget.initialTab ??
+        (widget.initialUrl == null ? AddAddonTab.catalog : AddAddonTab.link);
     _visited.add(_tab);
+    if (_tab == AddAddonTab.phone) {
+      _ensurePhone();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+    }
   }
 
-  void _select(AddAddonTab t) => setState(() {
-    _tab = t;
-    _visited.add(t);
-  });
+  @override
+  void dispose() {
+    final p = _phone;
+    if (p != null) {
+      p.adds.pending.removeListener(_onPending);
+      unawaited(p.stop());
+      p.dispose();
+    }
+    super.dispose();
+  }
+
+  PhoneSession _ensurePhone() {
+    final existing = _phone;
+    if (existing != null) return existing;
+    final p = ref.read(phoneSessionFactoryProvider)(
+      ref.read(localeProvider).languageCode,
+    );
+    p.adds.pending.addListener(_onPending);
+    return _phone = p;
+  }
+
+  /// Démarre ou arrête le serveur selon l'écran affiché.
+  void _sync() {
+    if (!mounted) return;
+    final want = _tab == AddAddonTab.phone || _phoneReq != null;
+    if (want) {
+      final p = _ensurePhone();
+      final st = p.state.value.status;
+      if (st == PhoneServerStatus.stopped ||
+          st == PhoneServerStatus.noNetwork ||
+          st == PhoneServerStatus.error) {
+        unawaited(p.start());
+      }
+    } else {
+      final p = _phone;
+      if (p != null && p.state.value.status != PhoneServerStatus.stopped) {
+        unawaited(p.stop());
+      }
+    }
+  }
+
+  /// Lien reçu du téléphone : la TV affiche l'aperçu existant, l'utilisateur
+  /// confirme l'installation ici.
+  void _onPending() {
+    final r = _phone?.adds.pending.value;
+    if (r == null || !mounted) return;
+    setState(() {
+      _phoneReq = r.id;
+      _linkUrl = r.url.toString();
+      _linkSeq++;
+      _tab = AddAddonTab.link;
+      _visited.add(AddAddonTab.link);
+    });
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(context.l10n.phoneAddWaiting)));
+  }
+
+  /// Fin du flux venu du téléphone : retour à l'onglet du téléphone, la page
+  /// affiche le résultat.
+  void _finishPhoneFlow(PhoneAddState state, {String? name}) {
+    final id = _phoneReq;
+    if (id == null) return;
+    _phone?.adds.resolve(id, state, name: name);
+    setState(() {
+      _phoneReq = null;
+      _tab = AddAddonTab.phone;
+    });
+    _sync();
+  }
+
+  void _select(AddAddonTab t) {
+    final id = _phoneReq;
+    if (id != null && t != AddAddonTab.link) {
+      _phone?.adds.resolve(id, PhoneAddState.cancelled);
+      _phoneReq = null;
+    }
+    setState(() {
+      _tab = t;
+      _visited.add(t);
+    });
+    _sync();
+  }
 
   /// Le catalogue confie une adresse au flux « Par lien » (aperçu, garde
   /// réseau, installation).
-  void _useLink(String url) => setState(() {
-    _linkUrl = url;
-    _linkSeq++;
-    _tab = AddAddonTab.link;
-    _visited.add(AddAddonTab.link);
-  });
+  void _useLink(String url) {
+    final id = _phoneReq;
+    if (id != null) {
+      _phone?.adds.resolve(id, PhoneAddState.cancelled);
+      _phoneReq = null;
+    }
+    setState(() {
+      _linkUrl = url;
+      _linkSeq++;
+      _tab = AddAddonTab.link;
+      _visited.add(AddAddonTab.link);
+    });
+    _sync();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +255,7 @@ class _AddAddonScreenState extends State<AddAddonScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: _tab == AddAddonTab.link ? 48 : 32),
+              SizedBox(height: _tab == AddAddonTab.catalog ? 32 : 48),
               Expanded(
                 child: IndexedStack(
                   index: _tab.index,
@@ -162,11 +273,30 @@ class _AddAddonScreenState extends State<AddAddonScreen> {
                         initialUrl: _linkUrl,
                         debounce: widget.debounce,
                         active: _tab == AddAddonTab.link,
-                        onInstalled: () => Navigator.of(context).pop(true),
+                        onInstalled: (name) {
+                          if (_phoneReq != null) {
+                            _finishPhoneFlow(
+                              PhoneAddState.installed,
+                              name: name,
+                            );
+                          } else {
+                            Navigator.of(context).pop(true);
+                          }
+                        },
+                        onFailed: (message) {
+                          if (_phoneReq == null) return;
+                          _finishPhoneFlow(PhoneAddState.failed);
+                          ScaffoldMessenger.maybeOf(context)
+                            ?..hideCurrentSnackBar()
+                            ..showSnackBar(SnackBar(content: Text(message)));
+                        },
                       )
                     else
                       const SizedBox.shrink(),
-                    const _PhoneTab(),
+                    if (_visited.contains(AddAddonTab.phone) && _phone != null)
+                      PhoneTab(session: _phone!, onRestart: _sync)
+                    else
+                      const SizedBox.shrink(),
                   ],
                 ),
               ),
@@ -227,52 +357,6 @@ class _TabPill extends StatelessWidget {
   }
 }
 
-/// Troisième onglet : emplacement propre en attendant la page servie par la
-/// box (maquette TV09).
-class _PhoneTab extends StatelessWidget {
-  const _PhoneTab();
-
-  @override
-  Widget build(BuildContext context) {
-    final l = context.l10n;
-    final c = context.lumio;
-    final t = Theme.of(context).textTheme;
-    return Align(
-      alignment: Alignment.topLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1000),
-        child: Container(
-          key: const ValueKey('addtab:phone-body'),
-          padding: const EdgeInsets.all(40),
-          decoration: BoxDecoration(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(32),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l.phoneTabSoonTitle,
-                style: t.headlineMedium?.copyWith(fontSize: 46),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l.phoneTabSoonBody,
-                style: t.bodyMedium?.copyWith(
-                  fontSize: 28,
-                  height: 1.4,
-                  color: c.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Onglet « Par lien » (maquette TV08) : champ, Coller, aperçu du manifest,
 /// Installer. Le flux est celui de l'ancien dialogue : aperçu, garde réseau,
 /// confirmation d'adresse locale, installation (URL chiffrée dans SecretStore).
@@ -281,12 +365,18 @@ class LinkTab extends ConsumerStatefulWidget {
     super.key,
     this.initialUrl,
     required this.onInstalled,
+    this.onFailed,
     this.active = true,
     this.debounce = const Duration(milliseconds: 600),
   });
 
   final String? initialUrl;
-  final VoidCallback onInstalled;
+
+  /// Appelé avec le nom de l'addon une fois installé.
+  final ValueChanged<String> onInstalled;
+
+  /// Appelé avec le message affiché quand l'aperçu ou l'installation échoue.
+  final ValueChanged<String>? onFailed;
   final bool active;
   final Duration debounce;
 
@@ -423,24 +513,31 @@ class _LinkTabState extends ConsumerState<LinkTab> {
         _allowPrivate = true;
         await _fetchPreview();
       } else {
-        setState(() => _error = context.l10n.localAddressRefused);
+        final msg = context.l10n.localAddressRefused;
+        setState(() => _error = msg);
+        widget.onFailed?.call(msg);
       }
     } on AddonException catch (e) {
       if (!mounted || gen != _generation) return;
+      final msg = l10nForError(context.l10n, e);
       setState(() {
-        _error = l10nForError(context.l10n, e);
+        _error = msg;
         _loading = false;
       });
+      widget.onFailed?.call(msg);
     } catch (_) {
       if (!mounted || gen != _generation) return;
+      final msg = context.l10n.addonUnreadable;
       setState(() {
-        _error = context.l10n.addonUnreadable;
+        _error = msg;
         _loading = false;
       });
+      widget.onFailed?.call(msg);
     }
   }
 
   Future<void> _install() async {
+    final name = _preview?.name ?? '';
     setState(() {
       _installing = true;
       _error = null;
@@ -450,19 +547,23 @@ class _LinkTabState extends ConsumerState<LinkTab> {
           .read(addonRepositoryProvider)
           .install(_effectiveUrl, allowPrivate: _allowPrivate);
       await ref.read(addonsProvider.notifier).refresh();
-      if (mounted) widget.onInstalled();
+      if (mounted) widget.onInstalled(name);
     } on AddonException catch (e) {
       if (!mounted) return;
+      final msg = l10nForError(context.l10n, e);
       setState(() {
-        _error = l10nForError(context.l10n, e);
+        _error = msg;
         _installing = false;
       });
+      widget.onFailed?.call(msg);
     } catch (_) {
       if (!mounted) return;
+      final msg = context.l10n.installFailed;
       setState(() {
-        _error = context.l10n.installFailed;
+        _error = msg;
         _installing = false;
       });
+      widget.onFailed?.call(msg);
     }
   }
 

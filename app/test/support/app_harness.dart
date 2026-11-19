@@ -21,7 +21,10 @@ import 'package:lumio/ui/focus/tv_detection.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
+import 'package:lumio/features/phone/phone_providers.dart';
+
 import 'fake_addon_fetcher.dart';
+import 'fake_phone.dart';
 
 /// Addon factice unique : catalogue + fiche + flux.
 final fakeManifest = AddonManifest(
@@ -161,6 +164,8 @@ class AppHarness {
       return const Scaffold(body: Text('PLAYER'));
     }),
     appVersionProvider.overrideWith((ref) async => '1.0.0'),
+    lanAddressSourceProvider.overrideWithValue(const FakeLan()),
+    phoneSessionFactoryProvider.overrideWithValue((_) => FakePhoneSession()),
     ...extra,
   ];
 

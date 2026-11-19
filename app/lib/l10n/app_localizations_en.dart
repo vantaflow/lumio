@@ -2504,9 +2504,59 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only install sources you trust: the link may contain a personal key, kept encrypted on this device.';
 
   @override
-  String get phoneTabSoonTitle => 'Coming soon';
+  String get phoneStep1 => 'Phone on the same Wi-Fi as the TV';
 
   @override
-  String get phoneTabSoonBody =>
-      'Adding from your phone is coming: a page served by the box to send the link from your phone. Meanwhile, use the catalogue or the “By link” tab.';
+  String get phoneStep2 => 'Scan the code: this TV\'s Lumio page opens';
+
+  @override
+  String get phoneStep3 => 'Paste a link, then confirm here on the TV';
+
+  @override
+  String get phoneOrType => 'Or type in the phone\'s browser';
+
+  @override
+  String get phoneCodeLabel => 'Security code:';
+
+  @override
+  String get phoneLive =>
+      'Page open while this screen is shown · no external server';
+
+  @override
+  String get phoneConnected =>
+      'Phone connected · page open while this screen is shown';
+
+  @override
+  String get phoneLocked =>
+      'Too many attempts: a new code is shown, try again in a minute';
+
+  @override
+  String get phoneNoNetworkTitle => 'No local network';
+
+  @override
+  String get phoneNoNetworkBody =>
+      'Connect the TV to the home Wi-Fi or Ethernet: the phone page is never served over a VPN or the mobile network.';
+
+  @override
+  String get phoneIdleStopped =>
+      'The page closed after 10 minutes without activity.';
+
+  @override
+  String get phoneErrorBody => 'The page could not start. Try again.';
+
+  @override
+  String get phoneRestart => 'Restart';
+
+  @override
+  String get phoneQrLabel => 'QR code of the Lumio page on the local network';
+
+  @override
+  String get settingsManagePhone => 'Manage from your phone';
+
+  @override
+  String get settingsManagePhoneNoNetwork => 'Local network unavailable';
+
+  @override
+  String get phoneAddWaiting =>
+      'Link received from the phone: check the preview and confirm here.';
 }

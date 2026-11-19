@@ -7,6 +7,8 @@ import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/add_addon_screen.dart';
 import 'package:lumio/features/home/tv_home.dart' show LumioMark;
+import 'package:lumio/features/phone/phone_providers.dart';
+import 'package:lumio/features/phone/phone_server.dart' show PhoneServer;
 import 'package:lumio/features/profiles/profile_picker_screen.dart'
     show kidLabel, switchProfileFlow;
 import 'package:lumio/features/party/party_providers.dart';
@@ -321,6 +323,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 14),
+                        _PhoneCard(
+                          onOpen: () => showAddAddonScreen(
+                            context,
+                            initialTab: AddAddonTab.phone,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
                         Text(
                           '${l.versionValue(ref.watch(appVersionProvider).value ?? '')}'
                           ' · ${l.settingsBackHome}',
@@ -784,6 +794,102 @@ class _VpnCard extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Carte « Gérer depuis le téléphone » en bas du rail (maquette TV10) : ouvre
+/// l'onglet « Depuis le téléphone » ; l'adresse affichée est celle que la
+/// page prendra (rien n'écoute tant que l'écran n'est pas ouvert).
+class _PhoneCard extends ConsumerWidget {
+  const _PhoneCard({required this.onOpen});
+
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.lumio;
+    final l = context.l10n;
+    final ip = ref.watch(lanAddressProvider).value;
+    final sub = ip == null
+        ? l.settingsManagePhoneNoNetwork
+        : '${ip.address}:${PhoneServer.defaultPort}';
+    return FocusableCard(
+      key: const ValueKey('settings-phone'),
+      scale: 1.02,
+      borderRadius: BorderRadius.circular(20),
+      semanticLabel: '${l.settingsManagePhone}, $sub',
+      onSelect: onOpen,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          border: Border.all(color: c.surfaceFocus, width: 2),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            CustomPaint(
+              size: const Size(44, 44),
+              painter: _QrGlyphPainter(c.secondary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l.settingsManagePhone,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      fontVariations: [FontVariation.weight(700)],
+                      height: 1.3,
+                    ),
+                  ),
+                  Text(
+                    sub,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 24,
+                      height: 1.3,
+                      color: c.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Pictogramme QR de la maquette TV10 (viewBox 24, trait 2).
+class _QrGlyphPainter extends CustomPainter {
+  const _QrGlyphPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final k = size.width / 24;
+    final p = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2 * k;
+    for (final (x, y) in const [(3.0, 3.0), (14.0, 3.0), (3.0, 14.0)]) {
+      canvas.drawRect(Rect.fromLTWH(x * k, y * k, 7 * k, 7 * k), p);
+    }
+    canvas.drawRect(Rect.fromLTWH(14 * k, 14 * k, 3 * k, 3 * k), p);
+    canvas.drawLine(Offset(20 * k, 14 * k), Offset(20 * k, 21 * k), p);
+    canvas.drawLine(Offset(14 * k, 20 * k), Offset(17 * k, 20 * k), p);
+  }
+
+  @override
+  bool shouldRepaint(_QrGlyphPainter old) => old.color != color;
 }
 
 /// Carte du profil actif en haut du rail (maquette TV10).
