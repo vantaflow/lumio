@@ -130,6 +130,35 @@ Non atteints : onboarding (TV01 à TV03, exige l'effacement des données, interd
 - **D21. Personnaliser l'accueil** n'affiche que Continuer à regarder et Ma liste, pas les rangées d'addon, alors que TV22 en liste cinq (A/19-perso.png).
 - **D22. Import d'une sauvegarde** : aucune réaction visible dans Lumio pendant l'ouverture du sélecteur système (A/98-import.png).
 
+### Suivi des corrections
+
+« Vérifié box » = constaté sur la box 192.168.0.45 après installation d'une version release ; « code + tests » = corrigé dans le code et couvert par les tests, pas revu sur la box dans ce passage.
+
+| Défaut | Corrigé | Commit | Vérification |
+|---|---|---|---|
+| D1 touches qui fuient | oui | e9a3844 (FocusRescueObserver) | code + tests |
+| D2 Retour quitte l'application | oui | e9a3844, ca2a5b6 (Retour depuis le sélecteur, `beforeSelect` enfin appelé) | vérifié box : Retour depuis « Qui regarde ? » ramène à l'accueil |
+| D3 pavé PIN mort après erreur | oui | e9a3844 | code + tests |
+| D4 clavier qui s'ouvre seul | oui | e9a3844 | vérifié box : éditeur de profil sans clavier à l'ouverture, clavier seulement après OK |
+| D5 accueil : mise en page | oui (rangées) ; hero TV05 et états TV44/45/52 : non | e9a3844 | code + tests |
+| D6 Réglages | oui, rail pleine hauteur, Général en premier, carte du profil, pied de rail, carte VPN, jauge du cache, métriques exactes TV10/14/15/47 ; reste : liste d'addons en ligne et cartes Dossiers/Jellyfin de TV10 | e9a3844, 9a1c5f1, ca2a5b6 | vérifié box (cmp-TV15, cmp-TV14, cmp-TV47) |
+| D7 marges de sécurité | partiel (écrans refaits : Réglages, sélecteur, Recherche, Ma liste, Calendrier, Personnaliser, Addons, Fiche) ; Jellyfin, Dossiers, Suivi, Watch party, Import, Sauvegarde : non | e9a3844, 7b48b6a | |
+| D8 ajout d'addon | non (cycle séparé) | | |
+| D9 fiche | bouton sur une ligne : oui ; focus initial : oui ; fond/bandeau TV06 : non revu | 7b48b6a | vérifié box (fiche série) |
+| D10 rendu lent | non | | |
+| D11 menu avatar | oui (TV43) | 9a1c5f1 | code + tests |
+| D12 Films/Séries | non | | |
+| D13 menu debug | non | | |
+| D14 permission fichiers | non | | |
+| D15 touches PIN | oui (P01) | 7b48b6a | code + tests |
+| D16 pastilles d'avatar | oui (TV04 : aucun badge ; TV35 : badges 60 dp aux coins) | ca2a5b6 | vérifié box (cmp-TV04, cmp-TV35) |
+| D17 Recherche | oui | e9a3844 | code + tests |
+| D18 sélecteurs d'option | oui (P13) | 7b48b6a | code + tests |
+| D19 Suivi non configuré | non | | |
+| D20 « Changer de profil » avec un seul profil | non revu | | |
+| D21 Personnaliser | non | | |
+| D22 import de sauvegarde | non | | |
+
 ## 4. Maquettes créées (docs/design/maquettes/project/)
 
 Toutes en 1920×1080, mêmes jetons et même squelette que P09 / TV13 (`.dc.html`, bloc `data-dc-script` avec `$preview` 1920×1080, vrais `<button>`, SVG en trait avec `aria-hidden`, focus 4 px `#FFE08A`, texte ≥ 24 px). Libellés pris dans `app_fr.arb`. Rendu vérifié en headless (Chrome).
