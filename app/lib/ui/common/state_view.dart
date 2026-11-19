@@ -16,13 +16,15 @@ class StateView extends StatelessWidget {
       message = null,
       actionLabel = null,
       onAction = null,
-      headerInset = null;
+      headerInset = null,
+      maxWidth = 1100;
 
   const StateView.empty({
     required String this.message,
     this.actionLabel,
     this.onAction,
     this.headerInset,
+    this.maxWidth = 1100,
     super.key,
   }) : _kind = _Kind.empty;
 
@@ -31,6 +33,7 @@ class StateView extends StatelessWidget {
     required VoidCallback onRetry,
     String? retryLabel,
     this.headerInset,
+    this.maxWidth = 1100,
     super.key,
   }) : _kind = _Kind.error,
        actionLabel = retryLabel,
@@ -44,6 +47,9 @@ class StateView extends StatelessWidget {
   /// Hauteur d'en-tête au-dessus de la zone (TV) : les maquettes centrent
   /// l'état dans tout l'écran 1080, pas sous l'en-tête (défaut : 152).
   final double? headerInset;
+
+  /// Largeur maximale du message (TV, 1100 ; TV51 : 1000).
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +71,7 @@ class StateView extends StatelessWidget {
             48 + (headerInset ?? tvHeaderHeight),
           ),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
+            constraints: BoxConstraints(maxWidth: maxWidth),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

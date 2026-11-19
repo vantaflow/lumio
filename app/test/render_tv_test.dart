@@ -26,7 +26,13 @@ import 'package:lumio/features/update/update_banner.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_screen.dart';
-import 'package:lumio/features/settings/settings_screen.dart' show AboutScreen;
+import 'package:lumio/data/db.dart' show LocalFolder;
+import 'package:lumio/data/jellyfin_repository.dart' show JellyfinServer;
+import 'package:lumio/features/addons/addons_screen.dart';
+import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
+import 'package:lumio/features/local/local_providers.dart';
+import 'package:lumio/features/settings/settings_screen.dart'
+    show AboutScreen, SettingsScreen;
 import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/features/tracking/tracking_providers.dart';
@@ -536,16 +542,104 @@ void main() {
       metaError: true,
     );
   });
+
+  testWidgets('lot 5 : sources', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+
+    AddonManifest manifest(String id, String name, {bool catalog = true}) =>
+        AddonManifest(
+          id: id,
+          version: '1.0.0',
+          name: name,
+          types: const ['movie'],
+          resources: [
+            if (catalog) const AddonResource('catalog'),
+            const AddonResource('stream'),
+          ],
+          catalogs: [
+            if (catalog) CatalogDecl(type: 'movie', id: 'top', name: 'Top'),
+          ],
+          transportUrl: Uri.parse('https://$id.example.com/tok/manifest.json'),
+        );
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    final h = AppHarness(t);
+    final key = GlobalKey();
+    await h.pump(
+      RepaintBoundary(key: key, child: const SettingsScreen()),
+      extra: [
+        addonsProvider.overrideWith(
+          () => _RAddons(
+            [
+              manifest('a1', 'Source Alpha'),
+              manifest('a2', 'Direct Plus', catalog: false),
+              manifest('a3', 'Catalogue Libre'),
+            ],
+            disabled: {'a3'},
+          ),
+        ),
+        healthSnapshotProvider.overrideWith(
+          (ref) => Stream.value({
+            'a1': const AddonHealth(
+              median: Duration(milliseconds: 62),
+              successRate: 1,
+              samples: 20,
+            ),
+            'a2': const AddonHealth(
+              median: Duration(milliseconds: 1840),
+              successRate: 0.95,
+              samples: 20,
+            ),
+            'a3': const AddonHealth(
+              median: Duration(seconds: 5),
+              successRate: 0.2,
+              samples: 20,
+            ),
+          }),
+        ),
+        localFoldersProvider.overrideWith(
+          (ref) => Stream.value([
+            LocalFolder(
+              path: '/Films',
+              addedAt: now,
+              lastScanAt: now - const Duration(hours: 2).inMilliseconds,
+            ),
+            LocalFolder(path: '/Séries', addedAt: now, lastScanAt: now),
+          ]),
+        ),
+        jellyfinServersProvider.overrideWith(_RJellyfin.new),
+      ],
+    );
+    await t.tap(find.byKey(const ValueKey('rail:sources')));
+    await h.settle();
+    await _save(t, key, 'r-TV10');
+    await h.close();
+
+    final h2 = AppHarness(t);
+    final k2 = GlobalKey();
+    await h2.pump(
+      RepaintBoundary(key: k2, child: const AddonsScreen()),
+      extra: [addonsProvider.overrideWith(() => _RAddons(const []))],
+    );
+    await _save(t, k2, 'r-TV51');
+    await h2.close();
+  });
 }
 
 class _RAddons extends AddonsController {
-  _RAddons(this.manifests);
+  _RAddons(this.manifests, {this.disabled = const {}});
   final List<AddonManifest> manifests;
+  final Set<String> disabled;
 
   @override
   Future<List<InstalledAddon>> build() async => [
     for (final (i, m) in manifests.indexed)
-      InstalledAddon(id: m.id, manifest: m, position: i, enabled: true),
+      InstalledAddon(
+        id: m.id,
+        manifest: m,
+        position: i,
+        enabled: !disabled.contains(m.id),
+      ),
   ];
 }
 
@@ -670,4 +764,18 @@ class _BrokenLauncher extends PlaybackLauncher {
   @override
   Future<Meta> loadMeta(MetaPreview p) =>
       Future.error(StateError('hors ligne'));
+}
+
+class _RJellyfin extends JellyfinServersController {
+  @override
+  Future<List<JellyfinServer>> build() async => [
+    JellyfinServer(
+      id: 's1',
+      name: 'Salon',
+      url: Uri.parse('https://salon.example.com'),
+      allowPrivate: false,
+      userId: 'u',
+      userName: 'lilou',
+    ),
+  ];
 }

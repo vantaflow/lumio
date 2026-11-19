@@ -174,6 +174,9 @@ abstract final class LumioTheme {
       fontWeight: FontWeight.w700,
       fontVariations: const [FontVariation.weight(700)],
       height: h,
+      // Les maquettes HTML n'ont aucun interlettrage ; sans cela le thème
+      // Material 3 en ajoute (+0,25 à +0,5) et le texte est plus large.
+      letterSpacing: 0,
       color: c.text,
     );
     TextStyle body(double size, double h, [FontWeight w = FontWeight.w400]) =>
@@ -183,6 +186,7 @@ abstract final class LumioTheme {
           fontWeight: w,
           fontVariations: [FontVariation.weight(w.value.toDouble())],
           height: h,
+          letterSpacing: 0,
           color: c.text,
         );
 

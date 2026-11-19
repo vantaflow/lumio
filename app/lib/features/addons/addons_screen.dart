@@ -37,15 +37,20 @@ class AddonsScreen extends ConsumerWidget {
     }
     return TvScreen(
       title: context.l10n.addonsTitle,
-      subtitle: context.l10n.addonsPriorityHint,
+      // Maquette TV51 : titre seul quand aucun addon n'est installé.
+      subtitle: (addons.value?.isEmpty ?? false)
+          ? null
+          : context.l10n.addonsPriorityHint,
       actions: [
-        if (addons.value?.isNotEmpty ?? false)
+        if (addons.hasValue)
           TvButton(
             key: const ValueKey('addons-add'),
             // Action principale : focus d'emblée, sauf si un addon était
             // focalisé avant (retour d'un sous-écran).
-            autofocus: remembered == null,
+            autofocus:
+                remembered == null && (addons.value?.isNotEmpty ?? false),
             height: 76,
+            horizontalPadding: 40,
             fontSize: 28,
             label: '+ ${context.l10n.addAddon}',
             onPressed: add,
@@ -59,6 +64,8 @@ class AddonsScreen extends ConsumerWidget {
         ),
         data: (list) => list.isEmpty
             ? StateView.empty(
+                headerInset: 56,
+                maxWidth: 1000,
                 message: context.l10n.addonsEmpty,
                 actionLabel: context.l10n.addAddon,
                 onAction: add,
@@ -117,14 +124,11 @@ class _AddonList extends ConsumerWidget {
     WidgetRef ref,
     Future<void> Function() op,
   ) async {
-    final messenger = ScaffoldMessenger.of(context);
     final failed = context.l10n.addonActionFailed;
     try {
       await op();
     } catch (_) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(failed)));
+      if (context.mounted) showTvSnack(context, failed, error: true);
       // Resynchronise l'affichage avec la base.
       await ref.read(addonsProvider.notifier).refresh().catchError((_) {});
     }

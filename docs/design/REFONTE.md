@@ -13,7 +13,7 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | TV 07 · Lecteur | `TV07-Lecteur.dc.html` | à reprendre : cmp box (scratchpad/refonte4/cmp-pl.png) sans écart de mise en page hors données (titre/sous-titre de source, durées, bouton Suivant) ; maquette = état composite (panneau + épisode suivant) ; titre plus étroit corrigé par la police ; à vérifier sur la box |
 | TV 08 · Ajouter un addon · Par lien | `TV08-AjoutAddon.dc.html` | cycle ajout d'addon (après la refonte) |
 | TV 09 · Ajouter un addon · Depuis le téléphone (page de la box) | `TV09-Appairage.dc.html` | cycle ajout d'addon (après la refonte) |
-| TV 10 · Réglages · Sources | `TV10-Reglages.dc.html` | à reprendre : liste des addons en ligne + cartes Dossiers/Jellyfin manquantes |
+| TV 10 · Réglages · Sources | `TV10-Reglages.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV10.png) — à vérifier sur la box ; addons en ligne dans la page (OK = menu monter / descendre / réinitialiser les mesures / supprimer, interrupteur = second arrêt de focus), cartes Dossiers locaux et Serveurs Jellyfin côte à côte ; pas de « configurer » (aucune action de configuration d'addon dans le code), pas d'état « Connecté » Jellyfin (nombre de serveurs à la place), « Fiable / Lent / Défaillant » rendus « Bonne santé / Lente / Hors ligne » |
 | TV 11 · Recherche | `TV12-Recherche.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV12.png) — à vérifier sur la box ; panneau clavier 760, touches 69×84 en 8 colonnes (lettres, chiffres, Espace/Effacer/Tout effacer/langue gardés), micro rond à côté du champ, cartes 230×340 ; la maquette TV46 montre un autre clavier (7 colonnes, sans panneau) : TV12 suivi |
 | TV 12 · Accueil vide (aucune source) | `TV13-AccueilVide.dc.html` | fait (comparaison maquette | fait (rendu : scratchpad/refonte5/cmp-TV13.png, revérifié après changement de police/TvScreen) — à vérifier sur la box |
 | TV 13 · Réglages · Lecture | `TV14-ReglagesLecture.dc.html` | fait (comparaison maquette | box) |
@@ -65,10 +65,12 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | TV 48 · Suivi · non configuré | `TV48-SuiviNonConfigure.dc.html` | à reprendre : la maquette montre le rail des Réglages avec les cartes dans la page ; l'app ouvre l'écran Suivi (TV25) depuis le rail |
 | TV 49 · Dossiers locaux · vide et accès refusé | `TV49-DossiersVide.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV49.png) — à vérifier sur la box |
 | TV 50 · Jellyfin · aucun serveur | `TV50-JellyfinVide.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV50.png) — à vérifier sur la box |
-| TV 51 · Addons · aucun addon et erreurs | `TV51-AddonsVide.dc.html` | à reprendre : refait sans comparaison |
+| TV 51 · Addons · aucun addon et erreurs | `TV51-AddonsVide.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV51.png) — à vérifier sur la box ; bouton d'ajout toujours en tête, message d'échec d'action au gabarit des messages éphémères |
 | TV 52 · Accueil · mise à jour disponible | `TV52-AccueilMiseAJour.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV52.png, héros retiré du rendu comme la maquette) — à vérifier sur la box |
 | Pop-up 20 · Création du PIN | `P20-CreationPIN.dc.html` | à faire |
 | Pop-up 21 · Code de récupération | `P21-CodeRecuperation.dc.html` | fait (comparaison maquette | box) |
 | Pop-up 22 · PIN parent | `P22-PINParent.dc.html` | à faire |
 | Pop-up 23 · Réglages des sous-titres | `P23-SousTitresReglages.dc.html` | fait (cmp : scratchpad/refonte4/cmp-pi.png) — mêmes positions que P23 ; ligne « Variante » = état d'erreur ; à vérifier sur la box |
 | Pop-up 24 · Fiche indisponible | `P24-ErreurFiche.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P24.png) — à vérifier sur la box |
+
+Note de lot : le thème n'ajoute plus d'interlettrage (`letterSpacing: 0`) : le thème Material 3 ajoutait +0,25 à +0,5 aux styles de corps, ce qui élargissait tout le texte de 3 à 8 % par rapport aux maquettes HTML.

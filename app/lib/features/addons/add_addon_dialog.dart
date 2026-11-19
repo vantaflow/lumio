@@ -478,7 +478,7 @@ class AddonLogo extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: c.surfaceRaised,
-        borderRadius: BorderRadius.circular(size / 6 + 4),
+        borderRadius: BorderRadius.circular(size * 0.28),
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,

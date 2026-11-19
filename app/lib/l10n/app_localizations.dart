@@ -3949,6 +3949,90 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Torrent'**
   String get streamBadgeTorrent;
+
+  /// No description provided for @secAddonsPriority.
+  ///
+  /// In fr, this message translates to:
+  /// **'Addons · l\'ordre décide de la priorité'**
+  String get secAddonsPriority;
+
+  /// No description provided for @addonsMenuHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'OK sur un addon : monter, descendre, supprimer.'**
+  String get addonsMenuHint;
+
+  /// No description provided for @healthShortGood.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bonne santé'**
+  String get healthShortGood;
+
+  /// No description provided for @healthShortSlow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lente'**
+  String get healthShortSlow;
+
+  /// No description provided for @healthShortOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Hors ligne'**
+  String get healthShortOffline;
+
+  /// No description provided for @menuMoveUp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Monter'**
+  String get menuMoveUp;
+
+  /// No description provided for @menuMoveDown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Descendre'**
+  String get menuMoveDown;
+
+  /// No description provided for @menuResetHealth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialiser les mesures'**
+  String get menuResetHealth;
+
+  /// No description provided for @localFoldersCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucun dossier} =1{1 dossier} other{{count} dossiers}}'**
+  String localFoldersCount(int count);
+
+  /// No description provided for @localLastScan.
+  ///
+  /// In fr, this message translates to:
+  /// **'dernière analyse {ago}'**
+  String localLastScan(Object ago);
+
+  /// No description provided for @agoMinutes.
+  ///
+  /// In fr, this message translates to:
+  /// **'il y a {n} min'**
+  String agoMinutes(int n);
+
+  /// No description provided for @agoHours.
+  ///
+  /// In fr, this message translates to:
+  /// **'il y a {n} h'**
+  String agoHours(int n);
+
+  /// No description provided for @agoDays.
+  ///
+  /// In fr, this message translates to:
+  /// **'il y a {n} j'**
+  String agoDays(int n);
+
+  /// No description provided for @jellyfinServersCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =0{Aucun serveur} =1{1 serveur} other{{count} serveurs}}'**
+  String jellyfinServersCount(int count);
 }
 
 class _AppLocalizationsDelegate

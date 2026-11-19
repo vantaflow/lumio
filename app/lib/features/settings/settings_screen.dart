@@ -6,9 +6,6 @@ import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
 import 'package:lumio/features/addons/add_addon_dialog.dart';
-import 'package:lumio/features/addons/addons_screen.dart';
-import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
-import 'package:lumio/features/local/local_screen.dart';
 import 'package:lumio/features/home/tv_home.dart' show LumioMark;
 import 'package:lumio/features/profiles/profile_picker_screen.dart'
     show kidLabel, switchProfileFlow;
@@ -19,6 +16,7 @@ import 'package:lumio/features/detail/playback_service.dart'
     show streamPrefsProvider;
 import 'package:lumio/features/profiles/pin_dialog.dart' show requireParent;
 import 'package:lumio/features/settings/settings_providers.dart';
+import 'package:lumio/features/settings/sources_page.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/features/tracking/tracking_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -363,11 +361,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _sourcesPage(BuildContext context) {
     final l = context.l10n;
-    final addons = ref.watch(addonsProvider).value ?? const [];
     return _Page(
       key: const ValueKey('page:sources'),
       title: l.settingsCatSources,
       subtitle: l.settingsSourcesHint,
+      headGap: 43,
+      bleed: true,
       action: TvButton(
         key: const ValueKey('setting:addAddon'),
         label: '+ ${l.addAddon}',
@@ -375,30 +374,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         fontSize: 28,
         onPressed: () => showAddAddonDialog(context),
       ),
-      children: [
-        _Section(l.secAddons),
-        _Tile(
-          id: 'addons',
-          title: l.settingsAddons,
-          subtitle:
-              '${l.addonsInstalledCount(addons.length)} · '
-              '${l.settingsAddonsHint}',
-          onTap: () => _push(const AddonsScreen()),
-        ),
-        _Section(l.secPersonalSources),
-        _Tile(
-          id: 'localFolders',
-          title: l.localFolders,
-          subtitle: l.localFoldersHint,
-          onTap: () => _push(const LocalFoldersScreen()),
-        ),
-        _Tile(
-          id: 'jellyfin',
-          title: l.jellyfinServers,
-          subtitle: l.jellyfinServersHint,
-          onTap: () => _push(const JellyfinServersScreen()),
-        ),
-      ],
+      children: const [SourcesBody()],
     );
   }
 
@@ -982,7 +958,12 @@ class _Page extends StatelessWidget {
     this.subtitle,
     this.action,
     this.headGap = 0,
+    this.bleed = false,
   });
+
+  /// Contenu aligné sur la marge de la page (anneaux de focus visibles hors
+  /// de la liste) : maquette TV10.
+  final bool bleed;
 
   /// Espace entre l'en-tête et la première section (maquettes : 36 sur
   /// Général et Sources, 0 ailleurs).
@@ -1040,7 +1021,12 @@ class _Page extends StatelessWidget {
         SizedBox(height: headGap),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.only(bottom: 48, left: 6, right: 6),
+            clipBehavior: bleed ? Clip.none : Clip.hardEdge,
+            padding: EdgeInsets.only(
+              bottom: 48,
+              left: bleed ? 0 : 6,
+              right: bleed ? 0 : 6,
+            ),
             children: children,
           ),
         ),

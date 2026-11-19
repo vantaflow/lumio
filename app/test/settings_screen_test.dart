@@ -167,12 +167,19 @@ void main() {
     await h.dispose();
   });
 
-  testWidgets('addons : le tuile ouvre la gestion des addons', (tester) async {
+  testWidgets('addons : listés dans la page Sources, OK ouvre le menu', (
+    tester,
+  ) async {
+    // Maquette TV10 : la liste des addons est dans la page (plus de tuile
+    // vers l'écran Addons) ; OK sur un addon ouvre ses actions.
     final h = _H(tester)..start();
     await h.run(() => h.repo.install(_urlA));
     await h.pump(const SettingsScreen());
-    await h.tapTile('addons');
+    await openSettingsPageFor(tester, 'addons', h.settle);
     expect(find.text('Alpha'), findsOneWidget);
+    await tester.tap(find.text('Alpha'));
+    await h.settle();
+    expect(find.byKey(const ValueKey('addon-menu:delete')), findsOneWidget);
     await h.dispose();
   });
 
@@ -226,10 +233,7 @@ void main() {
     final h = _H(tester)..start();
     await h.pump(const SettingsScreen());
     await openSettingsPageFor(tester, 'preferDirect', h.settle);
-    expect(
-      find.text('Préférer les liens directs'),
-      findsOneWidget,
-    );
+    expect(find.text('Préférer les liens directs'), findsOneWidget);
     expect(
       (await h.run(
         () => StreamPrefsStore(h.db).load(defaultProfileId),

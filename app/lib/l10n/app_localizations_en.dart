@@ -2297,4 +2297,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get streamBadgeTorrent => 'Torrent';
+
+  @override
+  String get secAddonsPriority => 'Addons · order sets the priority';
+
+  @override
+  String get addonsMenuHint => 'OK on an addon: move up, move down, remove.';
+
+  @override
+  String get healthShortGood => 'Good health';
+
+  @override
+  String get healthShortSlow => 'Slow';
+
+  @override
+  String get healthShortOffline => 'Offline';
+
+  @override
+  String get menuMoveUp => 'Move up';
+
+  @override
+  String get menuMoveDown => 'Move down';
+
+  @override
+  String get menuResetHealth => 'Reset measurements';
+
+  @override
+  String localFoldersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders',
+      one: '1 folder',
+      zero: 'No folder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String localLastScan(Object ago) {
+    return 'last scan $ago';
+  }
+
+  @override
+  String agoMinutes(int n) {
+    return '$n min ago';
+  }
+
+  @override
+  String agoHours(int n) {
+    return '$n h ago';
+  }
+
+  @override
+  String agoDays(int n) {
+    return '$n d ago';
+  }
+
+  @override
+  String jellyfinServersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count servers',
+      one: '1 server',
+      zero: 'No server',
+    );
+    return '$_temp0';
+  }
 }

@@ -1080,5 +1080,59 @@
   "detailUnavailableBody": "Page unavailable. Try again.",
   "addToListShort": "+ My list",
   "streamBadgeDirect": "Direct",
-  "streamBadgeTorrent": "Torrent"
+  "streamBadgeTorrent": "Torrent",
+  "secAddonsPriority": "Addons · order sets the priority",
+  "addonsMenuHint": "OK on an addon: move up, move down, remove.",
+  "healthShortGood": "Good health",
+  "healthShortSlow": "Slow",
+  "healthShortOffline": "Offline",
+  "menuMoveUp": "Move up",
+  "menuMoveDown": "Move down",
+  "menuResetHealth": "Reset measurements",
+  "localFoldersCount": "{count, plural, =0{No folder} =1{1 folder} other{{count} folders}}",
+  "@localFoldersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "localLastScan": "last scan {ago}",
+  "@localLastScan": {
+    "placeholders": {
+      "ago": {}
+    }
+  },
+  "agoMinutes": "{n} min ago",
+  "@agoMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "agoHours": "{n} h ago",
+  "@agoHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "agoDays": "{n} d ago",
+  "@agoDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "jellyfinServersCount": "{count, plural, =0{No server} =1{1 server} other{{count} servers}}",
+  "@jellyfinServersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
