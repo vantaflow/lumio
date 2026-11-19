@@ -223,6 +223,20 @@ void main() {
     expect(b.calls.where((x) => x.startsWith('ext:')), isEmpty);
   });
 
+  testWidgets('piste interne « fr · auto » du fichier d\'addon : masquée', (
+    t,
+  ) async {
+    final b = FakeBackend()
+      ..subtitleTracks = const [
+        TrackOption(id: '10', label: 'Français SDH', lang: 'fr'),
+        TrackOption(id: '11', label: 'fr · auto', lang: 'auto'),
+      ];
+    final c = make(b, InMemoryTitleSettingsStore());
+    await pumpHost(t, c);
+    expect(find.text('Français SDH'), findsOneWidget);
+    expect(find.text('fr · auto'), findsNothing);
+  });
+
   testWidgets('sous-titre d\'addon valide chargé en piste externe', (t) async {
     final b = FakeBackend();
     final item = SubtitleItem(

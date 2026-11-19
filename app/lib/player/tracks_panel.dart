@@ -72,7 +72,12 @@ class _TracksPanelState extends State<TracksPanel> {
     final colors = theme.extension<LumioColors>() ?? LumioColors.dark;
     final l = context.l10n;
     final audio = c.backend.audioTracks;
-    final subs = c.backend.subtitleTracks;
+    // La piste créée par le moteur pour un fichier d'addon chargé (« fr · auto »)
+    // double la ligne de l'addon : elle n'est pas proposée.
+    final subs = [
+      for (final t in c.backend.subtitleTracks)
+        if (t.lang != engineExternalLang) t,
+    ];
     final selAudio = c.backend.selectedAudioId;
     final selSub = c.backend.selectedSubtitleId;
     final size = MediaQuery.sizeOf(context);

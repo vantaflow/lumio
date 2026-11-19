@@ -14,6 +14,10 @@ import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:media_kit/media_kit.dart';
 
+/// Langue que libmpv donne à la piste d'un fichier externe chargé sans langue
+/// (notre sous-titre d'addon) : cette piste double la ligne de l'addon.
+const engineExternalLang = 'auto';
+
 /// Une piste proposée au choix (audio ou sous-titre interne).
 class TrackOption {
   const TrackOption({required this.id, required this.label, this.lang});
