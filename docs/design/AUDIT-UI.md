@@ -185,3 +185,9 @@ Toutes en 1920×1080, mêmes jetons et même squelette que P09 / TV13 (`.dc.html
 | P24-ErreurFiche | « Impossible de charger la fiche. » + Réessayer | Absent |
 
 Maquettes existantes non modifiées (aucun libellé faux relevé). Les maquettes TV08, TV09, TV16, M04 (ajout d'addon, catalogue) restent la cible : elles ne sont pas refaites ; l'écart est consigné en D8. `canvas.json` : 18 cadres ajoutés (3 par rangée, x 0 / 2040 / 4080, rangées de 1200 de pas à partir de y 21000), note « Audit · écrans ajoutés » en y 20700, aucun chevauchement.
+
+## Défauts relevés sur l'émulateur (2026-11-19)
+- Catalogue (TV16) : tuiles qui défilaient par-dessus l'en-tête et la note de bas — corrigé (zone découpée entre l'en-tête et le bas, anneau de focus conservé).
+- Accueil vide : pas de focus initial au démarrage à froid ; après fermeture du menu avatar, le focus revient sur l'onglet Accueil — à corriger.
+- Flèches d'un clavier (source keyboard) : testées avec `input keyevent DPAD_*` sur l'émulateur, elles déplacent bien le focus de Lumio (langue, accueil, catalogue) ; les raccourcis de l'application n'écartent aucune touche fléchée (`WidgetsApp.defaultShortcuts` + `ActivateIntent` pour OK). Un blocage ne se reproduit donc qu'avec des appuis très rapprochés ; à surveiller sur la box.
+- Onboarding profil : le choix d'avatar de la maquette TV02 n'existe pas (le profil n'a pas d'avatar) — écart de conception, pas corrigé.
