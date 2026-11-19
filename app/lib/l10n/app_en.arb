@@ -1040,5 +1040,15 @@
   "@sizeGbDecimal": {"placeholders": {"n": {"type": "String"}}},
   "profileAdultShort": "Adult",
   "manageProfilesHint": "Edit a profile: name, kid profile and age limit, PIN lock. Six profiles at most.",
-  "profileEditorHint": "For an adult profile, the \"Lock with PIN\" option replaces the age limit: \"The parent PIN is required to open this profile.\""
+  "profileEditorHint": "For an adult profile, the \"Lock with PIN\" option replaces the age limit: \"The parent PIN is required to open this profile.\"",
+  "subtitleAppearance": "Appearance",
+  "subtitleSmaller": "Make subtitles smaller",
+  "subtitleLarger": "Make subtitles larger",
+  "seekBackShort": "−10 s",
+  "seekForwardShort": "+10 s",
+  "tracksShort": "Tracks",
+  "nextShort": "Next",
+  "playbackSpeed": "Speed {rate}×",
+  "castShort": "Cast",
+  "partyShort": "Together"
 }

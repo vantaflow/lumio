@@ -25,9 +25,17 @@ class TorrentOverlay extends StatelessWidget {
     final colors =
         Theme.of(context).extension<LumioColors>() ?? LumioColors.dark;
     final l = context.l10n;
-    final style = Theme.of(
-      context,
-    ).textTheme.titleMedium?.copyWith(color: colors.text);
+    // Maquette P05 (TV) : cartes de 600, rayon 24, bord de 2, texte 28 gras.
+    final big = MediaQuery.sizeOf(context).width >= 1280;
+    final style = big
+        ? TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            fontVariations: const [FontVariation.weight(700)],
+            color: colors.text,
+          )
+        : Theme.of(context).textTheme.titleMedium?.copyWith(color: colors.text);
     return ValueListenableBuilder<TorrentStatus?>(
       valueListenable: status,
       builder: (context, st, _) {
@@ -50,30 +58,39 @@ class TorrentOverlay extends StatelessWidget {
           child: ExcludeSemantics(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: colors.surface.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(LumioRadius.md),
+                color: colors.surface.withValues(alpha: big ? 0.88 : 0.85),
+                borderRadius: BorderRadius.circular(big ? 24 : LumioRadius.md),
                 border: Border.all(
                   color: lost ? colors.warning : colors.outline,
+                  width: big ? 2 : 1,
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: LumioSpacing.md,
-                  vertical: LumioSpacing.sm,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final line in lines)
-                      Text(
-                        line,
-                        key: ValueKey(line),
-                        style: lost && line == l.torrentConnectionLost
-                            ? style?.copyWith(color: colors.warning)
-                            : style,
+                padding: big
+                    ? const EdgeInsets.symmetric(horizontal: 28, vertical: 20)
+                    : const EdgeInsets.symmetric(
+                        horizontal: LumioSpacing.md,
+                        vertical: LumioSpacing.sm,
                       ),
-                  ],
+                child: SizedBox(
+                  width: big ? 544 : null,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < lines.length; i++)
+                        Padding(
+                          padding: EdgeInsets.only(top: i == 0 ? 0 : 4),
+                          child: Text(
+                            lines[i],
+                            key: ValueKey(lines[i]),
+                            style: lost && lines[i] == l.torrentConnectionLost
+                                ? style?.copyWith(color: colors.warning)
+                                : style,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

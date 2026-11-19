@@ -112,13 +112,25 @@ Widget host(TracksController c, {VoidCallback? onClose}) => MaterialApp(
   ),
 );
 
+/// Écran assez haut pour afficher tout le panneau (taille, décalage, fermer).
+Future<void> pumpHost(
+  WidgetTester t,
+  TracksController c, {
+  VoidCallback? onClose,
+}) async {
+  t.view.physicalSize = const Size(800, 1800);
+  t.view.devicePixelRatio = 1;
+  addTearDown(t.view.reset);
+  await t.pumpWidget(host(c, onClose: onClose));
+}
+
 void main() {
   testWidgets('liste 2 pistes audio et la sélection appelle le contrôleur', (
     t,
   ) async {
     final b = FakeBackend();
     final c = make(b, InMemoryTitleSettingsStore());
-    await t.pumpWidget(host(c));
+    await pumpHost(t, c);
     expect(find.text('Français'), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
     await t.tap(find.text('English'));
@@ -133,7 +145,7 @@ void main() {
     final b = FakeBackend();
     final store = InMemoryTitleSettingsStore();
     final c = make(b, store);
-    await t.pumpWidget(host(c));
+    await pumpHost(t, c);
     for (var i = 0; i < 3; i++) {
       await t.tap(find.byKey(const ValueKey('delay-plus')));
       await t.pump();
@@ -150,9 +162,13 @@ void main() {
   testWidgets('taille et fond opaque appliqués', (t) async {
     final b = FakeBackend();
     final c = make(b, InMemoryTitleSettingsStore());
-    await t.pumpWidget(host(c));
-    await t.tap(find.byKey(const ValueKey('size-xl')));
+    await pumpHost(t, c);
+    // M (100 %) -> L -> XL avec « + ».
+    await t.tap(find.byKey(const ValueKey('size-plus')));
     await t.pump();
+    await t.tap(find.byKey(const ValueKey('size-plus')));
+    await t.pump();
+    expect(find.text('164 %'), findsOneWidget);
     await t.tap(find.byKey(const ValueKey('bg-toggle')));
     await t.pump();
     expect(b.calls, contains('style:xl:false'));
@@ -178,7 +194,7 @@ void main() {
       addon: [item],
       download: (_) async => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A],
     );
-    await t.pumpWidget(host(c));
+    await pumpHost(t, c);
     await t.tap(find.text('Addon · fr'));
     await t.pump();
     await t.pump();
@@ -201,55 +217,55 @@ void main() {
       download: (_) async =>
           '1\n00:00:01,000 --> 00:00:02,000\nSalut\n'.codeUnits,
     );
-    await t.pumpWidget(host(c));
+    await pumpHost(t, c);
     await t.runAsync(() => c.selectAddonSubtitle(item));
     await t.pump();
     expect(b.calls.where((x) => x.startsWith('ext:')), hasLength(1));
     expect(c.addonSelectedId, 'a1');
   });
 
-  testWidgets('D-pad : ordre audio, sous-titres, décalage, taille, fond', (
-    t,
-  ) async {
-    final b = FakeBackend();
-    final c = make(b, InMemoryTitleSettingsStore());
-    var closed = false;
-    await t.pumpWidget(host(c, onClose: () => closed = true));
-    Future<void> next() async {
-      await t.sendKeyEvent(LogicalKeyboardKey.tab);
-      await t.pump();
-    }
+  testWidgets(
+    'D-pad : ordre audio, sous-titres, taille, décalage, fond, fermer',
+    (t) async {
+      final b = FakeBackend();
+      final c = make(b, InMemoryTitleSettingsStore());
+      var closed = false;
+      await pumpHost(t, c, onClose: () => closed = true);
+      Future<void> next() async {
+        await t.sendKeyEvent(LogicalKeyboardKey.tab);
+        await t.pump();
+      }
 
-    final order = <Key>[
-      const ValueKey('audio-1'),
-      const ValueKey('audio-2'),
-      const ValueKey('sub-off'),
-      const ValueKey('sub-10'),
-      const ValueKey('delay-minus'),
-      const ValueKey('delay-plus'),
-      const ValueKey('size-s'),
-      const ValueKey('size-m'),
-      const ValueKey('size-l'),
-      const ValueKey('size-xl'),
-      const ValueKey('bg-toggle'),
-    ];
-    await t.pump();
-    for (final k in order) {
-      // Le premier élément a le focus à l'ouverture (autofocus).
-      if (k != order.first) await next();
-      final ctx = FocusManager.instance.primaryFocus!.context;
-      expect(
-        find.descendant(
-          of: find.byKey(k),
-          matching: find.byElementPredicate((e) => e == ctx),
-        ),
-        findsOneWidget,
-        reason: 'focus attendu sur $k',
-      );
-    }
-    await t.sendKeyEvent(LogicalKeyboardKey.escape);
-    expect(closed, isTrue);
-  });
+      final order = <Key>[
+        const ValueKey('audio-1'),
+        const ValueKey('audio-2'),
+        const ValueKey('sub-off'),
+        const ValueKey('sub-10'),
+        const ValueKey('size-minus'),
+        const ValueKey('size-plus'),
+        const ValueKey('delay-minus'),
+        const ValueKey('delay-plus'),
+        const ValueKey('bg-toggle'),
+        const ValueKey('tracks-close'),
+      ];
+      await t.pump();
+      for (final k in order) {
+        // Le premier élément a le focus à l'ouverture (autofocus).
+        if (k != order.first) await next();
+        final ctx = FocusManager.instance.primaryFocus!.context;
+        expect(
+          find.descendant(
+            of: find.byKey(k),
+            matching: find.byElementPredicate((e) => e == ctx),
+          ),
+          findsOneWidget,
+          reason: 'focus attendu sur $k',
+        );
+      }
+      await t.sendKeyEvent(LogicalKeyboardKey.escape);
+      expect(closed, isTrue);
+    },
+  );
 
   test('réglages mémorisés réappliqués à l\'ouverture', () async {
     final store = InMemoryTitleSettingsStore()

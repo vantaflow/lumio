@@ -2214,4 +2214,36 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get profileEditorHint =>
       'For an adult profile, the \"Lock with PIN\" option replaces the age limit: \"The parent PIN is required to open this profile.\"';
+
+  @override
+  String get subtitleAppearance => 'Appearance';
+
+  @override
+  String get subtitleSmaller => 'Make subtitles smaller';
+
+  @override
+  String get subtitleLarger => 'Make subtitles larger';
+
+  @override
+  String get seekBackShort => '−10 s';
+
+  @override
+  String get seekForwardShort => '+10 s';
+
+  @override
+  String get tracksShort => 'Tracks';
+
+  @override
+  String get nextShort => 'Next';
+
+  @override
+  String playbackSpeed(String rate) {
+    return 'Speed $rate×';
+  }
+
+  @override
+  String get castShort => 'Cast';
+
+  @override
+  String get partyShort => 'Together';
 }

@@ -486,6 +486,9 @@ class PlayerController {
     }
   }
 
+  /// Vitesse de lecture (1 = normale).
+  Future<void> setRate(double r) => player.setRate(r);
+
   Future<void> setVolume(double v) => player.setVolume(v.clamp(0, 100));
 
   Future<void> dispose() async {

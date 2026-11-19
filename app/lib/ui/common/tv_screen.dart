@@ -179,8 +179,10 @@ class TvTile extends StatelessWidget {
     this.semanticLabel,
     this.color,
     this.enabled = true,
+    this.horizontalPadding = 32,
   });
 
+  final double horizontalPadding;
   final Widget child;
   final VoidCallback? onSelect;
   final VoidCallback? onLongPress;
@@ -207,7 +209,10 @@ class TvTile extends StatelessWidget {
       onFocusChange: onFocusChange,
       child: Container(
         constraints: BoxConstraints(minHeight: minHeight),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: 12,
+        ),
         decoration: BoxDecoration(
           color: color ?? c.surface,
           borderRadius: BorderRadius.circular(22),

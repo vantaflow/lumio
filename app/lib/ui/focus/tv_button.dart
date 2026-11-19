@@ -15,6 +15,9 @@ enum TvButtonKind {
 
   /// Pastille de navigation de l'écran courant (ambre, maquette TV05).
   navSelected,
+
+  /// Bouton texte (maquettes `.bt`) : transparent, texte #C9D0DA.
+  ghost,
 }
 
 /// Bouton en pastille des écrans TV : mesures des maquettes (hauteur 88 par
@@ -35,6 +38,7 @@ class TvButton extends StatelessWidget {
     this.destructive = false,
     this.scale = 1.04,
     this.expand = false,
+    this.semanticLabel,
   });
 
   final String label;
@@ -52,14 +56,22 @@ class TvButton extends StatelessWidget {
   /// Occupe toute la largeur disponible (listes de boutons).
   final bool expand;
 
+  /// Étiquette d'accessibilité si elle diffère du texte (ex. « − »).
+  final String? semanticLabel;
+
   @override
   Widget build(BuildContext context) {
     final c = context.lumio;
     final (bg, fg, weight) = switch (kind) {
       TvButtonKind.primary => (c.accent, c.onAccent, FontWeight.w700),
-      TvButtonKind.secondary => (c.surfaceFocus, c.text, FontWeight.w600),
+      TvButtonKind.secondary => (c.surfaceFocus, c.text, FontWeight.w700),
       TvButtonKind.nav => (Colors.transparent, c.textMuted, FontWeight.w600),
       TvButtonKind.navSelected => (c.accent, c.onAccent, FontWeight.w700),
+      TvButtonKind.ghost => (
+        Colors.transparent,
+        const Color(0xFFC9D0DA),
+        FontWeight.w600,
+      ),
     };
     final radius = BorderRadius.circular(height / 2);
     return FocusableCard(
@@ -67,7 +79,7 @@ class TvButton extends StatelessWidget {
       focusNode: focusNode,
       scale: scale,
       borderRadius: radius,
-      semanticLabel: label,
+      semanticLabel: semanticLabel ?? label,
       enabled: onPressed != null,
       onSelect: onPressed ?? () {},
       child: Container(

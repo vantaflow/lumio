@@ -1262,5 +1262,22 @@
   "@sizeGbDecimal": {"placeholders": {"n": {"type": "String"}}},
   "profileAdultShort": "Adulte",
   "manageProfilesHint": "Modifier un profil : nom, profil enfant et limite d'âge, verrou par PIN. Six profils au maximum.",
-  "profileEditorHint": "Pour un profil adulte, l'option « Verrouiller par PIN » remplace la limite d'âge : « Le PIN parent est demandé pour ouvrir ce profil. »"
+  "profileEditorHint": "Pour un profil adulte, l'option « Verrouiller par PIN » remplace la limite d'âge : « Le PIN parent est demandé pour ouvrir ce profil. »",
+  "subtitleAppearance": "Apparence",
+  "subtitleSmaller": "Réduire les sous-titres",
+  "subtitleLarger": "Agrandir les sous-titres",
+  "seekBackShort": "−10 s",
+  "seekForwardShort": "+10 s",
+  "tracksShort": "Pistes",
+  "nextShort": "Suivant",
+  "playbackSpeed": "Vitesse {rate}×",
+  "@playbackSpeed": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "castShort": "Diffuser",
+  "partyShort": "Ensemble"
 }

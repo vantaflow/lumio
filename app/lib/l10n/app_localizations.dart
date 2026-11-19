@@ -3799,6 +3799,66 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Pour un profil adulte, l\'option « Verrouiller par PIN » remplace la limite d\'âge : « Le PIN parent est demandé pour ouvrir ce profil. »'**
   String get profileEditorHint;
+
+  /// No description provided for @subtitleAppearance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence'**
+  String get subtitleAppearance;
+
+  /// No description provided for @subtitleSmaller.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réduire les sous-titres'**
+  String get subtitleSmaller;
+
+  /// No description provided for @subtitleLarger.
+  ///
+  /// In fr, this message translates to:
+  /// **'Agrandir les sous-titres'**
+  String get subtitleLarger;
+
+  /// No description provided for @seekBackShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'−10 s'**
+  String get seekBackShort;
+
+  /// No description provided for @seekForwardShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'+10 s'**
+  String get seekForwardShort;
+
+  /// No description provided for @tracksShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pistes'**
+  String get tracksShort;
+
+  /// No description provided for @nextShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivant'**
+  String get nextShort;
+
+  /// No description provided for @playbackSpeed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vitesse {rate}×'**
+  String playbackSpeed(String rate);
+
+  /// No description provided for @castShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Diffuser'**
+  String get castShort;
+
+  /// No description provided for @partyShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ensemble'**
+  String get partyShort;
 }
 
 class _AppLocalizationsDelegate

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/cast/cast_button.dart';
+import 'package:lumio/features/detail/streams_list.dart' show qualityLabel;
 import 'package:lumio/features/cast/player_cast.dart';
 import 'package:lumio/features/party/party_providers.dart';
 import 'package:lumio/features/party/party_screen.dart';
@@ -27,8 +28,11 @@ import 'package:lumio/torrent/torrent_engine.dart' show TorrentStatus;
 import 'package:lumio/torrent/torrent_overlay.dart';
 import 'package:lumio/torrent/torrent_playback.dart';
 import 'package:lumio/torrent/torrent_providers.dart';
-import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart' show tvScrim;
+import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart' hide Video;
 import 'package:lumio_core/lumio_core.dart' as core show Video;
@@ -211,6 +215,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   bool _creditsRead = false;
   bool _offerDone = false;
   bool _showNext = false;
+  double _rate = 1;
   bool _switching = false;
   bool _disposed = false;
 
@@ -883,6 +888,28 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     _armHide();
   }
 
+  /// Vitesses proposées par le bouton « Vitesse » (une pression = suivante).
+  static const _rates = [1.0, 1.25, 1.5, 2.0, 0.75];
+
+  void _cycleRate() {
+    final i = _rates.indexOf(_rate);
+    final next = _rates[(i + 1) % _rates.length];
+    setState(() => _rate = next);
+    unawaited(_ctl.setRate(next));
+    _armHide();
+  }
+
+  /// Ligne sous le titre (maquette TV07) : qualité et langue de la source.
+  String? _sourceLine() {
+    final it = _current ?? widget.item;
+    final parts = <String>[
+      if (it.quality != Quality.unknown) qualityLabel(it.quality),
+      if (it.language != null && it.language != 'multi')
+        it.language!.toUpperCase(),
+    ];
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
+
   void _setControls(bool v) {
     if (_controls == v) return;
     setState(() => _controls = v);
@@ -966,7 +993,32 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                     Center(
                       child: Semantics(
                         label: context.l10n.buffering,
-                        child: CircularProgressIndicator(color: colors.accent),
+                        child: MediaQuery.sizeOf(context).width >= 1280
+                            // Maquette P05 : libellé seul, sans roue.
+                            ? ExcludeSemantics(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 28,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xCC0E1116),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    context.l10n.buffering,
+                                    style: TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontSize: 28,
+                                      height: 1.4,
+                                      color: colors.text.withValues(
+                                        alpha: 0.85,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : CircularProgressIndicator(color: colors.accent),
                       ),
                     ),
                   if (st.notice != null && !failed)
@@ -1010,6 +1062,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                           ignoring: !_controls,
                           child: _Controls(
                             title: _title,
+                            subtitle: _sourceLine(),
+                            rate: _rate,
+                            onSpeed: _cycleRate,
+                            onNext: _next == null
+                                ? null
+                                : () => unawaited(_playNext()),
                             state: st,
                             playNode: _playNode,
                             tracksNode: _tracksNode,
@@ -1043,8 +1101,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                     ),
                   if (_torrentActive && !failed)
                     PositionedDirectional(
-                      top: LumioSpacing.lg,
-                      end: LumioSpacing.lg,
+                      top: MediaQuery.sizeOf(context).width >= 1280
+                          ? 48
+                          : LumioSpacing.lg,
+                      end: MediaQuery.sizeOf(context).width >= 1280
+                          ? 48
+                          : LumioSpacing.lg,
                       child: ValueListenableBuilder<TorrentStatus?>(
                         valueListenable: _torrentStatus,
                         builder: (context, ts, child) {
@@ -1067,10 +1129,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                       onCancel: _cancelNext,
                     ),
                   if (_panel && _tracks != null && !failed)
-                    PositionedDirectional(
-                      top: 0,
-                      bottom: 0,
-                      end: 0,
+                    Positioned.fill(
                       child: TracksPanel(
                         controller: _tracks!,
                         onClose: _closePanel,
@@ -1109,26 +1168,110 @@ class _FailureView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.lumio;
+    final l = context.l10n;
+    final big = MediaQuery.sizeOf(context).width >= 1280;
+    // Maquette P10 : voile puis panneau centré de 1100, icône dans un rond de
+    // 96, titre 44, message, trois boutons centrés (« Réessayer » d'abord).
     return ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: tvScrim,
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // « Réessayer » reçoit le focus en premier (ordre de traversée).
-            StateView.error(message: message, onRetry: onRetry),
-            const SizedBox(height: LumioSpacing.md),
-            Wrap(
-              spacing: LumioSpacing.md,
+        child: Container(
+          width: big ? 1100 : null,
+          margin: big ? null : const EdgeInsets.all(LumioSpacing.lg),
+          padding: EdgeInsets.symmetric(
+            horizontal: big ? 48 : LumioSpacing.lg,
+            vertical: big ? 44 : LumioSpacing.lg,
+          ),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x80000000),
+                blurRadius: 80,
+                offset: Offset(0, 24),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                OutlinedButton(
-                  onPressed: onOther,
-                  child: Text(context.l10n.chooseOtherSource),
+                Container(
+                  width: 96,
+                  height: 96,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF2A2020),
+                  ),
+                  child: LumioIconView(
+                    LumioIcon.alert,
+                    size: 56,
+                    color: c.error,
+                  ),
                 ),
-                TextButton(onPressed: onBack, child: Text(context.l10n.back)),
+                const SizedBox(height: 20),
+                Semantics(
+                  header: true,
+                  liveRegion: true,
+                  child: Text(
+                    l.failGeneric,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontSize: big ? 44 : null,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: big ? 28 : 18,
+                    height: 1.4,
+                    color: c.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    // « Réessayer » reçoit le focus en premier.
+                    TvButton(
+                      label: l.retry,
+                      autofocus: true,
+                      height: 76,
+                      fontSize: 28,
+                      horizontalPadding: 40,
+                      onPressed: onRetry,
+                    ),
+                    TvButton(
+                      label: l.chooseOtherSource,
+                      kind: TvButtonKind.secondary,
+                      height: 76,
+                      fontSize: 28,
+                      horizontalPadding: 40,
+                      onPressed: onOther,
+                    ),
+                    TvButton(
+                      label: l.back,
+                      kind: TvButtonKind.ghost,
+                      height: 76,
+                      fontSize: 28,
+                      horizontalPadding: 40,
+                      onPressed: onBack,
+                    ),
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1138,6 +1281,10 @@ class _FailureView extends StatelessWidget {
 class _Controls extends StatelessWidget {
   const _Controls({
     required this.title,
+    required this.subtitle,
+    required this.rate,
+    required this.onSpeed,
+    required this.onNext,
     required this.state,
     required this.playNode,
     required this.tracksNode,
@@ -1151,6 +1298,10 @@ class _Controls extends StatelessWidget {
   });
 
   final String title;
+  final String? subtitle;
+  final double rate;
+  final VoidCallback onSpeed;
+  final VoidCallback? onNext;
   final PlayerState state;
   final FocusNode playNode;
   final FocusNode tracksNode;
@@ -1162,11 +1313,167 @@ class _Controls extends StatelessWidget {
   final ValueChanged<Duration> onSeekTo;
   final VoidCallback onTouch;
 
+  /// Disposition TV (maquette TV07) : titre en haut, barre de progression
+  /// puis boutons ronds −10 s / lecture / +10 s et pastilles en bas.
+  Widget _tvLayout(BuildContext context) {
+    final l = context.l10n;
+    final c = context.lumio;
+    final speed = l.playbackSpeed(_rateText(rate, l.localeName));
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 260,
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xE60E1116), Color(0x000E1116)],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(96, 56, 96, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Bricolage Grotesque',
+                      fontSize: 44,
+                      fontWeight: FontWeight.w700,
+                      fontVariations: const [FontVariation.weight(700)],
+                      color: c.text,
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 26,
+                        color: Color(0xFFC9D0DA),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 300,
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color(0xF20E1116), Color(0x000E1116)],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(96, 0, 96, 56),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _ProgressBar(
+                    state: state,
+                    big: true,
+                    onSeekBy: onSeekBy,
+                    onSeekTo: onSeekTo,
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _CtlButton(
+                        label: l.seekBackShort,
+                        semantic: l.seekBack10,
+                        onPressed: () => onSeekBy(-seekStep),
+                      ),
+                      const SizedBox(width: 32),
+                      _CtlButton(
+                        focusNode: playNode,
+                        semantic: state.isPlaying ? l.pause : l.play,
+                        diameter: 128,
+                        primary: true,
+                        icon: state.isPlaying
+                            ? LumioIcon.pauseSolid
+                            : LumioIcon.playSolid,
+                        onPressed: onPlayPause,
+                      ),
+                      const SizedBox(width: 32),
+                      _CtlButton(
+                        label: l.seekForwardShort,
+                        semantic: l.seekForward10,
+                        onPressed: () => onSeekBy(seekStep),
+                      ),
+                      if (onTracks != null) ...[
+                        const SizedBox(width: 32),
+                        _CtlButton(
+                          focusNode: tracksNode,
+                          label: l.tracksShort,
+                          semantic: l.tracksAndSubtitles,
+                          pill: true,
+                          onPressed: onTracks!,
+                        ),
+                      ],
+                      const SizedBox(width: 32),
+                      _CtlButton(label: speed, pill: true, onPressed: onSpeed),
+                      if (onNext != null) ...[
+                        const SizedBox(width: 32),
+                        _CtlButton(
+                          label: l.nextShort,
+                          semantic: l.playNow,
+                          pill: true,
+                          onPressed: onNext!,
+                        ),
+                      ],
+                      if (onCast != null) ...[
+                        const SizedBox(width: 32),
+                        _CtlButton(
+                          label: l.castShort,
+                          semantic: l.castTooltip,
+                          pill: true,
+                          onPressed: onCast!,
+                        ),
+                      ],
+                      if (onParty != null) ...[
+                        const SizedBox(width: 32),
+                        _CtlButton(
+                          label: l.partyShort,
+                          semantic: l.partyTooltip,
+                          pill: true,
+                          onPressed: onParty!,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.extension<LumioColors>() ?? LumioColors.dark;
     final big = MediaQuery.sizeOf(context).width >= 1280;
+    if (big) return _tvLayout(context);
     // Téléphone : écart réduit pour que cinq boutons tiennent sur la ligne.
     final gap = MediaQuery.sizeOf(context).width < 600
         ? LumioSpacing.sm
@@ -1270,6 +1577,74 @@ class _Controls extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Texte de vitesse : `1×`, `1,25×` (virgule en français).
+String _rateText(double r, String locale) {
+  final s = r == r.roundToDouble() ? '${r.toInt()}' : '$r';
+  return locale == 'fr' ? s.replaceAll('.', ',') : s;
+}
+
+/// Bouton du lecteur TV (maquette TV07 `.cb`) : rond de 104 (128 pour la
+/// lecture) ou pastille de 104 de haut, fond #0E1116 à 82 %, texte 30.
+class _CtlButton extends StatelessWidget {
+  const _CtlButton({
+    required this.onPressed,
+    this.label,
+    this.semantic,
+    this.icon,
+    this.diameter = 104,
+    this.primary = false,
+    this.pill = false,
+    this.focusNode,
+  });
+
+  final VoidCallback onPressed;
+  final String? label;
+  final String? semantic;
+  final LumioIcon? icon;
+  final double diameter;
+  final bool primary;
+  final bool pill;
+  final FocusNode? focusNode;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.lumio;
+    final fg = primary ? c.onAccent : c.text;
+    final radius = BorderRadius.circular(diameter / 2);
+    return FocusableCard(
+      focusNode: focusNode,
+      scale: 1.04,
+      borderRadius: radius,
+      semanticLabel: semantic ?? label,
+      onSelect: onPressed,
+      child: Container(
+        width: pill ? null : diameter,
+        height: diameter,
+        padding: pill ? const EdgeInsets.symmetric(horizontal: 36) : null,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: primary ? c.accent : const Color(0xD10E1116),
+          borderRadius: radius,
+        ),
+        child: icon != null
+            ? LumioIconView(icon!, size: 56, color: fg)
+            : Text(
+                label ?? '',
+                maxLines: 1,
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  fontVariations: const [FontVariation.weight(700)],
+                  color: fg,
+                  height: 1.2,
+                ),
+              ),
       ),
     );
   }
@@ -1387,11 +1762,20 @@ class _ProgressBarState extends State<_ProgressBar> {
         total <= 0 ? 0 : (d.inMilliseconds / total).clamp(0.0, 1.0);
     final track = widget.big ? 12.0 : 8.0;
     final handle = widget.big ? 32.0 : 20.0;
-    final text = theme.textTheme.titleMedium?.copyWith(color: colors.text);
+    final text = widget.big
+        ? TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 28,
+            fontWeight: FontWeight.w600,
+            fontVariations: const [FontVariation.weight(600)],
+            color: colors.text,
+          )
+        : theme.textTheme.titleMedium?.copyWith(color: colors.text);
+    final gap = widget.big ? 24.0 : LumioSpacing.md;
     return Row(
       children: [
         Text(formatClock(st.position), style: text),
-        const SizedBox(width: LumioSpacing.md),
+        SizedBox(width: gap),
         Expanded(
           child: Semantics(
             slider: true,
@@ -1429,26 +1813,57 @@ class _ProgressBarState extends State<_ProgressBar> {
                         clipBehavior: Clip.none,
                         children: [
                           _bar(w, track, colors.outline, 1),
-                          _bar(w, track, colors.textMuted, frac(st.buffered)),
+                          if (!widget.big)
+                            _bar(w, track, colors.textMuted, frac(st.buffered)),
                           _bar(w, track, colors.accent, frac(st.position)),
                           PositionedDirectional(
-                            start: (w - handle) * frac(st.position),
-                            child: AnimatedContainer(
-                              duration: MediaQuery.of(context).disableAnimations
-                                  ? Duration.zero
-                                  : LumioMotion.focus,
-                              width: handle,
-                              height: handle,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: colors.accent,
-                                border: Border.all(
-                                  color: _focused
-                                      ? colors.focusRing
-                                      : Colors.transparent,
-                                  width: lumioFocusWidth,
+                            start: widget.big
+                                ? w * frac(st.position) - handle / 2
+                                : (w - handle) * frac(st.position),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
+                              children: [
+                                if (widget.big && _focused)
+                                  // Anneau de focus hors du rond (4 dp, à 4 dp).
+                                  Positioned(
+                                    left: -8,
+                                    top: -8,
+                                    right: -8,
+                                    bottom: -8,
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: colors.focusRing,
+                                          width: lumioFocusWidth,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                AnimatedContainer(
+                                  duration:
+                                      MediaQuery.of(context).disableAnimations
+                                      ? Duration.zero
+                                      : LumioMotion.focus,
+                                  width: handle,
+                                  height: handle,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: widget.big
+                                        ? colors.focusRing
+                                        : colors.accent,
+                                    border: widget.big
+                                        ? null
+                                        : Border.all(
+                                            color: _focused
+                                                ? colors.focusRing
+                                                : Colors.transparent,
+                                            width: lumioFocusWidth,
+                                          ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                         ],
@@ -1460,7 +1875,7 @@ class _ProgressBarState extends State<_ProgressBar> {
             ),
           ),
         ),
-        const SizedBox(width: LumioSpacing.md),
+        SizedBox(width: gap),
         Text(formatClock(st.duration), style: text),
       ],
     );

@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/ui/theme.dart';
 
-/// Panneau latéral droit du lecteur (620 de large) : pistes audio, sous-titres
+/// Panneau du lecteur à droite (maquette P23, 780 de large) : pistes audio, sous-titres
 /// (internes et d'addons), décalage, taille et fond. Entièrement utilisable au
 /// D-pad ; l'ordre de focus suit l'ordre de lecture (audio, sous-titres,
 /// décalage −/+, taille, fond). Retour ferme le panneau.
@@ -21,7 +23,7 @@ class TracksPanel extends StatefulWidget {
   final TracksController controller;
   final VoidCallback onClose;
 
-  static const width = 620.0;
+  static const width = 780.0;
 
   @override
   State<TracksPanel> createState() => _TracksPanelState();
@@ -65,11 +67,15 @@ class _TracksPanelState extends State<TracksPanel> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.extension<LumioColors>() ?? LumioColors.dark;
+    final l = context.l10n;
     final audio = c.backend.audioTracks;
     final subs = c.backend.subtitleTracks;
     final selAudio = c.backend.selectedAudioId;
     final selSub = c.backend.selectedSubtitleId;
-    final heading = theme.textTheme.titleMedium?.copyWith(color: colors.accent);
+    final size = MediaQuery.sizeOf(context);
+    final big = size.width >= 1280;
+    final sizes = SubtitleSize.values;
+    final sizeIndex = sizes.indexOf(c.style.size);
     return FocusScope(
       node: _scope,
       autofocus: true,
@@ -86,113 +92,133 @@ class _TracksPanelState extends State<TracksPanel> {
         policy: ReadingOrderTraversalPolicy(),
         child: Semantics(
           container: true,
-          label: context.l10n.tracksAndSubtitles,
-          child: Material(
-            color: colors.surface,
-            borderRadius: const BorderRadiusDirectional.horizontal(
-              start: Radius.circular(32),
-            ),
-            child: SizedBox(
-              width: TracksPanel.width,
-              child: SafeArea(
-                child: ListView(
-                  padding: const EdgeInsets.all(LumioSpacing.lg),
-                  children: [
-                    Text(
-                      context.l10n.tracksAndSubtitles,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: colors.text,
+          label: l.tracksAndSubtitles,
+          // Voile de la maquette P23 : rgba(6,8,12,.5), panneau à droite.
+          child: ColoredBox(
+            color: const Color(0x8006080C),
+            child: Align(
+              alignment: AlignmentDirectional.topEnd,
+              child: Padding(
+                padding: EdgeInsetsDirectional.only(
+                  top: big ? 90 : 16,
+                  end: big ? 96 : 16,
+                  bottom: big ? 90 : 16,
+                  start: big ? 0 : 16,
+                ),
+                child: Material(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(32),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox(
+                    width: big ? TracksPanel.width : 560,
+                    child: SingleChildScrollView(
+                      clipBehavior: Clip.none,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 48,
+                        vertical: 44,
                       ),
-                    ),
-                    const SizedBox(height: LumioSpacing.md),
-                    Text(context.l10n.audio, style: heading),
-                    if (audio.isEmpty) _Hint(context.l10n.noAudioTrack),
-                    for (final t in audio)
-                      _Option(
-                        key: ValueKey('audio-${t.id}'),
-                        autofocus: t == audio.first,
-                        label: t.label,
-                        selected: t.id == selAudio,
-                        onPressed: () => c.selectAudio(t),
-                      ),
-                    const SizedBox(height: LumioSpacing.md),
-                    Text(context.l10n.subtitles, style: heading),
-                    _Option(
-                      key: const ValueKey('sub-off'),
-                      autofocus: audio.isEmpty,
-                      label: context.l10n.subtitlesOff,
-                      selected: selSub == null && c.addonSelectedId == null,
-                      onPressed: () => c.selectSubtitle(null),
-                    ),
-                    for (final t in subs)
-                      _Option(
-                        key: ValueKey('sub-${t.id}'),
-                        label: t.label,
-                        selected: t.id == selSub && c.addonSelectedId == null,
-                        onPressed: () => c.selectSubtitle(t),
-                      ),
-                    for (final s in c.addonSubtitles)
-                      _Option(
-                        key: ValueKey('addon-${s.id}'),
-                        label: context.l10n.addonSubtitle(s.lang),
-                        selected: c.addonSelectedId == s.id,
-                        onPressed: () => c.selectAddonSubtitle(s),
-                      ),
-                    const SizedBox(height: LumioSpacing.md),
-                    Text(context.l10n.subtitleDelay, style: heading),
-                    Row(
-                      children: [
-                        _Step(
-                          key: const ValueKey('delay-minus'),
-                          label: context.l10n.subtitleAdvance,
-                          icon: Icons.remove,
-                          onPressed: () => c.changeDelay(-subtitleDelayStepMs),
-                        ),
-                        Expanded(
-                          child: Semantics(
-                            liveRegion: true,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Semantics(
+                            header: true,
                             child: Text(
-                              formatDelay(c.delayMs),
-                              key: const ValueKey('delay-value'),
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: colors.text,
+                              l.tracksAndSubtitles,
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontSize: 44,
+                                height: 1.15,
                               ),
                             ),
                           ),
-                        ),
-                        _Step(
-                          key: const ValueKey('delay-plus'),
-                          label: context.l10n.subtitleRetard,
-                          icon: Icons.add,
-                          onPressed: () => c.changeDelay(subtitleDelayStepMs),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: LumioSpacing.md),
-                    Text(context.l10n.subtitleSize, style: heading),
-                    Wrap(
-                      spacing: LumioSpacing.sm,
-                      children: [
-                        for (final s in SubtitleSize.values)
-                          _Option(
-                            key: ValueKey('size-${s.name}'),
-                            label: s.label,
-                            selected: c.style.size == s,
-                            compact: true,
-                            onPressed: () => c.setSize(s),
+                          TvSectionLabel(l.audio, top: 20),
+                          if (audio.isEmpty) _Hint(l.noAudioTrack),
+                          _Chips([
+                            for (final t in audio)
+                              _Chip(
+                                key: ValueKey('audio-${t.id}'),
+                                autofocus: t == audio.first,
+                                label: t.label,
+                                selected: t.id == selAudio,
+                                onPressed: () => c.selectAudio(t),
+                              ),
+                          ]),
+                          TvSectionLabel(l.subtitles, top: 16),
+                          _Chips([
+                            _Chip(
+                              key: const ValueKey('sub-off'),
+                              autofocus: audio.isEmpty,
+                              label: l.subtitlesOff,
+                              selected:
+                                  selSub == null && c.addonSelectedId == null,
+                              onPressed: () => c.selectSubtitle(null),
+                            ),
+                            for (final t in subs)
+                              _Chip(
+                                key: ValueKey('sub-${t.id}'),
+                                label: t.label,
+                                selected:
+                                    t.id == selSub && c.addonSelectedId == null,
+                                onPressed: () => c.selectSubtitle(t),
+                              ),
+                            for (final s in c.addonSubtitles)
+                              _Chip(
+                                key: ValueKey('addon-${s.id}'),
+                                label: l.addonSubtitle(s.lang),
+                                selected: c.addonSelectedId == s.id,
+                                onPressed: () => c.selectAddonSubtitle(s),
+                              ),
+                          ]),
+                          TvSectionLabel(l.subtitleAppearance, top: 16),
+                          _StepRow(
+                            label: l.subtitleSize,
+                            value: '${_sizePercent(c.style.size)} %',
+                            valueKey: const ValueKey('size-value'),
+                            minusKey: const ValueKey('size-minus'),
+                            plusKey: const ValueKey('size-plus'),
+                            minusLabel: l.subtitleSmaller,
+                            plusLabel: l.subtitleLarger,
+                            onMinus: sizeIndex > 0
+                                ? () => c.setSize(sizes[sizeIndex - 1])
+                                : null,
+                            onPlus: sizeIndex < sizes.length - 1
+                                ? () => c.setSize(sizes[sizeIndex + 1])
+                                : null,
                           ),
-                      ],
+                          _StepRow(
+                            label: l.subtitleDelay,
+                            value: formatDelay(c.delayMs),
+                            valueKey: const ValueKey('delay-value'),
+                            minusKey: const ValueKey('delay-minus'),
+                            plusKey: const ValueKey('delay-plus'),
+                            minusLabel: l.subtitleAdvance,
+                            plusLabel: l.subtitleRetard,
+                            onMinus: () => c.changeDelay(-subtitleDelayStepMs),
+                            onPlus: () => c.changeDelay(subtitleDelayStepMs),
+                          ),
+                          _ToggleRow(
+                            key: const ValueKey('bg-toggle'),
+                            label: l.opaqueBackground,
+                            on: c.style.opaqueBackground,
+                            onPressed: c.toggleBackground,
+                          ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: TvButton(
+                              key: const ValueKey('tracks-close'),
+                              label: l.close,
+                              kind: TvButtonKind.secondary,
+                              height: 76,
+                              fontSize: 28,
+                              horizontalPadding: 40,
+                              onPressed: widget.onClose,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: LumioSpacing.md),
-                    _Option(
-                      key: const ValueKey('bg-toggle'),
-                      label: context.l10n.opaqueBackground,
-                      selected: c.style.opaqueBackground,
-                      toggle: true,
-                      onPressed: c.toggleBackground,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -202,6 +228,10 @@ class _TracksPanelState extends State<TracksPanel> {
     );
   }
 }
+
+/// Taille en pourcentage de la taille moyenne (M = 100 %).
+int _sizePercent(SubtitleSize s) =>
+    (s.mpvFontSize * 100 / SubtitleSize.m.mpvFontSize).round();
 
 /// Décalage lisible : « +0,3 s », « −1,2 s », « 0 s ».
 String formatDelay(int ms) {
@@ -225,139 +255,222 @@ class _Hint extends StatelessWidget {
   }
 }
 
-class _Option extends StatefulWidget {
-  const _Option({
+/// Pastilles à la suite (maquette P23 : 12 dp d'écart).
+class _Chips extends StatelessWidget {
+  const _Chips(this.children);
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.all(4),
+    child: Wrap(spacing: 12, runSpacing: 12, children: children),
+  );
+}
+
+/// Pastille de choix (P23 `.chip`) : ambre si choisie, gris sinon.
+class _Chip extends StatelessWidget {
+  const _Chip({
     required this.label,
     required this.selected,
     required this.onPressed,
-    this.compact = false,
-    this.toggle = false,
     this.autofocus = false,
     super.key,
   });
 
-  final bool autofocus;
   final String label;
   final bool selected;
-  final bool compact;
-  final bool toggle;
+  final bool autofocus;
   final VoidCallback onPressed;
 
   @override
-  State<_Option> createState() => _OptionState();
+  Widget build(BuildContext context) => Semantics(
+    selected: selected,
+    child: TvButton(
+      label: label,
+      kind: selected ? TvButtonKind.primary : TvButtonKind.secondary,
+      height: 56,
+      fontSize: 26,
+      horizontalPadding: 24,
+      autofocus: autofocus,
+      onPressed: onPressed,
+    ),
+  );
 }
 
-class _OptionState extends State<_Option> {
-  bool _focused = false;
+/// Ligne « libellé  −  valeur  + » (P23) : 88 de haut, libellé de 360.
+class _StepRow extends StatelessWidget {
+  const _StepRow({
+    required this.label,
+    required this.value,
+    required this.valueKey,
+    required this.minusKey,
+    required this.plusKey,
+    required this.minusLabel,
+    required this.plusLabel,
+    required this.onMinus,
+    required this.onPlus,
+  });
+
+  final String label;
+  final String value;
+  final Key valueKey;
+  final Key minusKey;
+  final Key plusKey;
+  final String minusLabel;
+  final String plusLabel;
+  final VoidCallback? onMinus;
+  final VoidCallback? onPlus;
 
   @override
   Widget build(BuildContext context) {
-    final colors =
-        Theme.of(context).extension<LumioColors>() ?? LumioColors.dark;
-    final icon = widget.toggle
-        ? (widget.selected ? Icons.toggle_on : Icons.toggle_off)
-        : (widget.selected ? Icons.check_circle : Icons.circle_outlined);
-    return Semantics(
-      button: true,
-      selected: widget.selected,
-      toggled: widget.toggle ? widget.selected : null,
-      label: widget.label,
-      child: ExcludeSemantics(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            autofocus: widget.autofocus,
-            onTap: widget.onPressed,
-            onFocusChange: (v) => setState(() => _focused = v),
-            child: Container(
-              constraints: BoxConstraints(
-                minHeight: lumioTouchMin,
-                minWidth: widget.compact ? 72 : 0,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: LumioSpacing.md,
-                vertical: LumioSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: _focused ? colors.surfaceFocus : colors.surfaceRaised,
-                border: Border.all(
-                  color: _focused ? colors.focusRing : Colors.transparent,
-                  width: lumioFocusWidth,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: widget.compact
-                    ? MainAxisSize.min
-                    : MainAxisSize.max,
-                children: [
-                  Icon(
-                    icon,
-                    color: widget.selected ? colors.accent : colors.textMuted,
-                  ),
-                  const SizedBox(width: LumioSpacing.sm),
-                  Flexible(
+    TextStyle style(double size) => TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: size,
+      fontWeight: FontWeight.w700,
+      fontVariations: const [FontVariation.weight(700)],
+      color: context.lumio.text,
+    );
+    Widget step(
+      Key k,
+      String sign,
+      String semantic,
+      VoidCallback? f, [
+      double w = 96,
+    ]) => SizedBox(
+      width: w,
+      child: TvButton(
+        key: k,
+        label: sign,
+        semanticLabel: semantic,
+        kind: TvButtonKind.secondary,
+        height: 72,
+        fontSize: 28,
+        horizontalPadding: 0,
+        onPressed: f,
+      ),
+    );
+    // Petit écran (téléphone) : libellé au-dessus, commandes dessous.
+    final compact = MediaQuery.sizeOf(context).width < 1280;
+    if (compact) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: style(20)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                step(minusKey, '−', minusLabel, onMinus),
+                Expanded(
+                  child: Semantics(
+                    liveRegion: true,
                     child: Text(
-                      widget.label,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: colors.text),
+                      value,
+                      key: valueKey,
+                      textAlign: TextAlign.center,
+                      style: style(24),
                     ),
                   ),
-                ],
+                ),
+                step(plusKey, '+', plusLabel, onPlus),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+    return SizedBox(
+      height: 88,
+      child: Row(
+        children: [
+          // 360 + 96 + 200 + 96 + marges dépassent les 684 du panneau : comme
+          // dans la maquette (flex), libellé, boutons et valeur rétrécissent.
+          Expanded(child: Text(label, style: style(28))),
+          const SizedBox(width: 20),
+          step(minusKey, '−', minusLabel, onMinus, 80),
+          const SizedBox(width: 20),
+          SizedBox(
+            width: 166,
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                value,
+                key: valueKey,
+                textAlign: TextAlign.center,
+                style: style(34),
               ),
             ),
           ),
-        ),
+          const SizedBox(width: 20),
+          step(plusKey, '+', plusLabel, onPlus, 80),
+        ],
       ),
     );
   }
 }
 
-class _Step extends StatefulWidget {
-  const _Step({
+/// Ligne à interrupteur (P23 `.row` + `.tg` 84 x 46).
+class _ToggleRow extends StatelessWidget {
+  const _ToggleRow({
     required this.label,
-    required this.icon,
+    required this.on,
     required this.onPressed,
     super.key,
   });
 
   final String label;
-  final IconData icon;
+  final bool on;
   final VoidCallback onPressed;
 
   @override
-  State<_Step> createState() => _StepState();
-}
-
-class _StepState extends State<_Step> {
-  bool _focused = false;
-
-  @override
   Widget build(BuildContext context) {
-    final colors =
-        Theme.of(context).extension<LumioColors>() ?? LumioColors.dark;
+    final c = context.lumio;
     return Semantics(
-      button: true,
-      label: widget.label,
-      child: ExcludeSemantics(
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: widget.onPressed,
-          onFocusChange: (v) => setState(() => _focused = v),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _focused ? colors.surfaceFocus : colors.surfaceRaised,
-              border: Border.all(
-                color: _focused ? colors.focusRing : Colors.transparent,
-                width: lumioFocusWidth,
+      toggled: on,
+      child: TvTile(
+        minHeight: 88,
+        horizontalPadding: 24,
+        semanticLabel: label,
+        onSelect: onPressed,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  fontVariations: const [FontVariation.weight(700)],
+                  color: c.text,
+                ),
               ),
             ),
-            child: Icon(widget.icon, color: colors.text),
-          ),
+            Container(
+              width: 84,
+              height: 46,
+              decoration: BoxDecoration(
+                color: on ? c.accent : c.outline,
+                borderRadius: BorderRadius.circular(23),
+              ),
+              child: Align(
+                alignment: on ? Alignment.centerRight : Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: c.text,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

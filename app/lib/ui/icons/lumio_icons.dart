@@ -41,15 +41,22 @@ enum LumioIcon {
   ),
   pause('<p M8 5v14M16 5v14>'),
   replay('<p M5 12a7 7 0 107-7H8M8 2L5 5l3 3>'),
-  alert('<p M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5v.5>');
+  alert('<p M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5v.5>'),
 
-  const LumioIcon(this.spec, {this.join = true});
+  /// Variantes pleines du lecteur (TV07 : pause = deux barres arrondies).
+  pauseSolid('<r 6 5 4 14 1><r 14 5 4 14 1>', fill: true),
+  playSolid('<p M7 5l12 7-12 7z>', fill: true);
+
+  const LumioIcon(this.spec, {this.join = true, this.fill = false});
 
   /// Éléments : `<p d>` chemin, `<c cx cy r>` cercle, `<r x y w h [rx]>`.
   final String spec;
 
   /// Jonctions et extrémités arrondies (stroke-linejoin / linecap round).
   final bool join;
+
+  /// Forme pleine (`fill`) au lieu d'un contour.
+  final bool fill;
 }
 
 /// Dessine une [LumioIcon] à [size] dp dans [color].
@@ -90,7 +97,7 @@ class _IconPainter extends CustomPainter {
     final k = size.width / 24;
     canvas.scale(k);
     final paint = Paint()
-      ..style = PaintingStyle.stroke
+      ..style = icon.fill ? PaintingStyle.fill : PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..color = color
       ..strokeCap = icon.join ? StrokeCap.round : StrokeCap.butt
