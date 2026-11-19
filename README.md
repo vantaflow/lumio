@@ -1,15 +1,16 @@
 # Lumio
 
-Client média libre, multi-plateformes, compatible avec le protocole d'addons
-de Stremio. Lumio est **Android uniquement** (Android TV et téléphone),
-sans synchronisation ni compte.
+Client média libre compatible avec le protocole d'addons de Stremio, pensé
+pour la télécommande. Lumio est **Android uniquement** (Android TV et
+téléphone), sans synchronisation ni compte.
 
-> **Statut : toutes les phases du plan sont réalisées, la validation sur
-> appareil reste à faire.** Les suites automatiques sont vertes (voir
-> [le rapport de vérification](docs/rapports/2026-11-18-verification-finale.md)),
-> mais les essais sur la box Android TV et les services réels (Trakt, Jellyfin,
-> DLNA, serveur des salles de watch-party déployé) n'ont pas
-> encore été vérifiés. Aucune version publiée n'est disponible pour l'instant.
+> **Statut (19 novembre 2026) : fonctions et interface TV terminées, validation
+> sur la box en cours.** Toutes les phases du plan sont réalisées, l'interface
+> TV a été refaite écran par écran d'après les maquettes, et un test global de
+> bout en bout a été joué sur émulateur
+> ([compte rendu](docs/rapports/2026-11-19-test-global-emulateur.md)). La
+> vérification sur une vraie box Android TV est en cours (fluidité du lecteur,
+> HEVC, portail depuis le téléphone). Aucune version publiée pour l'instant.
 
 Lumio est un projet indépendant, **non affilié à Stremio**. « Compatible avec
 le protocole d'addons » décrit uniquement l'interopérabilité technique.
@@ -77,12 +78,26 @@ retirées) ; toutes sont réalisées.
 | 0 — Socle | Monorepo et CI, addons simulés, backend de comptes, mises à jour, spike torrents | Terminée |
 | 1 — MVP | Protocole d'addons, lecteur, focus TV, profils, accueil, recherche, torrents | Terminée |
 | 2 — « En mieux » | Synchronisation, chiffrement, import Stremio, confidentialité, santé et tri des sources | Terminée |
-| 3 — Extensions | Dossiers locaux, Jellyfin, Trakt, Simkl, calendrier, DLNA, watch-party | Terminée |
-| Validation sur appareil | Box Android TV, bureau, services réels | À faire |
+| 3 — Extensions | Dossiers locaux, Jellyfin, Trakt, calendrier, DLNA, watch-party | Terminée |
+| Recentrage | Android seul ; synchronisation, comptes, Simkl et versions bureau retirés | Terminé |
+| Interface TV | Refonte complète d'après les maquettes (68 écrans et pop-ups), audit à la télécommande | Terminée |
+| Addons | Catalogue intégré (stremio-addons.net + addons officiels), portail web servi par la TV, réglage des addons depuis le téléphone | Terminé |
+| Test global | Parcours complet sur émulateur : addons, lecture, sous-titres, reprise, séries, anime | Terminé |
+| Validation sur la box | Écrans, fluidité, HEVC, portail, torrents 1080p, endurance 8 h | En cours |
+| À venir | VPN WireGuard intégré (configuré depuis le portail), guides pas à pas, Trakt sur le portail | Prévu |
 
 ## Captures d'écran
 
-À venir, quand l'interface existera.
+Captures réelles prises sur une box Android TV (1920×1080) :
+[docs/captures/box/](docs/captures/box/).
+
+| Accueil | Fiche et sources | Lecteur |
+|---|---|---|
+| ![Accueil](docs/captures/box/TV05-accueil-rempli.png) | ![Fiche](docs/captures/box/TV06-fiche-flux-direct.png) | ![Lecteur](docs/captures/box/TV07-lecteur-commandes.png) |
+| **Recherche** | **Réglages** | **Gérer depuis le téléphone** |
+| ![Recherche](docs/captures/box/TV12-recherche-resultats.png) | ![Réglages](docs/captures/box/TV33-reglages-sauvegarde.png) | ![Portail](docs/captures/box/TV09-gerer-depuis-telephone.png) |
+
+Les maquettes de chaque écran sont dans [docs/design/maquettes/](docs/design/maquettes/).
 
 ## Installation rapide
 
@@ -161,16 +176,17 @@ votre pays. Voir [docs/AVERTISSEMENT.md](docs/AVERTISSEMENT.md).
 
 ## English summary
 
-Lumio is a free (GPL-3.0), cross-platform media client compatible with the
-Stremio addon protocol, Android only (Android TV and phone), no sync and no
-account (Flutter). Features: addon aggregation, built-in torrent streaming
+Lumio is a free (GPL-3.0) media client compatible with the Stremio addon
+protocol, Android only (Android TV and phone), no sync and no account
+(Flutter), with a built-in addon catalogue and a local web portal served by
+the TV to add and configure addons from a phone. Features: addon aggregation, built-in torrent streaming
 (libtorrent), local folders, Jellyfin, profiles with PIN and parental control,
 local backup, Stremio import, torrent
 privacy (VPN), addon health and source ranking with fallback, Trakt,
 release calendar, DLNA cast, watch-party.
 
-**Status: all planned phases are done; device validation is pending** (Android
-TV box runs, real third-party services). No release yet.
+**Status: features and TV interface done, end-to-end test passed on an
+emulator, validation on a real Android TV box in progress.** No release yet.
 
 Lumio ships no addon and no content, includes no scraper, and is not affiliated
 with Stremio. You are responsible for the sources you add and for complying
