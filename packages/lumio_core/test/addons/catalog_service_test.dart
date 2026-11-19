@@ -281,12 +281,7 @@ void main() {
       () async {
         Map<String, Object?> e(String id, List types, List res) => {
           'transportUrl': 'https://$id.example/manifest.json',
-          'manifest': {
-            'id': id,
-            'name': id,
-            'types': types,
-            'resources': res,
-          },
+          'manifest': {'id': id, 'name': id, 'types': types, 'resources': res},
         };
         site.routes['/addonscollection.json'] = jsonEncode([
           e('kitsu', ['anime', 'movie'], ['catalog', 'meta', 'subtitles']),

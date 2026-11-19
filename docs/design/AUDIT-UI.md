@@ -219,3 +219,10 @@ Compte rendu complet : `docs/rapports/2026-11-19-test-global-emulateur.md`.
 - Corrigé, tests verts, NON revérifié à l'écran : piste interne « fr · auto » masquée dans Pistes ; Retour ne part plus deux fois (la fiche ouverte depuis la recherche ramenait à l'accueil ; un Retour sur l'accueil proposait aussitôt « Quitter Lumio ? » ; au retour d'une fiche l'onglet « Accueil » prenait le focus).
 - Anime : Anime Kitsu absent des puces « Officiels » et « Anime » du catalogue (installé par lien) ; catalogues Kitsu sur l'accueil, fiche et épisodes affichés ; flux de test pour `kitsu:` prêt (addon de test) ; lecture et reprise d'un épisode d'anime non jouées (émulateur instable).
 - Ouvert : « Anime Kitsu » devrait figurer dans la puce « Anime » du catalogue (celle-ci ne propose que des addons de torrents) ; au démarrage à froid de l'émulateur l'écran « Set up Google TV » vole le focus (hors application).
+
+### Passe 7 (2026-11-19, soir)
+- Corrigé et vérifié à l'écran : puce « Anime » du catalogue (Anime Kitsu en tête, via la collection communautaire) ; piste « auto » absente de Pistes avec des sous-titres d'addon ; lecture, épisode suivant et reprise d'un épisode d'anime (« REPRENDRE · É4 », « Reprise à 0:18 ») ; un Retour = un retour (lecteur, fiche, accueil, « Quitter Lumio ? » au second niveau seulement) ; focus de retour sur la carte d'origine depuis l'accueil.
+- Corrigé (test d'abord) et vérifié : lecteur, une flèche commandes visibles et focus sur la racine ne quitte plus le lecteur (le focus partait sur l'accueil resté dessous).
+- Tests verts, NON revérifié à l'écran : Retour et focus d'origine depuis la recherche et depuis « Ma liste ».
+- Ouvert : le lecteur masque les commandes avec un fondu et la première touche suivante ne fait que les réveiller (±10 s pour gauche/droite) ; acceptable, à confirmer sur une vraie télécommande.
+
