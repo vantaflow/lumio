@@ -93,3 +93,9 @@ Correctifs (tests verts : core 531, app 741, analyze et format propres) :
 
 ### Reste à faire (prochaine passe, nouvel émulateur)
 APK de 617e09e déjà construit sur la machine IA (`~/lumio-build/src/app/build/app/outputs/flutter-apk/app-release.apk`). À jouer : F (français appliqué, taille et fond visibles), G, H série, I, anime.
+
+
+## Passe 5 : sous-titres regroupés, vérifications (émulateur 127.0.0.1:5601)
+- Étape 1 (APK de 617e09e) : sous-titre français de l'addon de test affiché à l'écran (« C'est bientôt fini. Chut… / Bonne nuit, Scales. ») : BOM corrigé confirmé. La taille et le fond opaque n'ont pas pu être revérifiés avec l'ancien panneau (Apparence en bas d'une liste de 100 lignes) ; à voir avec le nouveau panneau (étape 2).
+- Étape 2 (ce lot, ce255e8) : panneau Pistes réorganisé : Audio, Apparence (Taille en mots Petite / Normale / Grande / Très grande, Décalage, Fond opaque), puis Sous-titres. Les sous-titres d'addons sont regroupés par langue (noms en clair : Albanais, Croate, Estonien… via `languageDisplayName` ; codes à 3 lettres d'OpenSubtitles ramenés à ISO 639-1 dans `normalizeLang`), langues préférées (sous-titre mémorisé du titre, réglage Lecture, langue de l'app) en tête, 5 entrées par langue au maximum (la ligne choisie reste visible), puis « Autres langues… » (bascule, le focus ne bouge pas) qui déplie les autres langues sous un titre chacune. Un fichier refusé par le moteur (erreur libmpv de fichier externe dans les 1,5 s) n'est plus marqué « choisi », n'est pas mémorisé et affiche « Sous-titre illisible ». Tests : core 534, app 750, analyze et format propres.
+- Arrêt de l'émulateur : à 13:25:59 juste après `adb install -r` de l'APK de ce lot, emu-keeper.log note « arrêt de l'émulateur, code 0 » (pas de SIGKILL), relance 13:26:05.
