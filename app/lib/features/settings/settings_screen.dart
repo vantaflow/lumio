@@ -598,16 +598,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l = context.l10n;
     return _Page(
       key: const ValueKey('page:tracking'),
-      title: l.settingsCatTracking,
+      title: l.trackingTitle,
       subtitle: l.trackingHint,
-      children: [
-        _Tile(
-          id: 'tracking',
-          title: l.trackingTitle,
-          subtitle: l.trackingHint,
-          onTap: () => _push(const TrackingScreen()),
-        ),
-      ],
+      headGap: 42,
+      children: const [TrackingBody(inPage: true)],
     );
   }
 

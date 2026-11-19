@@ -51,8 +51,8 @@ enum LumioIcon {
   inbox('<p M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z>'),
   alert('<p M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5v.5>'),
   close('<p M6 6l12 12M18 6L6 18>'),
-  arrowUp('<p M12 19V5M5 12l7-7 7 7>'),
-  arrowDown('<p M12 5v14M5 12l7 7 7-7>'),
+  arrowUp('<p M12 19V5M6 11l6-6 6 6>'),
+  arrowDown('<p M12 5v14M6 13l6 6 6-6>'),
   mic('<r 9 3 6 11 3><p M5 11a7 7 0 0014 0M12 18v3>'),
 
   /// Sauvegarde (TV33), import de fichier (TV32), Trakt (TV25).

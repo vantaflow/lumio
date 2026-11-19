@@ -195,9 +195,13 @@ class TvTile extends StatelessWidget {
     this.color,
     this.enabled = true,
     this.horizontalPadding = 32,
+    this.radius = 22,
   });
 
   final double horizontalPadding;
+
+  /// Rayon des coins (22 ; 18 pour les lignes du calendrier TV21).
+  final double radius;
   final Widget child;
   final VoidCallback? onSelect;
   final VoidCallback? onLongPress;
@@ -217,7 +221,7 @@ class TvTile extends StatelessWidget {
       focusNode: focusNode,
       scale: 1.015,
       enabled: enabled && onSelect != null,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(radius),
       semanticLabel: semanticLabel,
       onSelect: onSelect ?? () {},
       onLongPress: onLongPress,
@@ -230,7 +234,7 @@ class TvTile extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: color ?? c.surface,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(radius),
         ),
         child: child,
       ),

@@ -2906,6 +2906,12 @@ abstract class AppLocalizations {
   /// **'Suivi (Trakt)'**
   String get trackingTitle;
 
+  /// No description provided for @trackingNoConnectHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun bouton « Connecter » tant que l\'application n\'est pas configurée.'**
+  String get trackingNoConnectHint;
+
   /// No description provided for @trackingHint.
   ///
   /// In fr, this message translates to:
@@ -3587,7 +3593,7 @@ abstract class AppLocalizations {
   /// No description provided for @libraryCount.
   ///
   /// In fr, this message translates to:
-  /// **'{count, plural, =1{1 titre} other{{count} titres}}'**
+  /// **'{count, plural, =0{0 titre} =1{1 titre} other{{count} titres}}'**
   String libraryCount(int count);
 
   /// No description provided for @customizeHomeHint.

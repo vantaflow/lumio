@@ -1693,6 +1693,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get trackingTitle => 'Suivi (Trakt)';
 
   @override
+  String get trackingNoConnectHint =>
+      'Aucun bouton « Connecter » tant que l\'application n\'est pas configurée.';
+
+  @override
   String get trackingHint => 'Enregistrez vos lectures sur votre compte';
 
   @override
@@ -2087,6 +2091,7 @@ class AppLocalizationsFr extends AppLocalizations {
       locale: localeName,
       other: '$count titres',
       one: '1 titre',
+      zero: '0 titre',
     );
     return '$_temp0';
   }

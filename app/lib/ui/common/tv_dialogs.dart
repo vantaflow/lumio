@@ -25,6 +25,8 @@ class TvPanel extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 48, vertical: 44),
     this.titleSize = 44,
     this.fitActions = false,
+    this.gap = 20,
+    this.actionsGap = 12,
     this.contentPadding = const EdgeInsets.symmetric(
       horizontal: 12,
       vertical: 12,
@@ -34,6 +36,12 @@ class TvPanel extends StatelessWidget {
   /// Marge autour du contenu défilant (12 : laisse la place à l'anneau de
   /// focus ; nulle pour un simple texte).
   final EdgeInsetsGeometry contentPadding;
+
+  /// Espace sous le titre (20 ; 14 et 10 dans les fenêtres de TV33).
+  final double gap;
+
+  /// Espace au-dessus des actions (12).
+  final double actionsGap;
 
   /// Réduit la rangée d'actions si elle dépasse (boutons sans flex).
   final bool fitActions;
@@ -82,7 +90,7 @@ class TvPanel extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: gap),
                   Flexible(
                     child: SingleChildScrollView(
                       clipBehavior: Clip.none,
@@ -95,7 +103,7 @@ class TvPanel extends StatelessWidget {
                     ),
                   ),
                   if (actions.isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: actionsGap),
                     () {
                       final row = Row(
                         mainAxisSize: fitActions

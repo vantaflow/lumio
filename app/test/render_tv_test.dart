@@ -36,6 +36,13 @@ import 'package:lumio/features/settings/settings_screen.dart'
 import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/features/tracking/tracking_providers.dart';
+import 'package:lumio/features/library/library_screen.dart';
+import 'package:lumio/features/settings/backup_section.dart'
+    show ImportPassphraseDialog;
+import 'package:lumio/ui/common/tv_dialogs.dart' show showTvPanel;
+import 'package:lumio/features/calendar/calendar_providers.dart';
+import 'package:lumio/features/calendar/calendar_screen.dart';
+import 'package:lumio/features/home/row_editor_screen.dart';
 import 'package:lumio/features/tracking/tracking_screen.dart';
 import 'package:lumio/providers.dart';
 
@@ -624,6 +631,266 @@ void main() {
     await _save(t, k2, 'r-TV51');
     await h2.close();
   });
+
+  testWidgets('lot 6 : listes', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+    MetaPreview m(String n, {String type = 'movie'}) => MetaPreview(
+      id: n,
+      type: type,
+      name: n,
+      sourceAddonId: 'alpha',
+      certification: 'G',
+    );
+    final names = [
+      'Sintel',
+      'Big Buck Bunny',
+      'Tears of Steel',
+      'Cosmos Laundromat',
+      'Spring',
+      'Elephants Dream',
+      'Agent 327',
+      'Coffee Run',
+      'Hero',
+      'Glass Half',
+      'Caminandes 3',
+      'Charge',
+      'Sprite Fright',
+      'Wing It!',
+    ];
+    Future<void> shot(
+      String name,
+      Widget screen,
+      List<Override> extra, {
+      Future<void> Function(AppHarness h)? after,
+    }) async {
+      final h = AppHarness(t);
+      final key = GlobalKey();
+      await h.pump(
+        RepaintBoundary(key: key, child: screen),
+        extra: extra,
+      );
+      if (after != null) await after(h);
+      await _save(t, key, name);
+      await h.close();
+    }
+
+    Future<void> right(AppHarness h, int n) async {
+      for (var i = 0; i < n; i++) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await t.pump(const Duration(milliseconds: 300));
+      }
+    }
+
+    await shot('r-TV20', const LibraryScreen(), [
+      libraryProvider.overrideWith(
+        (ref) => Stream.value([for (final n in names) m(n)]),
+      ),
+    ], after: (h) => right(h, 2));
+    await shot('r-TV41', const LibraryScreen(), [
+      libraryProvider.overrideWith((ref) => Stream.value(const [])),
+    ]);
+    final now = DateTime.now();
+    CalendarEntry entry(String n, DateTime? d, int? s, int? e) => CalendarEntry(
+      series: Meta(id: n, type: 'series', name: n),
+      video: d == null && s == null
+          ? null
+          : Video(
+              id: '$n:$s:$e',
+              title: s == null ? 'Épisode 12' : 'Épisode $e',
+              season: s,
+              episode: e,
+              released: d,
+            ),
+      date: d,
+    );
+    final today = DateTime(now.year, now.month, now.day, 20);
+    final calOverrides = <Override>[
+      calendarClockProvider.overrideWithValue(() => now),
+      calendarProvider.overrideWith(
+        (ref) async => CalendarData(
+          entries: [
+            entry('Cosmos Laundromat', today, 2, 4),
+            entry('Spring', today.add(const Duration(days: 1)), 1, 7),
+            entry(
+              'Sintel',
+              today.add(const Duration(days: 1, hours: 1)),
+              null,
+              12,
+            ),
+            entry('Tears of Steel', today.add(const Duration(days: 2)), 3, 1),
+            entry('Big Buck Bunny', null, null, null),
+          ],
+          previews: {
+            for (final n in [
+              'Cosmos Laundromat',
+              'Spring',
+              'Sintel',
+              'Tears of Steel',
+              'Big Buck Bunny',
+            ])
+              n: m(n, type: 'series'),
+          },
+        ),
+      ),
+      notifyReleasesProvider.overrideWith(() => _RNotify(true)),
+    ];
+    await shot('r-TV21', const CalendarScreen(), calOverrides);
+    await shot('r-TV42', const CalendarScreen(), [
+      calendarClockProvider.overrideWithValue(() => now),
+      calendarProvider.overrideWith(
+        (ref) async => const CalendarData(entries: [], previews: {}),
+      ),
+      notifyReleasesProvider.overrideWith(() => _RNotify(false)),
+    ]);
+    await shot('r-TV42b', const CalendarScreen(), [
+      calendarClockProvider.overrideWithValue(() => now),
+      calendarProvider.overrideWith(
+        (ref) async => CalendarData(
+          entries: const [],
+          previews: {'a': m('a', type: 'series')},
+        ),
+      ),
+      notifyReleasesProvider.overrideWith(() => _RNotify(false)),
+    ]);
+    await shot('r-TV22', const RowEditorScreen(), [
+      addonsProvider.overrideWith(
+        () => _RAddons([
+          AddonManifest(
+            id: 'alpha',
+            version: '1.0.0',
+            name: 'Cinemeta',
+            types: const ['movie', 'series'],
+            resources: const [AddonResource('catalog')],
+            catalogs: [
+              CatalogDecl(type: 'movie', id: 'top', name: 'Populaires'),
+              CatalogDecl(type: 'series', id: 'top', name: 'Populaires'),
+            ],
+            transportUrl: Uri.parse('https://alpha.example.com/m.json'),
+          ),
+        ]),
+      ),
+    ]);
+  });
+
+  testWidgets('lot 6 : suivi et sauvegarde', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+
+    Future<void> shot(
+      String name,
+      Widget screen,
+      List<Override> extra, {
+      Future<void> Function(AppHarness h)? after,
+    }) async {
+      final h = AppHarness(t);
+      final key = GlobalKey();
+      await h.pump(screen, extra: extra, boundary: key);
+      if (after != null) await after(h);
+      await _save(t, key, name);
+      await h.close();
+    }
+
+    final noTrakt = <Override>[
+      secretStoreProvider.overrideWithValue(MemorySecretStore()),
+      traktCredentialsProvider.overrideWithValue((id: '', secret: '')),
+    ];
+    await shot(
+      'r-TV48',
+      const SettingsScreen(),
+      noTrakt,
+      after: (h) async {
+        await t.tap(find.byKey(const ValueKey('rail:tracking')));
+        await h.settle();
+      },
+    );
+    await shot(
+      'r-TV26',
+      const TraktDeviceAuthScreen(profileId: 'default'),
+      [
+        secretStoreProvider.overrideWithValue(MemorySecretStore()),
+        traktCredentialsProvider.overrideWithValue((id: 'c', secret: 's')),
+        trackingFetcherProvider.overrideWithValue(_RTrakt()),
+        trackingSleepProvider.overrideWithValue(
+          (_) => Completer<void>().future,
+        ),
+      ],
+      after: (h) => h.settle(3),
+    );
+    await shot(
+      'r-P07',
+      const JellyfinServersScreen(),
+      [jellyfinServersProvider.overrideWith(_RJellyfinFail.new)],
+      after: (h) async {
+        await t.tap(find.byKey(const ValueKey('jellyfin-add')));
+        await h.settle();
+        _fill(
+          t,
+          find.byKey(const ValueKey('jellyfin-url')),
+          'https://jellyfin.exemple.fr',
+        );
+        _fill(t, find.byKey(const ValueKey('jellyfin-user')), 'lilou');
+        _fill(t, find.byKey(const ValueKey('jellyfin-pass')), 'motdepasse');
+        await t.tap(find.byKey(const ValueKey('jellyfin-connect')));
+        await h.settle();
+      },
+    );
+    await shot(
+      'r-TV33',
+      const SettingsScreen(),
+      const [],
+      after: (h) async {
+        await t.tap(find.byKey(const ValueKey('rail:backup')));
+        await h.settle();
+      },
+    );
+    await shot(
+      'r-TV33b',
+      const SettingsScreen(),
+      const [],
+      after: (h) async {
+        await t.tap(find.byKey(const ValueKey('rail:backup')));
+        await h.settle();
+        await t.tap(find.byKey(const ValueKey('setting:backupExport')));
+        await h.settle();
+      },
+    );
+    await shot(
+      'r-P14',
+      const SettingsScreen(),
+      const [],
+      after: (h) async {
+        await t.tap(find.byKey(const ValueKey('rail:playback')));
+        await h.settle();
+        final ctx = t.element(find.byType(Scaffold).first);
+        unawaited(
+          showTvPanel<String>(
+            ctx,
+            builder: (_) => const ImportPassphraseDialog(wrong: true),
+          ),
+        );
+        await h.settle();
+        _fill(t, find.byType(TextField).last, 'motdepasse12');
+        await h.settle(2);
+      },
+    );
+  });
+}
+
+/// Remplit un champ (en mode TV les champs sont en lecture seule : on écrit
+/// dans leur contrôleur).
+void _fill(WidgetTester t, Finder f, String text) {
+  final field = f.evaluate().first.widget is TextField
+      ? f.evaluate().first.widget as TextField
+      : t.widget<TextField>(
+          find.descendant(of: f, matching: find.byType(TextField)).first,
+        );
+  field.controller!.text = text;
+}
+
+class _RNotify extends NotifyReleasesController {
+  _RNotify(this.v);
+  final bool v;
+  @override
+  Future<bool> build() async => v;
 }
 
 class _RAddons extends AddonsController {
@@ -778,4 +1045,40 @@ class _RJellyfin extends JellyfinServersController {
       userName: 'lilou',
     ),
   ];
+}
+
+class _RTrakt implements HttpPostFetcher {
+  @override
+  Future<FetchResponse> post(
+    Uri url, {
+    required List<int> body,
+    Map<String, String> headers = const {},
+    int maxBytes = 5 * 1024 * 1024,
+    Duration timeout = const Duration(seconds: 8),
+    void Function(Uri target)? guard,
+  }) async => FetchResponse(
+    status: 200,
+    body: utf8.encode(
+      jsonEncode({
+        'device_code': 'dev-1',
+        'user_code': '5B7C9D2E',
+        'verification_url': 'https://trakt.tv/activate',
+        'expires_in': 600,
+        'interval': 5,
+      }),
+    ),
+  );
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+class _RJellyfinFail extends _RJellyfin {
+  @override
+  Future<JellyfinServer> add(
+    Uri url,
+    String user,
+    String password, {
+    bool confirmedInsecure = false,
+  }) => Future.error(const JellyfinAuthException());
 }

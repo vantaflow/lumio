@@ -813,6 +813,7 @@
   "jellyfinErrRedirect": "The server redirects to another address: enter the final address.",
   "jellyfinErrAddress": "Invalid server address.",
   "trackingTitle": "Tracking (Trakt)",
+  "trackingNoConnectHint": "No “Connect” button until the app is configured.",
   "trackingHint": "Record what you watch on your account",
   "trackingTrakt": "Trakt",
   "trackingNotConfigured": "Not configured: the Trakt application credentials are missing. Nothing is sent.",

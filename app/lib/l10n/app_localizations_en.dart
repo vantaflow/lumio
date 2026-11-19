@@ -1679,6 +1679,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trackingTitle => 'Tracking (Trakt)';
 
   @override
+  String get trackingNoConnectHint =>
+      'No “Connect” button until the app is configured.';
+
+  @override
   String get trackingHint => 'Record what you watch on your account';
 
   @override

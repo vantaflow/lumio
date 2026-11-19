@@ -782,6 +782,10 @@ class _AddState extends ConsumerState<JellyfinAddDialog> {
       title: l.jellyfinAddServer,
       width: 920,
       fitActions: true,
+      // P07 : 20 sous le titre et 20 + 12 avant les boutons (12 déjà dans la
+      // marge de contenu).
+      gap: 8,
+      actionsGap: 20,
       onBack: _busy ? null : () => Navigator.pop(context, false),
       children: [
         TvLabeledField(
@@ -806,7 +810,8 @@ class _AddState extends ConsumerState<JellyfinAddDialog> {
         ),
         if (_error != null)
           Padding(
-            padding: const EdgeInsets.only(top: 10),
+            // P07 : marge 10 + écart 20 de la colonne.
+            padding: const EdgeInsets.only(top: 30),
             child: Semantics(
               liveRegion: true,
               child: Row(
@@ -825,6 +830,7 @@ class _AddState extends ConsumerState<JellyfinAddDialog> {
                         fontFamily: 'Manrope',
                         fontSize: 26,
                         fontWeight: FontWeight.w600,
+                        fontVariations: const [FontVariation.weight(600)],
                         color: context.lumio.error,
                       ),
                     ),

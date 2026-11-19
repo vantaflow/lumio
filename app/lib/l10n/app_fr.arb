@@ -1028,6 +1028,7 @@
   "jellyfinErrRedirect": "Le serveur redirige vers une autre adresse : saisissez l'adresse finale.",
   "jellyfinErrAddress": "Adresse du serveur invalide.",
   "trackingTitle": "Suivi (Trakt)",
+  "trackingNoConnectHint": "Aucun bouton « Connecter » tant que l'application n'est pas configurée.",
   "trackingHint": "Enregistrez vos lectures sur votre compte",
   "trackingTrakt": "Trakt",
   "trackingNotConfigured": "Non configuré : les identifiants de l'application Trakt sont absents. Rien n'est envoyé.",
@@ -1186,7 +1187,7 @@
   "quitTitle": "Quitter Lumio ?",
   "quitBody": "Vous reviendrez à l'écran d'accueil de la box.",
   "quitAction": "Quitter",
-  "libraryCount": "{count, plural, =1{1 titre} other{{count} titres}}",
+  "libraryCount": "{count, plural, =0{0 titre} =1{1 titre} other{{count} titres}}",
   "@libraryCount": {
     "placeholders": {
       "count": {

@@ -540,12 +540,11 @@ void main() {
       final h = AppHarness(t);
       await h.pump(const SettingsScreen(), extra: over());
       await t.tap(find.byKey(const ValueKey('rail:tracking')));
-      await t.pump(const Duration(milliseconds: 100));
+      await h.settle();
       expect(find.text('Suivi (Trakt)'), findsWidgets);
-      expect(
-        find.byKey(const ValueKey('setting:tracking'), skipOffstage: false),
-        findsOneWidget,
-      );
+      // TV48 : la page du rail affiche directement la carte du service.
+      expect(find.byKey(const ValueKey('tracking-state')), findsOneWidget);
+      expect(find.byKey(const ValueKey('tracking-connect')), findsOneWidget);
       await h.close();
     });
 

@@ -220,7 +220,8 @@ void main() {
       expect(dayLabel(l, fr, inDays(1), now), 'Demain');
       final far = DateTime(2026, 12, 25);
       final label = dayLabel(l, fr, far, DateTime(2026, 11, 18));
-      expect(label.toLowerCase(), contains('vendredi'));
+      // Maquette TV21 : jour de la semaine abrégé (« ven. 25 décembre »).
+      expect(label.toLowerCase(), contains('ven.'));
       expect(label.toLowerCase(), contains('décembre'));
     });
   });

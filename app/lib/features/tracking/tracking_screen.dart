@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/tracking_repository.dart' show trackerIds, traktId;
 import 'package:lumio/features/tracking/tracking_providers.dart';
@@ -60,8 +61,28 @@ Key _key(String base, String trackerId) =>
 /// Réglages « Suivi (Trakt) » du profil actif : une carte par service
 /// (état du compte, connexion par code d'appareil), file d'envoi,
 /// autorisation parentale pour un profil enfant.
-class TrackingScreen extends ConsumerWidget {
+class TrackingScreen extends StatelessWidget {
   const TrackingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    // Maquette TV25 : en-tête de 152, cartes côte à côte (gap 32).
+    return TvScreen(
+      title: l.trackingTitle,
+      subtitle: l.trackingHint,
+      child: const TrackingBody(),
+    );
+  }
+}
+
+/// Contenu du suivi, partagé par l'écran [TrackingScreen] (TV25 : cartes côte
+/// à côte) et par la page « Suivi » du rail des Réglages ([inPage], TV48 :
+/// cartes empilées pleine largeur).
+class TrackingBody extends ConsumerWidget {
+  const TrackingBody({super.key, this.inPage = false});
+
+  final bool inPage;
 
   Future<void> _connect(
     BuildContext context,
@@ -109,72 +130,93 @@ class TrackingScreen extends ConsumerWidget {
       }
     }
 
-    // Maquette TV25 : en-tête de 152, cartes côte à côte (gap 32).
-    return TvScreen(
-      title: l.trackingTitle,
-      subtitle: l.trackingHint,
-      child: () {
-        final failed = statuses.values.where((s) => s.hasError);
-        if (failed.isNotEmpty) {
-          return StateView.error(
-            message: l10nForError(l, failed.first.error!),
-            onRetry: refresh,
-          );
+    Widget framed(Widget w) => inPage ? SizedBox(height: 360, child: w) : w;
+    final failed = statuses.values.where((s) => s.hasError);
+    if (failed.isNotEmpty) {
+      return framed(
+        StateView.error(
+          message: l10nForError(l, failed.first.error!),
+          onRetry: refresh,
+        ),
+      );
+    }
+    if (statuses.values.any((s) => !s.hasValue)) {
+      return framed(const StateView.loading());
+    }
+    final all = {for (final e in statuses.entries) e.key: e.value.value!};
+    final anyConfigured = all.values.any((s) => s.configured);
+    // Réglage commun à tous les services : lu sur le premier.
+    final shared = all.values.first;
+    final allowed = !kid || shared.kidAllowed;
+    Widget card(int i, String id) => _TrackerCard(
+      trackerId: id,
+      status: all[id]!,
+      allowed: allowed,
+      page: inPage,
+      showKid: kid && anyConfigured && i == 0,
+      onKid: (v) async {
+        await repo.setKidAllowed(profileId, v);
+        refresh();
+      },
+      pending: anyConfigured ? shared.pending : 0,
+      onRetry: () async {
+        await service.flush();
+        refresh();
+        if (context.mounted) _tell(context, l.trackingRetried);
+      },
+      autofocus: id == trackerIds.first || !all[trackerIds.first]!.configured,
+      onConnect: () => _connect(context, ref, id),
+      onDisconnect: () async {
+        await service.disconnect(profileId, id);
+        refresh();
+        if (context.mounted) {
+          _tell(context, _namesOf(l, id).disconnected);
         }
-        if (statuses.values.any((s) => !s.hasValue)) {
-          return const StateView.loading();
-        }
-        final all = {for (final e in statuses.entries) e.key: e.value.value!};
-        final anyConfigured = all.values.any((s) => s.configured);
-        // Réglage commun à tous les services : lu sur le premier.
-        final shared = all.values.first;
-        final allowed = !kid || shared.kidAllowed;
-        return ListView(
-          clipBehavior: Clip.none,
-          padding: EdgeInsets.zero,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final (i, id) in trackerIds.indexed) ...[
-                  if (i > 0) const SizedBox(width: 32),
-                  Expanded(
-                    child: _TrackerCard(
-                      trackerId: id,
-                      status: all[id]!,
-                      allowed: allowed,
-                      showKid: kid && anyConfigured && i == 0,
-                      onKid: (v) async {
-                        await repo.setKidAllowed(profileId, v);
-                        refresh();
-                      },
-                      pending: anyConfigured ? shared.pending : 0,
-                      onRetry: () async {
-                        await service.flush();
-                        refresh();
-                        if (context.mounted) _tell(context, l.trackingRetried);
-                      },
-                      autofocus:
-                          id == trackerIds.first ||
-                          !all[trackerIds.first]!.configured,
-                      onConnect: () => _connect(context, ref, id),
-                      onDisconnect: () async {
-                        await service.disconnect(profileId, id);
-                        refresh();
-                        if (context.mounted) {
-                          _tell(context, _namesOf(l, id).disconnected);
-                        }
-                      },
-                    ),
-                  ),
-                ],
-                // Un seul service : la carte n'occupe que la moitié (TV25).
-                if (trackerIds.length == 1) const Spacer(),
-              ],
-            ),
+      },
+    );
+    if (inPage) {
+      // Maquette TV48 : cartes empilées pleine largeur (gap 20), puis la
+      // note d'absence de bouton quand rien n'est configuré.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (i, id) in trackerIds.indexed) ...[
+            if (i > 0) const SizedBox(height: 20),
+            card(i, id),
           ],
-        );
-      }(),
+          if (!anyConfigured)
+            Padding(
+              padding: const EdgeInsets.only(top: 28),
+              child: Text(
+                l.trackingNoConnectHint,
+                key: const ValueKey('tracking-no-connect'),
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 24,
+                  height: 1.35,
+                  color: context.lumio.textMuted,
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+    return ListView(
+      clipBehavior: Clip.none,
+      padding: EdgeInsets.zero,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final (i, id) in trackerIds.indexed) ...[
+              if (i > 0) const SizedBox(width: 32),
+              Expanded(child: card(i, id)),
+            ],
+            // Un seul service : la carte n'occupe que la moitié (TV25).
+            if (trackerIds.length == 1) const Spacer(),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -193,8 +235,11 @@ class _TrackerCard extends StatelessWidget {
     required this.onKid,
     required this.pending,
     required this.onRetry,
+    this.page = false,
   });
 
+  /// Dans la page du rail des Réglages (TV48).
+  final bool page;
   final String trackerId;
   final TrackingStatus status;
   final bool allowed;
@@ -231,6 +276,60 @@ class _TrackerCard extends StatelessWidget {
       height: 1.4,
       color: Color(0xFFC9D0DA),
     );
+    if (page && !s.configured) {
+      // Maquette TV48 : titre 40, pastille d'état, texte 28 en 600.
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 32),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    n.title,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge!.copyWith(fontSize: 40),
+                  ),
+                ),
+                Container(
+                  height: 56,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.surfaceFocus,
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Text(
+                    l.trackingNotConnected,
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      fontVariations: [FontVariation.weight(700)],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              stateText,
+              key: _key('tracking-state', trackerId),
+              style: md.copyWith(
+                fontWeight: FontWeight.w600,
+                fontVariations: const [FontVariation.weight(600)],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(36),
       decoration: BoxDecoration(
@@ -274,7 +373,11 @@ class _TrackerCard extends StatelessWidget {
           const SizedBox(height: 18),
           ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 84),
-            child: Text(stateText, key: _key('tracking-state', trackerId), style: md),
+            child: Text(
+              stateText,
+              key: _key('tracking-state', trackerId),
+              style: md,
+            ),
           ),
           if (s.configured && pending > 0) ...[
             const SizedBox(height: 18),
@@ -504,7 +607,8 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
     // Maquette TV26 : colonne de 760 et QR blanc, centrés (gap 120).
     return TvScreen(
       title: _namesOf(l, widget.trackerId).authTitle,
-      child: Center(
+      child: Align(
+        alignment: Alignment.topCenter,
         child: SingleChildScrollView(
           child: _error != null
               ? Column(
@@ -554,25 +658,32 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            Semantics(
-                              label: code.userCode,
-                              child: ExcludeSemantics(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 44,
-                                    vertical: 36,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: c.surface,
-                                    borderRadius: BorderRadius.circular(28),
-                                  ),
-                                  child: Text(
-                                    code.userCode,
-                                    key: const ValueKey('tracking-auth-code'),
-                                    style: text.titleLarge!.copyWith(
-                                      fontSize: 132,
-                                      height: 1,
-                                      letterSpacing: 14,
+                            // Maquette TV26 : le cadre du code garde sa largeur
+                            // (864 pour 8 caractères) même au-delà de la colonne.
+                            OverflowBox(
+                              maxWidth: double.infinity,
+                              alignment: Alignment.centerLeft,
+                              fit: OverflowBoxFit.deferToChild,
+                              child: Semantics(
+                                label: code.userCode,
+                                child: ExcludeSemantics(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 44,
+                                      vertical: 36,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: c.surface,
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                    child: Text(
+                                      code.userCode,
+                                      key: const ValueKey('tracking-auth-code'),
+                                      style: text.titleLarge!.copyWith(
+                                        fontSize: 132,
+                                        height: 1,
+                                        letterSpacing: 14,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -582,12 +693,15 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
                             Row(
                               children: [
                                 SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 4,
-                                    color: c.accent,
-                                    backgroundColor: c.outline,
+                                  width: 36,
+                                  height: 36,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 4,
+                                      color: c.accent,
+                                      backgroundColor: c.outline,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 16),

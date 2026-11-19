@@ -176,7 +176,11 @@ class AppHarness {
     addTearDown(container.dispose);
   }
 
-  Future<void> pump(Widget home, {List<Override> extra = const []}) async {
+  Future<void> pump(
+    Widget home, {
+    List<Override> extra = const [],
+    GlobalKey? boundary,
+  }) async {
     _prepare(extra);
     await t.pumpWidget(
       UncontrolledProviderScope(
@@ -192,7 +196,13 @@ class AppHarness {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            builder: (context, child) => LumioThemeScope(tv: tv, child: child!),
+            builder: (context, child) {
+              final scoped = LumioThemeScope(tv: tv, child: child!);
+              // Rendus PNG : la zone capturée englobe aussi les fenêtres.
+              return boundary == null
+                  ? scoped
+                  : RepaintBoundary(key: boundary, child: scoped);
+            },
             home: home,
           ),
         ),

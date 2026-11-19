@@ -75,9 +75,7 @@ class BackupFlows {
           width: 900,
           fitActions: true,
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
-          children: [
-            LinearProgressIndicator(color: context.lumio.accent),
-          ],
+          children: [LinearProgressIndicator(color: context.lumio.accent)],
         ),
       ),
     );
@@ -101,6 +99,10 @@ class BackupFlows {
         width: 900,
         fitActions: true,
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        // Maquette TV33 : titre, texte et boutons espacés de 14 (+ 12).
+        gap: 14,
+        actionsGap: 26,
+        contentPadding: EdgeInsets.zero,
         onBack: () => Navigator.pop(ctx),
         children: [_body(ctx, l.backupSecretsWarning)],
         actions: [
@@ -155,10 +157,8 @@ class BackupFlows {
     }
   }
 
-  Future<String?> _askNewPassphrase() => showTvPanel<String>(
-    context,
-    builder: (_) => const _NewPassphraseDialog(),
-  );
+  Future<String?> _askNewPassphrase() =>
+      showTvPanel<String>(context, builder: (_) => const NewPassphraseDialog());
 
   // --- Import ---------------------------------------------------------------
 
@@ -195,7 +195,7 @@ class BackupFlows {
   Future<String?> _askImportPassphrase({required bool wrong}) =>
       showTvPanel<String>(
         context,
-        builder: (_) => _ImportPassphraseDialog(wrong: wrong),
+        builder: (_) => ImportPassphraseDialog(wrong: wrong),
       );
 
   Future<void> import() async {
@@ -239,6 +239,9 @@ class BackupFlows {
           width: 900,
           fitActions: true,
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+          gap: 14,
+          actionsGap: 26,
+          contentPadding: EdgeInsets.zero,
           onBack: () => Navigator.pop(ctx, false),
           children: [_body(ctx, l.backupConfirmBody)],
           actions: [
@@ -324,6 +327,9 @@ class BackupFlows {
         width: 900,
         fitActions: true,
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        gap: 10,
+        actionsGap: 22,
+        contentPadding: EdgeInsets.zero,
         onBack: () => Navigator.pop(ctx),
         children: [for (final s in lines) _body(ctx, s)],
         actions: [
@@ -356,6 +362,9 @@ class BackupFlows {
         width: 900,
         fitActions: true,
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        gap: 14,
+        actionsGap: 26,
+        contentPadding: EdgeInsets.zero,
         onBack: () => Navigator.pop(ctx, false),
         children: [_body(ctx, l.backupPrivateBody(a.name, a.host))],
         actions: [
@@ -392,14 +401,14 @@ class BackupFlows {
 
 /// Phrase de la sauvegarde : saisie confirmée, 12 caractères au moins. Les
 /// champs vivent dans l'état du dialogue (libérés après sa fermeture animée).
-class _NewPassphraseDialog extends StatefulWidget {
-  const _NewPassphraseDialog();
+class NewPassphraseDialog extends StatefulWidget {
+  const NewPassphraseDialog({super.key});
 
   @override
-  State<_NewPassphraseDialog> createState() => _NewPassphraseDialogState();
+  State<NewPassphraseDialog> createState() => NewPassphraseDialogState();
 }
 
-class _NewPassphraseDialogState extends State<_NewPassphraseDialog> {
+class NewPassphraseDialogState extends State<NewPassphraseDialog> {
   final _phrase = TextEditingController();
   final _confirm = TextEditingController();
   String? _error;
@@ -482,17 +491,16 @@ class _NewPassphraseDialogState extends State<_NewPassphraseDialog> {
 
 /// Phrase d'une sauvegarde chiffrée à importer ; [wrong] affiche l'erreur
 /// après un essai raté.
-class _ImportPassphraseDialog extends StatefulWidget {
-  const _ImportPassphraseDialog({required this.wrong});
+class ImportPassphraseDialog extends StatefulWidget {
+  const ImportPassphraseDialog({super.key, required this.wrong});
 
   final bool wrong;
 
   @override
-  State<_ImportPassphraseDialog> createState() =>
-      _ImportPassphraseDialogState();
+  State<ImportPassphraseDialog> createState() => ImportPassphraseDialogState();
 }
 
-class _ImportPassphraseDialogState extends State<_ImportPassphraseDialog> {
+class ImportPassphraseDialogState extends State<ImportPassphraseDialog> {
   final _phrase = TextEditingController();
 
   @override

@@ -1038,6 +1038,7 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w600,
+                    fontVariations: const [FontVariation.weight(600)],
                     color: c.error,
                   ),
                 ),

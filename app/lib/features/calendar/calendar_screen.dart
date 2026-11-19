@@ -7,6 +7,7 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -60,10 +61,12 @@ String dayLabel(AppLocalizations l, Locale locale, DateTime day, DateTime now) {
   ).difference(DateTime.utc(today.year, today.month, today.day)).inDays;
   if (diff == 0) return l.calendarToday;
   if (diff == 1) return l.calendarTomorrow;
+  // Maquette TV21 : « ven. 20 novembre ».
   try {
-    return DateFormat.MMMMEEEEd(locale.toLanguageTag()).format(day);
+    final tag = locale.toLanguageTag();
+    return '${DateFormat.E(tag).format(day)} ${DateFormat.MMMMd(tag).format(day)}';
   } on Object {
-    return DateFormat.MMMMEEEEd().format(day);
+    return '${DateFormat.E().format(day)} ${DateFormat.MMMMd().format(day)}';
   }
 }
 
@@ -138,6 +141,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           TvSwitchTile(
             key: const ValueKey('calendar-notify'),
+            minHeight: 116,
             autofocus: remembered == null || remembered == 'notify',
             title: l.calendarNotify,
             subtitle: syncFailed ? l.calendarNotifyError : l.calendarNotifyHint,
@@ -203,10 +207,11 @@ class _EntryList extends ConsumerWidget {
         final preview = data.previews[e.series.id];
         rows.add(
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.zero,
             child: TvTile(
               key: ValueKey(id),
               minHeight: 92,
+              radius: 18,
               autofocus: remembered == id,
               semanticLabel: e.series.name,
               onFocusChange: (f) {
@@ -223,13 +228,14 @@ class _EntryList extends ConsumerWidget {
                         ? l.calendarUnknownEntry
                         : episodeLabel(l, e.video!),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 28,
                       color: context.lumio.textMuted,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 36,
+                  const SizedBox(width: 24),
+                  LumioIconView(
+                    LumioIcon.chevronAlt,
+                    size: 32,
                     color: context.lumio.textMuted,
                   ),
                 ],
@@ -239,9 +245,6 @@ class _EntryList extends ConsumerWidget {
         );
       }
     }
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 24, top: 4),
-      children: rows,
-    );
+    return ListView(padding: const EdgeInsets.only(bottom: 24), children: rows);
   }
 }

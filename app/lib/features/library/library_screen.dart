@@ -37,11 +37,11 @@ class LibraryScreen extends ConsumerWidget {
     } else {
       // Maquette TV20 : 7 colonnes de 220, titres sous les affiches.
       body = GridView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 256,
-          mainAxisExtent: 450,
-          crossAxisSpacing: 28,
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 7,
+          mainAxisExtent: 432,
+          crossAxisSpacing: 36,
           mainAxisSpacing: 16,
         ),
         itemCount: items.length,
@@ -56,7 +56,14 @@ class LibraryScreen extends ConsumerWidget {
     }
     return TvScreen(
       title: context.l10n.myList,
-      subtitle: items.isEmpty ? null : context.l10n.libraryCount(items.length),
+      subtitle: lib.hasValue && !lib.hasError
+          ? context.l10n.libraryCount(items.length)
+          : null,
+      // Maquette TV20 : 7 × 220 + 6 × 36 = 1756 depuis x = 96 (dépasse de 28
+      // dans la marge droite) ; 12 dp de réserve de chaque côté pour l'anneau.
+      padding: items.isEmpty || lib.hasError || !lib.hasValue
+          ? null
+          : const EdgeInsets.fromLTRB(84, 0, 56, 48),
       child: body,
     );
   }

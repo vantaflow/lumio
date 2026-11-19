@@ -24,20 +24,20 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | Téléphone · Ajout d'addon | `M03-Ajout.dc.html` | — téléphone |
 | Bureau · Accueil | `D01-Accueil.dc.html` | — hors cible (Android TV) |
 | Téléphone · Page web de la box | `M04-PageWebBox.dc.html` | cycle ajout d'addon (après la refonte) |
-| TV 20 · Ma liste | `TV20-MaListe.dc.html` | à reprendre : refait sans comparaison |
-| TV 21 · Calendrier des sorties | `TV21-Calendrier.dc.html` | à reprendre : refait sans comparaison |
-| TV 22 · Personnaliser l'accueil | `TV22-PersonnaliserAccueil.dc.html` | à reprendre : refait sans comparaison |
+| TV 20 · Ma liste | `TV20-MaListe.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV20.png) — à vérifier sur la box ; 7 colonnes de 220 (gap 36, déborde de 28 dans la marge droite comme la maquette), lignes de 448 ; affiche absente = pavé neutre (la maquette dessine un dégradé avec le titre : donnée d'affiche) ; focus initial sur le bouton Retour (la maquette montre le 3e titre focalisé) |
+| TV 21 · Calendrier des sorties | `TV21-Calendrier.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV21.png) — à vérifier sur la box ; ligne d'interrupteur 116, lignes de 92 jointives (rayon 18), chevron SVG, jour « ven. 20 novembre » ; 1 à 2 px d'écart cumulé par groupe de jours (interligne des titres de jour) |
+| TV 22 · Personnaliser l'accueil | `TV22-PersonnaliserAccueil.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV22.png) — à vérifier sur la box ; lignes de 100, flèches SVG de la maquette, bouton Masquer/Afficher de 180 en 600 ; rangées = celles de l'app au lieu de celles de la maquette |
 | TV 23 · Compte et synchronisation | `TV23-CompteSynchro.dc.html` | — retiré (synchro supprimée) |
 | TV 24 · Phrase secrète | `TV24-PhraseSecrete.dc.html` | — retiré (synchro supprimée) |
 | TV 25 · Suivi Trakt et Simkl | `TV25-Suivi.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV25.png) — à vérifier sur la box ; cartes dans l'écran Suivi ; Simkl absent de l'app (Trakt seul) ; réglage parental non rendu (profil adulte) |
-| TV 26 · Code d'appareil Trakt | `TV26-TraktCode.dc.html` | fait en code (écran refait selon TV26) — rendu non produit, à vérifier sur la box |
+| TV 26 · Code d'appareil Trakt | `TV26-TraktCode.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV26.png) — à vérifier sur la box ; colonne alignée en haut (200), cadre du code à largeur naturelle (864), pastille d'attente 36 ; adresse affichée « https://trakt.tv/activate » (donnée renvoyée par Trakt) au lieu de « trakt.tv/activate » |
 | TV 27 · Regarder ensemble | `TV27-WatchParty.dc.html` | à faire : écran Regarder ensemble encore en Material (deux colonnes TV27 à écrire) ; visible seulement avec PARTY_SERVER_URL |
 | TV 28 · Jellyfin · serveurs et navigation | `TV28-Jellyfin.dc.html` | partiel : liste des serveurs refaite (TvScreen, lignes 96, corbeille) ; navigation des bibliothèques (volet droit) et fiche encore en Material |
 | TV 29 · Fiche Jellyfin | `TV29-JellyfinFiche.dc.html` | à faire : fiche Jellyfin encore en Material |
 | TV 30 · Dossiers locaux | `TV30-DossiersLocaux.dc.html` | à vérifier sur la box : cmp box (scratchpad/refonte4/cmp-dl.png) montrait en-tête non aligné à droite et bouton d'analyse trop clair, corrigés (TvScreen + fond surface) ; lignes conformes |
 | TV 31 · Fiche locale | `TV31-FicheLocale.dc.html` | à vérifier sur la box : cmp (scratchpad/refonte4/cmp-fl.png) sans écart hors données, 1-2 px d'écart vertical du titre |
 | TV 32 · Import depuis un autre client | `TV32-ImportStremio.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV32.png) — à vérifier sur la box ; maquette = états composites (fichier chargé, progression, bilan) |
-| TV 33 · Sauvegarde | `TV33-Sauvegarde.dc.html` | partiel : lignes avec icônes et panneaux/dialogues refaits (TvPanel) ; la maquette est un écran seul « Réglages · Sauvegarde », l'app garde le rail des Réglages (TV10/TV47) ; pas de rendu |
+| TV 33 · Sauvegarde | `TV33-Sauvegarde.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV33.png et cmp-TV33b.png) — à vérifier sur la box ; ÉCART DOCUMENTÉ : la maquette est un écran seul « Réglages · Sauvegarde » (lignes à gauche, fenêtres à droite) ; l'app garde le rail des Réglages (TV10/TV47), lignes en pleine largeur et fenêtres (export, rapport) centrées sur le voile ; fenêtres au gabarit TV33 (900, marges 40, écarts 14/10) |
 | TV 34 · À propos | `TV34-APropos.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV34.png, largeur de texte 1308 corrigée ensuite) — à vérifier sur la box |
 | TV 35 · Gestion des profils | `TV35-ProfilsGestion.dc.html` | fait (comparaison maquette | box) |
 | Pop-up 01 · PIN | `P01-PIN.dc.html` | fait (comparaison maquette | box) |
@@ -46,23 +46,23 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | Pop-up 04 · Alerte adresse IP | `P04-AlerteIP.dc.html` | à faire |
 | Pop-up 05 · Chargement torrent | `P05-ChargementTorrent.dc.html` | à faire |
 | Pop-up 06 · Épisode suivant | `P06-EpisodeSuivant.dc.html` | à faire |
-| Pop-up 07 · Ajout Jellyfin | `P07-AjoutJellyfin.dc.html` | fait en code (TvPanel 920, champs P07, erreur rouge) — pas de rendu, à vérifier sur la box |
+| Pop-up 07 · Ajout Jellyfin | `P07-AjoutJellyfin.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P07.png) — à vérifier sur la box ; panneau 920, écarts et erreur rouge (graisse 600 corrigée) à 2 px près ; focus sur le bouton après la tentative (la maquette montre le 1er champ focalisé) |
 | Pop-up 08 · Choix du dossier | `P08-ChoixDossier.dc.html` | à vérifier sur la box (panneau de saisie de chemin refait au lot précédent) |
 | Pop-up 09 · Confirmation | `P09-Confirmation.dc.html` | à faire |
 | Pop-up 10 · Erreur de lecture | `P10-ErreurLecture.dc.html` | à faire |
 | Pop-up 11 · Aucun flux | `P11-AucunFlux.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P11.png) — à vérifier sur la box ; carte « Aucun flux trouvé » calée ; la maquette montre un autre gabarit de fiche (en-tête + affiche à gauche, TV06 suivi) et un message éphémère « Aucune source disponible » que le code n'affiche pas |
 | Pop-up 12 · Addon hors ligne | `P12-AddonHorsLigne.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P12.png) — à vérifier sur la box ; en-tête « Ne répond pas » + pastille « Défaillant · Médiane… » ; lignes de flux au gabarit TV06 (la maquette en dessine d'autres) ; message éphémère « Délai dépassé » absent du code |
 | Pop-up 13 · Sélecteur d'option | `P13-SelecteurOption.dc.html` | à faire |
-| Pop-up 14 · Import de sauvegarde | `P14-ImportSauvegarde.dc.html` | fait en code (TvPanel 960, champ P14 avec erreur rouge) — pas de rendu, à vérifier sur la box |
+| Pop-up 14 · Import de sauvegarde | `P14-ImportSauvegarde.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P14.png) — à vérifier sur la box ; panneau 960 sur la page Lecture ; libellé du champ = celui du code (« Phrase secrète de la sauvegarde », la maquette dit « de synchronisation ») |
 | TV 40 · Fiche série · saisons et épisodes | `TV40-FicheSerie.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV40.png) — à vérifier sur la box ; fond de la colonne gauche en dégradé #1B2A33, zone Sources = titre + en-têtes d'addon + lignes comme TV06 ; liseré ambre sur l'épisode choisi (état absent de la maquette) |
-| TV 41 · Ma liste · vide | `TV41-MaListeVide.dc.html` | à faire |
-| TV 42 · Calendrier · aucune série ou aucune sortie | `TV42-CalendrierVide.dc.html` | à faire |
+| TV 41 · Ma liste · vide | `TV41-MaListeVide.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV41.png) — à vérifier sur la box ; sous-titre « 0 titre » ajouté ; le bouton « Recherche » de la maquette n'existe pas dans le code (non ajouté) : le groupe icône + texte est donc plus bas de 28 px que la maquette |
+| TV 42 · Calendrier · aucune série ou aucune sortie | `TV42-CalendrierVide.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV42.png) — à vérifier sur la box ; la ligne d'interrupteur reprend la hauteur et la teinte de TV21 (116, #2A3340) alors que TV42 la dessine à 112 sur #161B22 ; variantes « aucune sortie » / erreur = textes du code |
 | TV 43 · Menu de l'avatar | `TV43-MenuAvatar.dc.html` | fait (comparaison maquette | box) |
 | TV 44 · Accueil · rangée en chargement et en échec | `TV44-AccueilEtats.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV44.png, héros retiré du rendu comme la maquette) — à vérifier sur la box ; 8 px d'écart vertical entre rangées (12 au lieu de 20, voir TV05) |
 | TV 45 · Accueil · profil enfant sans contenu adapté | `TV45-AccueilFiltre.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV45.png) — à vérifier sur la box ; boutons « Changer de profil » (filtre), « Gérer les addons » (aucun catalogue) et « Réessayer » (addons illisibles) ; couleur de l'avatar = celle du choix de profil |
 | TV 46 · Recherche · saisie vide et aucun résultat | `TV46-RechercheEtats.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV46.png) — à vérifier sur la box ; état centré dans le volet des résultats (la maquette le centre sur tout l'écran) ; clavier de TV12 (TV46 en dessine un autre) |
 | TV 47 · Réglages · Général | `TV47-ReglagesGeneral.dc.html` | fait (comparaison maquette | box) |
-| TV 48 · Suivi · non configuré | `TV48-SuiviNonConfigure.dc.html` | à reprendre : la maquette montre le rail des Réglages avec les cartes dans la page ; l'app ouvre l'écran Suivi (TV25) depuis le rail |
+| TV 48 · Suivi · non configuré | `TV48-SuiviNonConfigure.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV48.png) — à vérifier sur la box ; la page « Suivi Trakt » du rail affiche la carte (TrackingBody, mode page : pastille d'état, texte 28/600) ; Trakt seul (pas de carte Simkl), titre « Suivi (Trakt) » ; note « Aucun bouton Connecter… » ajoutée (texte de la maquette, nouvelle chaîne) ; rail = celui des Réglages (profil, version), pas celui de la maquette ; le sous-écran Suivi (TV25) reste pour le test et n'est plus ouvert depuis le rail |
 | TV 49 · Dossiers locaux · vide et accès refusé | `TV49-DossiersVide.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV49.png) — à vérifier sur la box |
 | TV 50 · Jellyfin · aucun serveur | `TV50-JellyfinVide.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV50.png) — à vérifier sur la box |
 | TV 51 · Addons · aucun addon et erreurs | `TV51-AddonsVide.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV51.png) — à vérifier sur la box ; bouton d'ajout toujours en tête, message d'échec d'action au gabarit des messages éphémères |
