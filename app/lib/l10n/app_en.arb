@@ -1213,5 +1213,21 @@
   "phoneQrLabel": "QR code of the Lumio page on the local network",
   "settingsManagePhone": "Manage from your phone",
   "settingsManagePhoneNoNetwork": "Local network unavailable",
-  "phoneAddWaiting": "Link received from the phone: check the preview and confirm here."
+  "phoneAddWaiting": "Link received from the phone: check the preview and confirm here.",
+  "addonInstall": "Install",
+  "addonConfigure": "Configure",
+  "addonConfigureTitle": "Configure {name}",
+  "@addonConfigureTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "addonOrPhone": "Or configure on your phone",
+  "configureHelp": "OK: confirm · Back: cancel · the install link is picked up automatically",
+  "configureUseCopied": "Use the copied link",
+  "configureNoLink": "No addon link on the clipboard.",
+  "configureBlocked": "Page blocked: it leaves the addon.",
+  "configureLoadError": "The setup page did not load.",
+  "addonSheetRequired": "This addon needs setup before it works (debrid key, languages…). Set it up here with the remote.",
+  "addonSheetConfigurable": "Install it as is, or choose your settings first."
 }

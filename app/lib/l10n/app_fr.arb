@@ -1442,5 +1442,21 @@
   "phoneQrLabel": "QR code de la page Lumio sur le réseau local",
   "settingsManagePhone": "Gérer depuis le téléphone",
   "settingsManagePhoneNoNetwork": "Réseau local indisponible",
-  "phoneAddWaiting": "Lien reçu du téléphone : vérifiez l'aperçu et confirmez ici."
+  "phoneAddWaiting": "Lien reçu du téléphone : vérifiez l'aperçu et confirmez ici.",
+  "addonInstall": "Installer",
+  "addonConfigure": "Configurer",
+  "addonConfigureTitle": "Configurer {name}",
+  "@addonConfigureTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "addonOrPhone": "Ou configurer sur le téléphone",
+  "configureHelp": "OK : valider · Retour : annuler · le lien d'installation est capté automatiquement",
+  "configureUseCopied": "Utiliser le lien copié",
+  "configureNoLink": "Aucun lien d'addon dans le presse-papiers.",
+  "configureBlocked": "Page bloquée : elle sort de l'addon.",
+  "configureLoadError": "La page de configuration ne s'est pas chargée.",
+  "addonSheetRequired": "Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Configurez-le ici avec la télécommande.",
+  "addonSheetConfigurable": "Installez-le tel quel ou choisissez vos réglages avant."
 }

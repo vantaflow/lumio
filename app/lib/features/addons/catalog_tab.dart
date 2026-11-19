@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/addon_logo.dart';
 import 'package:lumio/features/addons/catalog_providers.dart';
+import 'package:lumio/features/addons/configure_addon_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/addon_repository.dart' show InstalledAddon;
 import 'package:lumio/providers.dart';
@@ -71,6 +72,8 @@ String _moreLabel(String category, AppLocalizations l) => switch (category) {
 
 /// Onglet « Catalogue » (maquette TV16) : puces de catégories, grille de
 /// cartes, badge « Installé », note de bas de page.
+enum _SheetChoice { install, configure, phone }
+
 class CatalogTab extends ConsumerStatefulWidget {
   const CatalogTab({super.key, required this.onUseLink, this.active = true});
 
@@ -220,11 +223,103 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
       );
     }
     if (pick == null || !mounted) return;
-    if (pick.configurationRequired) {
-      await _configureOnPhone(e.name, pick);
-      return;
+    await _sheet(e, pick);
+  }
+
+  /// Fiche d'un addon (maquette TV16) : Installer (sauf si la configuration est
+  /// requise) et Configurer (page de l'addon dans l'app), le QR du téléphone
+  /// restant une option.
+  Future<void> _sheet(CatalogEntry e, CatalogInstance pick) async {
+    final l = context.l10n;
+    final configure = pick.configureUrl;
+    final required = pick.configurationRequired;
+    final choice = await showTvPanel<_SheetChoice>(
+      context,
+      builder: (ctx) => TvPanel(
+        title: e.name,
+        width: 900,
+        onBack: () => Navigator.of(ctx).pop(),
+        actions: [
+          if (!required)
+            TvButton(
+              key: const ValueKey('sheet-install'),
+              autofocus: true,
+              label: l.addonInstall,
+              height: 76,
+              fontSize: 28,
+              onPressed: () => Navigator.of(ctx).pop(_SheetChoice.install),
+            ),
+          if (configure != null)
+            TvButton(
+              key: const ValueKey('sheet-configure'),
+              autofocus: required,
+              label: l.addonConfigure,
+              kind: TvButtonKind.secondary,
+              height: 76,
+              fontSize: 28,
+              onPressed: () => Navigator.of(ctx).pop(_SheetChoice.configure),
+            ),
+          TvButton(
+            key: const ValueKey('sheet-close'),
+            label: l.close,
+            kind: TvButtonKind.ghost,
+            height: 76,
+            fontSize: 28,
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+        ],
+        children: [
+          if (e.description != null && e.description!.trim().isNotEmpty) ...[
+            Text(
+              e.description!.trim(),
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                fontSize: 26,
+                height: 1.4,
+                color: ctx.lumio.textMuted,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Text(
+            required ? l.addonSheetRequired : l.addonSheetConfigurable,
+            key: const ValueKey('sheet-body'),
+            style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+              fontSize: 26,
+              height: 1.4,
+            ),
+          ),
+          if (configure != null)
+            TvButton(
+              key: const ValueKey('sheet-phone'),
+              label: l.addonOrPhone,
+              kind: TvButtonKind.ghost,
+              height: 64,
+              fontSize: 24,
+              onPressed: () => Navigator.of(ctx).pop(_SheetChoice.phone),
+            ),
+        ],
+      ),
+    );
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case _SheetChoice.install:
+        widget.onUseLink(pick.manifestUrl.toString());
+      case _SheetChoice.phone:
+        await _configureOnPhone(e.name, pick);
+      case _SheetChoice.configure:
+        if (configure == null) return;
+        final manifest = await Navigator.of(context).push<Uri>(
+          MaterialPageRoute(
+            builder: (_) =>
+                ConfigureAddonScreen(name: e.name, start: configure),
+          ),
+        );
+        if (manifest != null && mounted) {
+          widget.onUseLink(manifest.toString());
+        }
     }
-    widget.onUseLink(pick.manifestUrl.toString());
   }
 
   Future<void> _configureOnPhone(String name, CatalogInstance i) {
