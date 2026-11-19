@@ -211,8 +211,8 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
             (
               i,
               i.configurationRequired
-                  ? '${i.domain} · ${l.instanceNeedsSetup}'
-                  : i.domain,
+                  ? '${i.label} · ${l.instanceNeedsSetup}'
+                  : i.label,
             ),
         ],
         current: null,

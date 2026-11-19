@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import '../../net/http_fetcher.dart';
 import '../../net/url_guard.dart';
@@ -115,6 +116,7 @@ class AddonCatalogSource {
     Uri? collectionUrl,
     RateLimiter? limiter,
     this.timeout = const Duration(seconds: 10),
+    this.maxListBytes = 512 * 1024,
     this.maxPageBytes = 2 * 1024 * 1024,
     this.maxCollectionBytes = 2 * 1024 * 1024,
   }) : site = site ?? Uri.parse('https://stremio-addons.net'),
@@ -128,6 +130,9 @@ class AddonCatalogSource {
   final Uri collectionUrl;
   final RateLimiter _limiter;
   final Duration timeout;
+
+  /// Plafond des pages de liste (les fiches peuvent être plus grosses).
+  final int maxListBytes;
   final int maxPageBytes;
   final int maxCollectionBytes;
 
@@ -142,20 +147,22 @@ class AddonCatalogSource {
         if (q.page > 1) 'page': '${q.page}',
       },
     );
-    return AddonCatalogParser.parseList(
-      await _get(url, maxPageBytes),
-      page: q.page,
-    );
+    final body = await _get(url, maxListBytes);
+    final page = q.page;
+    // Analyse hors du fil de l'interface.
+    return Isolate.run(() => AddonCatalogParser.parseList(body, page: page));
   }
 
   Future<CatalogDetail> detail(String slug) async {
     final url = site.replace(pathSegments: ['addons', slug]);
-    return AddonCatalogParser.parseDetail(await _get(url, maxPageBytes), slug);
+    final body = await _get(url, maxPageBytes);
+    return Isolate.run(() => AddonCatalogParser.parseDetail(body, slug));
   }
 
-  Future<CatalogPage> collection() async => AddonCatalogParser.parseCollection(
-    await _get(collectionUrl, maxCollectionBytes),
-  );
+  Future<CatalogPage> collection() async {
+    final body = await _get(collectionUrl, maxCollectionBytes);
+    return Isolate.run(() => AddonCatalogParser.parseCollection(body));
+  }
 
   Future<String> _get(Uri url, int maxBytes) async {
     await _limiter.acquire();

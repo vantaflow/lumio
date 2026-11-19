@@ -41,6 +41,20 @@ class CatalogInstance {
   /// Hôte affiché pour choisir entre plusieurs instances.
   String get domain => manifestUrl.host;
 
+  /// Domaine et chemin court (sans `manifest.json`), pour distinguer deux
+  /// instances du même hôte.
+  String get label {
+    var path = manifestUrl.path;
+    if (path.endsWith('manifest.json')) {
+      path = path.substring(0, path.length - 'manifest.json'.length);
+    }
+    while (path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
+    }
+    if (path.length > 24) path = '${path.substring(0, 23)}…';
+    return '$domain$path';
+  }
+
   /// Page de configuration (convention du protocole : `…/configure` à la place
   /// de `…/manifest.json`), si l'addon est configurable.
   Uri? get configureUrl {

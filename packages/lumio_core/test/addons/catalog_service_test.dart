@@ -12,6 +12,7 @@ class FakeSite implements HttpFetcher {
   final Map<String, Object> routes = {};
   final List<Uri> requests = [];
   final List<Map<String, String>> headersSeen = [];
+  final List<int> bytesSeen = [];
   bool offline = false;
 
   @override
@@ -25,6 +26,7 @@ class FakeSite implements HttpFetcher {
     guard?.call(url);
     requests.add(url);
     headersSeen.add(headers);
+    bytesSeen.add(maxBytes);
     if (offline) throw const SocketException('hors ligne');
     final r = routes[url.path] ?? routes[url.toString()];
     if (r == null) return const FetchResponse(status: 404, body: []);
@@ -90,6 +92,24 @@ void main() {
       );
       await expectLater(src.list(q), throwsA(isA<UnsafeUrlException>()));
       expect(site.requests, isEmpty);
+    });
+
+    test('pages de liste plafonnées à 512 Kio, fiches à 2 Mio', () async {
+      await service.list(q);
+      await service.detail('torrentio');
+      expect(site.bytesSeen, [512 * 1024, 2 * 1024 * 1024]);
+    });
+
+    test('page pathologique sans </a> : rendue en moins de 2 s', () async {
+      final body = StringBuffer('<p>14000<!-- --> results</p>');
+      for (var i = 0; i < 14000; i++) {
+        body.write('<a href="/addons/s$i"><h3>N</h3>');
+      }
+      site.routes['/addons'] = body.toString();
+      final sw = Stopwatch()..start();
+      final r = await build().list(q);
+      expect(sw.elapsed, lessThan(const Duration(seconds: 2)));
+      expect(r.value.entries, isNotEmpty);
     });
 
     test('statut 500 : indisponible avec le statut', () async {
@@ -184,6 +204,28 @@ void main() {
       expect(r.origin, CatalogOrigin.fallback);
       expect(r.value.entries, hasLength(12));
       expect(r.value.hasMore, isFalse);
+    });
+
+    test('collection de repli altérée : le service ne plante pas', () async {
+      final list = jsonDecode(fx('addonscollection.json')) as List;
+      ((list[0] as Map)['manifest'] as Map)['description'] = 42;
+      site
+        ..offline = false
+        ..routes['/addons'] = '<html>Erreur</html>'
+        ..routes['/addonscollection.json'] = jsonEncode(list);
+      final r = await build().list(q);
+      expect(r.origin, CatalogOrigin.fallback);
+      expect(r.value.entries, isNotEmpty);
+    });
+
+    test('collection de repli : types inattendus ignorés', () async {
+      site
+        ..routes['/addons'] = '<html>Erreur</html>'
+        ..routes['/addonscollection.json'] =
+            '[{"manifest":{"name":"A",'
+            '"types":{"x":1}},"transportUrl":"https://a.example/m.json"}]';
+      final r = await build().list(q);
+      expect(r.origin, CatalogOrigin.fallback);
     });
 
     test('page changée : repli sur la collection, filtrée', () async {

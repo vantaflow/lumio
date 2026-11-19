@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:lumio_core/lumio_core.dart';
@@ -174,6 +175,112 @@ void main() {
     });
   });
 
+  group('fiche : instances bornées', () {
+    String page(String body) => '<meta property="og:title" content="Z"/>$body';
+
+    // Charge Next.js : JSON échappé dans un script.
+    String esc(String json) => json.replaceAll('"', r'\"');
+
+    const inst1 =
+        '{"id":1,"uuid":"a","manifest":{"name":"Z","description":"a {b} } c",'
+        '"behaviorHints":{"configurable":false,"configurationRequired":false}},'
+        '"manifestUrl":"https://one.example/manifest.json","stars":5}';
+    const inst2 =
+        '{"id":2,"uuid":"b","manifest":{"name":"Z","behaviorHints":'
+        '{"configurable":true,"configurationRequired":false}},'
+        '"manifestUrl":"https://two.example/p/manifest.json","stars":7}';
+    const similar =
+        ',"similar":[{"manifestUrl":"https://autre.example/manifest.json",'
+        '"configurable":true,"configurationRequired":true,"stars":999},'
+        '{"manifestUrl":"https://encore.example/manifest.json"}]}]}';
+
+    test('bloc « addons similaires » après les instances : ignoré', () {
+      final d = AddonCatalogParser.parseDetail(
+        page(esc('{"instances":[$inst1,$inst2]$similar')),
+        'z',
+      );
+      expect(d.instances.map((i) => i.manifestUrl.host), [
+        'one.example',
+        'two.example',
+      ]);
+      // Les réglages de la dernière instance sont les siens, pas ceux du bloc
+      // qui suit.
+      final last = d.instances.last;
+      expect(last.configurable, isTrue);
+      expect(last.configurationRequired, isFalse);
+      expect(last.stars, 7);
+    });
+
+    test('accolades dans les chaînes : l\'objet reste borné', () {
+      final d = AddonCatalogParser.parseDetail(
+        page(esc('{"instances":[$inst1]$similar')),
+        'z',
+      );
+      expect(d.instances, hasLength(1));
+      expect(d.instances.single.configurationRequired, isFalse);
+      expect(d.instances.single.stars, 5);
+    });
+
+    test('blocs d\'instance sans adresse valide : rien n\'est proposé', () {
+      expect(
+        () => AddonCatalogParser.parseDetail(
+          page(
+            esc(
+              '{"instances":[{"id":1,"manifestUrl":"javascript:x"}]'
+              ',"similar":[{"manifestUrl":"https://autre.example/manifest.json"}]}',
+            ),
+          ),
+          'z',
+        ),
+        throwsA(isA<CatalogParseException>()),
+      );
+    });
+
+    test('repli ambigu (plusieurs adresses sans instances) : rien', () {
+      expect(
+        () => AddonCatalogParser.parseDetail(
+          page(
+            r'{\"manifestUrl\":\"https://a.example/manifest.json\"}'
+            r'{\"manifestUrl\":\"https://b.example/manifest.json\"}',
+          ),
+          'z',
+        ),
+        throwsA(isA<CatalogParseException>()),
+      );
+    });
+
+    test('libellé : domaine et chemin court', () {
+      final d = AddonCatalogParser.parseDetail(
+        page(
+          esc(
+            '{"instances":[{"manifestUrl":"https://h.example/alpha/manifest.json"},'
+            '{"manifestUrl":"https://h.example/beta/gamma/manifest.json"},'
+            '{"manifestUrl":"https://h.example/manifest.json"}]}',
+          ),
+        ),
+        'z',
+      );
+      expect(d.instances.map((i) => i.label), [
+        'h.example/alpha',
+        'h.example/beta/gamma',
+        'h.example',
+      ]);
+    });
+  });
+
+  group('analyse bornée', () {
+    test('page pathologique sans </a> : moins de 2 s', () {
+      final body = StringBuffer('<p>14000<!-- --> results</p>');
+      for (var i = 0; i < 14000; i++) {
+        body.write('<a href="/addons/s$i"><h3>N</h3>');
+      }
+      final sw = Stopwatch()..start();
+      final p = AddonCatalogParser.parseList(body.toString());
+      expect(sw.elapsed, lessThan(const Duration(seconds: 2)));
+      expect(p.entries, isNotEmpty);
+    });
+  });
+
   group('collection officielle', () {
     test('entrées avec une instance et capacités', () {
       final p = AddonCatalogParser.parseCollection(fx('addonscollection.json'));
@@ -184,6 +291,25 @@ void main() {
       final cfg = p.entries.firstWhere((e) => e.name == 'Cast Search');
       expect(cfg.instances.single.configurable, isTrue);
       expect(cfg.types, isNotEmpty);
+    });
+
+    test('champs de mauvais type : tolérés, entrée invalide ignorée', () {
+      final list = jsonDecode(fx('addonscollection.json')) as List;
+      final total = list.length;
+      final m0 = (list[0] as Map)['manifest'] as Map;
+      m0['description'] = 42;
+      m0['types'] = 'movie';
+      m0['resources'] = {'a': 1};
+      final m1 = (list[1] as Map)['manifest'] as Map;
+      m1['name'] = 7;
+      ((list[2] as Map)['manifest'] as Map)['version'] = ['x'];
+      (list[3] as Map)['manifest'] = 'texte';
+      list.add(12);
+      final p = AddonCatalogParser.parseCollection(jsonEncode(list));
+      expect(p.entries, hasLength(total - 2));
+      final first = p.entries.firstWhere((e) => e.name == m0['name']);
+      expect(first.description, isNull);
+      expect(first.types, isEmpty);
     });
 
     test('JSON invalide : erreur typée', () {

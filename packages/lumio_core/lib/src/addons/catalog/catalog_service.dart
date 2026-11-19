@@ -123,9 +123,10 @@ class AddonCatalogService {
       final at = _now();
       await _store.write(_collectionKey, jsonEncode(page.toJson()), at);
       return (value: page, at: at);
-    } on CatalogParseException {
-      return cached;
     } on CatalogUnavailableException {
+      return cached;
+    } on Object {
+      // Toute erreur d'analyse du repli (format inattendu, type inattendu).
       return cached;
     }
   }

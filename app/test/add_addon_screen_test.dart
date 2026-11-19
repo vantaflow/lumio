@@ -238,6 +238,31 @@ void main() {
     await h.close();
   });
 
+  testWidgets('deux instances du même hôte : le chemin les distingue', (
+    t,
+  ) async {
+    final site = FakeCatalogSite(
+      cards: _cards,
+      details: {
+        'beta': [
+          ('https://hote.example.org/alpha/manifest.json', false, false),
+          ('https://hote.example.org/beta/manifest.json', false, false),
+        ],
+      },
+    );
+    final h = AppHarness(t, size: const Size(1920, 1080));
+    await h.pump(
+      _Launcher(ValueNotifier(null)),
+      extra: [catalogOverride(site)],
+    );
+    await _open(h, t);
+    await t.tap(find.byKey(const ValueKey('card:beta')));
+    await h.settle();
+    expect(find.text('hote.example.org/alpha'), findsOneWidget);
+    expect(find.text('hote.example.org/beta'), findsOneWidget);
+    await h.close();
+  });
+
   testWidgets(
     'configuration requise : QR vers /configure, pas d\'installation',
     (t) async {
