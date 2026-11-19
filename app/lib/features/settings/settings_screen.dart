@@ -661,18 +661,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _Section(l.settingsBackup),
         _Tile(
           id: 'backupExport',
+          icon: LumioIcon.upload,
+          minHeight: 112,
           title: l.backupExport,
           subtitle: l.backupExportHint,
           onTap: () => BackupFlows(context, ref).export(),
         ),
         _Tile(
           id: 'backupImport',
+          icon: LumioIcon.download,
+          minHeight: 112,
           title: l.backupImport,
           subtitle: l.backupImportHint,
           onTap: () => BackupFlows(context, ref).import(),
         ),
         _Tile(
           id: 'otherImport',
+          icon: LumioIcon.document,
+          minHeight: 112,
           title: l.otherImportTitle,
           subtitle: l.otherImportHint,
           onTap: () => _push(const StremioImportScreen()),
@@ -1065,7 +1071,11 @@ class _Tile extends ConsumerWidget {
     this.gauge,
     this.valueNote,
     this.minHeight = 96,
+    this.icon,
   });
+
+  /// Icône ambre de tête de ligne (maquette TV33).
+  final LumioIcon? icon;
 
   final double minHeight;
 
@@ -1095,6 +1105,10 @@ class _Tile extends ConsumerWidget {
         onSelect: onTap,
         child: Row(
           children: [
+            if (icon != null) ...[
+              LumioIconView(icon!, size: 40, color: c.accent),
+              const SizedBox(width: 24),
+            ],
             Expanded(
               child: gauge == null
                   ? TvTileText(title: title, subtitle: subtitle)
@@ -1300,45 +1314,63 @@ class AboutScreen extends StatelessWidget {
       color: const Color(0xFFC9D0DA),
       height: 1.4,
     );
+    // Maquette TV34 : colonne de 1500, titres 52 et 36, texte 30 puis 28.
+    final lead = md().copyWith(fontSize: 30);
+    final credit = md().copyWith(height: 1.7);
     return TvScreen(
       title: l.settingsAbout,
       child: ListView(
-        padding: const EdgeInsets.only(top: 8, bottom: 24, left: 6, right: 6),
+        padding: EdgeInsets.zero,
+        clipBehavior: Clip.none,
         children: [
-          Text(
-            l.gplTitle,
-            style: theme.textTheme.headlineMedium?.copyWith(fontSize: 44),
-          ),
-          const SizedBox(height: 12),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1500),
-            child: Text(l.gplText, style: md()),
-          ),
-          const SizedBox(height: 36),
-          Text(
-            l.aboutCredits,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontSize: 34,
-              color: c.text,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(l.creditsLibmpv, style: md()),
-          Text(l.creditsMediaKit, style: md()),
-          Text(l.creditsLibtorrent, style: md()),
-          Text(l.creditsFonts, style: md()),
-          const SizedBox(height: 36),
           Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TvButton(
-              key: const ValueKey('about:licenses'),
-              autofocus: true,
-              kind: TvButtonKind.secondary,
-              height: 76,
-              fontSize: 28,
-              label: l.openSourceLicenses,
-              onPressed: () =>
-                  showLicensePage(context: context, applicationName: 'Lumio'),
+            alignment: AlignmentDirectional.topStart,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1308),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l.gplTitle,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontSize: 52,
+                      height: 1.15,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  Text(l.gplText, style: lead),
+                  const SizedBox(height: 34),
+                  Text(
+                    l.aboutCredits,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontSize: 36,
+                      height: 1.15,
+                      color: c.text,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  Text(l.creditsLibmpv, style: credit),
+                  Text(l.creditsMediaKit, style: credit),
+                  Text(l.creditsLibtorrent, style: credit),
+                  Text(l.creditsFonts, style: credit),
+                  const SizedBox(height: 34),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TvButton(
+                      key: const ValueKey('about:licenses'),
+                      autofocus: true,
+                      kind: TvButtonKind.secondary,
+                      height: 76,
+                      fontSize: 28,
+                      label: l.openSourceLicenses,
+                      onPressed: () => showLicensePage(
+                        context: context,
+                        applicationName: 'Lumio',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

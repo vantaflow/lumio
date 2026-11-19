@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/secret_store.dart';
 import 'package:lumio/data/tracking_repository.dart';
@@ -567,7 +568,8 @@ void main() {
     ) async {
       final h = AppHarness(t);
       await h.pump(const TrackingScreen(), extra: over());
-      expect(find.textContaining('Non connecté'), findsOneWidget);
+      // Maquette TV25 : l'état figure dans la pastille et dans le texte.
+      expect(find.textContaining('Non connecté'), findsNWidgets(2));
       await t.tap(find.byKey(const ValueKey('tracking-connect')));
       await h.settle(3);
       expect(find.byKey(const ValueKey('tracking-auth-code')), findsOneWidget);
@@ -632,5 +634,4 @@ void main() {
   });
 }
 
-ButtonStyleButton tester(WidgetTester t, Finder f) =>
-    t.widget<ButtonStyleButton>(f);
+TvButton tester(WidgetTester t, Finder f) => t.widget<TvButton>(f);

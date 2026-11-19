@@ -8,8 +8,9 @@ import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
-import 'package:lumio/ui/focus/focus_ring.dart';
-import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -108,90 +109,78 @@ class TrackingScreen extends ConsumerWidget {
       }
     }
 
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(title: Text(l.trackingTitle)),
-        body: () {
-          final failed = statuses.values.where((s) => s.hasError);
-          if (failed.isNotEmpty) {
-            return StateView.error(
-              message: l10nForError(l, failed.first.error!),
-              onRetry: refresh,
-            );
-          }
-          if (statuses.values.any((s) => !s.hasValue)) {
-            return const StateView.loading();
-          }
-          final all = {for (final e in statuses.entries) e.key: e.value.value!};
-          final anyConfigured = all.values.any((s) => s.configured);
-          // Réglage commun à tous les services : lu sur le premier.
-          final shared = all.values.first;
-          final allowed = !kid || shared.kidAllowed;
-          return ListView(
-            padding: const EdgeInsets.all(LumioSpacing.md),
-            children: [
-              if (kid && anyConfigured)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: LumioSpacing.md),
-                  child: FocusRing(
-                    child: SwitchListTile(
-                      key: const ValueKey('tracking-kid'),
-                      title: Text(l.trackingKidAllow),
-                      subtitle: Text(l.trackingKidAllowHint),
-                      value: shared.kidAllowed,
-                      onChanged: (v) async {
+    // Maquette TV25 : en-tête de 152, cartes côte à côte (gap 32).
+    return TvScreen(
+      title: l.trackingTitle,
+      subtitle: l.trackingHint,
+      child: () {
+        final failed = statuses.values.where((s) => s.hasError);
+        if (failed.isNotEmpty) {
+          return StateView.error(
+            message: l10nForError(l, failed.first.error!),
+            onRetry: refresh,
+          );
+        }
+        if (statuses.values.any((s) => !s.hasValue)) {
+          return const StateView.loading();
+        }
+        final all = {for (final e in statuses.entries) e.key: e.value.value!};
+        final anyConfigured = all.values.any((s) => s.configured);
+        // Réglage commun à tous les services : lu sur le premier.
+        final shared = all.values.first;
+        final allowed = !kid || shared.kidAllowed;
+        return ListView(
+          clipBehavior: Clip.none,
+          padding: EdgeInsets.zero,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final (i, id) in trackerIds.indexed) ...[
+                  if (i > 0) const SizedBox(width: 32),
+                  Expanded(
+                    child: _TrackerCard(
+                      trackerId: id,
+                      status: all[id]!,
+                      allowed: allowed,
+                      showKid: kid && anyConfigured && i == 0,
+                      onKid: (v) async {
                         await repo.setKidAllowed(profileId, v);
                         refresh();
                       },
-                    ),
-                  ),
-                ),
-              for (final id in trackerIds)
-                _TrackerCard(
-                  trackerId: id,
-                  status: all[id]!,
-                  allowed: allowed,
-                  autofocus:
-                      id == trackerIds.first ||
-                      !all[trackerIds.first]!.configured,
-                  onConnect: () => _connect(context, ref, id),
-                  onDisconnect: () async {
-                    await service.disconnect(profileId, id);
-                    refresh();
-                    if (context.mounted) {
-                      _tell(context, _namesOf(l, id).disconnected);
-                    }
-                  },
-                ),
-              if (anyConfigured) ...[
-                if (shared.pending > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: LumioSpacing.md),
-                    child: OutlinedButton.icon(
-                      key: const ValueKey('tracking-retry'),
-                      onPressed: () async {
+                      pending: anyConfigured ? shared.pending : 0,
+                      onRetry: () async {
                         await service.flush();
                         refresh();
                         if (context.mounted) _tell(context, l.trackingRetried);
                       },
-                      icon: const Icon(Icons.sync),
-                      label: Text(l.trackingRetry),
+                      autofocus:
+                          id == trackerIds.first ||
+                          !all[trackerIds.first]!.configured,
+                      onConnect: () => _connect(context, ref, id),
+                      onDisconnect: () async {
+                        await service.disconnect(profileId, id);
+                        refresh();
+                        if (context.mounted) {
+                          _tell(context, _namesOf(l, id).disconnected);
+                        }
+                      },
                     ),
                   ),
-                Text(
-                  l.trackingPending(shared.pending),
-                  key: const ValueKey('tracking-pending'),
-                ),
+                ],
+                // Un seul service : la carte n'occupe que la moitié (TV25).
+                if (trackerIds.length == 1) const Spacer(),
               ],
-            ],
-          );
-        }(),
-      ),
+            ),
+          ],
+        );
+      }(),
     );
   }
 }
 
-/// Carte d'un service : état du compte et boutons connecter / déconnecter.
+/// Carte d'un service (maquettes TV25 et TV48) : titre, état du compte,
+/// envois en attente, réglage parental et boutons connecter / déconnecter.
 class _TrackerCard extends StatelessWidget {
   const _TrackerCard({
     required this.trackerId,
@@ -200,61 +189,233 @@ class _TrackerCard extends StatelessWidget {
     required this.autofocus,
     required this.onConnect,
     required this.onDisconnect,
+    required this.showKid,
+    required this.onKid,
+    required this.pending,
+    required this.onRetry,
   });
 
   final String trackerId;
   final TrackingStatus status;
   final bool allowed;
   final bool autofocus;
+  final bool showKid;
+  final int pending;
   final VoidCallback onConnect;
   final VoidCallback onDisconnect;
+  final VoidCallback onRetry;
+  final ValueChanged<bool> onKid;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final c = context.lumio;
     final n = _namesOf(l, trackerId);
     final s = status;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: LumioSpacing.lg),
+    final stateText = !s.configured
+        ? n.notConfigured
+        : s.reauthRequired
+        ? n.reauth
+        : s.connected
+        ? n.connected
+        : l.trackingNotConnected;
+    final dotColor = s.connected && !s.reauthRequired
+        ? const Color(0xFF5BD68A)
+        : c.textMuted;
+    final dotLabel = s.connected && !s.reauthRequired
+        ? l.trackingConnectedShort
+        : l.trackingNotConnected;
+    const md = TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 28,
+      height: 1.4,
+      color: Color(0xFFC9D0DA),
+    );
+    return Container(
+      padding: const EdgeInsets.all(36),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(n.title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: LumioSpacing.xs),
-          Text(
-            !s.configured
-                ? n.notConfigured
-                : s.reauthRequired
-                ? n.reauth
-                : s.connected
-                ? n.connected
-                : l.trackingNotConnected,
-            key: _key('tracking-state', trackerId),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  n.title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge!.copyWith(fontSize: 44, height: 1.15),
+                ),
+              ),
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                dotLabel,
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  fontVariations: const [FontVariation.weight(700)],
+                  color: const Color(0xFFC9D0DA),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 18),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 84),
+            child: Text(stateText, key: _key('tracking-state', trackerId), style: md),
+          ),
+          if (s.configured && pending > 0) ...[
+            const SizedBox(height: 18),
+            Text(
+              l.trackingPending(pending),
+              key: const ValueKey('tracking-pending'),
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 24,
+                height: 1.35,
+                color: c.accent,
+              ),
+            ),
+          ],
+          if (showKid) ...[
+            const SizedBox(height: 18),
+            _KidToggle(value: status.kidAllowed, onChanged: onKid),
+          ],
           if (s.configured) ...[
-            const SizedBox(height: LumioSpacing.md),
+            const SizedBox(height: 18),
             Wrap(
-              spacing: LumioSpacing.sm,
-              runSpacing: LumioSpacing.sm,
+              spacing: 16,
+              runSpacing: 16,
               children: [
+                if (s.connected && pending > 0)
+                  TvButton(
+                    key: const ValueKey('tracking-retry'),
+                    label: l.trackingRetry,
+                    kind: TvButtonKind.secondary,
+                    height: 76,
+                    fontSize: 28,
+                    horizontalPadding: 40,
+                    onPressed: onRetry,
+                  ),
                 if (!s.connected || s.reauthRequired)
-                  FilledButton.icon(
+                  TvButton(
                     key: _key('tracking-connect', trackerId),
                     autofocus: autofocus,
+                    label: n.connect,
+                    height: 76,
+                    fontSize: 28,
+                    horizontalPadding: 40,
+                    icon: LumioIconView(
+                      LumioIcon.linkOn,
+                      size: 32,
+                      color: c.onAccent,
+                    ),
                     onPressed: allowed ? onConnect : null,
-                    icon: const Icon(Icons.link),
-                    label: Text(n.connect),
                   ),
                 if (s.connected)
-                  OutlinedButton.icon(
+                  TvButton(
                     key: _key('tracking-disconnect', trackerId),
+                    label: n.disconnect,
+                    kind: TvButtonKind.secondary,
+                    height: 76,
+                    fontSize: 28,
+                    horizontalPadding: 40,
+                    icon: LumioIconView(
+                      LumioIcon.linkOff,
+                      size: 32,
+                      color: c.text,
+                    ),
                     onPressed: onDisconnect,
-                    icon: const Icon(Icons.link_off),
-                    label: Text(n.disconnect),
                   ),
               ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Réglage parental (TV25) : ligne #0E1116 de 96 avec interrupteur 84 x 46.
+class _KidToggle extends StatelessWidget {
+  const _KidToggle({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final c = context.lumio;
+    return TvTile(
+      key: const ValueKey('tracking-kid'),
+      minHeight: 96,
+      color: c.bg,
+      horizontalPadding: 24,
+      semanticLabel: l.trackingKidAllow,
+      onSelect: () => onChanged(!value),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.trackingKidAllow,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: [FontVariation.weight(700)],
+                  ),
+                ),
+                Text(
+                  l.trackingKidAllowHint,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 24,
+                    height: 1.35,
+                    color: c.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          Container(
+            width: 84,
+            height: 46,
+            decoration: BoxDecoration(
+              color: value ? c.accent : c.outline,
+              borderRadius: BorderRadius.circular(23),
+            ),
+            child: Align(
+              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: c.text,
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -333,107 +494,141 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
     final l = context.l10n;
     final code = _code;
     final text = Theme.of(context).textTheme;
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(title: Text(_namesOf(l, widget.trackerId).authTitle)),
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(LumioSpacing.lg),
-            child: _error != null
-                ? Column(
+    final c = context.lumio;
+    const md = TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 28,
+      height: 1.4,
+      color: Color(0xFFC9D0DA),
+    );
+    // Maquette TV26 : colonne de 760 et QR blanc, centrés (gap 120).
+    return TvScreen(
+      title: _namesOf(l, widget.trackerId).authTitle,
+      child: Center(
+        child: SingleChildScrollView(
+          child: _error != null
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10nForError(l, _error!),
+                      key: const ValueKey('tracking-auth-error'),
+                      textAlign: TextAlign.center,
+                      style: md,
+                    ),
+                    const SizedBox(height: 24),
+                    TvButton(
+                      key: const ValueKey('tracking-auth-new'),
+                      autofocus: true,
+                      label: l.trackingAuthNewCode,
+                      height: 76,
+                      fontSize: 28,
+                      horizontalPadding: 40,
+                      onPressed: _start,
+                    ),
+                  ],
+                )
+              : code == null
+              ? CircularProgressIndicator(color: c.accent)
+              : Padding(
+                  padding: const EdgeInsets.only(top: 48),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        l10nForError(l, _error!),
-                        key: const ValueKey('tracking-auth-error'),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: LumioSpacing.md),
-                      FilledButton(
-                        key: const ValueKey('tracking-auth-new'),
-                        autofocus: true,
-                        onPressed: _start,
-                        child: Text(l.trackingAuthNewCode),
-                      ),
-                    ],
-                  )
-                : code == null
-                ? const CircularProgressIndicator()
-                : Wrap(
-                    spacing: LumioSpacing.xl,
-                    runSpacing: LumioSpacing.lg,
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 520),
+                      SizedBox(
+                        width: 760,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(l.trackingAuthStep),
-                            const SizedBox(height: LumioSpacing.sm),
+                            Text(l.trackingAuthStep, style: md),
+                            const SizedBox(height: 24),
                             SelectableText(
                               code.verificationUrl.toString(),
                               key: const ValueKey('tracking-auth-url'),
-                              style: text.titleLarge,
+                              style: text.titleLarge!.copyWith(
+                                fontSize: 48,
+                                height: 1.15,
+                                color: c.secondary,
+                              ),
                             ),
-                            const SizedBox(height: LumioSpacing.md),
+                            const SizedBox(height: 24),
                             Semantics(
                               label: code.userCode,
                               child: ExcludeSemantics(
-                                child: Text(
-                                  code.userCode,
-                                  key: const ValueKey('tracking-auth-code'),
-                                  style: text.displayMedium?.copyWith(
-                                    letterSpacing: 6,
-                                    fontWeight: FontWeight.bold,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 44,
+                                    vertical: 36,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: c.surface,
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
+                                  child: Text(
+                                    code.userCode,
+                                    key: const ValueKey('tracking-auth-code'),
+                                    style: text.titleLarge!.copyWith(
+                                      fontSize: 132,
+                                      height: 1,
+                                      letterSpacing: 14,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: LumioSpacing.md),
+                            const SizedBox(height: 24),
                             Row(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const SizedBox(
-                                  width: 16,
-                                  height: 16,
+                                SizedBox(
+                                  width: 32,
+                                  height: 32,
                                   child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                                    strokeWidth: 4,
+                                    color: c.accent,
+                                    backgroundColor: c.outline,
                                   ),
                                 ),
-                                const SizedBox(width: LumioSpacing.sm),
-                                Flexible(child: Text(l.trackingAuthWaiting)),
+                                const SizedBox(width: 16),
+                                Flexible(
+                                  child: Text(l.trackingAuthWaiting, style: md),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: LumioSpacing.md),
-                            FocusRing(
-                              child: OutlinedButton(
-                                key: const ValueKey('tracking-auth-cancel'),
-                                autofocus: true,
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: Text(l.cancel),
-                              ),
+                            const SizedBox(height: 24),
+                            TvButton(
+                              key: const ValueKey('tracking-auth-cancel'),
+                              autofocus: true,
+                              label: l.cancel,
+                              kind: TvButtonKind.secondary,
+                              height: 76,
+                              fontSize: 28,
+                              horizontalPadding: 40,
+                              onPressed: () => Navigator.of(context).pop(),
                             ),
                           ],
                         ),
                       ),
+                      const SizedBox(width: 120),
                       Semantics(
                         label: l.trackingQrSemantic,
                         child: Container(
-                          color: Colors.white,
-                          padding: const EdgeInsets.all(LumioSpacing.sm),
+                          padding: const EdgeInsets.all(28),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
                           child: QrImageView(
                             key: const ValueKey('tracking-auth-qr'),
                             data: code.verificationUrl.toString(),
-                            size: 220,
+                            size: 225,
                           ),
                         ),
                       ),
                     ],
                   ),
-          ),
+                ),
         ),
       ),
     );

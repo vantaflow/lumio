@@ -51,6 +51,24 @@ enum LumioIcon {
   inbox('<p M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z>'),
   alert('<p M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5v.5>'),
 
+  /// Sauvegarde (TV33), import de fichier (TV32), Trakt (TV25).
+  upload('<p M12 15V3M7 8l5-5 5 5M4 21h16>'),
+  document('<p M6 3h8l4 4v14H6zM9 12h6M9 16h6>'),
+  filePlain('<p M6 3h8l4 4v14H6zM14 3v5h5>'),
+  linkOn(
+    '<p M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1>',
+  ),
+  linkOff(
+    '<p M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1M4 4l16 16>',
+  ),
+
+  /// Jellyfin (TV28, P07) et Regarder ensemble (TV27).
+  server('<p M4 5h16v6H4zM4 13h16v6H4zM8 8h.01M8 16h.01>'),
+  people(
+    '<p M9 11a3 3 0 100-6 3 3 0 000 6zM3 20a6 6 0 0112 0M17 11a3 3 0 100-6M21 20a6 6 0 00-4-5.6>',
+  ),
+  copy('<p M8 8h12v12H8zM4 16V4h12>'),
+
   /// Variantes pleines du lecteur (TV07 : pause = deux barres arrondies).
   pauseSolid('<r 6 5 4 14 1><r 14 5 4 14 1>', fill: true),
   playSolid('<p M7 5l12 7-12 7z>', fill: true);

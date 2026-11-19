@@ -1031,6 +1031,7 @@
   "trackingHint": "Enregistrez vos lectures sur votre compte",
   "trackingTrakt": "Trakt",
   "trackingNotConfigured": "Non configuré : les identifiants de l'application Trakt sont absents. Rien n'est envoyé.",
+  "trackingConnectedShort": "Connecté",
   "trackingNotConnected": "Non connecté",
   "trackingConnected": "Connecté : vos lectures sont enregistrées sur Trakt.",
   "trackingReauth": "Reconnexion nécessaire : Trakt a refusé la connexion. Reconnectez le compte pour reprendre l'envoi.",

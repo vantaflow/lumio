@@ -57,6 +57,7 @@ class TvScreen extends StatelessWidget {
                       const SizedBox(width: 28),
                     ],
                     Expanded(
+                      flex: actions.isEmpty ? 1 : 3,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,10 +90,24 @@ class TvScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    for (final a in actions) ...[
-                      const SizedBox(width: 24),
-                      Flexible(child: a),
-                    ],
+                    // Maquettes : `.top{gap:28px}`, actions alignées à droite
+                    // (réduites si l'espace manque).
+                    if (actions.isNotEmpty)
+                      Expanded(
+                        flex: 2,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (final (i, a) in actions.indexed) ...[
+                                if (i > 0) const SizedBox(width: 28),
+                                Flexible(child: a),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

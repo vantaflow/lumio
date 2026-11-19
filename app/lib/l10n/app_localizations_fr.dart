@@ -1703,6 +1703,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Non configuré : les identifiants de l\'application Trakt sont absents. Rien n\'est envoyé.';
 
   @override
+  String get trackingConnectedShort => 'Connecté';
+
+  @override
   String get trackingNotConnected => 'Non connecté';
 
   @override

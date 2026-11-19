@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/common/tv_text_field.dart';
+import 'package:lumio/ui/focus/focus_ring.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
@@ -20,8 +22,17 @@ class TvPanel extends StatelessWidget {
     this.width = 760,
     this.actions = const [],
     this.onBack,
+    this.padding = const EdgeInsets.symmetric(horizontal: 48, vertical: 44),
+    this.titleSize = 44,
+    this.fitActions = false,
   });
 
+  /// Réduit la rangée d'actions si elle dépasse (boutons sans flex).
+  final bool fitActions;
+
+  /// Marges intérieures (P-xx : 44 x 48 ; TV33 : 32 x 40).
+  final EdgeInsetsGeometry padding;
+  final double titleSize;
   final String title;
   final List<Widget> children;
   final List<Widget> actions;
@@ -48,7 +59,7 @@ class TvPanel extends StatelessWidget {
               maxHeight: h - 96,
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 44),
+              padding: padding,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -58,7 +69,7 @@ class TvPanel extends StatelessWidget {
                     child: Text(
                       title,
                       style: t.headlineMedium?.copyWith(
-                        fontSize: 44,
+                        fontSize: titleSize,
                         height: 1.15,
                       ),
                     ),
@@ -80,15 +91,27 @@ class TvPanel extends StatelessWidget {
                   ),
                   if (actions.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        for (var i = 0; i < actions.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 16),
-                          actions[i],
+                    () {
+                      final row = Row(
+                        mainAxisSize: fitActions
+                            ? MainAxisSize.min
+                            : MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          for (var i = 0; i < actions.length; i++) ...[
+                            if (i > 0) const SizedBox(width: 16),
+                            actions[i],
+                          ],
                         ],
-                      ],
-                    ),
+                      );
+                      return fitActions
+                          ? FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: row,
+                            )
+                          : row;
+                    }(),
                   ],
                 ],
               ),
@@ -309,4 +332,109 @@ void showTvSnack(BuildContext context, String message, {bool error = false}) {
         ),
       ),
     );
+}
+
+
+/// Champ des fenêtres (maquettes P08 et P14) : étiquette de 24, champ de 80
+/// (fond #0E1116, bordure de 2, rayon 18), message d'erreur éventuel en rouge
+/// avec l'icône d'alerte ; la bordure vire au rouge sur erreur.
+class TvLabeledField extends StatelessWidget {
+  const TvLabeledField({
+    super.key,
+    required this.fieldKey,
+    required this.controller,
+    required this.label,
+    this.error,
+    this.obscureText = false,
+    this.autofocus = false,
+    this.onSubmitted,
+  });
+
+  final Key fieldKey;
+  final TextEditingController controller;
+  final String label;
+  final String? error;
+  final bool obscureText, autofocus;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.lumio;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            fontVariations: const [FontVariation.weight(600)],
+            color: c.textMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        FocusRing(
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            height: 80,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            alignment: Alignment.centerLeft,
+            decoration: BoxDecoration(
+              color: c.bg,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: error == null ? c.outline : c.error,
+                width: 2,
+              ),
+            ),
+            child: TvTextField(
+              key: fieldKey,
+              controller: controller,
+              autofocus: autofocus,
+              obscureText: obscureText,
+              autocorrect: false,
+              enableSuggestions: false,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 30,
+                fontWeight: FontWeight.w600,
+                fontVariations: [FontVariation.weight(600)],
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                isCollapsed: true,
+              ),
+              onSubmitted: onSubmitted,
+            ),
+          ),
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Row(
+              children: [
+                LumioIconView(LumioIcon.alert, size: 28, color: c.error),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    error!,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      fontVariations: const [FontVariation.weight(600)],
+                      color: c.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
 }

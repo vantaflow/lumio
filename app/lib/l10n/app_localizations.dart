@@ -2924,6 +2924,12 @@ abstract class AppLocalizations {
   /// **'Non configuré : les identifiants de l\'application Trakt sont absents. Rien n\'est envoyé.'**
   String get trackingNotConfigured;
 
+  /// No description provided for @trackingConnectedShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecté'**
+  String get trackingConnectedShort;
+
   /// No description provided for @trackingNotConnected.
   ///
   /// In fr, this message translates to:

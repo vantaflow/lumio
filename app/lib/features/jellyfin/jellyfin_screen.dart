@@ -1,7 +1,7 @@
+// ignore_for_file: sort_child_properties_last
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/jellyfin_repository.dart';
 import 'package:lumio/features/detail/playback_service.dart'
@@ -15,6 +15,10 @@ import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
@@ -467,21 +471,41 @@ class JellyfinServersScreen extends ConsumerWidget {
   ) async {
     final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(ctx.l10n.jellyfinRemoveTitle(s.name)),
-        content: Text(ctx.l10n.jellyfinRemoveBody),
-        actions: [
-          TextButton(
-            autofocus: true,
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(ctx.l10n.cancel),
+    final ok = await showTvPanel<bool>(
+      context,
+      builder: (ctx) => TvPanel(
+        title: ctx.l10n.jellyfinRemoveTitle(s.name),
+        width: 920,
+        fitActions: true,
+        onBack: () => Navigator.pop(ctx, false),
+        children: [
+          Text(
+            ctx.l10n.jellyfinRemoveBody,
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 28,
+              height: 1.4,
+              color: Color(0xFFC9D0DA),
+            ),
           ),
-          FilledButton(
+        ],
+        actions: [
+          TvButton(
+            label: ctx.l10n.cancel,
+            kind: TvButtonKind.ghost,
+            autofocus: true,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+          TvButton(
             key: const ValueKey('jellyfin-remove-ok'),
+            label: ctx.l10n.jellyfinRemove(s.name),
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(ctx.l10n.jellyfinRemove(s.name)),
           ),
         ],
       ),
@@ -498,71 +522,141 @@ class JellyfinServersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
     final servers = ref.watch(jellyfinServersProvider);
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l.jellyfinServers),
-          actions: [
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: LumioSpacing.sm),
-              child: FilledButton.icon(
-                key: const ValueKey('jellyfin-add'),
-                autofocus: true,
-                onPressed: () async {
-                  final added = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => const JellyfinAddDialog(),
-                  );
-                  if (added == true) ref.invalidate(jellyfinRowsProvider);
-                },
-                icon: const Icon(Icons.add),
-                label: Text(l.jellyfinAddServer),
-              ),
-            ),
-          ],
+    final c = context.lumio;
+    // Maquettes TV50 et TV28 : en-tête avec « Ajouter un serveur », lignes de 96.
+    return TvScreen(
+      title: l.jellyfinServers,
+      subtitle: l.jellyfinServersHint,
+      actions: [
+        TvButton(
+          key: const ValueKey('jellyfin-add'),
+          autofocus: true,
+          label: l.jellyfinAddServer,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          icon: LumioIconView(LumioIcon.plus, size: 32, color: c.onAccent),
+          onPressed: () async {
+            final added = await showTvPanel<bool>(
+              context,
+              builder: (_) => const JellyfinAddDialog(),
+            );
+            if (added == true) ref.invalidate(jellyfinRowsProvider);
+          },
         ),
-        body: servers.when(
-          loading: () => const StateView.loading(),
-          error: (e, _) => StateView.error(
-            message: l10nForError(l, e),
-            onRetry: () => ref.invalidate(jellyfinServersProvider),
-          ),
-          data: (list) {
-            if (list.isEmpty) return StateView.empty(message: l.jellyfinEmpty);
-            return ListView(
-              padding: const EdgeInsets.all(LumioSpacing.md),
-              children: [
-                for (final s in list)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: LumioSpacing.sm),
-                    child: FocusRing(
-                      child: ListTile(
-                        key: ValueKey('jellyfin-server:${s.id}'),
-                        leading: const Icon(Icons.dns_outlined),
-                        title: Text(s.name),
-                        subtitle: Text(l.jellyfinSignedInAs(s.userName)),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                JellyfinBrowseScreen(serverId: s.id),
-                          ),
+      ],
+      child: servers.when(
+        loading: () => const StateView.loading(),
+        error: (e, _) => StateView.error(
+          message: l10nForError(l, e),
+          onRetry: () => ref.invalidate(jellyfinServersProvider),
+        ),
+        data: (list) {
+          if (list.isEmpty) {
+            return SingleChildScrollView(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 268),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 96,
+                        height: 96,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: c.surface,
                         ),
-                        trailing: IconButton(
-                          key: ValueKey('jellyfin-remove:${s.id}'),
-                          tooltip: l.jellyfinRemove(s.name),
-                          onPressed: () => _remove(context, ref, s),
-                          icon: Icon(
-                            Icons.delete_outline,
-                            color: context.lumio.error,
+                        child: LumioIconView(
+                          LumioIcon.inbox,
+                          size: 48,
+                          color: c.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1100),
+                        child: Text(
+                          l.jellyfinEmpty,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 34,
+                            height: 1.4,
+                            color: Color(0xFFC9D0DA),
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+          return ListView(
+            clipBehavior: Clip.none,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            children: [
+              for (final s in list)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 96),
+                    padding: const EdgeInsetsDirectional.only(end: 32),
+                    decoration: BoxDecoration(
+                      color: c.surface,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TvTile(
+                            key: ValueKey('jellyfin-server:${s.id}'),
+                            minHeight: 96,
+                            color: Colors.transparent,
+                            semanticLabel: s.name,
+                            onSelect: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    JellyfinBrowseScreen(serverId: s.id),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                LumioIconView(
+                                  LumioIcon.server,
+                                  size: 40,
+                                  color: c.secondary,
+                                ),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  child: TvTileText(
+                                    title: s.name,
+                                    subtitle: l.jellyfinSignedInAs(s.userName),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        TvIconButton(
+                          key: ValueKey('jellyfin-remove:${s.id}'),
+                          lumioIcon: LumioIcon.trash,
+                          iconColor: c.error,
+                          background: c.bg,
+                          label: l.jellyfinRemove(s.name),
+                          onPressed: () => _remove(context, ref, s),
+                        ),
+                      ],
                     ),
                   ),
-              ],
-            );
-          },
-        ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -602,22 +696,42 @@ class _AddState extends ConsumerState<JellyfinAddDialog> {
   }
 
   Future<bool> _confirmInsecure() async =>
-      await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
+      await showTvPanel<bool>(
+        context,
+        builder: (ctx) => TvPanel(
           key: const ValueKey('jellyfin-insecure'),
-          title: Text(ctx.l10n.jellyfinInsecureTitle),
-          content: Text(ctx.l10n.jellyfinInsecureBody),
-          actions: [
-            TextButton(
-              autofocus: true,
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(ctx.l10n.cancel),
+          title: ctx.l10n.jellyfinInsecureTitle,
+          width: 920,
+          fitActions: true,
+          onBack: () => Navigator.pop(ctx, false),
+          children: [
+            Text(
+              ctx.l10n.jellyfinInsecureBody,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 28,
+                height: 1.4,
+                color: Color(0xFFC9D0DA),
+              ),
             ),
-            TextButton(
+          ],
+          actions: [
+            TvButton(
+              label: ctx.l10n.cancel,
+              kind: TvButtonKind.ghost,
+              autofocus: true,
+              height: 76,
+              fontSize: 28,
+              horizontalPadding: 40,
+              onPressed: () => Navigator.pop(ctx, false),
+            ),
+            TvButton(
               key: const ValueKey('jellyfin-insecure-ok'),
+              label: ctx.l10n.jellyfinInsecureContinue,
+              height: 76,
+              fontSize: 28,
+              horizontalPadding: 40,
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(ctx.l10n.jellyfinInsecureContinue),
             ),
           ],
         ),
@@ -663,62 +777,79 @@ class _AddState extends ConsumerState<JellyfinAddDialog> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return AlertDialog(
-      title: Text(l.jellyfinAddServer),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TvTextField(
-              key: const ValueKey('jellyfin-url'),
-              controller: _url,
-              autofocus: true,
-              keyboardType: TextInputType.url,
-              autocorrect: false,
-              decoration: InputDecoration(
-                labelText: l.jellyfinServerUrl,
-                hintText: l.jellyfinServerUrlHint,
-              ),
-            ),
-            TvTextField(
-              key: const ValueKey('jellyfin-user'),
-              controller: _user,
-              autocorrect: false,
-              decoration: InputDecoration(labelText: l.jellyfinUser),
-            ),
-            TvTextField(
-              key: const ValueKey('jellyfin-pass'),
-              controller: _pass,
-              obscureText: true,
-              enableSuggestions: false,
-              autocorrect: false,
-              decoration: InputDecoration(labelText: l.jellyfinPassword),
-              onSubmitted: (_) => _busy ? null : _submit(),
-            ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: LumioSpacing.sm),
-                child: Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    _error!,
-                    key: const ValueKey('jellyfin-error'),
-                    style: TextStyle(color: context.lumio.error),
+    // Maquette P07 : panneau de 920, trois champs, erreur en rouge.
+    return TvPanel(
+      title: l.jellyfinAddServer,
+      width: 920,
+      fitActions: true,
+      onBack: _busy ? null : () => Navigator.pop(context, false),
+      children: [
+        TvLabeledField(
+          fieldKey: const ValueKey('jellyfin-url'),
+          controller: _url,
+          label: l.jellyfinServerUrl,
+          autofocus: true,
+        ),
+        const SizedBox(height: 20),
+        TvLabeledField(
+          fieldKey: const ValueKey('jellyfin-user'),
+          controller: _user,
+          label: l.jellyfinUser,
+        ),
+        const SizedBox(height: 20),
+        TvLabeledField(
+          fieldKey: const ValueKey('jellyfin-pass'),
+          controller: _pass,
+          label: l.jellyfinPassword,
+          obscureText: true,
+          onSubmitted: (_) => _busy ? null : _submit(),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Semantics(
+              liveRegion: true,
+              child: Row(
+                children: [
+                  LumioIconView(
+                    LumioIcon.alert,
+                    size: 28,
+                    color: context.lumio.error,
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      _error!,
+                      key: const ValueKey('jellyfin-error'),
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 26,
+                        fontWeight: FontWeight.w600,
+                        color: context.lumio.error,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-          ],
-        ),
-      ),
+            ),
+          ),
+      ],
       actions: [
-        TextButton(
+        TvButton(
+          label: l.cancel,
+          kind: TvButtonKind.ghost,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
           onPressed: _busy ? null : () => Navigator.pop(context, false),
-          child: Text(l.cancel),
         ),
-        FilledButton(
+        TvButton(
           key: const ValueKey('jellyfin-connect'),
+          label: _busy ? l.jellyfinConnecting : l.jellyfinConnect,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
           onPressed: _busy ? null : _submit,
-          child: Text(_busy ? l.jellyfinConnecting : l.jellyfinConnect),
         ),
       ],
     );

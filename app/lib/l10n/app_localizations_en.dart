@@ -1689,6 +1689,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Not configured: the Trakt application credentials are missing. Nothing is sent.';
 
   @override
+  String get trackingConnectedShort => 'Connected';
+
+  @override
   String get trackingNotConnected => 'Not connected';
 
   @override

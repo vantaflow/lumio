@@ -1,5 +1,5 @@
+// ignore_for_file: sort_child_properties_last
 import 'package:flutter/material.dart';
-import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/backup_files.dart';
 import 'package:lumio/data/backup_service.dart';
@@ -7,7 +7,10 @@ import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/theme.dart';
 import 'package:lumio/ui/focus/tv_detection.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -48,25 +51,33 @@ class BackupFlows {
     );
   }
 
+  /// Texte courant des fenêtres (maquette TV33 : 26, #C9D0DA).
+  Widget _body(BuildContext ctx, String text) => Text(
+    text,
+    style: const TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 26,
+      height: 1.4,
+      color: Color(0xFFC9D0DA),
+    ),
+  );
+
   /// Fenêtre d'attente pendant [op] (dérivation de clé, installation réseau).
   Future<T> _busy<T>(String label, Future<T> Function() op) async {
-    showDialog<void>(
-      context: context,
+    showTvPanel<void>(
+      context,
       barrierDismissible: false,
       builder: (_) => PopScope(
         canPop: false,
-        child: AlertDialog(
-          content: Row(
-            children: [
-              const SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(strokeWidth: 3),
-              ),
-              const SizedBox(width: 16),
-              Flexible(child: Text(label)),
-            ],
-          ),
+        child: TvPanel(
+          title: label,
+          titleSize: 38,
+          width: 900,
+          fitActions: true,
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+          children: [
+            LinearProgressIndicator(color: context.lumio.accent),
+          ],
         ),
       ),
     );
@@ -81,31 +92,43 @@ class BackupFlows {
 
   Future<void> export() async {
     final l = context.l10n;
-    final secrets = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
+    final secrets = await showTvPanel<bool>(
+      context,
+      builder: (ctx) => TvPanel(
         key: const ValueKey('backup:secretsDialog'),
-        title: Text(l.backupSecretsTitle),
-        content: Text(l.backupSecretsWarning),
+        title: l.backupSecretsTitle,
+        titleSize: 38,
+        width: 900,
+        fitActions: true,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        onBack: () => Navigator.pop(ctx),
+        children: [_body(ctx, l.backupSecretsWarning)],
         actions: [
-          TextButton(
+          TvButton(
+            label: l.cancel,
+            kind: TvButtonKind.ghost,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l.cancel),
           ),
-          FocusRing(
-            child: FilledButton(
-              key: const ValueKey('backup:withoutSecrets'),
-              autofocus: true,
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.backupWithoutSecrets),
-            ),
+          TvButton(
+            key: const ValueKey('backup:withoutSecrets'),
+            label: l.backupWithoutSecrets,
+            autofocus: true,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            onPressed: () => Navigator.pop(ctx, false),
           ),
-          FocusRing(
-            child: TextButton(
-              key: const ValueKey('backup:withSecrets'),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.backupWithSecrets),
-            ),
+          TvButton(
+            key: const ValueKey('backup:withSecrets'),
+            label: l.backupWithSecrets,
+            kind: TvButtonKind.secondary,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            onPressed: () => Navigator.pop(ctx, true),
           ),
         ],
       ),
@@ -132,8 +155,8 @@ class BackupFlows {
     }
   }
 
-  Future<String?> _askNewPassphrase() => showDialog<String>(
-    context: context,
+  Future<String?> _askNewPassphrase() => showTvPanel<String>(
+    context,
     builder: (_) => const _NewPassphraseDialog(),
   );
 
@@ -170,8 +193,8 @@ class BackupFlows {
   }
 
   Future<String?> _askImportPassphrase({required bool wrong}) =>
-      showDialog<String>(
-        context: context,
+      showTvPanel<String>(
+        context,
         builder: (_) => _ImportPassphraseDialog(wrong: wrong),
       );
 
@@ -207,24 +230,34 @@ class BackupFlows {
         }
       }
       if (!context.mounted) return;
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
+      final ok = await showTvPanel<bool>(
+        context,
+        builder: (ctx) => TvPanel(
           key: const ValueKey('backup:confirmImport'),
-          title: Text(l.backupConfirmTitle),
-          content: Text(l.backupConfirmBody),
+          title: l.backupConfirmTitle,
+          titleSize: 38,
+          width: 900,
+          fitActions: true,
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+          onBack: () => Navigator.pop(ctx, false),
+          children: [_body(ctx, l.backupConfirmBody)],
           actions: [
-            TextButton(
+            TvButton(
+              label: l.cancel,
+              kind: TvButtonKind.ghost,
+              height: 76,
+              fontSize: 28,
+              horizontalPadding: 40,
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.cancel),
             ),
-            FocusRing(
-              child: FilledButton(
-                key: const ValueKey('backup:confirmOk'),
-                autofocus: true,
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text(l.backupContinue),
-              ),
+            TvButton(
+              key: const ValueKey('backup:confirmOk'),
+              label: l.backupContinue,
+              autofocus: true,
+              height: 76,
+              fontSize: 28,
+              horizontalPadding: 40,
+              onPressed: () => Navigator.pop(ctx, true),
             ),
           ],
         ),
@@ -282,26 +315,26 @@ class BackupFlows {
       if (r.addonsFailed > 0) l.backupSumFailed(r.addonsFailed),
       if (r.skipped > 0) l.backupSumSkipped(r.skipped),
     ]);
-    return showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
+    return showTvPanel<void>(
+      context,
+      builder: (ctx) => TvPanel(
         key: const ValueKey('backup:report'),
-        title: Text(l.backupDoneTitle),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [for (final s in lines) Text(s)],
-          ),
-        ),
+        title: l.backupDoneTitle,
+        titleSize: 38,
+        width: 900,
+        fitActions: true,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        onBack: () => Navigator.pop(ctx),
+        children: [for (final s in lines) _body(ctx, s)],
         actions: [
-          FocusRing(
-            child: FilledButton(
-              key: const ValueKey('backup:reportOk'),
-              autofocus: true,
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l.close),
-            ),
+          TvButton(
+            key: const ValueKey('backup:reportOk'),
+            label: l.close,
+            autofocus: true,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            onPressed: () => Navigator.pop(ctx),
           ),
         ],
       ),
@@ -314,26 +347,34 @@ class BackupFlows {
     PendingBackupAddon a,
   ) async {
     final l = context.l10n;
-    final allow = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
+    final allow = await showTvPanel<bool>(
+      context,
+      builder: (ctx) => TvPanel(
         key: ValueKey('backup:private:${a.name}'),
-        title: Text(l.backupPrivateTitle),
-        content: Text(l.backupPrivateBody(a.name, a.host)),
+        title: l.backupPrivateTitle,
+        titleSize: 38,
+        width: 900,
+        fitActions: true,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        onBack: () => Navigator.pop(ctx, false),
+        children: [_body(ctx, l.backupPrivateBody(a.name, a.host))],
         actions: [
-          FocusRing(
-            child: TextButton(
-              autofocus: true,
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.addonUrlIgnore),
-            ),
+          TvButton(
+            label: l.addonUrlIgnore,
+            kind: TvButtonKind.ghost,
+            autofocus: true,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            onPressed: () => Navigator.pop(ctx, false),
           ),
-          FocusRing(
-            child: FilledButton(
-              key: const ValueKey('backup:privateAllow'),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.addonUrlAllow),
-            ),
+          TvButton(
+            key: const ValueKey('backup:privateAllow'),
+            label: l.addonUrlAllow,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            onPressed: () => Navigator.pop(ctx, true),
           ),
         ],
       ),
@@ -384,51 +425,55 @@ class _NewPassphraseDialogState extends State<_NewPassphraseDialog> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return AlertDialog(
-      title: Text(l.backupPassphraseTitle),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l.backupPassphraseHint),
-            const SizedBox(height: 12),
-            TvTextField(
-              key: const ValueKey('backup:phrase'),
-              controller: _phrase,
-              autofocus: true,
-              obscureText: true,
-              autocorrect: false,
-              enableSuggestions: false,
-              decoration: InputDecoration(labelText: l.passphraseLabel),
-            ),
-            const SizedBox(height: 8),
-            TvTextField(
-              key: const ValueKey('backup:phraseConfirm'),
-              controller: _confirm,
-              obscureText: true,
-              autocorrect: false,
-              enableSuggestions: false,
-              decoration: InputDecoration(
-                labelText: l.passphraseConfirmLabel,
-                errorText: _error,
-              ),
-              onSubmitted: (_) => _submit(),
-            ),
-          ],
-        ),
-      ),
+    return TvPanel(
+      title: l.backupPassphraseTitle,
+      width: 960,
+      fitActions: true,
+      onBack: () => Navigator.pop(context),
       actions: [
-        TextButton(
+        TvButton(
+          label: l.cancel,
+          kind: TvButtonKind.ghost,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
           onPressed: () => Navigator.pop(context),
-          child: Text(l.cancel),
         ),
-        FocusRing(
-          child: FilledButton(
-            key: const ValueKey('backup:phraseOk'),
-            onPressed: _submit,
-            child: Text(l.backupContinue),
+        TvButton(
+          key: const ValueKey('backup:phraseOk'),
+          label: l.backupContinue,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          onPressed: _submit,
+        ),
+      ],
+      children: [
+        Text(
+          l.backupPassphraseHint,
+          style: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 28,
+            height: 1.4,
+            color: Color(0xFFC9D0DA),
           ),
+        ),
+        const SizedBox(height: 20),
+        TvLabeledField(
+          fieldKey: const ValueKey('backup:phrase'),
+          controller: _phrase,
+          label: l.passphraseLabel,
+          autofocus: true,
+          obscureText: true,
+        ),
+        const SizedBox(height: 20),
+        TvLabeledField(
+          fieldKey: const ValueKey('backup:phraseConfirm'),
+          controller: _confirm,
+          label: l.passphraseConfirmLabel,
+          obscureText: true,
+          error: _error,
+          onSubmitted: (_) => _submit(),
         ),
       ],
     );
@@ -459,40 +504,48 @@ class _ImportPassphraseDialogState extends State<_ImportPassphraseDialog> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    return AlertDialog(
-      title: Text(l.backupImportPassphraseTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l.backupImportPassphraseHint),
-          const SizedBox(height: 12),
-          TvTextField(
-            key: const ValueKey('backup:importPhrase'),
-            controller: _phrase,
-            autofocus: true,
-            obscureText: true,
-            autocorrect: false,
-            enableSuggestions: false,
-            decoration: InputDecoration(
-              labelText: l.passphraseLabel,
-              errorText: widget.wrong ? l.backupWrongPassphrase : null,
-            ),
-            onSubmitted: (v) => Navigator.pop(context, v),
-          ),
-        ],
-      ),
+    return TvPanel(
+      title: l.backupImportPassphraseTitle,
+      width: 960,
+      fitActions: true,
+      onBack: () => Navigator.pop(context),
       actions: [
-        TextButton(
+        TvButton(
+          label: l.cancel,
+          kind: TvButtonKind.ghost,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
           onPressed: () => Navigator.pop(context),
-          child: Text(l.cancel),
         ),
-        FocusRing(
-          child: FilledButton(
-            key: const ValueKey('backup:importPhraseOk'),
-            onPressed: () => Navigator.pop(context, _phrase.text),
-            child: Text(l.backupContinue),
+        TvButton(
+          key: const ValueKey('backup:importPhraseOk'),
+          label: l.backupContinue,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          onPressed: () => Navigator.pop(context, _phrase.text),
+        ),
+      ],
+      children: [
+        Text(
+          l.backupImportPassphraseHint,
+          style: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 28,
+            height: 1.4,
+            color: Color(0xFFC9D0DA),
           ),
+        ),
+        const SizedBox(height: 20),
+        TvLabeledField(
+          fieldKey: const ValueKey('backup:importPhrase'),
+          controller: _phrase,
+          label: l.passphraseLabel,
+          autofocus: true,
+          obscureText: true,
+          error: widget.wrong ? l.backupWrongPassphrase : null,
+          onSubmitted: (v) => Navigator.pop(context, v),
         ),
       ],
     );

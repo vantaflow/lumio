@@ -816,6 +816,7 @@
   "trackingHint": "Record what you watch on your account",
   "trackingTrakt": "Trakt",
   "trackingNotConfigured": "Not configured: the Trakt application credentials are missing. Nothing is sent.",
+  "trackingConnectedShort": "Connected",
   "trackingNotConnected": "Not connected",
   "trackingConnected": "Connected: your plays are recorded on Trakt.",
   "trackingReauth": "Sign-in required: Trakt rejected the connection. Reconnect the account to resume sending.",

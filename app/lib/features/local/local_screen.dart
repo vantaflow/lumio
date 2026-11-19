@@ -656,11 +656,15 @@ class _LocalFoldersScreenState extends ConsumerState<LocalFoldersScreen> {
       subtitle: l.localSubtitle,
       actions: [
         if (folders.value?.isNotEmpty ?? false)
-          TvIconButton(
-            key: const ValueKey('local-scan'),
-            lumioIcon: LumioIcon.refresh,
-            label: l.localScanNow,
-            onPressed: _scanning ? null : _scanAll,
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TvIconButton(
+              key: const ValueKey('local-scan'),
+              lumioIcon: LumioIcon.refresh,
+              background: c.surface,
+              label: l.localScanNow,
+              onPressed: _scanning ? null : _scanAll,
+            ),
           ),
         TvButton(
           key: const ValueKey('local-add'),

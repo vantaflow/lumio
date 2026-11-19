@@ -11,8 +11,10 @@ import 'package:lumio/features/settings/backup_section.dart';
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
-import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -325,118 +327,213 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
     final l = context.l10n;
     return PopScope(
       canPop: _phase != _Phase.running,
-      child: TvScaffold(
-        child: Scaffold(
-          appBar: AppBar(title: Text(l.otherImportTitle)),
-          body: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: ListView(
-                padding: const EdgeInsets.all(LumioSpacing.lg),
-                children: switch (_phase) {
-                  _Phase.form => _form(l),
-                  _Phase.running => _running(l),
-                  _Phase.done => _report(l),
-                },
-              ),
-            ),
-          ),
+      // Maquette TV32 : en-tête de 152, aide de 26, cartes côte à côte.
+      child: TvScreen(
+        title: l.otherImportTitle,
+        padding: const EdgeInsets.fromLTRB(96, 0, 96, 48),
+        child: ListView(
+          clipBehavior: Clip.none,
+          padding: EdgeInsets.zero,
+          children: switch (_phase) {
+            _Phase.form => _form(l),
+            _Phase.running => _running(l),
+            _Phase.done => _report(l),
+          },
         ),
       ),
     );
   }
 
-  List<Widget> _section({required AppLocalizations l, required bool addons}) {
-    final key = addons ? 'addons' : 'library';
-    final fileName = addons ? _addonsFileName : _libraryFileName;
-    return [
-      Text(
-        addons ? l.otherImportAddonsLabel : l.otherImportLibraryLabel,
-        style: Theme.of(context).textTheme.titleMedium,
+  TextStyle _md(BuildContext context, {Color? color, double size = 28}) =>
+      TextStyle(
+        fontFamily: 'Manrope',
+        fontSize: size,
+        height: 1.4,
+        color: color ?? const Color(0xFFC9D0DA),
+      );
+
+  TextStyle _cardTitle(BuildContext context) => Theme.of(context)
+      .textTheme
+      .titleMedium!
+      .copyWith(fontSize: 36, height: 1.15)
+      .weighted(FontWeight.w700);
+
+  Widget _card(BuildContext context, {required List<Widget> children}) {
+    final c = context.lumio;
+    return Container(
+      padding: const EdgeInsets.all(36),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(24),
       ),
-      const SizedBox(height: LumioSpacing.sm),
-      if (fileName != null)
-        Row(
-          children: [
-            const Icon(Icons.description_outlined),
-            const SizedBox(width: LumioSpacing.sm),
-            Expanded(
-              child: Text(
-                l.otherImportFileLoaded(fileName),
-                key: ValueKey('otherImport:$key:fileName'),
-              ),
-            ),
-            FocusRing(
-              child: TextButton(
-                key: ValueKey('otherImport:$key:remove'),
-                onPressed: () => _clearFile(addons: addons),
-                child: Text(l.otherImportRemoveFile),
-              ),
-            ),
-          ],
-        )
-      else ...[
-        TvTextField(
-          key: ValueKey('otherImport:$key:text'),
-          controller: addons ? _addonsCtl : _libraryCtl,
-          minLines: 2,
-          maxLines: 4,
-          autocorrect: false,
-          enableSuggestions: false,
-          decoration: InputDecoration(hintText: l.otherImportPasteHint),
-        ),
-        const SizedBox(height: LumioSpacing.sm),
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: FocusRing(
-            child: OutlinedButton.icon(
-              key: ValueKey('otherImport:$key:pick'),
-              onPressed: () => _pickFile(addons: addons),
-              icon: const Icon(Icons.folder_open),
-              label: Text(l.otherImportChooseFile),
-            ),
-          ),
-        ),
-      ],
-      const SizedBox(height: LumioSpacing.lg),
-    ];
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
   }
 
+  Widget _section({required AppLocalizations l, required bool addons}) {
+    final key = addons ? 'addons' : 'library';
+    final fileName = addons ? _addonsFileName : _libraryFileName;
+    final c = context.lumio;
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: BorderSide(color: color, width: 2),
+    );
+    return _card(
+      context,
+      children: [
+        Text(
+          addons ? l.otherImportAddonsLabel : l.otherImportLibraryLabel,
+          style: _cardTitle(context),
+        ),
+        const SizedBox(height: 16),
+        if (fileName != null)
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.otherImportFileLoaded(fileName),
+                  key: ValueKey('otherImport:$key:fileName'),
+                  style: _md(context),
+                ),
+              ),
+              const SizedBox(width: 16),
+              TvButton(
+                key: ValueKey('otherImport:$key:remove'),
+                label: l.otherImportRemoveFile,
+                kind: TvButtonKind.ghost,
+                height: 76,
+                fontSize: 28,
+                horizontalPadding: 40,
+                onPressed: () => _clearFile(addons: addons),
+              ),
+            ],
+          )
+        else ...[
+          TvTextField(
+            key: ValueKey('otherImport:$key:text'),
+            controller: addons ? _addonsCtl : _libraryCtl,
+            minLines: 4,
+            maxLines: 4,
+            autocorrect: false,
+            enableSuggestions: false,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 26,
+              fontWeight: FontWeight.w600,
+              fontVariations: const [FontVariation.weight(600)],
+              color: c.text,
+            ),
+            decoration: InputDecoration(
+              hintText: l.otherImportPasteHint,
+              hintStyle: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 26,
+                fontWeight: FontWeight.w600,
+                fontVariations: [FontVariation.weight(600)],
+                color: Color(0xFF6F7B8B),
+              ),
+              filled: true,
+              fillColor: c.bg,
+              contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+              border: border(c.outline),
+              enabledBorder: border(c.outline),
+              focusedBorder: border(c.focusRing),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TvButton(
+              key: ValueKey('otherImport:$key:pick'),
+              label: l.otherImportChooseFile,
+              kind: TvButtonKind.secondary,
+              height: 76,
+              fontSize: 28,
+              horizontalPadding: 40,
+              icon: LumioIconView(LumioIcon.filePlain, size: 32, color: c.text),
+              onPressed: () => _pickFile(addons: addons),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _help(AppLocalizations l) => [
+    Align(
+      alignment: AlignmentDirectional.topStart,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1500),
+        child: Text(
+          l.otherImportHelp,
+          key: const ValueKey('otherImport:help'),
+          style: _md(context, size: 26),
+        ),
+      ),
+    ),
+    const SizedBox(height: 24),
+  ];
+
   List<Widget> _form(AppLocalizations l) => [
-    Text(l.otherImportHelp, key: const ValueKey('otherImport:help')),
-    const SizedBox(height: LumioSpacing.lg),
-    ..._section(l: l, addons: true),
-    ..._section(l: l, addons: false),
+    ..._help(l),
+    Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _section(l: l, addons: true)),
+        const SizedBox(width: 28),
+        Expanded(child: _section(l: l, addons: false)),
+      ],
+    ),
+    const SizedBox(height: 24),
     if (_error != null) ...[
       Text(
         _error!,
         key: const ValueKey('otherImport:error'),
-        style: TextStyle(color: Theme.of(context).colorScheme.error),
+        style: _md(context, color: context.lumio.error),
       ),
-      const SizedBox(height: LumioSpacing.md),
+      const SizedBox(height: 16),
     ],
     Align(
       alignment: AlignmentDirectional.centerStart,
-      child: FocusRing(
-        child: FilledButton(
-          key: const ValueKey('otherImport:run'),
-          onPressed: _run,
-          child: Text(l.otherImportRun),
-        ),
+      child: TvButton(
+        key: const ValueKey('otherImport:run'),
+        label: l.otherImportRun,
+        height: 76,
+        fontSize: 28,
+        horizontalPadding: 40,
+        onPressed: _run,
       ),
     ),
   ];
 
   List<Widget> _running(AppLocalizations l) => [
-    const SizedBox(height: LumioSpacing.xl),
-    Text(
-      _libraryStep
-          ? '${l.otherImportProgressLibrary} $_libDone/$_libTotal'
-          : l.otherImportProgressAddons(_done, _total),
-      key: const ValueKey('otherImport:progress'),
-      style: Theme.of(context).textTheme.titleMedium,
+    ..._help(l),
+    Row(
+      children: [
+        TvButton(
+          label: l.otherImportRun,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          onPressed: null,
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: Text(
+            _libraryStep
+                ? '${l.otherImportProgressLibrary} $_libDone/$_libTotal'
+                : l.otherImportProgressAddons(_done, _total),
+            key: const ValueKey('otherImport:progress'),
+            style: _md(context, color: context.lumio.accent),
+          ),
+        ),
+      ],
     ),
-    const SizedBox(height: LumioSpacing.md),
+    const SizedBox(height: 24),
     LinearProgressIndicator(
       value: _libraryStep
           ? (_libTotal > 0 ? _libDone / _libTotal : null)
@@ -464,51 +561,56 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
     ];
     if (_nothing && lines.isEmpty) lines.add(l.otherImportSumNothing);
     return [
-      Text(
-        l.otherImportDoneTitle,
-        key: const ValueKey('otherImport:done'),
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-      const SizedBox(height: LumioSpacing.md),
-      for (final s in lines)
-        Padding(
-          padding: const EdgeInsets.only(bottom: LumioSpacing.sm),
-          child: Text(s),
-        ),
-      for (final u in List.of(_pending)) ...[
-        const SizedBox(height: LumioSpacing.md),
-        Text(l.otherImportPendingItem(u.host)),
-        const SizedBox(height: LumioSpacing.sm),
-        Row(
-          children: [
-            FocusRing(
-              child: FilledButton(
-                key: ValueKey('otherImport:allow:${u.host}'),
-                onPressed: () => _allow(u),
-                child: Text(l.addonUrlAllow),
-              ),
-            ),
-            const SizedBox(width: LumioSpacing.sm),
-            FocusRing(
-              child: TextButton(
-                key: ValueKey('otherImport:ignore:${u.host}'),
-                onPressed: () => _ignore(u),
-                child: Text(l.addonUrlIgnore),
-              ),
+      _card(
+        context,
+        children: [
+          Text(
+            l.otherImportDoneTitle,
+            key: const ValueKey('otherImport:done'),
+            style: _cardTitle(context),
+          ),
+          const SizedBox(height: 6),
+          for (final s in lines) Text(s, style: _md(context)),
+          for (final u in List.of(_pending)) ...[
+            const SizedBox(height: 16),
+            Text(l.otherImportPendingItem(u.host), style: _md(context)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                TvButton(
+                  key: ValueKey('otherImport:allow:${u.host}'),
+                  label: l.addonUrlAllow,
+                  height: 76,
+                  fontSize: 28,
+                  horizontalPadding: 40,
+                  onPressed: () => _allow(u),
+                ),
+                const SizedBox(width: 16),
+                TvButton(
+                  key: ValueKey('otherImport:ignore:${u.host}'),
+                  label: l.addonUrlIgnore,
+                  kind: TvButtonKind.ghost,
+                  height: 76,
+                  fontSize: 28,
+                  horizontalPadding: 40,
+                  onPressed: () => _ignore(u),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
-      const SizedBox(height: LumioSpacing.lg),
+        ],
+      ),
+      const SizedBox(height: 24),
       Align(
         alignment: AlignmentDirectional.centerStart,
-        child: FocusRing(
-          child: FilledButton(
-            key: const ValueKey('otherImport:close'),
-            autofocus: true,
-            onPressed: () => Navigator.of(context).maybePop(),
-            child: Text(l.close),
-          ),
+        child: TvButton(
+          key: const ValueKey('otherImport:close'),
+          label: l.close,
+          autofocus: true,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
     ];
