@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 
 /// Marge de sécurité TV des maquettes (docs/design/maquettes) : 96 dp de
@@ -131,7 +132,7 @@ class TvBackButton extends StatelessWidget {
         height: 72,
         alignment: Alignment.center,
         decoration: BoxDecoration(shape: BoxShape.circle, color: c.surface),
-        child: Icon(Icons.arrow_back, size: 36, color: c.text),
+        child: LumioIconView(LumioIcon.back, size: 36, color: c.text),
       ),
     );
   }

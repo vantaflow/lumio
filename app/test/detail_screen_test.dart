@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/db.dart';
@@ -273,7 +274,12 @@ void main() {
     expect(find.text('Addon org.a'), findsOneWidget);
     expect(find.text('Addon org.b'), findsOneWidget);
     expect(find.byType(MagnetIcon), findsOneWidget);
-    expect(find.byIcon(Icons.link), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is LumioIconView && w.icon == LumioIcon.link,
+      ),
+      findsOneWidget,
+    );
     await h.close();
   });
 

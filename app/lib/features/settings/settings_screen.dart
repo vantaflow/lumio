@@ -31,6 +31,7 @@ import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart'
     show NetInterface, Quality, StreamPrefs;
@@ -197,15 +198,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     SettingsCategory.general => l.settingsCatGeneral,
   };
 
-  IconData _catIcon(SettingsCategory c) => switch (c) {
-    SettingsCategory.sources => Icons.add_circle_outline,
-    SettingsCategory.playback => Icons.play_arrow_outlined,
-    SettingsCategory.torrents => Icons.vpn_lock_outlined,
-    SettingsCategory.profiles => Icons.person_outline,
-    SettingsCategory.tracking => Icons.history_toggle_off,
-    SettingsCategory.party => Icons.groups_outlined,
-    SettingsCategory.backup => Icons.download_outlined,
-    SettingsCategory.general => Icons.tune,
+  LumioIcon _catIcon(SettingsCategory c) => switch (c) {
+    SettingsCategory.sources => LumioIcon.plus,
+    SettingsCategory.playback => LumioIcon.play,
+    SettingsCategory.torrents => LumioIcon.torrents,
+    SettingsCategory.profiles => LumioIcon.user,
+    SettingsCategory.tracking => LumioIcon.tracking,
+    SettingsCategory.party => LumioIcon.group,
+    SettingsCategory.backup => LumioIcon.download,
+    SettingsCategory.general => LumioIcon.general,
   };
 
   @override
@@ -765,8 +766,8 @@ class _VpnCard extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            active ? Icons.verified_user_outlined : Icons.gpp_maybe_outlined,
+          LumioIconView(
+            LumioIcon.shield,
             size: 56,
             color: active ? c.success : c.accent,
           ),
@@ -906,7 +907,7 @@ class _RailItem extends StatelessWidget {
     required this.onSelect,
   });
 
-  final IconData icon;
+  final LumioIcon icon;
   final String label;
   final bool selected;
   final bool autofocus;
@@ -934,7 +935,11 @@ class _RailItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 30, color: selected ? c.accent : c.textMuted),
+            LumioIconView(
+              icon,
+              size: 30,
+              color: selected ? c.accent : c.textMuted,
+            ),
             const SizedBox(width: 18),
             Expanded(
               child: FittedBox(
@@ -1156,13 +1161,18 @@ class _Tile extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Icon(Icons.chevron_right, size: 20, color: c.textMuted),
+                      LumioIconView(
+                        LumioIcon.chevron,
+                        size: 20,
+                        color: c.textMuted,
+                        strokeWidth: 2.5,
+                      ),
                     ],
                   ),
                 ),
               )
             else
-              Icon(Icons.chevron_right, size: 40, color: c.textMuted),
+              LumioIconView(LumioIcon.chevronAlt, size: 32, color: c.textMuted),
           ],
         ),
       ),
@@ -1236,7 +1246,11 @@ class DebugMenuScreen extends StatelessWidget {
             Expanded(
               child: TvTileText(title: title, subtitle: sub),
             ),
-            Icon(Icons.chevron_right, size: 40, color: context.lumio.textMuted),
+            LumioIconView(
+              LumioIcon.chevronAlt,
+              size: 32,
+              color: context.lumio.textMuted,
+            ),
           ],
         ),
       ),

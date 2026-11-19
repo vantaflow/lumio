@@ -13,6 +13,7 @@ import 'package:lumio/ui/focus/focus_ring.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -332,7 +333,11 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                       height: 76,
                       fontSize: 28,
                       horizontalPadding: 40,
-                      icon: Icon(Icons.check, size: 30, color: c.onAccent),
+                      icon: LumioIconView(
+                        LumioIcon.check,
+                        size: 32,
+                        color: c.onAccent,
+                      ),
                       onPressed: _toggleManage,
                     ),
                   ),
@@ -370,13 +375,13 @@ const _avatarColors = [
 ];
 
 /// Pastille ronde 60 dp des badges d'avatar (TV35).
-Widget _avatarBadge(Color bg, IconData icon, double size, Color fg) =>
+Widget _avatarBadge(Color bg, LumioIcon icon, double size, Color fg) =>
     Container(
       width: 60,
       height: 60,
       alignment: Alignment.center,
       decoration: BoxDecoration(shape: BoxShape.circle, color: bg),
-      child: Icon(icon, size: size, color: fg),
+      child: LumioIconView(icon, size: size, color: fg),
     );
 
 /// Avatar focalisable : cercle de 200 dp, anneau à 8 dp, échelle 1,08.
@@ -479,12 +484,7 @@ class _ProfileTile extends StatelessWidget {
                     Positioned(
                       left: 0,
                       top: 0,
-                      child: _avatarBadge(
-                        c.bg,
-                        Icons.edit_outlined,
-                        30,
-                        c.text,
-                      ),
+                      child: _avatarBadge(c.bg, LumioIcon.pencil, 30, c.text),
                     ),
                     if (locked)
                       Positioned(
@@ -492,7 +492,7 @@ class _ProfileTile extends StatelessWidget {
                         bottom: 0,
                         child: _avatarBadge(
                           c.bg,
-                          Icons.lock_outline,
+                          LumioIcon.lockSolid,
                           32,
                           c.text,
                         ),
@@ -526,7 +526,11 @@ class _ProfileTile extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.lock_outline, size: 26, color: c.textMuted),
+                      LumioIconView(
+                        LumioIcon.lock,
+                        size: 24,
+                        color: c.textMuted,
+                      ),
                       const SizedBox(width: 8),
                       Text(l.pinBadge, style: subStyle),
                     ],
@@ -572,7 +576,11 @@ class _AddTile extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: c.surface,
                 ),
-                child: Icon(Icons.add, size: 72, color: c.textMuted),
+                child: LumioIconView(
+                  LumioIcon.plus,
+                  size: 72,
+                  color: c.textMuted,
+                ),
               ),
             ),
           ),

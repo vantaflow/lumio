@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/profile_repository.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart';
@@ -146,7 +147,12 @@ void main() {
     await h.run(() => h.repo.createParentPin('1234'));
     final c = await h.pump(const ProfileGate(child: _child));
 
-    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is LumioIconView && w.icon == LumioIcon.lock,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('PIN'), findsOneWidget);
 
     await tester.tap(find.text('Moi'));

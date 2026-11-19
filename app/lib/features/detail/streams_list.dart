@@ -4,6 +4,7 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/features/addons/health_pill.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -29,9 +30,9 @@ String sizeLabel(int bytes, [AppLocalizations? l]) {
   return l.sizeMb((bytes / mb).round());
 }
 
-/// Icône aimant (flux torrent) : un fer à cheval aux pôles marqués.
+/// Icône aimant (flux torrent) de la maquette TV40 : contour ambre.
 class MagnetIcon extends StatelessWidget {
-  const MagnetIcon({super.key, this.size = 34, this.color});
+  const MagnetIcon({super.key, this.size = 32, this.color});
 
   final double size;
   final Color? color;
@@ -39,39 +40,12 @@ class MagnetIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     label: context.l10n.torrentLabel,
-    child: CustomPaint(
-      size: Size.square(size),
-      painter: _MagnetPainter(color ?? context.lumio.secondary),
+    child: LumioIconView(
+      LumioIcon.torrents,
+      size: size,
+      color: color ?? context.lumio.accent,
     ),
   );
-}
-
-class _MagnetPainter extends CustomPainter {
-  _MagnetPainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size s) {
-    final w = s.width;
-    final stroke = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.24
-      ..strokeCap = StrokeCap.butt;
-    final path = Path()
-      ..moveTo(w * 0.2, w * 0.95)
-      ..lineTo(w * 0.2, w * 0.45)
-      ..arcToPoint(Offset(w * 0.8, w * 0.45), radius: Radius.circular(w * 0.3))
-      ..lineTo(w * 0.8, w * 0.95);
-    canvas.drawPath(path, stroke);
-    final tip = Paint()..color = Colors.white;
-    canvas.drawRect(Rect.fromLTWH(w * 0.08, w * 0.76, w * 0.24, w * 0.12), tip);
-    canvas.drawRect(Rect.fromLTWH(w * 0.68, w * 0.76, w * 0.24, w * 0.12), tip);
-  }
-
-  @override
-  bool shouldRepaint(_MagnetPainter old) => old.color != color;
 }
 
 final _noHealth = HealthTracker();
@@ -258,7 +232,11 @@ class _StreamRow extends StatelessWidget {
           children: [
             item.isTorrent
                 ? const MagnetIcon()
-                : Icon(Icons.link, color: lumio.secondary, size: 34),
+                : LumioIconView(
+                    LumioIcon.link,
+                    color: lumio.secondary,
+                    size: 32,
+                  ),
             const SizedBox(width: LumioSpacing.md),
             Expanded(
               child: Column(

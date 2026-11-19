@@ -6,6 +6,7 @@ import 'package:lumio/providers.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 
 /// Logo Lumio (anneau ambre + point turquoise) des maquettes, 44 dp.
@@ -169,12 +170,12 @@ class TvTopBar extends ConsumerWidget {
   /// le voile des pop-ups ; Retour le ferme.
   Future<void> _openMenu(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
-    final entries = <(IconData, String, VoidCallback)>[
-      (Icons.bookmark_border, l.homeManageList, onLibrary),
-      (Icons.event_outlined, l.homeCalendar, onCalendar),
-      (Icons.tune, l.homeCustomize, onCustomize),
+    final entries = <(LumioIcon, String, VoidCallback)>[
+      (LumioIcon.list, l.homeManageList, onLibrary),
+      (LumioIcon.calendar, l.homeCalendar, onCalendar),
+      (LumioIcon.sliders, l.homeCustomize, onCustomize),
       (
-        Icons.switch_account_outlined,
+        LumioIcon.user,
         l.tvSwitchProfile,
         () => switchProfileFlow(context, ref),
       ),
@@ -223,7 +224,11 @@ class TvTopBar extends ConsumerWidget {
                           ),
                           child: Row(
                             children: [
-                              Icon(entries[i].$1, size: 36, color: c.textMuted),
+                              LumioIconView(
+                                entries[i].$1,
+                                size: 36,
+                                color: c.textMuted,
+                              ),
                               const SizedBox(width: 20),
                               Expanded(
                                 child: Text(
