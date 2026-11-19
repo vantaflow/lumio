@@ -390,7 +390,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         final accepted = await showIpWarningDialog(context);
         if (_disposed || token != _torrentToken) return;
         if (!accepted) {
-          _failTorrent(token, (l) => l.torrentIpWarningDeclined);
+          // Refus volontaire : retour propre à la fiche, sans message d'échec.
+          _watcher?.stop();
+          if (mounted && Navigator.of(context).canPop()) {
+            Navigator.of(context).pop(PlayerExit.back);
+          }
           return;
         }
         try {
@@ -658,9 +662,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     // garde ses pistes par défaut).
     String? defaultAudio;
     String? defaultSubs;
+    String? fallbackSubs;
     try {
       defaultAudio = await ref.read(defaultAudioLangProvider.future);
       defaultSubs = await ref.read(defaultSubtitleLangProvider.future);
+      // Sans choix explicite : la langue préférée de l'utilisateur (sa
+      // première langue de flux), sinon la langue de l'application.
+      fallbackSubs = defaultAudio ?? ref.read(localeProvider).languageCode;
     } on Object {
       // Pas de langue par défaut.
     }
@@ -676,6 +684,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
       l10n: l10n,
       defaultAudioLang: defaultAudio,
       defaultSubtitleLang: defaultSubs,
+      fallbackSubtitleLang: fallbackSubs,
       store: store,
       profileId: ref.read(currentProfileIdProvider),
       metaId: widget.metaId ?? '',

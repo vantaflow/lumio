@@ -22,13 +22,22 @@ import 'support/fake_phone.dart';
 const _alpha = 'https://alpha.example.com/manifest.json';
 
 class _Home extends StatelessWidget {
-  const _Home({this.tab});
+  const _Home({this.tab, this.title, this.portalQuery, this.portalName});
+  final String? portalQuery;
+  final String? portalName;
   final AddAddonTab? tab;
+  final String? title;
   @override
   Widget build(BuildContext context) => Scaffold(
     body: Center(
       child: TextButton(
-        onPressed: () => showAddAddonScreen(context, initialTab: tab),
+        onPressed: () => showAddAddonScreen(
+          context,
+          initialTab: tab,
+          title: title,
+          portalQuery: portalQuery,
+          portalName: portalName,
+        ),
         child: const Text('OUVRIR'),
       ),
     ),
@@ -50,7 +59,16 @@ Override _repo() => addonRepositoryProvider.overrideWith(
 );
 
 class _Setup {
-  _Setup(this.t, {this.tab, this.initial, this.startState}) : h = AppHarness(t);
+  _Setup(
+    this.t, {
+    this.tab,
+    this.initial,
+    this.startState,
+    this.title,
+    this.portalName,
+  }) : h = AppHarness(t);
+  final String? portalName;
+  final String? title;
   final WidgetTester t;
   final PhoneServerState? initial;
   final PhoneServerState? startState;
@@ -63,7 +81,12 @@ class _Setup {
 
   Future<void> open() async {
     await h.pump(
-      _Home(tab: tab),
+      _Home(
+        tab: tab,
+        title: title,
+        portalQuery: portalName == null ? null : 'addon=x',
+        portalName: portalName,
+      ),
       extra: [
         catalogOverride(FakeCatalogSite(cards: const [], details: const {})),
         phoneSessionFactoryProvider.overrideWithValue((_) => session),
@@ -393,5 +416,61 @@ void main() {
     await h.settle();
     expect(find.text('Réseau local indisponible'), findsOneWidget);
     await h.close();
+  });
+
+  testWidgets('titre « Gérer depuis le téléphone » seulement sur son onglet', (
+    t,
+  ) async {
+    final s = _Setup(
+      t,
+      tab: AddAddonTab.phone,
+      title: 'Gérer depuis le téléphone',
+      initial: const PhoneServerState(),
+    );
+    await s.open();
+    expect(find.text('Gérer depuis le téléphone'), findsOneWidget);
+    await t.tap(find.byKey(const ValueKey('addtab:link')));
+    await s.h.settle();
+    expect(find.text('Gérer depuis le téléphone'), findsNothing);
+    expect(find.text('Ajouter un addon'), findsOneWidget);
+    await s.h.close();
+  });
+
+  testWidgets('aide de l\'onglet : guide propre à chaque onglet', (t) async {
+    final s = _Setup(
+      t,
+      tab: AddAddonTab.phone,
+      initial: const PhoneServerState(),
+    );
+    await s.open();
+    await t.tap(find.byKey(const ValueKey('addon-help')));
+    await s.h.settle();
+    expect(find.text('Ajouter depuis le téléphone'), findsOneWidget);
+    await t.tap(find.byKey(const ValueKey('guide-ok')));
+    await s.h.settle();
+    await t.tap(find.byKey(const ValueKey('addtab:link')));
+    await s.h.settle();
+    await t.tap(find.byKey(const ValueKey('addon-help')));
+    await s.h.settle();
+    expect(find.text('Ajouter un addon avec son lien'), findsOneWidget);
+    await t.tap(find.byKey(const ValueKey('guide-ok')));
+    await s.h.settle();
+    await s.h.close();
+  });
+
+  testWidgets('« Configurer depuis le portail » : encadré en 5 étapes', (
+    t,
+  ) async {
+    final s = _Setup(
+      t,
+      tab: AddAddonTab.phone,
+      portalName: 'Torrentio',
+      initial: const PhoneServerState(),
+    );
+    await s.open();
+    expect(find.byKey(const ValueKey('portal-guide')), findsOneWidget);
+    expect(find.text('Sur votre téléphone'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    await s.h.close();
   });
 }

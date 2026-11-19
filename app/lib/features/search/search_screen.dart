@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
 import 'package:lumio/ui/common/tv_scroll_clip.dart';
@@ -358,7 +359,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   /// 8 par ligne (69 x 84, rayon 14), Espace / Effacer / Tout effacer / langue.
   Widget _wideKeyboard(BuildContext context, bool tv) {
     final lumio = context.lumio;
-    final keys = _arabic ? _arabicKeys : _latinKeys;
+    final rows = _arabic
+        ? [
+            for (var i = 0; i < _arabicKeys.length; i += 10)
+              _arabicKeys.sublist(i, min(i + 10, _arabicKeys.length)),
+          ]
+        : [for (final r in _latinRows) r.split('')];
     final empty = _controller.text.isEmpty;
     final fieldStyle = TextStyle(
       fontFamily: 'Manrope',
@@ -440,20 +446,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ],
               ),
               const SizedBox(height: 28),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (var i = 0; i < keys.length; i++)
-                    _Key(
-                      key: ValueKey('key-${keys[i]}'),
-                      label: _arabic ? keys[i] : keys[i].toUpperCase(),
-                      semantic: keys[i],
-                      autofocus: i == 0,
-                      onSelect: () => _type(keys[i]),
-                    ),
-                ],
-              ),
+              // Rangées réelles : AZERTYUIOP / QSDFGHJKLM / WXCVBN, puis les
+              // chiffres (arabe : rangées de 10).
+              for (final (r, row) in rows.indexed) ...[
+                if (r > 0) const SizedBox(height: 10),
+                Row(
+                  children: [
+                    for (final (i, k) in row.indexed) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      _Key(
+                        key: ValueKey('key-$k'),
+                        label: _arabic ? k : k.toUpperCase(),
+                        semantic: k,
+                        width: 55,
+                        autofocus: r == 0 && i == 0,
+                        onSelect: () => _type(k),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
               const SizedBox(height: 10),
               Row(
                 children: [

@@ -1036,13 +1036,31 @@
   "profileChange": "Change",
   "settingsBackHome": "Back: home",
   "vpnCardActive": "VPN active · {name}",
-  "@vpnCardActive": {"placeholders": {"name": {"type": "String"}}},
+  "@vpnCardActive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "vpnCardStopHint": "Torrents stop if the VPN drops.",
   "vpnCardIpHint": "Your IP address is visible to other peers without a VPN.",
   "cacheUsedOf": "{used} used of",
-  "@cacheUsedOf": {"placeholders": {"used": {"type": "String"}}},
+  "@cacheUsedOf": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      }
+    }
+  },
   "sizeGbDecimal": "{n} GB",
-  "@sizeGbDecimal": {"placeholders": {"n": {"type": "String"}}},
+  "@sizeGbDecimal": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "profileAdultShort": "Adult",
   "manageProfilesHint": "Edit a profile: name, kid profile and age limit, PIN lock. Six profiles at most.",
   "profileEditorHint": "For an adult profile, the \"Lock with PIN\" option replaces the age limit: \"The parent PIN is required to open this profile.\"",
@@ -1151,9 +1169,21 @@
   "addonTabPhone": "From your phone",
   "catPopular": "Popular",
   "addonServerLine": "Server: {host}",
-  "@addonServerLine": {"placeholders": {"host": {"type": "String"}}},
+  "@addonServerLine": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
   "addonReplacesNote": "Replaces the version of “{name}” already installed.",
-  "@addonReplacesNote": {"placeholders": {"name": {"type": "String"}}},
+  "@addonReplacesNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "unknownTitle": "Unknown title",
   "catOfficial": "Official",
   "catMoviesSeries": "Movies and series",
@@ -1228,7 +1258,7 @@
   "phoneQrLabel": "QR code of the Lumio page on the local network",
   "settingsManagePhone": "Manage from your phone",
   "settingsManagePhoneNoNetwork": "Local network unavailable",
-  "phoneAddWaiting": "Link received from the phone: check the preview and confirm here.",
+  "phoneAddWaiting": "Request received from the phone: check the preview and confirm here.",
   "addonInstall": "Install",
   "addonConfigure": "Configure",
   "addonConfigurePortal": "Configure from the portal",
@@ -1240,5 +1270,57 @@
     "placeholders": {
       "name": {}
     }
-  }
+  },
+  "typePageNoMovies": "Your addons offer no movie catalogue",
+  "typePageNoSeries": "Your addons offer no series catalogue",
+  "guideGotIt": "Got it",
+  "guideHelp": "Help",
+  "guideNoteKeyStays": "Your key stays encrypted on the TV: it is never sent to the phone.",
+  "guideCatalogTitle": "Add an addon from the catalogue",
+  "guideCatalogStep1": "Pick an addon in the grid.",
+  "guideCatalogStep2": "Press \"Install\".",
+  "guideCatalogStep3": "If it needs a setting, press \"Set up from the portal\": your phone takes care of it.",
+  "guideLinkTitle": "Add an addon with its link",
+  "guideLinkStep1": "On the addon's page, tap \"Copy link\" (or \"Install\", then \"Copy link address\").",
+  "guideLinkStep2": "Come back here and paste the link in the field, or press \"Paste\".",
+  "guideLinkStep3": "Check the addon's name, then press \"Install\".",
+  "guidePhoneTitle": "Add from the phone",
+  "guidePhoneStep1": "Put the phone on the same Wi-Fi as the TV.",
+  "guidePhoneStep2": "Scan the code, then enter the security code shown here.",
+  "guidePhoneStep3": "Paste a link, tap \"Add\", then confirm here on the TV.",
+  "portalBoxTitle": "On your phone",
+  "portalStep1": "Scan the code: this TV's Lumio page opens.",
+  "portalStep2": "Enter the security code shown below.",
+  "portalStep3": "Set the addon up, then \"Copy link\" (or \"Install\").",
+  "portalStep4": "Paste the link into the page, tap \"Add\".",
+  "portalStep5": "Come back here and confirm on the TV.",
+  "traktStepsTitle": "To connect Trakt",
+  "traktStep1": "You pressed \"Connect Trakt\": a code is shown.",
+  "traktStep2": "On your phone, open trakt.tv/activate (or scan the code).",
+  "traktStep3": "Enter the code shown on the TV.",
+  "traktStep4": "Accept on Trakt: the TV connects by itself.",
+  "settingsHelp": "Help",
+  "settingsHelpHint": "Step-by-step guides: addons, phone, Trakt, profiles, subtitles",
+  "helpAddonsTitle": "Add an addon",
+  "helpAddonsStep1": "Open Settings › Sources, then \"Add an addon\".",
+  "helpAddonsStep2": "Pick a tab: Catalogue, By link or From the phone.",
+  "helpAddonsStep3": "Press \"Install\". No addon is provided by default.",
+  "helpSettingTitle": "Set up an addon",
+  "helpSettingStep1": "On an addon's card in the catalogue, press \"Set up from the portal\".",
+  "helpSettingStep2": "On the phone, set the addon up, then tap \"Copy link\".",
+  "helpSettingStep3": "Paste the link into the page, tap \"Add\", then confirm on the TV.",
+  "helpPortalTitle": "The phone portal",
+  "helpPortalStep1": "The phone must be on the same Wi-Fi as the TV.",
+  "helpPortalStep2": "Open Settings › Sources › From the phone, then scan the code.",
+  "helpPortalStep3": "Enter the security code shown on the TV.",
+  "helpPortalStep4": "Keep the TV screen open: the page closes with it.",
+  "helpTraktTitle": "Trakt",
+  "helpProfilesTitle": "Profiles and PIN",
+  "helpProfilesStep1": "Open Settings › Profiles › Manage profiles.",
+  "helpProfilesStep2": "For a child profile, pick the age limit.",
+  "helpProfilesStep3": "The parent PIN protects locked profiles and sensitive settings.",
+  "helpSubsTitle": "Subtitles",
+  "helpSubsStep1": "During playback, open \"Tracks and subtitles\".",
+  "helpSubsStep2": "Pick the language, the size and the delay.",
+  "helpSubsStep3": "In Settings › Playback, pick the preferred language: it applies by itself when it exists."
 }

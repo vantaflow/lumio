@@ -156,9 +156,30 @@
   "subtitles": "Sous-titres",
   "subtitlesOff": "Désactivés",
   "subtitleLabel": "{lang} · {source}",
-  "@subtitleLabel": {"placeholders": {"lang": {"type": "String"}, "source": {"type": "String"}}},
+  "@subtitleLabel": {
+    "placeholders": {
+      "lang": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      }
+    }
+  },
   "subtitleLabelN": "{lang} · {source} {n}",
-  "@subtitleLabelN": {"placeholders": {"lang": {"type": "String"}, "source": {"type": "String"}, "n": {"type": "int"}}},
+  "@subtitleLabelN": {
+    "placeholders": {
+      "lang": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "langUnknown": "Langue inconnue",
   "subtitleDelay": "Décalage des sous-titres",
   "subtitleAdvance": "Avancer les sous-titres de 100 ms",
@@ -1255,13 +1276,31 @@
   "profileChange": "Changer",
   "settingsBackHome": "Retour : accueil",
   "vpnCardActive": "VPN actif · {name}",
-  "@vpnCardActive": {"placeholders": {"name": {"type": "String"}}},
+  "@vpnCardActive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "vpnCardStopHint": "Les torrents s'arrêtent si le VPN tombe.",
   "vpnCardIpHint": "Votre adresse IP est visible des autres pairs sans VPN.",
   "cacheUsedOf": "{used} utilisés sur",
-  "@cacheUsedOf": {"placeholders": {"used": {"type": "String"}}},
+  "@cacheUsedOf": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      }
+    }
+  },
   "sizeGbDecimal": "{n} Go",
-  "@sizeGbDecimal": {"placeholders": {"n": {"type": "String"}}},
+  "@sizeGbDecimal": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "profileAdultShort": "Adulte",
   "manageProfilesHint": "Modifier un profil : nom, profil enfant et limite d'âge, verrou par PIN. Six profils au maximum.",
   "profileEditorHint": "Pour un profil adulte, l'option « Verrouiller par PIN » remplace la limite d'âge : « Le PIN parent est demandé pour ouvrir ce profil. »",
@@ -1377,9 +1416,21 @@
   "addonTabPhone": "Depuis le téléphone",
   "catPopular": "Populaires",
   "addonServerLine": "Serveur : {host}",
-  "@addonServerLine": {"placeholders": {"host": {"type": "String"}}},
+  "@addonServerLine": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
   "addonReplacesNote": "Remplace la version déjà installée de « {name} ».",
-  "@addonReplacesNote": {"placeholders": {"name": {"type": "String"}}},
+  "@addonReplacesNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "unknownTitle": "Titre inconnu",
   "catOfficial": "Officiels",
   "catMoviesSeries": "Films et séries",
@@ -1454,7 +1505,7 @@
   "phoneQrLabel": "QR code de la page Lumio sur le réseau local",
   "settingsManagePhone": "Gérer depuis le téléphone",
   "settingsManagePhoneNoNetwork": "Réseau local indisponible",
-  "phoneAddWaiting": "Lien reçu du téléphone : vérifiez l'aperçu et confirmez ici.",
+  "phoneAddWaiting": "Demande reçue du téléphone : vérifiez l'aperçu et confirmez ici.",
   "addonInstall": "Installer",
   "addonConfigure": "Configurer",
   "addonConfigurePortal": "Configurer depuis le portail",
@@ -1466,5 +1517,57 @@
     "placeholders": {
       "name": {}
     }
-  }
+  },
+  "typePageNoMovies": "Vos addons ne proposent aucun catalogue de films",
+  "typePageNoSeries": "Vos addons ne proposent aucun catalogue de séries",
+  "guideGotIt": "Compris",
+  "guideHelp": "Aide",
+  "guideNoteKeyStays": "Votre clé reste chiffrée sur la TV : elle n'est jamais envoyée au téléphone.",
+  "guideCatalogTitle": "Ajouter un addon du catalogue",
+  "guideCatalogStep1": "Choisissez un addon dans la grille.",
+  "guideCatalogStep2": "Appuyez sur « Installer ».",
+  "guideCatalogStep3": "S'il demande un réglage, appuyez sur « Configurer depuis le portail » : votre téléphone s'en charge.",
+  "guideLinkTitle": "Ajouter un addon avec son lien",
+  "guideLinkStep1": "Sur la page de l'addon, touchez « Copier le lien » (ou « Install », puis « Copier l'adresse du lien »).",
+  "guideLinkStep2": "Revenez ici et collez le lien dans le champ, ou appuyez sur « Coller ».",
+  "guideLinkStep3": "Vérifiez le nom de l'addon, puis appuyez sur « Installer ».",
+  "guidePhoneTitle": "Ajouter depuis le téléphone",
+  "guidePhoneStep1": "Mettez le téléphone sur le même Wi-Fi que la TV.",
+  "guidePhoneStep2": "Scannez le code, puis saisissez le code de sécurité affiché ici.",
+  "guidePhoneStep3": "Collez un lien, touchez « Ajouter », puis confirmez ici sur la TV.",
+  "portalBoxTitle": "Sur votre téléphone",
+  "portalStep1": "Scannez le code : la page Lumio de cette TV s'ouvre.",
+  "portalStep2": "Saisissez le code de sécurité affiché ci-dessous.",
+  "portalStep3": "Réglez l'addon, puis « Copier le lien » (ou « Install »).",
+  "portalStep4": "Collez le lien dans la page, touchez « Ajouter ».",
+  "portalStep5": "Revenez ici et confirmez sur la TV.",
+  "traktStepsTitle": "Pour connecter Trakt",
+  "traktStep1": "Vous avez appuyé sur « Connecter Trakt » : un code s'affiche.",
+  "traktStep2": "Sur votre téléphone, ouvrez trakt.tv/activate (ou scannez le code).",
+  "traktStep3": "Saisissez le code affiché sur la TV.",
+  "traktStep4": "Acceptez sur Trakt : la TV se connecte toute seule.",
+  "settingsHelp": "Aide",
+  "settingsHelpHint": "Guides pas à pas : addons, téléphone, Trakt, profils, sous-titres",
+  "helpAddonsTitle": "Ajouter un addon",
+  "helpAddonsStep1": "Ouvrez Réglages › Sources, puis « Ajouter un addon ».",
+  "helpAddonsStep2": "Choisissez un onglet : Catalogue, Par lien ou Depuis le téléphone.",
+  "helpAddonsStep3": "Appuyez sur « Installer ». Aucun addon n'est fourni d'office.",
+  "helpSettingTitle": "Régler un addon",
+  "helpSettingStep1": "Sur la fiche d'un addon du catalogue, appuyez sur « Configurer depuis le portail ».",
+  "helpSettingStep2": "Sur le téléphone, réglez l'addon puis touchez « Copier le lien ».",
+  "helpSettingStep3": "Collez le lien dans la page, touchez « Ajouter », puis confirmez sur la TV.",
+  "helpPortalTitle": "Le portail du téléphone",
+  "helpPortalStep1": "Le téléphone doit être sur le même Wi-Fi que la TV.",
+  "helpPortalStep2": "Ouvrez Réglages › Sources › Depuis le téléphone, puis scannez le code.",
+  "helpPortalStep3": "Saisissez le code de sécurité affiché sur la TV.",
+  "helpPortalStep4": "Laissez l'écran de la TV ouvert : la page se ferme avec lui.",
+  "helpTraktTitle": "Trakt",
+  "helpProfilesTitle": "Profils et code PIN",
+  "helpProfilesStep1": "Ouvrez Réglages › Profils › Gérer les profils.",
+  "helpProfilesStep2": "Pour un profil enfant, choisissez l'âge limite.",
+  "helpProfilesStep3": "Le code PIN parent protège les profils verrouillés et les réglages sensibles.",
+  "helpSubsTitle": "Sous-titres",
+  "helpSubsStep1": "Pendant la lecture, ouvrez « Pistes et sous-titres ».",
+  "helpSubsStep2": "Choisissez la langue, la taille et le décalage.",
+  "helpSubsStep3": "Dans Réglages › Lecture, choisissez la langue préférée : elle s'applique toute seule quand elle existe."
 }

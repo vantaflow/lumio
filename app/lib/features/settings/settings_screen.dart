@@ -17,6 +17,7 @@ import 'package:lumio/features/settings/backup_section.dart';
 import 'package:lumio/features/detail/playback_service.dart'
     show streamPrefsProvider;
 import 'package:lumio/features/profiles/pin_dialog.dart' show requireParent;
+import 'package:lumio/features/settings/help_screen.dart';
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/features/settings/sources_page.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
@@ -702,6 +703,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               await _save(() => ref.read(localeProvider.notifier).set(picked));
             }
           },
+        ),
+        _Section(l.settingsHelp, top: 24),
+        _Tile(
+          id: 'help',
+          icon: LumioIcon.document,
+          minHeight: 112,
+          title: l.settingsHelp,
+          subtitle: l.settingsHelpHint,
+          onTap: () => _push(const HelpScreen()),
         ),
         _Section(l.settingsVersion, top: 24),
         _Tile(

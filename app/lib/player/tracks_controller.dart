@@ -248,6 +248,7 @@ class TracksController extends ChangeNotifier {
     AppLocalizations? l10n,
     this.defaultAudioLang,
     this.defaultSubtitleLang,
+    this.fallbackSubtitleLang,
     this.refusalWindow = const Duration(milliseconds: 1500),
   }) : _style = style,
        l10n = l10n ?? AppLocalizationsFr() {
@@ -268,6 +269,11 @@ class TracksController extends ChangeNotifier {
   /// sous-titre) ; utilisées quand le titre n'a pas de mémorisation.
   final String? defaultAudioLang;
   final String? defaultSubtitleLang;
+
+  /// Langue préférée utilisée quand ni le titre ni les réglages n'ont choisi
+  /// de sous-titres : appliquée seulement si le film n'est pas déjà dans cette
+  /// langue (piste audio choisie) et si un sous-titre de cette langue existe.
+  final String? fallbackSubtitleLang;
 
   /// Délai pendant lequel un refus du moteur annule le choix d'un sous-titre.
   final Duration refusalWindow;
@@ -355,9 +361,18 @@ class TracksController extends ChangeNotifier {
         }
       }
     }
-    final s = _settings.subtitleLang ?? defaultSubtitleLang;
+    final explicit = _settings.subtitleLang ?? defaultSubtitleLang;
+    final s = explicit ?? fallbackSubtitleLang;
     if (!_appliedSubs && s != null && _tracksKnown) {
       _appliedSubs = true;
+      if (explicit == null) {
+        // Langue préférée par défaut : inutile si l'audio est déjà dans cette
+        // langue.
+        final id = backend.selectedAudioId;
+        for (final t in audio) {
+          if (t.id == id && _sameLang(t.lang, s)) return;
+        }
+      }
       if (s == 'off') {
         unawaited(backend.selectSubtitle(null));
         return;

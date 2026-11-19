@@ -155,6 +155,35 @@ Future<void> _tap(WidgetTester t, String key) async {
 
 void main() {
   _searchGridTests();
+  testWidgets('clavier TV : rangées AZERTY réelles', (t) async {
+    await _pump(t);
+    double y(String k) => t.getCenter(find.byKey(ValueKey('key-$k'))).dy;
+    double x(String k) => t.getCenter(find.byKey(ValueKey('key-$k'))).dx;
+    for (final k in 'zertyuiop'.split('')) {
+      expect(y(k), y('a'), reason: k);
+    }
+    for (final k in 'sdfghjklm'.split('')) {
+      expect(y(k), y('q'), reason: k);
+    }
+    for (final k in 'xcvbn'.split('')) {
+      expect(y(k), y('w'), reason: k);
+    }
+    expect(y('q'), greaterThan(y('a')));
+    expect(y('w'), greaterThan(y('q')));
+    expect(y('1'), greaterThan(y('w')));
+    expect(x('q'), x('a'));
+    // 10 touches dans la largeur du panneau (760 - 96 - 40).
+    expect(x('p') - x('a'), lessThan(624));
+  });
+
+  testWidgets('clavier arabe : rangées de 10', (t) async {
+    await _pump(t);
+    await _tap(t, 'layout');
+    double y(String k) => t.getCenter(find.byKey(ValueKey('key-$k'))).dy;
+    expect(y('ا'), y('ح'));
+    expect(y('ا'), isNot(y('ل')));
+  });
+
   testWidgets('anti-rebond : une seule requête pour une frappe rapide', (
     t,
   ) async {

@@ -572,6 +572,7 @@ void main() {
       await t.tap(find.byKey(const ValueKey('tracking-connect')));
       await h.settle(3);
       expect(find.byKey(const ValueKey('tracking-auth-code')), findsOneWidget);
+      expect(find.byKey(const ValueKey('tracking-auth-steps')), findsOneWidget);
       expect(find.text('ABCD1234'), findsOneWidget);
       expect(find.text('https://trakt.tv/activate'), findsOneWidget);
       expect(find.byType(QrImageView), findsOneWidget);

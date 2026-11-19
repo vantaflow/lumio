@@ -113,11 +113,13 @@ TracksController make(
   Future<List<int>> Function(SubtitleItem)? download,
   SubtitleTempStore? temp,
   String meta = 'tt1:1:2',
+  String? fallback,
 }) => TracksController(
   backend: b,
   store: store,
   profileId: 'p',
   metaId: meta,
+  fallbackSubtitleLang: fallback,
   addonSubtitles: addon,
   download: download,
   tempStore: temp ?? SubtitleTempStore(() async => Directory.systemTemp),
@@ -146,6 +148,42 @@ Future<void> pumpHost(
 }
 
 void main() {
+  testWidgets(
+    'langue préférée par défaut : sous-titre choisi automatiquement',
+    (t) async {
+      final b = FakeBackend()
+        ..subtitleTracks = const [
+          TrackOption(id: '10', label: 'English', lang: 'en'),
+        ];
+      final c = make(b, InMemoryTitleSettingsStore(), fallback: 'en');
+      await c.init();
+      expect(b.calls, contains('sub:10'));
+    },
+  );
+
+  testWidgets('langue préférée = langue de l\'audio : sous-titres laissés', (
+    t,
+  ) async {
+    final b = FakeBackend(); // audio français choisi, sous-titre français
+    final c = make(b, InMemoryTitleSettingsStore(), fallback: 'fr');
+    await c.init();
+    expect(b.calls.where((x) => x.startsWith('sub:')), isEmpty);
+  });
+
+  testWidgets('écran bas : le bouton Fermer reste entièrement visible', (
+    t,
+  ) async {
+    final b = FakeBackend();
+    final c = make(b, InMemoryTitleSettingsStore());
+    t.view.physicalSize = const Size(1920, 1080);
+    t.view.devicePixelRatio = 1;
+    addTearDown(t.view.reset);
+    await t.pumpWidget(host(c));
+    final r = t.getRect(find.byKey(const ValueKey('tracks-close')));
+    expect(r.bottom, lessThanOrEqualTo(1080));
+    expect(r.top, greaterThanOrEqualTo(0));
+  });
+
   testWidgets('liste 2 pistes audio et la sélection appelle le contrôleur', (
     t,
   ) async {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lumio/features/phone/phone_server.dart';
 import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/ui/common/tv_guide.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -199,125 +200,156 @@ class _PairingState extends State<_Pairing> {
           ),
           const SizedBox(width: 96),
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.portalName != null) ...[
-                  Text(
-                    l.portalAddonHint(widget.portalName!),
-                    key: const ValueKey('portal-addon-hint'),
-                    style: t.bodyMedium?.copyWith(
-                      fontSize: 28,
-                      height: 1.35,
-                      color: c.accent,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
-                step(1, l.phoneStep1),
-                const SizedBox(height: 32),
-                step(2, l.phoneStep2),
-                const SizedBox(height: 32),
-                step(3, l.phoneStep3),
-                const SizedBox(height: 32),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 24,
-                  ),
-                  decoration: BoxDecoration(
-                    color: c.surface,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
+            // Réduit d'un bloc si le guide et l'adresse dépassent la hauteur
+            // de l'écran (gros texte système).
+            child: LayoutBuilder(
+              builder: (context, box) => FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: SizedBox(
+                  width: box.maxWidth,
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        l.phoneOrType,
-                        style: t.bodySmall?.copyWith(
-                          fontSize: 26,
-                          height: 1.3,
-                          color: c.textMuted,
+                      if (widget.portalName != null) ...[
+                        Text(
+                          l.portalAddonHint(widget.portalName!),
+                          key: const ValueKey('portal-addon-hint'),
+                          style: t.bodyMedium?.copyWith(
+                            fontSize: 26,
+                            height: 1.3,
+                            color: c.accent,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        state.address,
-                        key: const ValueKey('phone-address'),
-                        style: TextStyle(
-                          fontFamily: 'Bricolage Grotesque',
-                          fontSize: 52,
-                          fontWeight: FontWeight.w700,
-                          fontVariations: const [FontVariation.weight(700)],
-                          color: c.accent,
-                          height: 1.2,
+                        const SizedBox(height: 20),
+                      ],
+                      if (widget.portalName != null)
+                        // Arrivée depuis « Configurer depuis le portail » : le guide
+                        // complet du téléphone, en 5 étapes (maquette G02).
+                        TvGuideBox(
+                          key: const ValueKey('portal-guide'),
+                          title: l.portalBoxTitle,
+                          steps: [
+                            l.portalStep1,
+                            l.portalStep2,
+                            l.portalStep3,
+                            l.portalStep4,
+                            l.portalStep5,
+                          ],
+                        )
+                      else ...[
+                        step(1, l.phoneStep1),
+                        const SizedBox(height: 32),
+                        step(2, l.phoneStep2),
+                        const SizedBox(height: 32),
+                        step(3, l.phoneStep3),
+                      ],
+                      const SizedBox(height: 28),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 24,
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text.rich(
-                        key: const ValueKey('phone-code'),
-                        TextSpan(
+                        decoration: BoxDecoration(
+                          color: c.surface,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TextSpan(text: '${l.phoneCodeLabel} '),
-                            TextSpan(
-                              text: PhoneTab.spaced(state.code),
+                            Text(
+                              l.phoneOrType,
+                              style: t.bodySmall?.copyWith(
+                                fontSize: 26,
+                                height: 1.3,
+                                color: c.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              state.address,
+                              key: const ValueKey('phone-address'),
                               style: TextStyle(
-                                color: c.text,
+                                fontFamily: 'Bricolage Grotesque',
+                                fontSize: 52,
                                 fontWeight: FontWeight.w700,
                                 fontVariations: const [
                                   FontVariation.weight(700),
                                 ],
-                                letterSpacing: 6,
+                                color: c.accent,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text.rich(
+                              key: const ValueKey('phone-code'),
+                              TextSpan(
+                                children: [
+                                  TextSpan(text: '${l.phoneCodeLabel} '),
+                                  TextSpan(
+                                    text: PhoneTab.spaced(state.code),
+                                    style: TextStyle(
+                                      color: c.text,
+                                      fontWeight: FontWeight.w700,
+                                      fontVariations: const [
+                                        FontVariation.weight(700),
+                                      ],
+                                      letterSpacing: 6,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              style: t.bodySmall?.copyWith(
+                                fontSize: 26,
+                                height: 1.3,
+                                color: c.textMuted,
                               ),
                             ),
                           ],
                         ),
-                        style: t.bodySmall?.copyWith(
-                          fontSize: 26,
-                          height: 1.3,
-                          color: c.textMuted,
+                      ),
+                      if (widget.portalName == null) ...[
+                        const SizedBox(height: 28),
+                        Text(
+                          l.phoneKeepOpen,
+                          key: const ValueKey('phone-keep-open'),
+                          style: t.bodyMedium?.copyWith(
+                            fontSize: 28,
+                            height: 1.3,
+                            color: c.text,
+                          ),
                         ),
+                      ],
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: locked ? c.warning : c.success,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              status,
+                              key: const ValueKey('phone-status'),
+                              style: t.bodySmall?.copyWith(
+                                fontSize: 24,
+                                color: c.textMuted,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 28),
-                Text(
-                  l.phoneKeepOpen,
-                  key: const ValueKey('phone-keep-open'),
-                  style: t.bodyMedium?.copyWith(
-                    fontSize: 28,
-                    height: 1.3,
-                    color: c.text,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: locked ? c.warning : c.success,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        status,
-                        key: const ValueKey('phone-status'),
-                        style: t.bodySmall?.copyWith(
-                          fontSize: 24,
-                          color: c.textMuted,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ],

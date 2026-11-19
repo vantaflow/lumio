@@ -8,9 +8,14 @@ import 'package:flutter/material.dart';
 /// jamais sur une puce située plus haut) et ne quittent la rangée que s'il n'y
 /// a plus de carte de ce côté.
 class RowTraversalPolicy extends ReadingOrderTraversalPolicy {
-  RowTraversalPolicy({this.strictRow = false});
+  RowTraversalPolicy({this.strictRow = false, this.preferUp});
 
   final bool strictRow;
+
+  /// Cible préférée d'une flèche haute : si elle fait partie de la rangée
+  /// voisine (onglet courant d'une barre), elle passe avant la carte la plus
+  /// proche horizontalement.
+  final FocusNode? preferUp;
 
   /// Deux éléments dont les centres verticaux diffèrent de moins que cela
   /// sont dans la même rangée.
@@ -52,7 +57,10 @@ class RowTraversalPolicy extends ReadingOrderTraversalPolicy {
     ];
     double dx(FocusNode n) => (n.rect.center.dx - from.center.dx).abs();
     row.sort((a, b) => dx(a).compareTo(dx(b)));
-    final target = row.first;
+    final pref = preferUp;
+    final target = !down && pref != null && row.contains(pref)
+        ? pref
+        : row.first;
     requestFocusCallback(target);
     return true;
   }
@@ -96,16 +104,20 @@ class RowTraversalGroup extends StatelessWidget {
   const RowTraversalGroup({
     required this.child,
     this.strictRow = false,
+    this.preferUp,
     super.key,
   });
   final Widget child;
+
+  /// Voir [RowTraversalPolicy.preferUp].
+  final FocusNode? preferUp;
 
   /// Gauche et droite restent dans la rangée (voir [RowTraversalPolicy]).
   final bool strictRow;
 
   @override
   Widget build(BuildContext context) => FocusTraversalGroup(
-    policy: RowTraversalPolicy(strictRow: strictRow),
+    policy: RowTraversalPolicy(strictRow: strictRow, preferUp: preferUp),
     child: child,
   );
 }

@@ -1,3 +1,4 @@
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
@@ -366,6 +367,7 @@ class TvHero extends StatelessWidget {
     required this.title,
     required this.onResume,
     this.poster,
+    this.background,
     this.allowPrivate = false,
     this.listLabel,
     this.onList,
@@ -374,6 +376,9 @@ class TvHero extends StatelessWidget {
   final String eyebrow;
   final String title;
   final Uri? poster;
+
+  /// Fond « background » de l'addon : préféré à l'affiche (haute définition).
+  final Uri? background;
   final bool allowPrivate;
   final VoidCallback onResume;
 
@@ -393,13 +398,21 @@ class TvHero extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          TvArtwork(
-            seed: title,
-            url: poster,
-            allowPrivate: allowPrivate,
-            width: 1728,
-            scrim: false,
-          ),
+          if (background != null || poster == null)
+            TvArtwork(
+              seed: title,
+              url: background,
+              allowPrivate: allowPrivate,
+              width: 1728,
+              scrim: false,
+            )
+          else
+            _PosterBackdrop(
+              key: const ValueKey('hero-poster-backdrop'),
+              seed: title,
+              poster: poster!,
+              allowPrivate: allowPrivate,
+            ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -470,6 +483,77 @@ class TvHero extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Héros sans fond d'addon : l'affiche (souvent basse définition) n'est ni
+/// étirée ni floutée en grand ; elle est posée à droite à sa taille d'origine
+/// (jamais agrandie), sur son propre reflet flou et assombri.
+class _PosterBackdrop extends StatelessWidget {
+  const _PosterBackdrop({
+    super.key,
+    required this.seed,
+    required this.poster,
+    required this.allowPrivate,
+  });
+
+  final String seed;
+  final Uri poster;
+  final bool allowPrivate;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.lumio;
+    final (a, b) = tvGradientFor(seed);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(gradient: LinearGradient(colors: [a, b])),
+        ),
+        RepaintBoundary(
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+            child: Opacity(
+              opacity: 0.35,
+              child: Image(
+                image: ResizeImage.resizeIfNeeded(
+                  160,
+                  null,
+                  GuardedNetworkImage(poster, allowPrivate: allowPrivate),
+                ),
+                fit: BoxFit.cover,
+                excludeFromSemantics: true,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+        ColoredBox(color: c.bg.withValues(alpha: 0.35)),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 72),
+            child: SizedBox(
+              width: 300,
+              height: 380,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image(
+                  image: GuardedNetworkImage(
+                    poster,
+                    allowPrivate: allowPrivate,
+                  ),
+                  fit: BoxFit.scaleDown,
+                  excludeFromSemantics: true,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

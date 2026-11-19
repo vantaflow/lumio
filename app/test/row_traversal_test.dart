@@ -29,6 +29,45 @@ Widget _row(String name, int n, {double top = 0}) => Padding(
 String? _focused() => FocusManager.instance.primaryFocus?.debugLabel;
 
 void main() {
+  testWidgets('haut : la cible préférée de la rangée voisine passe devant', (
+    t,
+  ) async {
+    final pref = FocusNode(debugLabel: 'pref');
+    addTearDown(pref.dispose);
+    await t.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RowTraversalGroup(
+            preferUp: pref,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Focus(
+                      focusNode: pref,
+                      child: const SizedBox(width: 100, height: 60),
+                    ),
+                    const SizedBox(width: 20),
+                    _row('t', 3),
+                  ],
+                ),
+                _row('c', 3, top: 100),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    FocusManager.instance.rootScope.descendants
+        .firstWhere((n) => n.debugLabel == 'c2')
+        .requestFocus();
+    await t.pump();
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await t.pump();
+    expect(_focused(), 'pref');
+  });
+
   testWidgets('bas : la rangée voisine, même à une seule carte en colonne 0', (
     t,
   ) async {

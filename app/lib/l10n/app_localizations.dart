@@ -4457,7 +4457,7 @@ abstract class AppLocalizations {
   /// No description provided for @phoneAddWaiting.
   ///
   /// In fr, this message translates to:
-  /// **'Lien reçu du téléphone : vérifiez l\'aperçu et confirmez ici.'**
+  /// **'Demande reçue du téléphone : vérifiez l\'aperçu et confirmez ici.'**
   String get phoneAddWaiting;
 
   /// No description provided for @addonInstall.
@@ -4501,6 +4501,318 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ouvrez cette page sur le portail : la fiche de « {name} » s’affiche directement.'**
   String portalAddonHint(Object name);
+
+  /// No description provided for @typePageNoMovies.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos addons ne proposent aucun catalogue de films'**
+  String get typePageNoMovies;
+
+  /// No description provided for @typePageNoSeries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos addons ne proposent aucun catalogue de séries'**
+  String get typePageNoSeries;
+
+  /// No description provided for @guideGotIt.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compris'**
+  String get guideGotIt;
+
+  /// No description provided for @guideHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aide'**
+  String get guideHelp;
+
+  /// No description provided for @guideNoteKeyStays.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre clé reste chiffrée sur la TV : elle n\'est jamais envoyée au téléphone.'**
+  String get guideNoteKeyStays;
+
+  /// No description provided for @guideCatalogTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un addon du catalogue'**
+  String get guideCatalogTitle;
+
+  /// No description provided for @guideCatalogStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez un addon dans la grille.'**
+  String get guideCatalogStep1;
+
+  /// No description provided for @guideCatalogStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appuyez sur « Installer ».'**
+  String get guideCatalogStep2;
+
+  /// No description provided for @guideCatalogStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'S\'il demande un réglage, appuyez sur « Configurer depuis le portail » : votre téléphone s\'en charge.'**
+  String get guideCatalogStep3;
+
+  /// No description provided for @guideLinkTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un addon avec son lien'**
+  String get guideLinkTitle;
+
+  /// No description provided for @guideLinkStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur la page de l\'addon, touchez « Copier le lien » (ou « Install », puis « Copier l\'adresse du lien »).'**
+  String get guideLinkStep1;
+
+  /// No description provided for @guideLinkStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revenez ici et collez le lien dans le champ, ou appuyez sur « Coller ».'**
+  String get guideLinkStep2;
+
+  /// No description provided for @guideLinkStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifiez le nom de l\'addon, puis appuyez sur « Installer ».'**
+  String get guideLinkStep3;
+
+  /// No description provided for @guidePhoneTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter depuis le téléphone'**
+  String get guidePhoneTitle;
+
+  /// No description provided for @guidePhoneStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mettez le téléphone sur le même Wi-Fi que la TV.'**
+  String get guidePhoneStep1;
+
+  /// No description provided for @guidePhoneStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez le code, puis saisissez le code de sécurité affiché ici.'**
+  String get guidePhoneStep2;
+
+  /// No description provided for @guidePhoneStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez un lien, touchez « Ajouter », puis confirmez ici sur la TV.'**
+  String get guidePhoneStep3;
+
+  /// No description provided for @portalBoxTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur votre téléphone'**
+  String get portalBoxTitle;
+
+  /// No description provided for @portalStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Scannez le code : la page Lumio de cette TV s\'ouvre.'**
+  String get portalStep1;
+
+  /// No description provided for @portalStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez le code de sécurité affiché ci-dessous.'**
+  String get portalStep2;
+
+  /// No description provided for @portalStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglez l\'addon, puis « Copier le lien » (ou « Install »).'**
+  String get portalStep3;
+
+  /// No description provided for @portalStep4.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez le lien dans la page, touchez « Ajouter ».'**
+  String get portalStep4;
+
+  /// No description provided for @portalStep5.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revenez ici et confirmez sur la TV.'**
+  String get portalStep5;
+
+  /// No description provided for @traktStepsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour connecter Trakt'**
+  String get traktStepsTitle;
+
+  /// No description provided for @traktStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous avez appuyé sur « Connecter Trakt » : un code s\'affiche.'**
+  String get traktStep1;
+
+  /// No description provided for @traktStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur votre téléphone, ouvrez trakt.tv/activate (ou scannez le code).'**
+  String get traktStep2;
+
+  /// No description provided for @traktStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez le code affiché sur la TV.'**
+  String get traktStep3;
+
+  /// No description provided for @traktStep4.
+  ///
+  /// In fr, this message translates to:
+  /// **'Acceptez sur Trakt : la TV se connecte toute seule.'**
+  String get traktStep4;
+
+  /// No description provided for @settingsHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aide'**
+  String get settingsHelp;
+
+  /// No description provided for @settingsHelpHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Guides pas à pas : addons, téléphone, Trakt, profils, sous-titres'**
+  String get settingsHelpHint;
+
+  /// No description provided for @helpAddonsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un addon'**
+  String get helpAddonsTitle;
+
+  /// No description provided for @helpAddonsStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrez Réglages › Sources, puis « Ajouter un addon ».'**
+  String get helpAddonsStep1;
+
+  /// No description provided for @helpAddonsStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez un onglet : Catalogue, Par lien ou Depuis le téléphone.'**
+  String get helpAddonsStep2;
+
+  /// No description provided for @helpAddonsStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appuyez sur « Installer ». Aucun addon n\'est fourni d\'office.'**
+  String get helpAddonsStep3;
+
+  /// No description provided for @helpSettingTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Régler un addon'**
+  String get helpSettingTitle;
+
+  /// No description provided for @helpSettingStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur la fiche d\'un addon du catalogue, appuyez sur « Configurer depuis le portail ».'**
+  String get helpSettingStep1;
+
+  /// No description provided for @helpSettingStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur le téléphone, réglez l\'addon puis touchez « Copier le lien ».'**
+  String get helpSettingStep2;
+
+  /// No description provided for @helpSettingStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Collez le lien dans la page, touchez « Ajouter », puis confirmez sur la TV.'**
+  String get helpSettingStep3;
+
+  /// No description provided for @helpPortalTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le portail du téléphone'**
+  String get helpPortalTitle;
+
+  /// No description provided for @helpPortalStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le téléphone doit être sur le même Wi-Fi que la TV.'**
+  String get helpPortalStep1;
+
+  /// No description provided for @helpPortalStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrez Réglages › Sources › Depuis le téléphone, puis scannez le code.'**
+  String get helpPortalStep2;
+
+  /// No description provided for @helpPortalStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez le code de sécurité affiché sur la TV.'**
+  String get helpPortalStep3;
+
+  /// No description provided for @helpPortalStep4.
+  ///
+  /// In fr, this message translates to:
+  /// **'Laissez l\'écran de la TV ouvert : la page se ferme avec lui.'**
+  String get helpPortalStep4;
+
+  /// No description provided for @helpTraktTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trakt'**
+  String get helpTraktTitle;
+
+  /// No description provided for @helpProfilesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Profils et code PIN'**
+  String get helpProfilesTitle;
+
+  /// No description provided for @helpProfilesStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrez Réglages › Profils › Gérer les profils.'**
+  String get helpProfilesStep1;
+
+  /// No description provided for @helpProfilesStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour un profil enfant, choisissez l\'âge limite.'**
+  String get helpProfilesStep2;
+
+  /// No description provided for @helpProfilesStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le code PIN parent protège les profils verrouillés et les réglages sensibles.'**
+  String get helpProfilesStep3;
+
+  /// No description provided for @helpSubsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sous-titres'**
+  String get helpSubsTitle;
+
+  /// No description provided for @helpSubsStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pendant la lecture, ouvrez « Pistes et sous-titres ».'**
+  String get helpSubsStep1;
+
+  /// No description provided for @helpSubsStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez la langue, la taille et le décalage.'**
+  String get helpSubsStep2;
+
+  /// No description provided for @helpSubsStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dans Réglages › Lecture, choisissez la langue préférée : elle s\'applique toute seule quand elle existe.'**
+  String get helpSubsStep3;
 }
 
 class _AppLocalizationsDelegate

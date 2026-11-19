@@ -22,6 +22,7 @@ import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:lumio/ui/focus/focus_rescue.dart' show appRouteObserver;
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/common/tv_guide.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -258,6 +259,32 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
     });
   }
 
+  /// Aide de l'onglet courant (maquette G01).
+  void _showHelp(AppLocalizations l) {
+    final (title, steps) = switch (_tab) {
+      AddAddonTab.catalog => (
+        l.guideCatalogTitle,
+        [l.guideCatalogStep1, l.guideCatalogStep2, l.guideCatalogStep3],
+      ),
+      AddAddonTab.link => (
+        l.guideLinkTitle,
+        [l.guideLinkStep1, l.guideLinkStep2, l.guideLinkStep3],
+      ),
+      AddAddonTab.phone => (
+        l.guidePhoneTitle,
+        [l.guidePhoneStep1, l.guidePhoneStep2, l.guidePhoneStep3],
+      ),
+    };
+    unawaited(
+      showTvGuide(
+        context,
+        title: title,
+        steps: steps,
+        note: _tab == AddAddonTab.catalog ? null : l.guideNoteKeyStays,
+      ),
+    );
+  }
+
   void _select(AddAddonTab t) {
     if (t != AddAddonTab.phone || _tab != AddAddonTab.phone) {
       _portalQuery = null;
@@ -317,7 +344,11 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
                     child: Semantics(
                       header: true,
                       child: Text(
-                        widget.title ?? l.addAddon,
+                        // Le titre fourni (« Gérer depuis le téléphone ») ne vaut que pour
+                        // l'onglet du téléphone ; les autres onglets gardent le titre commun.
+                        _tab == AddAddonTab.phone
+                            ? (widget.title ?? l.addAddon)
+                            : l.addAddon,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: t.headlineLarge?.copyWith(
@@ -352,6 +383,13 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
                               onSelect: () => _select(tab),
                             ),
                           ],
+                          const SizedBox(width: 12),
+                          _TabPill(
+                            key: const ValueKey('addon-help'),
+                            label: l.guideHelp,
+                            selected: false,
+                            onSelect: () => _showHelp(l),
+                          ),
                         ],
                       ),
                     ),

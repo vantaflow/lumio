@@ -1422,6 +1422,9 @@ class _RAgg implements CatalogAggregator {
 }
 
 class _RPlayback implements ContinuePlayback {
+  @override
+  Future<Uri?> backdrop(ProgressEntry e) async => null;
+
   _RPlayback(this.names);
   final Map<String, String> names;
 

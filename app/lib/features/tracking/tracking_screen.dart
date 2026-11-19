@@ -8,6 +8,7 @@ import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/common/tv_guide.dart';
 import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/icons/lumio_icons.dart';
@@ -653,7 +654,16 @@ class _AuthState extends ConsumerState<TraktDeviceAuthScreen> {
                                 constraints: const BoxConstraints(
                                   maxWidth: 760,
                                 ),
-                                child: Text(l.trackingAuthStep, style: md),
+                                child: TvGuideSteps(
+                                  key: const ValueKey('tracking-auth-steps'),
+                                  compact: true,
+                                  steps: [
+                                    l.traktStep1,
+                                    l.traktStep2,
+                                    l.traktStep3,
+                                    l.traktStep4,
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 24),
                               ConstrainedBox(

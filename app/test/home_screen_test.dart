@@ -145,6 +145,9 @@ class _NoNet implements HttpFetcher {
 }
 
 class _RecordingPlayback implements ContinuePlayback {
+  @override
+  Future<Uri?> backdrop(ProgressEntry e) async => null;
+
   final played = <String>[];
 
   /// Titre renvoyé à la place de « Série … » (simule un addon meta installé).
@@ -188,6 +191,7 @@ class _H {
     List<MetaPreview>? library,
     List<MetaPreview>? local,
     List<NavigatorObserver> observers = const [],
+    bool? tv,
   }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
@@ -220,7 +224,7 @@ class _H {
         child: MaterialApp(
           theme: LumioTheme.dark(),
           navigatorObservers: observers,
-          home: const HomeScreen(),
+          home: HomeScreen(tvLayout: tv),
         ),
       ),
     );
@@ -934,6 +938,45 @@ void main() {
       final layout = h.container.read(homeLayoutProvider).value!;
       expect(layout.order.take(2), [libraryRowId, continueRowId]);
       await h.close();
+    });
+  });
+
+  group('pages Films et Séries', () {
+    testWidgets('Films : les rangées de type film, pas la recherche', (
+      t,
+    ) async {
+      final h = _H(t);
+      final series = AddonManifest(
+        id: 's',
+        version: '1.0.0',
+        name: 'Addon s',
+        types: const ['series'],
+        resources: const [AddonResource('catalog')],
+        catalogs: const [CatalogDecl(type: 'series', id: 'tv', name: 'Cat tv')],
+        transportUrl: Uri.parse('https://s.example.com/tok/manifest.json'),
+      );
+      await h.pump(
+        tv: true,
+        addons: [_installed(_manifest('a')), _installed(series)],
+        aggregator: _FakeAggregator([
+          [
+            _row('a', 'top', [_meta('1')]),
+            CatalogRow(
+              addonId: 's',
+              catalogId: 'tv',
+              type: 'series',
+              title: 'Cat tv',
+              items: [_meta('2')],
+            ),
+          ],
+        ]),
+      );
+      await t.tap(find.text('Films').first);
+      await h.settle();
+      expect(find.byKey(const ValueKey('type-page-movie')), findsOneWidget);
+      expect(find.text('Films · Cat top'), findsOneWidget);
+      expect(find.text('Séries · Cat tv'), findsNothing);
+      await h.closeDeep();
     });
   });
 }

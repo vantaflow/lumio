@@ -2603,7 +2603,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get phoneAddWaiting =>
-      'Link received from the phone: check the preview and confirm here.';
+      'Request received from the phone: check the preview and confirm here.';
 
   @override
   String get addonInstall => 'Install';
@@ -2629,4 +2629,181 @@ class AppLocalizationsEn extends AppLocalizations {
   String portalAddonHint(Object name) {
     return 'Open this page on the portal: the “$name” page shows up directly.';
   }
+
+  @override
+  String get typePageNoMovies => 'Your addons offer no movie catalogue';
+
+  @override
+  String get typePageNoSeries => 'Your addons offer no series catalogue';
+
+  @override
+  String get guideGotIt => 'Got it';
+
+  @override
+  String get guideHelp => 'Help';
+
+  @override
+  String get guideNoteKeyStays =>
+      'Your key stays encrypted on the TV: it is never sent to the phone.';
+
+  @override
+  String get guideCatalogTitle => 'Add an addon from the catalogue';
+
+  @override
+  String get guideCatalogStep1 => 'Pick an addon in the grid.';
+
+  @override
+  String get guideCatalogStep2 => 'Press \"Install\".';
+
+  @override
+  String get guideCatalogStep3 =>
+      'If it needs a setting, press \"Set up from the portal\": your phone takes care of it.';
+
+  @override
+  String get guideLinkTitle => 'Add an addon with its link';
+
+  @override
+  String get guideLinkStep1 =>
+      'On the addon\'s page, tap \"Copy link\" (or \"Install\", then \"Copy link address\").';
+
+  @override
+  String get guideLinkStep2 =>
+      'Come back here and paste the link in the field, or press \"Paste\".';
+
+  @override
+  String get guideLinkStep3 =>
+      'Check the addon\'s name, then press \"Install\".';
+
+  @override
+  String get guidePhoneTitle => 'Add from the phone';
+
+  @override
+  String get guidePhoneStep1 => 'Put the phone on the same Wi-Fi as the TV.';
+
+  @override
+  String get guidePhoneStep2 =>
+      'Scan the code, then enter the security code shown here.';
+
+  @override
+  String get guidePhoneStep3 =>
+      'Paste a link, tap \"Add\", then confirm here on the TV.';
+
+  @override
+  String get portalBoxTitle => 'On your phone';
+
+  @override
+  String get portalStep1 => 'Scan the code: this TV\'s Lumio page opens.';
+
+  @override
+  String get portalStep2 => 'Enter the security code shown below.';
+
+  @override
+  String get portalStep3 =>
+      'Set the addon up, then \"Copy link\" (or \"Install\").';
+
+  @override
+  String get portalStep4 => 'Paste the link into the page, tap \"Add\".';
+
+  @override
+  String get portalStep5 => 'Come back here and confirm on the TV.';
+
+  @override
+  String get traktStepsTitle => 'To connect Trakt';
+
+  @override
+  String get traktStep1 => 'You pressed \"Connect Trakt\": a code is shown.';
+
+  @override
+  String get traktStep2 =>
+      'On your phone, open trakt.tv/activate (or scan the code).';
+
+  @override
+  String get traktStep3 => 'Enter the code shown on the TV.';
+
+  @override
+  String get traktStep4 => 'Accept on Trakt: the TV connects by itself.';
+
+  @override
+  String get settingsHelp => 'Help';
+
+  @override
+  String get settingsHelpHint =>
+      'Step-by-step guides: addons, phone, Trakt, profiles, subtitles';
+
+  @override
+  String get helpAddonsTitle => 'Add an addon';
+
+  @override
+  String get helpAddonsStep1 =>
+      'Open Settings › Sources, then \"Add an addon\".';
+
+  @override
+  String get helpAddonsStep2 =>
+      'Pick a tab: Catalogue, By link or From the phone.';
+
+  @override
+  String get helpAddonsStep3 =>
+      'Press \"Install\". No addon is provided by default.';
+
+  @override
+  String get helpSettingTitle => 'Set up an addon';
+
+  @override
+  String get helpSettingStep1 =>
+      'On an addon\'s card in the catalogue, press \"Set up from the portal\".';
+
+  @override
+  String get helpSettingStep2 =>
+      'On the phone, set the addon up, then tap \"Copy link\".';
+
+  @override
+  String get helpSettingStep3 =>
+      'Paste the link into the page, tap \"Add\", then confirm on the TV.';
+
+  @override
+  String get helpPortalTitle => 'The phone portal';
+
+  @override
+  String get helpPortalStep1 =>
+      'The phone must be on the same Wi-Fi as the TV.';
+
+  @override
+  String get helpPortalStep2 =>
+      'Open Settings › Sources › From the phone, then scan the code.';
+
+  @override
+  String get helpPortalStep3 => 'Enter the security code shown on the TV.';
+
+  @override
+  String get helpPortalStep4 =>
+      'Keep the TV screen open: the page closes with it.';
+
+  @override
+  String get helpTraktTitle => 'Trakt';
+
+  @override
+  String get helpProfilesTitle => 'Profiles and PIN';
+
+  @override
+  String get helpProfilesStep1 => 'Open Settings › Profiles › Manage profiles.';
+
+  @override
+  String get helpProfilesStep2 => 'For a child profile, pick the age limit.';
+
+  @override
+  String get helpProfilesStep3 =>
+      'The parent PIN protects locked profiles and sensitive settings.';
+
+  @override
+  String get helpSubsTitle => 'Subtitles';
+
+  @override
+  String get helpSubsStep1 => 'During playback, open \"Tracks and subtitles\".';
+
+  @override
+  String get helpSubsStep2 => 'Pick the language, the size and the delay.';
+
+  @override
+  String get helpSubsStep3 =>
+      'In Settings › Playback, pick the preferred language: it applies by itself when it exists.';
 }

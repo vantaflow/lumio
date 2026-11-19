@@ -40,6 +40,10 @@ abstract class ContinuePlayback {
   /// Titre à afficher (la progression ne porte que des identifiants).
   Future<ContinueInfo> describe(ProgressEntry entry);
 
+  /// Image de fond « background » de l'addon (paysage, haute définition), ou
+  /// null : le héros de l'accueil la préfère à l'affiche.
+  Future<Uri?> backdrop(ProgressEntry entry);
+
   /// Lance (ou reprend) la lecture de [entry].
   Future<void> play(BuildContext context, ProgressEntry entry);
 }
@@ -164,6 +168,16 @@ class DefaultContinuePlayback implements ContinuePlayback {
           : client.imageUrl(it.id, tag: it.imageTag),
       allowPrivate: server.allowPrivate,
     );
+  }
+
+  @override
+  Future<Uri?> backdrop(ProgressEntry entry) async {
+    if (isLocalId(entry.metaId) || isJellyfinId(entry.metaId)) return null;
+    try {
+      return (await _meta(entry)).background;
+    } on Object {
+      return null;
+    }
   }
 
   @override

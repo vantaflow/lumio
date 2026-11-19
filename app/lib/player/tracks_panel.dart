@@ -141,132 +141,148 @@ class _TracksPanelState extends State<TracksPanel> {
                   clipBehavior: Clip.antiAlias,
                   child: SizedBox(
                     width: big ? TracksPanel.width : 560,
-                    child: SingleChildScrollView(
-                      clipBehavior: Clip.none,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 48,
-                        vertical: 44,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Semantics(
-                            header: true,
-                            child: Text(
-                              l.tracksAndSubtitles,
-                              style: TextStyle(
-                                fontFamily: 'Bricolage Grotesque',
-                                fontSize: 44,
-                                height: 1.15,
-                                fontWeight: FontWeight.w700,
-                                fontVariations: const [
-                                  FontVariation.weight(700),
-                                ],
-                                color: colors.text,
-                              ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: SingleChildScrollView(
+                            clipBehavior: Clip.none,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 48,
+                              vertical: 44,
                             ),
-                          ),
-                          TvSectionLabel(l.audio, top: 20),
-                          const SizedBox(height: 14),
-                          if (audio.isEmpty) _Hint(l.noAudioTrack),
-                          _Chips([
-                            for (final t in audio)
-                              _Chip(
-                                key: ValueKey('audio-${t.id}'),
-                                autofocus: t == audio.first,
-                                label: t.label,
-                                selected: t.id == selAudio,
-                                onPressed: () => c.selectAudio(t),
-                              ),
-                          ]),
-                          const SizedBox(height: 28),
-                          TvSectionLabel(l.subtitleAppearance, top: 0),
-                          const SizedBox(height: 14),
-                          _StepRow(
-                            label: l.subtitleSize,
-                            value: _sizeName(l, c.style.size),
-                            valueKey: const ValueKey('size-value'),
-                            minusKey: const ValueKey('size-minus'),
-                            plusKey: const ValueKey('size-plus'),
-                            minusLabel: l.subtitleSmaller,
-                            plusLabel: l.subtitleLarger,
-                            onMinus: sizeIndex > 0
-                                ? () => c.setSize(sizes[sizeIndex - 1])
-                                : null,
-                            onPlus: sizeIndex < sizes.length - 1
-                                ? () => c.setSize(sizes[sizeIndex + 1])
-                                : null,
-                          ),
-                          const SizedBox(height: 12),
-                          _StepRow(
-                            label: l.subtitleDelay,
-                            value: formatDelay(c.delayMs),
-                            valueKey: const ValueKey('delay-value'),
-                            minusKey: const ValueKey('delay-minus'),
-                            plusKey: const ValueKey('delay-plus'),
-                            minusLabel: l.subtitleAdvance,
-                            plusLabel: l.subtitleRetard,
-                            onMinus: () => c.changeDelay(-subtitleDelayStepMs),
-                            onPlus: () => c.changeDelay(subtitleDelayStepMs),
-                          ),
-                          const SizedBox(height: 12),
-                          _ToggleRow(
-                            key: const ValueKey('bg-toggle'),
-                            label: l.opaqueBackground,
-                            on: c.style.opaqueBackground,
-                            onPressed: c.toggleBackground,
-                          ),
-                          const SizedBox(height: 28),
-                          TvSectionLabel(l.subtitles, top: 0),
-                          const SizedBox(height: 14),
-                          _Chips([
-                            _Chip(
-                              key: const ValueKey('sub-off'),
-                              autofocus: audio.isEmpty,
-                              label: l.subtitlesOff,
-                              selected:
-                                  selSub == null && c.addonSelectedId == null,
-                              onPressed: () => c.selectSubtitle(null),
-                            ),
-                            for (final t in subs)
-                              _Chip(
-                                key: ValueKey('sub-${t.id}'),
-                                label: t.label,
-                                selected:
-                                    t.id == selSub && c.addonSelectedId == null,
-                                onPressed: () => c.selectSubtitle(t),
-                              ),
-                            for (final g in grouped.preferred)
-                              for (final s in g.shown) addonChip(s),
-                            if (grouped.others.isNotEmpty)
-                              _Chip(
-                                key: const ValueKey('sub-other-langs'),
-                                label: showOthers
-                                    ? l.subtitleHideOtherLanguages
-                                    : l.subtitleOtherLanguages,
-                                selected: false,
-                                onPressed: () =>
-                                    setState(() => _otherLangs = !showOthers),
-                              ),
-                          ]),
-                          if (showOthers)
-                            for (final g in grouped.others) ...[
-                              const SizedBox(height: 16),
-                              Text(
-                                g.name,
-                                style: TextStyle(
-                                  fontFamily: 'Manrope',
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  color: colors.textMuted,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Semantics(
+                                  header: true,
+                                  child: Text(
+                                    l.tracksAndSubtitles,
+                                    style: TextStyle(
+                                      fontFamily: 'Bricolage Grotesque',
+                                      fontSize: 44,
+                                      height: 1.15,
+                                      fontWeight: FontWeight.w700,
+                                      fontVariations: const [
+                                        FontVariation.weight(700),
+                                      ],
+                                      color: colors.text,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              _Chips([for (final s in g.shown) addonChip(s)]),
-                            ],
-                          const SizedBox(height: 24),
-                          Align(
+                                TvSectionLabel(l.audio, top: 20),
+                                const SizedBox(height: 14),
+                                if (audio.isEmpty) _Hint(l.noAudioTrack),
+                                _Chips([
+                                  for (final t in audio)
+                                    _Chip(
+                                      key: ValueKey('audio-${t.id}'),
+                                      autofocus: t == audio.first,
+                                      label: t.label,
+                                      selected: t.id == selAudio,
+                                      onPressed: () => c.selectAudio(t),
+                                    ),
+                                ]),
+                                const SizedBox(height: 28),
+                                TvSectionLabel(l.subtitleAppearance, top: 0),
+                                const SizedBox(height: 14),
+                                _StepRow(
+                                  label: l.subtitleSize,
+                                  value: _sizeName(l, c.style.size),
+                                  valueKey: const ValueKey('size-value'),
+                                  minusKey: const ValueKey('size-minus'),
+                                  plusKey: const ValueKey('size-plus'),
+                                  minusLabel: l.subtitleSmaller,
+                                  plusLabel: l.subtitleLarger,
+                                  onMinus: sizeIndex > 0
+                                      ? () => c.setSize(sizes[sizeIndex - 1])
+                                      : null,
+                                  onPlus: sizeIndex < sizes.length - 1
+                                      ? () => c.setSize(sizes[sizeIndex + 1])
+                                      : null,
+                                ),
+                                const SizedBox(height: 12),
+                                _StepRow(
+                                  label: l.subtitleDelay,
+                                  value: formatDelay(c.delayMs),
+                                  valueKey: const ValueKey('delay-value'),
+                                  minusKey: const ValueKey('delay-minus'),
+                                  plusKey: const ValueKey('delay-plus'),
+                                  minusLabel: l.subtitleAdvance,
+                                  plusLabel: l.subtitleRetard,
+                                  onMinus: () =>
+                                      c.changeDelay(-subtitleDelayStepMs),
+                                  onPlus: () =>
+                                      c.changeDelay(subtitleDelayStepMs),
+                                ),
+                                const SizedBox(height: 12),
+                                _ToggleRow(
+                                  key: const ValueKey('bg-toggle'),
+                                  label: l.opaqueBackground,
+                                  on: c.style.opaqueBackground,
+                                  onPressed: c.toggleBackground,
+                                ),
+                                const SizedBox(height: 28),
+                                TvSectionLabel(l.subtitles, top: 0),
+                                const SizedBox(height: 14),
+                                _Chips([
+                                  _Chip(
+                                    key: const ValueKey('sub-off'),
+                                    autofocus: audio.isEmpty,
+                                    label: l.subtitlesOff,
+                                    selected:
+                                        selSub == null &&
+                                        c.addonSelectedId == null,
+                                    onPressed: () => c.selectSubtitle(null),
+                                  ),
+                                  for (final t in subs)
+                                    _Chip(
+                                      key: ValueKey('sub-${t.id}'),
+                                      label: t.label,
+                                      selected:
+                                          t.id == selSub &&
+                                          c.addonSelectedId == null,
+                                      onPressed: () => c.selectSubtitle(t),
+                                    ),
+                                  for (final g in grouped.preferred)
+                                    for (final s in g.shown) addonChip(s),
+                                  if (grouped.others.isNotEmpty)
+                                    _Chip(
+                                      key: const ValueKey('sub-other-langs'),
+                                      label: showOthers
+                                          ? l.subtitleHideOtherLanguages
+                                          : l.subtitleOtherLanguages,
+                                      selected: false,
+                                      onPressed: () => setState(
+                                        () => _otherLangs = !showOthers,
+                                      ),
+                                    ),
+                                ]),
+                                if (showOthers)
+                                  for (final g in grouped.others) ...[
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      g.name,
+                                      style: TextStyle(
+                                        fontFamily: 'Manrope',
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
+                                        color: colors.textMuted,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _Chips([
+                                      for (final s in g.shown) addonChip(s),
+                                    ]),
+                                  ],
+                              ],
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(48, 8, 48, 32),
+                          child: Align(
                             alignment: AlignmentDirectional.centerEnd,
                             child: TvButton(
                               key: const ValueKey('tracks-close'),
@@ -278,8 +294,8 @@ class _TracksPanelState extends State<TracksPanel> {
                               onPressed: widget.onClose,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

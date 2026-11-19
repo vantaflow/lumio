@@ -334,7 +334,7 @@ void main() {
         await _settle(t);
         expect(e.addedMagnets, isEmpty);
         expect(ctl.opened, isEmpty);
-        expect(ctl.failures.single, contains('Torrent non démarré'));
+        expect(ctl.failures, isEmpty); // pas de « La lecture a échoué »
         expect(store.data[AppSettingsStore.ipWarningAcceptedKey], isNull);
         await t.pumpWidget(const SizedBox());
       },

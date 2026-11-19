@@ -2627,7 +2627,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get phoneAddWaiting =>
-      'Lien reçu du téléphone : vérifiez l\'aperçu et confirmez ici.';
+      'Demande reçue du téléphone : vérifiez l\'aperçu et confirmez ici.';
 
   @override
   String get addonInstall => 'Installer';
@@ -2653,4 +2653,191 @@ class AppLocalizationsFr extends AppLocalizations {
   String portalAddonHint(Object name) {
     return 'Ouvrez cette page sur le portail : la fiche de « $name » s’affiche directement.';
   }
+
+  @override
+  String get typePageNoMovies =>
+      'Vos addons ne proposent aucun catalogue de films';
+
+  @override
+  String get typePageNoSeries =>
+      'Vos addons ne proposent aucun catalogue de séries';
+
+  @override
+  String get guideGotIt => 'Compris';
+
+  @override
+  String get guideHelp => 'Aide';
+
+  @override
+  String get guideNoteKeyStays =>
+      'Votre clé reste chiffrée sur la TV : elle n\'est jamais envoyée au téléphone.';
+
+  @override
+  String get guideCatalogTitle => 'Ajouter un addon du catalogue';
+
+  @override
+  String get guideCatalogStep1 => 'Choisissez un addon dans la grille.';
+
+  @override
+  String get guideCatalogStep2 => 'Appuyez sur « Installer ».';
+
+  @override
+  String get guideCatalogStep3 =>
+      'S\'il demande un réglage, appuyez sur « Configurer depuis le portail » : votre téléphone s\'en charge.';
+
+  @override
+  String get guideLinkTitle => 'Ajouter un addon avec son lien';
+
+  @override
+  String get guideLinkStep1 =>
+      'Sur la page de l\'addon, touchez « Copier le lien » (ou « Install », puis « Copier l\'adresse du lien »).';
+
+  @override
+  String get guideLinkStep2 =>
+      'Revenez ici et collez le lien dans le champ, ou appuyez sur « Coller ».';
+
+  @override
+  String get guideLinkStep3 =>
+      'Vérifiez le nom de l\'addon, puis appuyez sur « Installer ».';
+
+  @override
+  String get guidePhoneTitle => 'Ajouter depuis le téléphone';
+
+  @override
+  String get guidePhoneStep1 =>
+      'Mettez le téléphone sur le même Wi-Fi que la TV.';
+
+  @override
+  String get guidePhoneStep2 =>
+      'Scannez le code, puis saisissez le code de sécurité affiché ici.';
+
+  @override
+  String get guidePhoneStep3 =>
+      'Collez un lien, touchez « Ajouter », puis confirmez ici sur la TV.';
+
+  @override
+  String get portalBoxTitle => 'Sur votre téléphone';
+
+  @override
+  String get portalStep1 =>
+      'Scannez le code : la page Lumio de cette TV s\'ouvre.';
+
+  @override
+  String get portalStep2 => 'Saisissez le code de sécurité affiché ci-dessous.';
+
+  @override
+  String get portalStep3 =>
+      'Réglez l\'addon, puis « Copier le lien » (ou « Install »).';
+
+  @override
+  String get portalStep4 => 'Collez le lien dans la page, touchez « Ajouter ».';
+
+  @override
+  String get portalStep5 => 'Revenez ici et confirmez sur la TV.';
+
+  @override
+  String get traktStepsTitle => 'Pour connecter Trakt';
+
+  @override
+  String get traktStep1 =>
+      'Vous avez appuyé sur « Connecter Trakt » : un code s\'affiche.';
+
+  @override
+  String get traktStep2 =>
+      'Sur votre téléphone, ouvrez trakt.tv/activate (ou scannez le code).';
+
+  @override
+  String get traktStep3 => 'Saisissez le code affiché sur la TV.';
+
+  @override
+  String get traktStep4 =>
+      'Acceptez sur Trakt : la TV se connecte toute seule.';
+
+  @override
+  String get settingsHelp => 'Aide';
+
+  @override
+  String get settingsHelpHint =>
+      'Guides pas à pas : addons, téléphone, Trakt, profils, sous-titres';
+
+  @override
+  String get helpAddonsTitle => 'Ajouter un addon';
+
+  @override
+  String get helpAddonsStep1 =>
+      'Ouvrez Réglages › Sources, puis « Ajouter un addon ».';
+
+  @override
+  String get helpAddonsStep2 =>
+      'Choisissez un onglet : Catalogue, Par lien ou Depuis le téléphone.';
+
+  @override
+  String get helpAddonsStep3 =>
+      'Appuyez sur « Installer ». Aucun addon n\'est fourni d\'office.';
+
+  @override
+  String get helpSettingTitle => 'Régler un addon';
+
+  @override
+  String get helpSettingStep1 =>
+      'Sur la fiche d\'un addon du catalogue, appuyez sur « Configurer depuis le portail ».';
+
+  @override
+  String get helpSettingStep2 =>
+      'Sur le téléphone, réglez l\'addon puis touchez « Copier le lien ».';
+
+  @override
+  String get helpSettingStep3 =>
+      'Collez le lien dans la page, touchez « Ajouter », puis confirmez sur la TV.';
+
+  @override
+  String get helpPortalTitle => 'Le portail du téléphone';
+
+  @override
+  String get helpPortalStep1 =>
+      'Le téléphone doit être sur le même Wi-Fi que la TV.';
+
+  @override
+  String get helpPortalStep2 =>
+      'Ouvrez Réglages › Sources › Depuis le téléphone, puis scannez le code.';
+
+  @override
+  String get helpPortalStep3 =>
+      'Saisissez le code de sécurité affiché sur la TV.';
+
+  @override
+  String get helpPortalStep4 =>
+      'Laissez l\'écran de la TV ouvert : la page se ferme avec lui.';
+
+  @override
+  String get helpTraktTitle => 'Trakt';
+
+  @override
+  String get helpProfilesTitle => 'Profils et code PIN';
+
+  @override
+  String get helpProfilesStep1 =>
+      'Ouvrez Réglages › Profils › Gérer les profils.';
+
+  @override
+  String get helpProfilesStep2 =>
+      'Pour un profil enfant, choisissez l\'âge limite.';
+
+  @override
+  String get helpProfilesStep3 =>
+      'Le code PIN parent protège les profils verrouillés et les réglages sensibles.';
+
+  @override
+  String get helpSubsTitle => 'Sous-titres';
+
+  @override
+  String get helpSubsStep1 =>
+      'Pendant la lecture, ouvrez « Pistes et sous-titres ».';
+
+  @override
+  String get helpSubsStep2 => 'Choisissez la langue, la taille et le décalage.';
+
+  @override
+  String get helpSubsStep3 =>
+      'Dans Réglages › Lecture, choisissez la langue préférée : elle s\'applique toute seule quand elle existe.';
 }

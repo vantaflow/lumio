@@ -26,6 +26,7 @@ import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/tv_cards.dart';
 import 'package:lumio/features/home/tv_home.dart';
+import 'package:lumio/features/home/type_page.dart';
 import 'package:lumio/features/addons/add_addon_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart'
     show JellyfinAddDialog;
@@ -155,6 +156,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ),
   );
 
+  /// Onglets Films et Séries : les catalogues des addons de ce type.
+  Future<void> _openType(String type) => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => TypePageScreen(type: type, onOpenItem: _openFrom),
+    ),
+  );
+
   Future<void> _addLocalFolder() => addLocalFolderFlow(context, ref);
 
   Future<void> _addJellyfin() async {
@@ -241,6 +249,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onBack: _handleBack,
           child: Scaffold(
             body: RowTraversalGroup(
+              preferUp: tv ? _topBarNode : null,
               child: Column(
                 children: [
                   const UpdateBanner(),
@@ -260,8 +269,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: tv
                         ? TvTopBar(
                             homeNode: _topBarNode,
-                            onMovies: () => _openSearch(type: 'movie'),
-                            onSeries: () => _openSearch(type: 'series'),
+                            onMovies: () => _openType('movie'),
+                            onSeries: () => _openType('series'),
                             onSearch: _openSearch,
                             onSettings: _openSettings,
                             onLibrary: _openLibrary,
@@ -493,7 +502,7 @@ class _HomeBody extends ConsumerWidget {
                 rowId: id,
                 onOpenItem: onOpenItem,
               ),
-              _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
+              _ => CatalogRowView(rowId: id, onOpenItem: onOpenItem),
             },
           );
         },
@@ -519,8 +528,12 @@ class _HeroPresent extends InheritedWidget {
 
 // --- rangées ---
 
-class _CatalogRowView extends ConsumerWidget {
-  const _CatalogRowView({required this.rowId, required this.onOpenItem});
+class CatalogRowView extends ConsumerWidget {
+  const CatalogRowView({
+    super.key,
+    required this.rowId,
+    required this.onOpenItem,
+  });
 
   final String rowId;
   final void Function(MetaPreview item)? onOpenItem;
@@ -827,7 +840,11 @@ class _HomeHero extends ConsumerStatefulWidget {
 
 class _HomeHeroState extends ConsumerState<_HomeHero> {
   late Future<ContinueInfo> _info = _describe();
+  late Future<Uri?> _backdrop = _loadBackdrop();
   bool? _inList;
+
+  Future<Uri?> _loadBackdrop() =>
+      ref.read(continuePlaybackProvider).backdrop(widget.entry);
 
   Future<ContinueInfo> _describe() {
     final unknown = context.l10n.unknownTitle;
@@ -844,6 +861,7 @@ class _HomeHeroState extends ConsumerState<_HomeHero> {
     super.didUpdateWidget(old);
     if (old.entry.videoId != widget.entry.videoId) {
       _info = _describe();
+      _backdrop = _loadBackdrop();
       _inList = null;
     }
   }
@@ -880,7 +898,12 @@ class _HomeHeroState extends ConsumerState<_HomeHero> {
     final l = context.l10n;
     final e = widget.entry;
     ref.listen(activeAddonsProvider, (_, _) {
-      if (mounted) setState(() => _info = _describe());
+      if (mounted) {
+        setState(() {
+          _info = _describe();
+          _backdrop = _loadBackdrop();
+        });
+      }
     });
     final playback = ref.watch(continuePlaybackProvider);
     final libs = ref.watch(libraryProvider).value;
@@ -896,16 +919,20 @@ class _HomeHeroState extends ConsumerState<_HomeHero> {
           if (left > Duration.zero)
             l.heroMinutesLeft(left.inMinutes.clamp(1, 99999)),
         ];
-        return TvHero(
-          eyebrow: parts.join(' · '),
-          title: info.title,
-          poster: info.poster,
-          allowPrivate: info.allowPrivate,
-          onResume: () => playback.play(context, e),
-          listLabel: _listable
-              ? (inList ? l.removeFromList : '+ ${l.myList}')
-              : null,
-          onList: _listable ? () => _toggleList(info, inList) : null,
+        return FutureBuilder<Uri?>(
+          future: _backdrop,
+          builder: (context, bg) => TvHero(
+            eyebrow: parts.join(' · '),
+            title: info.title,
+            poster: info.poster,
+            background: bg.data,
+            allowPrivate: info.allowPrivate,
+            onResume: () => playback.play(context, e),
+            listLabel: _listable
+                ? (inList ? l.removeFromList : '+ ${l.myList}')
+                : null,
+            onList: _listable ? () => _toggleList(info, inList) : null,
+          ),
         );
       },
     );
