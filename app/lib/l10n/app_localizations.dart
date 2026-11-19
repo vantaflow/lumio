@@ -3871,6 +3871,24 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Les vidéos stockées sur cet appareil'**
   String get localSubtitle;
+
+  /// No description provided for @heroResume.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reprendre'**
+  String get heroResume;
+
+  /// No description provided for @heroMinutesLeft.
+  ///
+  /// In fr, this message translates to:
+  /// **'{minutes} min restantes'**
+  String heroMinutesLeft(Object minutes);
+
+  /// No description provided for @searchCaption.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recherche dans tous vos addons, vos dossiers.'**
+  String get searchCaption;
 }
 
 class _AppLocalizationsDelegate

@@ -9,8 +9,9 @@ import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/features/search/search_providers.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
-import 'package:lumio/ui/common/tv_screen.dart' show tvMargin;
+import 'package:lumio/features/home/tv_cards.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
@@ -141,6 +142,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     final lumio = context.lumio;
     final tv = isTvLayout(context, override: widget.tvLayout);
+    final narrow = _narrow(context);
     return TvScaffold(
       child: Focus(
         canRequestFocus: false,
@@ -148,32 +150,40 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         onKeyEvent: tv ? _onPhysicalKey : null,
         child: Scaffold(
           backgroundColor: lumio.bg,
-          body: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: _narrow(context) ? LumioSpacing.md : tvMargin,
-                vertical: _narrow(context) ? LumioSpacing.md : 48,
-              ),
-              child: _narrow(context)
-                  // Téléphone : champ en haut (clavier du système), résultats
-                  // dessous.
-                  ? Column(
+          body: narrow
+              // Téléphone : champ en haut (clavier du système), résultats
+              // dessous.
+              ? SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(LumioSpacing.md),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _keyboardPane(context),
                         Expanded(child: _resultsPane(context)),
                       ],
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(width: 880, child: _keyboardPane(context)),
-                        const SizedBox(width: 48),
-                        Expanded(child: _resultsPane(context)),
-                      ],
                     ),
-            ),
-          ),
+                  ),
+                )
+              // Maquette TV12 : panneau du clavier de 760 (fond #12171E), puis
+              // les résultats.
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: 760,
+                      color: lumio.bgAlt,
+                      padding: const EdgeInsets.fromLTRB(96, 80, 40, 0),
+                      child: _wideKeyboard(context, tv),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(56, 80, 96, 0),
+                        child: _resultsPane(context),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
@@ -326,6 +336,159 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  /// Clavier de la maquette TV12 : champ (100) et micro rond, touches de
+  /// 8 par ligne (69 x 84, rayon 14), Espace / Effacer / Tout effacer / langue.
+  Widget _wideKeyboard(BuildContext context, bool tv) {
+    final lumio = context.lumio;
+    final keys = _arabic ? _arabicKeys : _latinKeys;
+    final empty = _controller.text.isEmpty;
+    final fieldStyle = TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 38,
+      fontVariations: const [FontVariation.weight(400)],
+      color: lumio.text,
+    );
+    final field = Container(
+      height: 100,
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      decoration: BoxDecoration(
+        color: lumio.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: lumio.outline, width: 3),
+      ),
+      alignment: AlignmentDirectional.centerStart,
+      // TV : simple affichage (saisie par le clavier à l'écran) ; bureau :
+      // champ normal (IME, clavier physique).
+      child: Row(
+        children: [
+          Flexible(
+            child: IntrinsicWidth(
+              child: TextField(
+                controller: _controller,
+                readOnly: tv,
+                canRequestFocus: !tv,
+                showCursor: !tv,
+                enableInteractiveSelection: !tv,
+                onChanged: tv
+                    ? null
+                    : (t) => ref.read(searchProvider.notifier).setQuery(t),
+                style: fieldStyle,
+                cursorColor: lumio.accent,
+                decoration: InputDecoration(
+                  hintText: context.l10n.searchHint,
+                  hintStyle: fieldStyle.copyWith(
+                    color: const Color(0xFF6F7B8B),
+                  ),
+                  border: InputBorder.none,
+                  isCollapsed: true,
+                ),
+              ),
+            ),
+          ),
+          if (tv && !empty) ...[
+            const SizedBox(width: 10),
+            Container(width: 3, height: 48, color: lumio.accent),
+          ],
+        ],
+      ),
+    );
+    return FocusTraversalGroup(
+      child: SingleChildScrollView(
+        clipBehavior: Clip.none,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(child: field),
+                if (_micAvailable) ...[
+                  const SizedBox(width: 16),
+                  _MicKey(
+                    key: const ValueKey('key-mic'),
+                    listening: _listening,
+                    semantic: _listening
+                        ? context.l10n.dictationStop
+                        : context.l10n.dictationStart,
+                    onSelect: _toggleMic,
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 28),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (var i = 0; i < keys.length; i++)
+                  _Key(
+                    key: ValueKey('key-${keys[i]}'),
+                    label: _arabic ? keys[i] : keys[i].toUpperCase(),
+                    semantic: keys[i],
+                    autofocus: i == 0,
+                    onSelect: () => _type(keys[i]),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _Key(
+                  key: const ValueKey('key-space'),
+                  label: context.l10n.kbSpace,
+                  semantic: context.l10n.kbSpace,
+                  width: 164,
+                  fontSize: 28,
+                  onSelect: () => _type(' '),
+                ),
+                const SizedBox(width: 10),
+                _Key(
+                  key: const ValueKey('key-backspace'),
+                  label: context.l10n.kbErase,
+                  semantic: context.l10n.kbErase,
+                  width: 150,
+                  fontSize: 26,
+                  onSelect: _backspace,
+                ),
+                const SizedBox(width: 10),
+                _Key(
+                  key: const ValueKey('key-clear'),
+                  label: context.l10n.kbClearAll,
+                  semantic: context.l10n.kbClearAll,
+                  width: 200,
+                  fontSize: 26,
+                  onSelect: () => _setText(''),
+                ),
+                const SizedBox(width: 10),
+                _Key(
+                  key: const ValueKey('key-layout'),
+                  label: _arabic ? 'ABC' : 'ع',
+                  semantic: _arabic
+                      ? context.l10n.kbLatin
+                      : context.l10n.kbArabic,
+                  width: 80,
+                  fontSize: 28,
+                  onSelect: () => setState(() => _arabic = !_arabic),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text(
+                context.l10n.searchCaption,
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 26,
+                  height: 1.4,
+                  color: lumio.textMuted,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Rend le focus au résultat mémorisé dès qu'il est construit (la grille
   /// est paresseuse : on s'en approche d'abord par défilement estimé).
   void _scheduleRestore(int index, int attempts) {
@@ -358,6 +521,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     step(attempts);
   }
 
+  /// Décalage vertical des états vides : les maquettes TV46 les placent au
+  /// milieu de l'écran, pas de la zone sous les filtres.
+  static const _stateInset = 206.0;
+
+  String _semantic(BuildContext context, MetaPreview m) {
+    final source = sourceLabel(m.sourceKind, context.l10n);
+    final year = RegExp(
+      r'\b(19|20)\d{2}\b',
+    ).firstMatch(m.releaseInfo ?? '')?.group(0);
+    return year == null
+        ? context.l10n.itemSemantic(m.name, source)
+        : context.l10n.itemSemanticYear(m.name, year, source);
+  }
+
   Widget _resultsPane(BuildContext context) {
     final s = ref.watch(searchProvider);
     final profile = ref.watch(currentProfileProvider);
@@ -374,13 +551,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     Widget body;
     if (!s.hasQuery) {
-      body = StateView.empty(message: context.l10n.searchPrompt);
+      body = StateView.empty(
+        message: context.l10n.searchPrompt,
+        headerInset: _stateInset,
+      );
     } else if (s.noSearchAddon) {
-      body = StateView.empty(message: context.l10n.searchNoAddon);
+      body = StateView.empty(
+        message: context.l10n.searchNoAddon,
+        headerInset: _stateInset,
+      );
     } else if (visible.isEmpty && s.searching) {
       body = const StateView.loading();
     } else if (visible.isEmpty) {
-      body = StateView.empty(message: context.l10n.searchNoResults);
+      body = StateView.empty(
+        message: context.l10n.searchNoResults,
+        headerInset: _stateInset,
+      );
     } else {
       final restoreIndex = _restoreId == null
           ? -1
@@ -388,12 +574,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (restoreIndex >= 0) _scheduleRestore(restoreIndex, 5);
       body = GridView.builder(
         controller: _grid,
-        padding: const EdgeInsets.all(LumioSpacing.md),
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 240,
-          mainAxisExtent: 440,
-          crossAxisSpacing: 28,
-          mainAxisSpacing: 16,
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.zero,
+        // Maquette TV12 : cartes 230 x 340, écart 24.
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          mainAxisExtent: 340,
+          crossAxisSpacing: 24,
+          mainAxisSpacing: 24,
         ),
         itemCount: visible.length,
         itemBuilder: (context, i) {
@@ -417,10 +605,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             },
             child: Align(
               alignment: AlignmentDirectional.topStart,
-              child: PosterCard(
+              child: TvMediaCard(
                 key: ValueKey('result-${m.id}'),
-                item: m,
+                title: m.name,
+                seed: m.id,
+                poster: m.poster,
                 allowPrivate: priv.contains(m.sourceAddonId),
+                width: 230,
+                height: 340,
+                radius: 18,
+                inset: 14,
+                badge: m.sourceKind == 'local' || m.sourceKind == 'jellyfin'
+                    ? sourceLabel(m.sourceKind, context.l10n)
+                    : null,
+                semanticLabel: _semantic(context, m),
                 onSelect: () => widget.onOpenItem?.call(m),
               ),
             ),
@@ -443,8 +641,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       children: [
         Wrap(
           crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: LumioSpacing.sm,
-          runSpacing: LumioSpacing.sm,
+          spacing: 14,
+          runSpacing: 14,
           children: [
             for (final f in _TypeFilter.values) ...[
               _FilterChip(
@@ -466,9 +664,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
           ],
         ),
+        const SizedBox(height: 32),
         if (s.hasQuery && visible.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 20),
+            padding: const EdgeInsets.only(bottom: 20),
             child: Text(
               context.l10n.searchResultsHeader(switch (_filter) {
                 _TypeFilter.all => context.l10n.searchMoviesAndSeries,
@@ -477,10 +676,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               }, visible.length),
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontSize: 34),
+              ).textTheme.titleLarge?.copyWith(fontSize: 36, height: 1.2),
             ),
           ),
-        const SizedBox(height: LumioSpacing.md),
         Expanded(child: body),
       ],
     );
@@ -497,6 +695,8 @@ class _Key extends StatelessWidget {
     this.wide = false,
     this.medium = false,
     this.highlighted = false,
+    this.width,
+    this.fontSize,
     required this.onSelect,
   });
 
@@ -507,25 +707,28 @@ class _Key extends StatelessWidget {
   final bool wide;
   final bool medium;
   final bool highlighted;
+  final double? width;
+  final double? fontSize;
   final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
     final fg = highlighted ? lumio.onAccent : lumio.text;
+    // Maquette TV12 : touche 69 x 84, rayon 14, 34 gras.
     return SizedBox(
-      width: wide ? 200 : (medium ? 220 : 72),
-      height: 72,
+      width: width ?? (wide ? 200 : (medium ? 220 : 69)),
+      height: 84,
       child: FocusableCard(
         autofocus: autofocus,
         scale: 1.06,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         semanticLabel: semantic ?? label,
         onSelect: onSelect,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: highlighted ? lumio.accent : lumio.surfaceFocus,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Center(
             child: icon != null
@@ -534,15 +737,51 @@ class _Key extends StatelessWidget {
                     label!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
                       color: fg,
-                      fontSize: wide || medium ? 26 : 30,
+                      fontSize: fontSize ?? 34,
                       fontWeight: FontWeight.w700,
                       fontVariations: const [FontVariation.weight(700)],
                     ),
                   ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Micro rond de la maquette TV12 (100, ambre, icône 48).
+class _MicKey extends StatelessWidget {
+  const _MicKey({
+    super.key,
+    required this.listening,
+    required this.semantic,
+    required this.onSelect,
+  });
+
+  final bool listening;
+  final String semantic;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.lumio;
+    return FocusableCard(
+      scale: 1.06,
+      borderRadius: BorderRadius.circular(50),
+      semanticLabel: semantic,
+      onSelect: onSelect,
+      child: Container(
+        width: 100,
+        height: 100,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: listening ? c.secondary : c.accent,
+        ),
+        child: LumioIconView(LumioIcon.mic, size: 48, color: c.onAccent),
       ),
     );
   }
@@ -564,8 +803,9 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) => TvButton(
     label: label,
     kind: selected ? TvButtonKind.primary : TvButtonKind.secondary,
-    height: 64,
-    horizontalPadding: 36,
+    weight: selected ? FontWeight.w700 : FontWeight.w600,
+    height: 62,
+    horizontalPadding: 28,
     fontSize: 28,
     scale: 1.04,
     onPressed: onSelect,

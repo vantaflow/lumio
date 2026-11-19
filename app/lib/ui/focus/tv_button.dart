@@ -13,7 +13,8 @@ enum TvButtonKind {
   /// Pastille de navigation : transparente, texte atténué.
   nav,
 
-  /// Pastille de navigation de l'écran courant (ambre, maquette TV05).
+  /// Pastille de navigation de l'écran courant (gris soutenu, maquettes
+  /// TV13, TV44, TV45, TV52).
   navSelected,
 
   /// Bouton texte (maquettes `.bt`) : transparent, texte #C9D0DA.
@@ -39,6 +40,7 @@ class TvButton extends StatelessWidget {
     this.scale = 1.04,
     this.expand = false,
     this.semanticLabel,
+    this.weight,
   });
 
   final String label;
@@ -59,20 +61,24 @@ class TvButton extends StatelessWidget {
   /// Étiquette d'accessibilité si elle diffère du texte (ex. « − »).
   final String? semanticLabel;
 
+  /// Graisse du texte si elle diffère du style (ex. filtres : 600 inactif).
+  final FontWeight? weight;
+
   @override
   Widget build(BuildContext context) {
     final c = context.lumio;
-    final (bg, fg, weight) = switch (kind) {
+    final (bg, fg, kindWeight) = switch (kind) {
       TvButtonKind.primary => (c.accent, c.onAccent, FontWeight.w700),
       TvButtonKind.secondary => (c.surfaceFocus, c.text, FontWeight.w700),
       TvButtonKind.nav => (Colors.transparent, c.textMuted, FontWeight.w600),
-      TvButtonKind.navSelected => (c.accent, c.onAccent, FontWeight.w700),
+      TvButtonKind.navSelected => (c.surfaceFocus, c.text, FontWeight.w600),
       TvButtonKind.ghost => (
         Colors.transparent,
         const Color(0xFFC9D0DA),
         FontWeight.w600,
       ),
     };
+    final weight = this.weight ?? kindWeight;
     final radius = BorderRadius.circular(height / 2);
     return FocusableCard(
       autofocus: autofocus,

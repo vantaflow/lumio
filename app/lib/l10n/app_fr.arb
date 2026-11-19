@@ -1281,5 +1281,13 @@
   },
   "castShort": "Diffuser",
   "partyShort": "Ensemble",
-  "localSubtitle": "Les vidéos stockées sur cet appareil"
+  "localSubtitle": "Les vidéos stockées sur cet appareil",
+  "heroResume": "Reprendre",
+  "heroMinutesLeft": "{minutes} min restantes",
+  "@heroMinutesLeft": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "searchCaption": "Recherche dans tous vos addons, vos dossiers."
 }

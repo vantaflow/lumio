@@ -436,6 +436,13 @@ const _avatarColors = [
   Color(0xFFE6C17A),
 ];
 
+/// Couleur d'avatar du profil [p] (celle du choix de profil, selon sa place
+/// dans la liste) ; ambre sans profil.
+Color avatarColorOf(List<Profile> list, Profile? p) {
+  final i = p == null ? 0 : list.indexWhere((x) => x.id == p.id);
+  return _avatarColors[(i < 0 ? 0 : i) % _avatarColors.length];
+}
+
 /// Pastille ronde 60 dp des badges d'avatar (TV35).
 Widget _avatarBadge(Color bg, LumioIcon icon, double size, Color fg) =>
     Container(

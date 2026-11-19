@@ -23,6 +23,8 @@ class TvRow extends ConsumerStatefulWidget {
     this.horizontalPadding = 96,
     this.verticalPadding = 12,
     this.autofocusFirst = false,
+    this.titleGap = LumioSpacing.xs,
+    this.titleHeight,
   });
 
   final String title;
@@ -49,6 +51,12 @@ class TvRow extends ConsumerStatefulWidget {
   /// Sans focus mémorisé, donne le focus à la première carte si rien d'autre
   /// n'est focalisé (première rangée affichée : le focus initial de l'écran).
   final bool autofocusFirst;
+
+  /// Espace entre le titre et les cartes (20 dans les maquettes TV05/TV44).
+  final double titleGap;
+
+  /// Interligne du titre (maquettes : 1,2).
+  final double? titleHeight;
 
   @override
   ConsumerState<TvRow> createState() => _TvRowState();
@@ -178,13 +186,14 @@ class _TvRowState extends ConsumerState<TvRow> {
             header: true,
             child: Text(
               widget.title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(color: lumio.text),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: lumio.text,
+                height: widget.titleHeight,
+              ),
             ),
           ),
         ),
-        const SizedBox(height: LumioSpacing.xs),
+        SizedBox(height: widget.titleGap),
         // 12 de marge verticale : l'anneau et l'échelle ne sont jamais rognés.
         SizedBox(
           height: widget.height,

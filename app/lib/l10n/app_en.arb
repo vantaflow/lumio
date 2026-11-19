@@ -1052,5 +1052,13 @@
   "playbackSpeed": "Speed {rate}×",
   "castShort": "Cast",
   "partyShort": "Together",
-  "localSubtitle": "Videos stored on this device"
+  "localSubtitle": "Videos stored on this device",
+  "heroResume": "Resume",
+  "heroMinutesLeft": "{minutes} min left",
+  "@heroMinutesLeft": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "searchCaption": "Searches all your addons and folders."
 }

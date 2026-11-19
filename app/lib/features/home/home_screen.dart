@@ -13,6 +13,7 @@ import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/calendar/calendar_screen.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
+import 'package:lumio/features/detail/playback_service.dart' show typeForVideo;
 import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
 import 'package:lumio/features/library/library_screen.dart';
 import 'package:lumio/features/local/local_providers.dart';
@@ -22,6 +23,7 @@ import 'package:lumio/features/settings/settings_screen.dart';
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
+import 'package:lumio/features/home/tv_cards.dart';
 import 'package:lumio/features/home/tv_home.dart';
 import 'package:lumio/features/addons/add_addon_dialog.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart'
@@ -372,11 +374,17 @@ class _HomeBody extends ConsumerWidget {
     switch (summary.phase) {
       case HomePhase.error:
         return StateView.error(
+          headerInset: 120,
           message: context.l10n.homeAddonsError,
           onRetry: () => ref.read(addonsProvider.notifier).reload(),
         );
       case HomePhase.noCatalog:
-        return StateView.empty(message: context.l10n.homeNoCatalog);
+        return StateView.empty(
+          headerInset: 120,
+          message: context.l10n.homeNoCatalog,
+          actionLabel: tv ? context.l10n.homeManageAddons : null,
+          onAction: tv ? onOpenAddons : null,
+        );
       case HomePhase.noAddons:
         final Widget help = tv
             ? SingleChildScrollView(
@@ -399,7 +407,12 @@ class _HomeBody extends ConsumerWidget {
           ],
         );
       case HomePhase.filtered:
-        return StateView.empty(message: context.l10n.homeFiltered);
+        return StateView.empty(
+          headerInset: 120,
+          message: context.l10n.homeFiltered,
+          actionLabel: tv ? context.l10n.tvSwitchProfile : null,
+          onAction: tv ? () => switchProfileFlow(context, ref) : null,
+        );
       case HomePhase.loading:
         return const _SkeletonList();
       case HomePhase.ready:
@@ -416,29 +429,57 @@ class _HomeBody extends ConsumerWidget {
         r.id,
     ];
     final ids = layout.requireValue.visible(natural);
-    return ListView.builder(
-      controller: scroll,
-      cacheExtent: 1500,
-      padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
-      itemCount: ids.length,
-      itemBuilder: (context, i) {
-        final id = ids[i];
-        return KeyedSubtree(
-          key: ValueKey(id),
-          child: switch (id) {
-            continueRowId => const _ContinueRow(),
-            libraryRowId => _LibraryRow(onOpenItem: onOpenItem),
-            localRowId => _LocalRow(onOpenItem: onOpenItem),
-            _ when id.startsWith('jf:') => _JellyfinRowView(
-              rowId: id,
-              onOpenItem: onOpenItem,
-            ),
-            _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
-          },
-        );
-      },
+    // TV : la reprise la plus récente en héros (maquette TV05).
+    final continues = tv ? _continueEntries(ref) : const <ProgressEntry>[];
+    final hero = continues.isNotEmpty && ids.contains(continueRowId)
+        ? continues.first
+        : null;
+    final lead = hero == null ? 0 : 1;
+    return _HeroPresent(
+      present: hero != null,
+      child: ListView.builder(
+        controller: scroll,
+        cacheExtent: 1500,
+        padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
+        itemCount: ids.length + lead,
+        itemBuilder: (context, index) {
+          if (hero != null && index == 0) {
+            return _HomeHero(key: const ValueKey('home-hero'), entry: hero);
+          }
+          final i = index - lead;
+          final id = ids[i];
+          return KeyedSubtree(
+            key: ValueKey(id),
+            child: switch (id) {
+              continueRowId => _ContinueRow(tvTop: hero != null ? 28 : 8),
+              libraryRowId => _LibraryRow(onOpenItem: onOpenItem),
+              localRowId => _LocalRow(onOpenItem: onOpenItem),
+              _ when id.startsWith('jf:') => _JellyfinRowView(
+                rowId: id,
+                onOpenItem: onOpenItem,
+              ),
+              _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
+            },
+          );
+        },
+      ),
     );
   }
+}
+
+/// Vrai quand le héros de l'accueil porte le focus initial : les rangées ne
+/// le réclament alors pas.
+class _HeroPresent extends InheritedWidget {
+  const _HeroPresent({required this.present, required super.child});
+
+  final bool present;
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_HeroPresent>()?.present ??
+      false;
+
+  @override
+  bool updateShouldNotify(_HeroPresent old) => present != old.present;
 }
 
 // --- rangées ---
@@ -582,11 +623,53 @@ class _PosterRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (isTvLayout(context)) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: TvRow(
+          title: title,
+          restorationId: rowId,
+          routeKey: homeRouteKey,
+          autofocusFirst: !_HeroPresent.of(context),
+          itemExtent: tvCardWidth,
+          gap: tvCardGap,
+          titleGap: 20,
+          titleHeight: 1.2,
+          height: tvCardHeight + 24,
+          items: [
+            for (final m in items)
+              TvMediaCard(
+                key: ValueKey('${m.sourceAddonId}|${m.id}'),
+                title: m.name,
+                seed: m.id,
+                poster: m.poster,
+                allowPrivate: allowPrivate,
+                badge:
+                    m.sourceKind == 'local' ||
+                        m.sourceKind == jellyfinSourceKind
+                    ? sourceLabel(m.sourceKind, context.l10n)
+                    : null,
+                semanticLabel: _year(m.releaseInfo) == null
+                    ? context.l10n.itemSemantic(
+                        m.name,
+                        sourceLabel(m.sourceKind, context.l10n),
+                      )
+                    : context.l10n.itemSemanticYear(
+                        m.name,
+                        _year(m.releaseInfo)!,
+                        sourceLabel(m.sourceKind, context.l10n),
+                      ),
+                onSelect: () => onOpenItem?.call(m),
+              ),
+          ],
+        ),
+      );
+    }
     return TvRow(
       title: title,
       restorationId: rowId,
       routeKey: homeRouteKey,
-      autofocusFirst: true,
+      autofocusFirst: !_HeroPresent.of(context),
       itemExtent: _posterWidth,
       verticalPadding: _rowPad,
       height: _posterHeight + 12 + 2 * 26 * 1.25 + 2 * _rowPad,
@@ -603,40 +686,70 @@ class _PosterRow extends ConsumerWidget {
   }
 }
 
+/// Entrées « Continuer » visibles pour le profil : une reprise locale dont le
+/// fichier n'est pas (ou plus) dans cet appareil (progression venue d'une
+/// sauvegarde) est masquée, idem pour un serveur Jellyfin absent.
+List<ProgressEntry> _continueEntries(WidgetRef ref) {
+  final localIds = {
+    for (final i in ref.watch(localItemsProvider).value ?? const []) i.id,
+  };
+  final serverIds = {
+    for (final s
+        in ref.watch(jellyfinServersProvider).value ?? const <JellyfinServer>[])
+      s.id,
+  };
+  return [
+    for (final e in visibleProgress(
+      ref.watch(continueWatchingProvider).value ?? const [],
+      ref.watch(currentProfileProvider),
+    ))
+      if ((!isLocalId(e.metaId) || localIds.contains(e.metaId)) &&
+          (!isJellyfinId(e.metaId) ||
+              serverIds.contains(parseJellyfinId(e.metaId)?.serverId)))
+        e,
+  ];
+}
+
 class _ContinueRow extends ConsumerWidget {
-  const _ContinueRow();
+  const _ContinueRow({this.tvTop = 12});
+
+  /// Marge haute de la rangée TV (maquettes : 8 à 28 selon l'écran).
+  final double tvTop;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Une reprise locale dont le fichier n'est pas (ou plus) dans ce
-    // appareil (progression venue d'une sauvegarde) est masquée.
-    final localIds = {
-      for (final i in ref.watch(localItemsProvider).value ?? const []) i.id,
-    };
-    // Idem pour un serveur Jellyfin absent (ou retiré) de cet appareil.
-    final serverIds = {
-      for (final s
-          in ref.watch(jellyfinServersProvider).value ??
-              const <JellyfinServer>[])
-        s.id,
-    };
-    final entries = [
-      for (final e in visibleProgress(
-        ref.watch(continueWatchingProvider).value ?? const [],
-        ref.watch(currentProfileProvider),
-      ))
-        if ((!isLocalId(e.metaId) || localIds.contains(e.metaId)) &&
-            (!isJellyfinId(e.metaId) ||
-                serverIds.contains(parseJellyfinId(e.metaId)?.serverId)))
-          e,
-    ];
+    final entries = _continueEntries(ref);
     if (entries.isEmpty) return const SizedBox.shrink();
     final playback = ref.watch(continuePlaybackProvider);
+    if (isTvLayout(context)) {
+      return Padding(
+        padding: EdgeInsets.only(top: tvTop),
+        child: TvRow(
+          title: context.l10n.continueWatching,
+          restorationId: continueRowId,
+          routeKey: homeRouteKey,
+          autofocusFirst: !_HeroPresent.of(context),
+          itemExtent: tvCardWidth,
+          gap: tvCardGap,
+          titleGap: 20,
+          titleHeight: 1.2,
+          height: tvCardHeight + 24,
+          items: [
+            for (final e in entries)
+              _ContinueCard(
+                key: ValueKey(e.videoId),
+                entry: e,
+                playback: playback,
+              ),
+          ],
+        ),
+      );
+    }
     return TvRow(
       title: context.l10n.continueWatching,
       restorationId: continueRowId,
       routeKey: homeRouteKey,
-      autofocusFirst: true,
+      autofocusFirst: !_HeroPresent.of(context),
       itemExtent: _continueWidth,
       verticalPadding: _rowPad,
       height: _continueHeight + 12 + 26 * 1.25 + 24 * 1.3 + 2 * _rowPad,
@@ -644,6 +757,95 @@ class _ContinueRow extends ConsumerWidget {
         for (final e in entries)
           _ContinueCard(key: ValueKey(e.videoId), entry: e, playback: playback),
       ],
+    );
+  }
+}
+
+/// Héros de l'accueil TV (maquette TV05) : la reprise la plus récente.
+class _HomeHero extends ConsumerStatefulWidget {
+  const _HomeHero({super.key, required this.entry});
+
+  final ProgressEntry entry;
+
+  @override
+  ConsumerState<_HomeHero> createState() => _HomeHeroState();
+}
+
+class _HomeHeroState extends ConsumerState<_HomeHero> {
+  late Future<ContinueInfo> _info = _describe();
+  bool? _inList;
+
+  Future<ContinueInfo> _describe() => ref
+      .read(continuePlaybackProvider)
+      .describe(widget.entry)
+      .catchError((Object _) => ContinueInfo(title: widget.entry.metaId));
+
+  @override
+  void didUpdateWidget(_HomeHero old) {
+    super.didUpdateWidget(old);
+    if (old.entry.videoId != widget.entry.videoId) {
+      _info = _describe();
+      _inList = null;
+    }
+  }
+
+  /// « + Ma liste » n'existe que pour un titre de catalogue (pas de fichier
+  /// local ni de serveur Jellyfin).
+  bool get _listable =>
+      !isLocalId(widget.entry.metaId) && !isJellyfinId(widget.entry.metaId);
+
+  Future<void> _toggleList(ContinueInfo info, bool inList) async {
+    final repo = ref.read(libraryRepositoryProvider);
+    final profileId = ref.read(currentProfileIdProvider);
+    final e = widget.entry;
+    if (inList) {
+      await repo.remove(profileId, e.metaId);
+    } else {
+      await repo.add(
+        profileId,
+        MetaPreview(
+          id: e.metaId,
+          type: typeForVideo(e.metaId, e.videoId),
+          name: info.title,
+          poster: info.poster,
+          sourceAddonId: '',
+          certification: e.certification,
+        ),
+      );
+    }
+    if (mounted) setState(() => _inList = !inList);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final e = widget.entry;
+    final playback = ref.watch(continuePlaybackProvider);
+    final libs = ref.watch(libraryProvider).value;
+    final inList = _inList ?? (libs?.any((m) => m.id == e.metaId) ?? false);
+    return FutureBuilder<ContinueInfo>(
+      future: _info,
+      builder: (context, snap) {
+        final info = snap.data ?? ContinueInfo(title: e.metaId);
+        final left = e.duration - e.position;
+        final parts = [
+          l.heroResume.toUpperCase(),
+          if (info.subtitle != null) info.subtitle!,
+          if (left > Duration.zero)
+            l.heroMinutesLeft(left.inMinutes.clamp(1, 99999)),
+        ];
+        return TvHero(
+          eyebrow: parts.join(' · '),
+          title: info.title,
+          poster: info.poster,
+          allowPrivate: info.allowPrivate,
+          onResume: () => playback.play(context, e),
+          listLabel: _listable
+              ? (inList ? l.removeFromList : '+ ${l.myList}')
+              : null,
+          onList: _listable ? () => _toggleList(info, inList) : null,
+        );
+      },
     );
   }
 }
@@ -855,6 +1057,22 @@ class _ContinueCardState extends State<_ContinueCard> {
         future: _info,
         builder: (context, snap) {
           final info = snap.data ?? ContinueInfo(title: e.metaId);
+          if (isTvLayout(context)) {
+            return TvMediaCard(
+              title: info.title,
+              seed: e.metaId,
+              poster: info.poster,
+              allowPrivate: info.allowPrivate,
+              badge: isLocalId(e.metaId)
+                  ? sourceLabel('local', context.l10n)
+                  : isJellyfinId(e.metaId)
+                  ? sourceLabel(jellyfinSourceKind, context.l10n)
+                  : null,
+              progress: progress,
+              semanticLabel: context.l10n.resumeSemantic(info.title),
+              onSelect: () => widget.playback.play(context, e),
+            );
+          }
           return FocusableCard(
             onSelect: () => widget.playback.play(context, e),
             semanticLabel: context.l10n.resumeSemantic(info.title),
@@ -941,6 +1159,35 @@ class _SkeletonRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
+    if (isTvLayout(context)) {
+      return Semantics(
+        label: context.l10n.loading,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Column(
+            key: const ValueKey('skeleton-row'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (title == null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 96, bottom: 20, top: 4),
+                  child: Container(
+                    height: 34,
+                    width: 360,
+                    decoration: BoxDecoration(
+                      color: lumio.surface,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                )
+              else
+                TvRowTitle(title!),
+              const TvSkeletonCards(),
+            ],
+          ),
+        ),
+      );
+    }
     return Semantics(
       label: context.l10n.loading,
       child: Column(
@@ -1006,6 +1253,18 @@ class _ErrorRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
+    if (isTvLayout(context)) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 20, bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TvRowTitle(title),
+            TvErrorBand(message: message, onRetry: onRetry),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 96,

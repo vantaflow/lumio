@@ -2252,4 +2252,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get localSubtitle => 'Videos stored on this device';
+
+  @override
+  String get heroResume => 'Resume';
+
+  @override
+  String heroMinutesLeft(Object minutes) {
+    return '$minutes min left';
+  }
+
+  @override
+  String get searchCaption => 'Searches all your addons and folders.';
 }

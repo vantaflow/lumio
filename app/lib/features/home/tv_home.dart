@@ -79,6 +79,10 @@ class TvTopBar extends ConsumerWidget {
     final l = context.l10n;
     final profile = ref.watch(currentProfileProvider);
     final name = (profile?.name ?? '').trim();
+    final avatar = avatarColorOf(
+      ref.watch(profilesProvider).value ?? const <Profile>[],
+      profile,
+    );
     final initial = name.isEmpty ? '?' : name.characters.first.toUpperCase();
     return SizedBox(
       height: 120,
@@ -145,7 +149,7 @@ class TvTopBar extends ConsumerWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: context.lumio.accent,
+                  color: avatar,
                 ),
                 child: Text(
                   initial,
@@ -338,7 +342,7 @@ class TvEmptyHome extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             l.tvEmptyTitle,
-            style: t.displayLarge?.copyWith(fontSize: 72, height: 1.1),
+            style: t.displayLarge?.copyWith(fontSize: 72, height: 1.2),
           ),
           const SizedBox(height: 16),
           ConstrainedBox(
