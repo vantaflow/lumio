@@ -352,7 +352,9 @@ void main() {
       _direct('fr', 'https://cdn.example.com/fr.mp4', desc: 'Film VF 1080p'),
     ];
     await h.pump(preview: _preview(), prefs: const StreamPrefs());
-    expect(find.text('Recommandé'), findsOneWidget);
+    // Maquette TV06 : le flux recommandé se reconnaît à son badge de qualité
+    // ambre (plus de libellé « Recommandé »).
+    expect(find.byKey(const ValueKey('stream-recommended')), findsOneWidget);
     await t.tap(find.textContaining('Lecture auto'));
     await h.settle();
     expect(h.players, hasLength(1));
@@ -523,7 +525,7 @@ void main() {
     final h = _H(t);
     await h.pump(preview: _preview(cert: 'G'));
     final repo = h.container.read(libraryRepositoryProvider);
-    await t.tap(find.text('Ajouter à ma liste'));
+    await t.tap(find.text('+ Ma liste'));
     await h.settle();
     expect(
       await t.runAsync(() => repo.contains(defaultProfileId, 'tt1')),

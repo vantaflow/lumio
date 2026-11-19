@@ -50,9 +50,10 @@ class MagnetIcon extends StatelessWidget {
 
 final _noHealth = HealthTracker();
 
-/// Liste des flux groupée par addon (story 1.4) : titre d'addon et santé,
-/// puis une ligne par flux (qualité, langue, taille, sources ; aimant pour
-/// un torrent). Le flux préféré du profil est signalé « Recommandé ».
+/// Liste des flux groupée par addon (maquettes TV06, TV40, P11, P12) : titre
+/// de section, puis par addon un en-tête « ADDON · nom · Santé : … » et une
+/// ligne par flux (qualité, langue, taille, aimant ou lien, sources). Le flux
+/// préféré du profil a le badge de qualité ambre.
 class StreamsList extends StatelessWidget {
   const StreamsList({
     super.key,
@@ -64,6 +65,8 @@ class StreamsList extends StatelessWidget {
     required this.onSelect,
     this.health = const {},
     this.tracker,
+    this.showCount = false,
+    this.headerTop = 24,
   });
 
   final List<StreamGroup> groups;
@@ -81,18 +84,74 @@ class StreamsList extends StatelessWidget {
   final StreamItem? preferred;
   final void Function(StreamItem item) onSelect;
 
+  /// Titre « Flux disponibles · N » (fiche film) au lieu de « Sources ».
+  final bool showCount;
+
+  /// Marge au-dessus d'un en-tête d'addon (24 fiche film, 16 fiche série).
+  final double headerTop;
+
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
-    final theme = Theme.of(context);
+    final l = context.l10n;
     final empty = groups.every((g) => g.items.isEmpty);
+    Widget heading(String text, double top, double bottom) => Padding(
+      padding: EdgeInsets.only(top: top, bottom: bottom),
+      child: Semantics(
+        header: true,
+        child: Text(
+          text,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(color: lumio.text, height: 1.2),
+        ),
+      ),
+    );
+    final headTop = showCount ? 28.0 : 0.0;
     if (empty && loading) {
-      return const SizedBox(height: 160, child: StateView.loading());
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          heading(l.sourcesTitle, headTop, 4),
+          const SizedBox(height: 160, child: StateView.loading()),
+        ],
+      );
     }
     if (empty && groups.every((g) => g.error == null)) {
-      return SizedBox(
-        height: 220,
-        child: StateView.empty(message: context.l10n.noStreams),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          heading(l.sourcesTitle, headTop, 16),
+          // P11 : carte de 200, icône d'alerte et message centrés.
+          Container(
+            height: 200,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: lumio.surface,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LumioIconView(
+                  LumioIcon.alert,
+                  size: 44,
+                  color: lumio.textMuted,
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  l.noStreams,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 30,
+                    color: const Color(0xFFC9D0DA),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
     // Chaque signature n'apparaît qu'une fois : dans le groupe de son
@@ -119,47 +178,30 @@ class StreamsList extends StatelessWidget {
             if (identical(best[s.signature], s)) s,
         ],
     };
+    final total = visible.values.fold<int>(0, (n, v) => n + v.length);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        heading(
+          showCount && total > 0 ? l.streamsAvailable(total) : l.sourcesTitle,
+          headTop,
+          0,
+        ),
         for (final g in groups) ...[
-          Padding(
-            padding: const EdgeInsets.only(
-              top: LumioSpacing.md,
-              bottom: LumioSpacing.sm,
-            ),
-            child: Row(
-              children: [
-                Text(
-                  addonNames[g.addonId] ?? context.l10n.addonFallback,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: lumio.text,
-                  ),
-                ),
-                const SizedBox(width: LumioSpacing.md),
-                Icon(
-                  g.error != null ? Icons.error_outline : Icons.check_circle,
-                  size: 28,
-                  color: g.error != null ? lumio.error : lumio.success,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  g.error != null
-                      ? context.l10n.noResponse
-                      : context.l10n.streamCount(visible[g]!.length),
-                  style: theme.textTheme.bodySmall,
-                ),
-                if (health[g.addonId] case final h?
-                    when h.level != HealthLevel.unknown) ...[
-                  const SizedBox(width: LumioSpacing.md),
-                  HealthPill(health: h),
-                ],
-              ],
-            ),
+          _GroupHeader(
+            name: addonNames[g.addonId] ?? l.addonFallback,
+            failed: g.error != null,
+            count: visible[g]!.length,
+            health: health[g.addonId],
+            top: headerTop,
           ),
-          for (final s in StreamRanker.sort(visible[g]!, prefs, tracked))
+          for (final (i, s) in StreamRanker.sort(
+            visible[g]!,
+            prefs,
+            tracked,
+          ).indexed)
             Padding(
-              padding: const EdgeInsets.only(bottom: LumioSpacing.sm),
+              padding: EdgeInsets.only(top: i == 0 ? 0 : 12),
               child: _StreamRow(
                 item: s,
                 recommended: identical(s, preferred),
@@ -184,7 +226,76 @@ class StreamsList extends StatelessWidget {
   }
 }
 
-class _StreamRow extends StatelessWidget {
+/// En-tête d'un addon (maquettes TV06 `.ad`, P12) : « ADDON · nom · Santé :
+/// bonne » en turquoise ; un addon qui n'a pas répondu ajoute l'alerte « Ne
+/// répond pas » et la pastille de santé détaillée.
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({
+    required this.name,
+    required this.failed,
+    required this.count,
+    required this.health,
+    required this.top,
+  });
+
+  final String name;
+  final bool failed;
+  final int count;
+  final AddonHealth? health;
+  final double top;
+
+  @override
+  Widget build(BuildContext context) {
+    final lumio = context.lumio;
+    final l = context.l10n;
+    final teal = TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 26,
+      fontWeight: FontWeight.w700,
+      fontVariations: const [FontVariation.weight(700)],
+      color: lumio.secondary,
+    );
+    final known = health != null && health!.level != HealthLevel.unknown;
+    final healthLine = !known || failed
+        ? null
+        : switch (health!.level) {
+            HealthLevel.reliable => l.healthLineGood,
+            HealthLevel.slow => l.healthLineSlow,
+            _ => l.healthLineBad,
+          };
+    final muted = TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 26,
+      fontWeight: FontWeight.w400,
+      color: lumio.textMuted,
+    );
+    return Padding(
+      padding: EdgeInsets.only(top: top, bottom: 10),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        runSpacing: 4,
+        children: [
+          Text('${l.streamGroupAddon} · ', style: teal),
+          Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: teal),
+          if (healthLine != null) Text(' · $healthLine', style: teal),
+          const SizedBox(width: 16),
+          if (failed) ...[
+            LumioIconView(LumioIcon.alert, size: 26, color: lumio.error),
+            const SizedBox(width: 8),
+            Text(l.noResponse, style: muted),
+          ] else
+            Text(l.streamCount(count), style: muted),
+          if (failed && known) ...[
+            const SizedBox(width: 16),
+            HealthPill(health: health!, showDetail: true),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StreamRow extends StatefulWidget {
   const _StreamRow({
     required this.item,
     required this.recommended,
@@ -199,37 +310,98 @@ class _StreamRow extends StatelessWidget {
   final VoidCallback onSelect;
 
   @override
+  State<_StreamRow> createState() => _StreamRowState();
+}
+
+class _StreamRowState extends State<_StreamRow> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
-    final theme = Theme.of(context);
+    final l = context.l10n;
+    final item = widget.item;
     final seeders = item.seeders;
+    final quality = qualityLabel(item.quality);
     final bits = [
-      qualityLabel(item.quality),
+      quality,
       if (item.language != null) item.language!.toUpperCase(),
-      if (item.sizeBytes != null) sizeLabel(item.sizeBytes!, context.l10n),
+      if (item.sizeBytes != null) sizeLabel(item.sizeBytes!, l),
     ].where((e) => e.isNotEmpty).join(' · ');
-    final kind = item.isTorrent
-        ? context.l10n.kindTorrent
-        : context.l10n.kindDirect;
+    final kind = item.isTorrent ? l.kindTorrent : l.kindDirect;
+    final seedColor = (seeders ?? 0) >= healthySeeders
+        ? lumio.success
+        : lumio.accent;
+    TextStyle text(Color color, [FontWeight w = FontWeight.w400]) => TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 26,
+      fontWeight: w,
+      fontVariations: [FontVariation.weight(w.value.toDouble())],
+      color: color,
+    );
     return FocusableCard(
       scale: 1.02,
-      onSelect: onSelect,
+      borderRadius: BorderRadius.circular(18),
+      onSelect: widget.onSelect,
+      onFocusChange: (f) => setState(() => _focused = f),
       semanticLabel:
           '${item.title}, $bits, $kind'
-          '${seeders != null ? ', ${context.l10n.seedersSemantic(seeders)}' : ''}'
-          '${recommended ? ', ${context.l10n.recommendedSemantic}' : ''}',
+          '${seeders != null ? ', ${l.seedersSemantic(seeders)}' : ''}'
+          '${widget.recommended ? ', ${l.recommendedSemantic}' : ''}',
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: LumioSpacing.lg,
-          vertical: LumioSpacing.md,
-        ),
+        height: 92,
+        padding: const EdgeInsets.symmetric(horizontal: 28),
         decoration: BoxDecoration(
-          color: recommended ? lumio.surfaceRaised : lumio.surface,
-          borderRadius: BorderRadius.circular(LumioRadius.lg),
-          border: Border.all(color: recommended ? lumio.accent : lumio.outline),
+          color: _focused ? lumio.surfaceFocus : lumio.surface,
+          borderRadius: BorderRadius.circular(18),
         ),
         child: Row(
           children: [
+            if (quality.isNotEmpty) ...[
+              Container(
+                key: widget.recommended
+                    ? const ValueKey('stream-recommended')
+                    : null,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.recommended ? lumio.accent : lumio.surfaceFocus,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  quality,
+                  style: text(
+                    widget.recommended ? lumio.onAccent : lumio.text,
+                    FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 20),
+            ],
+            Expanded(
+              child: Text(
+                item.language != null
+                    ? '${item.language!.toUpperCase()}  ${item.title}'
+                    : item.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text(lumio.text),
+              ),
+            ),
+            if (widget.others > 0) ...[
+              const SizedBox(width: 20),
+              Text(
+                l.otherAddonsCount(widget.others),
+                style: text(lumio.textMuted).copyWith(fontSize: 24),
+              ),
+            ],
+            if (item.sizeBytes != null) ...[
+              const SizedBox(width: 20),
+              Text(sizeLabel(item.sizeBytes!, l), style: text(lumio.textMuted)),
+            ],
+            const SizedBox(width: 20),
             item.isTorrent
                 ? const MagnetIcon()
                 : LumioIconView(
@@ -237,52 +409,23 @@ class _StreamRow extends StatelessWidget {
                     color: lumio.secondary,
                     size: 32,
                   ),
-            const SizedBox(width: LumioSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: lumio.text,
-                    ),
-                  ),
-                  if (bits.isNotEmpty)
-                    Text(bits, style: theme.textTheme.bodySmall),
-                  if (others > 0)
-                    Text(
-                      context.l10n.otherAddonsCount(others),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                ],
+            const SizedBox(width: 20),
+            SizedBox(
+              width: item.isTorrent && seeders != null ? null : 170,
+              child: Text(
+                item.isTorrent && seeders != null
+                    ? l.seedersCount(seeders)
+                    : (item.isTorrent
+                          ? l.streamBadgeTorrent
+                          : l.streamBadgeDirect),
+                textAlign: TextAlign.end,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: item.isTorrent && seeders != null
+                    ? text(seedColor, FontWeight.w700)
+                    : text(lumio.textMuted),
               ),
             ),
-            if (item.isTorrent && seeders != null) ...[
-              Icon(
-                Icons.arrow_upward,
-                size: 28,
-                color: seeders >= healthySeeders
-                    ? lumio.success
-                    : lumio.warning,
-              ),
-              Text(
-                '$seeders',
-                style: TextStyle(
-                  color: seeders >= healthySeeders
-                      ? lumio.success
-                      : lumio.warning,
-                ),
-              ),
-              const SizedBox(width: LumioSpacing.md),
-            ],
-            if (recommended)
-              Text(
-                context.l10n.recommended,
-                style: theme.textTheme.bodySmall?.copyWith(color: lumio.accent),
-              ),
           ],
         ),
       ),

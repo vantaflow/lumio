@@ -370,7 +370,9 @@ void main() {
           ),
         ),
       );
-      expect(find.text('Fiable'), findsOneWidget);
+      // Maquette TV06 : « Santé : bonne » dans l'en-tête de groupe.
+      expect(find.text('Santé : bonne'), findsNothing);
+      expect(find.textContaining('Santé : bonne'), findsOneWidget);
     });
   });
 }

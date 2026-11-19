@@ -9,7 +9,7 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | TV 03 · Onboarding · Ajouter vos sources | `TV03-Sources.dc.html` | fait (comparaison maquette | box) |
 | TV 04 · Choix du profil (PIN) | `TV04-ChoixProfil.dc.html` | fait (cmp : scratchpad/refonte4/cmp-TV04.png) — centré voulu par l'utilisateur ; panneau PIN et libellé « Filtre -12 ans » = données/états ; à vérifier sur la box |
 | TV 05 · Accueil | `TV05-Accueil.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV05.png) — à vérifier sur la box ; héros = reprise la plus récente (+ Ma liste = ajout/retrait réel, seulement pour un titre de catalogue) ; cartes 300×170 (affiche réelle sinon dégradé, pastille seulement Local/Jellyfin : la source Direct/Torrent n'est connue qu'à la recherche de flux) ; pastille « Accueil » courante en gris #2A3340 (TV13/44/45/52) et non ambre comme dans TV05 seul ; rangées 12 px d'écart (TV05) alors que TV44 en montre 20 |
-| TV 06 · Fiche + flux par addon | `TV06-Fiche.dc.html` | à reprendre : refait sans comparaison |
+| TV 06 · Fiche + flux par addon | `TV06-Fiche.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV06.png) — à vérifier sur la box ; positions des flux, en-têtes d'addon et boutons au pixel près ; ligne de flux = nom du flux + langue (la maquette n'affiche que les langues), badge ambre = flux recommandé |
 | TV 07 · Lecteur | `TV07-Lecteur.dc.html` | à reprendre : cmp box (scratchpad/refonte4/cmp-pl.png) sans écart de mise en page hors données (titre/sous-titre de source, durées, bouton Suivant) ; maquette = état composite (panneau + épisode suivant) ; titre plus étroit corrigé par la police ; à vérifier sur la box |
 | TV 08 · Ajouter un addon · Par lien | `TV08-AjoutAddon.dc.html` | cycle ajout d'addon (après la refonte) |
 | TV 09 · Ajouter un addon · Depuis le téléphone (page de la box) | `TV09-Appairage.dc.html` | cycle ajout d'addon (après la refonte) |
@@ -50,11 +50,11 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | Pop-up 08 · Choix du dossier | `P08-ChoixDossier.dc.html` | à vérifier sur la box (panneau de saisie de chemin refait au lot précédent) |
 | Pop-up 09 · Confirmation | `P09-Confirmation.dc.html` | à faire |
 | Pop-up 10 · Erreur de lecture | `P10-ErreurLecture.dc.html` | à faire |
-| Pop-up 11 · Aucun flux | `P11-AucunFlux.dc.html` | à faire |
-| Pop-up 12 · Addon hors ligne | `P12-AddonHorsLigne.dc.html` | à faire |
+| Pop-up 11 · Aucun flux | `P11-AucunFlux.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P11.png) — à vérifier sur la box ; carte « Aucun flux trouvé » calée ; la maquette montre un autre gabarit de fiche (en-tête + affiche à gauche, TV06 suivi) et un message éphémère « Aucune source disponible » que le code n'affiche pas |
+| Pop-up 12 · Addon hors ligne | `P12-AddonHorsLigne.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P12.png) — à vérifier sur la box ; en-tête « Ne répond pas » + pastille « Défaillant · Médiane… » ; lignes de flux au gabarit TV06 (la maquette en dessine d'autres) ; message éphémère « Délai dépassé » absent du code |
 | Pop-up 13 · Sélecteur d'option | `P13-SelecteurOption.dc.html` | à faire |
 | Pop-up 14 · Import de sauvegarde | `P14-ImportSauvegarde.dc.html` | fait en code (TvPanel 960, champ P14 avec erreur rouge) — pas de rendu, à vérifier sur la box |
-| TV 40 · Fiche série · saisons et épisodes | `TV40-FicheSerie.dc.html` | à reprendre : fond colonne gauche, zone Sources |
+| TV 40 · Fiche série · saisons et épisodes | `TV40-FicheSerie.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV40.png) — à vérifier sur la box ; fond de la colonne gauche en dégradé #1B2A33, zone Sources = titre + en-têtes d'addon + lignes comme TV06 ; liseré ambre sur l'épisode choisi (état absent de la maquette) |
 | TV 41 · Ma liste · vide | `TV41-MaListeVide.dc.html` | à faire |
 | TV 42 · Calendrier · aucune série ou aucune sortie | `TV42-CalendrierVide.dc.html` | à faire |
 | TV 43 · Menu de l'avatar | `TV43-MenuAvatar.dc.html` | fait (comparaison maquette | box) |
@@ -71,4 +71,4 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | Pop-up 21 · Code de récupération | `P21-CodeRecuperation.dc.html` | fait (comparaison maquette | box) |
 | Pop-up 22 · PIN parent | `P22-PINParent.dc.html` | à faire |
 | Pop-up 23 · Réglages des sous-titres | `P23-SousTitresReglages.dc.html` | fait (cmp : scratchpad/refonte4/cmp-pi.png) — mêmes positions que P23 ; ligne « Variante » = état d'erreur ; à vérifier sur la box |
-| Pop-up 24 · Fiche indisponible | `P24-ErreurFiche.dc.html` | à faire |
+| Pop-up 24 · Fiche indisponible | `P24-ErreurFiche.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P24.png) — à vérifier sur la box |

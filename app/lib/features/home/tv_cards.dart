@@ -41,6 +41,7 @@ class TvArtwork extends StatelessWidget {
     this.allowPrivate = false,
     this.width = tvCardWidth,
     this.scrim = true,
+    this.resize = true,
   });
 
   final String seed;
@@ -50,6 +51,9 @@ class TvArtwork extends StatelessWidget {
 
   /// Voile sombre en bas pour garder le titre lisible sur une affiche.
   final bool scrim;
+
+  /// Décode à la taille d'affichage (désactivé pour l'affiche de la fiche).
+  final bool resize;
 
   @override
   Widget build(BuildContext context) {
@@ -69,11 +73,13 @@ class TvArtwork extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Image(
-          image: ResizeImage.resizeIfNeeded(
-            (width * 2).round(),
-            null,
-            GuardedNetworkImage(u, allowPrivate: allowPrivate),
-          ),
+          image: resize
+              ? ResizeImage.resizeIfNeeded(
+                  (width * 2).round(),
+                  null,
+                  GuardedNetworkImage(u, allowPrivate: allowPrivate),
+                )
+              : GuardedNetworkImage(u, allowPrivate: allowPrivate),
           fit: BoxFit.cover,
           gaplessPlayback: true,
           excludeFromSemantics: true,

@@ -13,6 +13,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/secret_store.dart';
+import 'package:lumio/features/addons/health_providers.dart';
+import 'package:lumio/features/detail/detail_screen.dart';
+import 'package:lumio/features/detail/playback_service.dart'
+    show PlaybackLauncher, addonClientProvider, playbackLauncherProvider;
 import 'package:lumio/features/home/continue_playback.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/home_screen.dart';
@@ -369,6 +373,169 @@ void main() {
     await shot('r-TV46', 'zzzz', const []);
     await shot('r-TV46b', '', const []);
   });
+
+  testWidgets('lot 5 : fiches', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+
+    AddonManifest manifest(String id, String name) => AddonManifest(
+      id: id,
+      version: '1.0.0',
+      name: name,
+      types: const ['movie', 'series'],
+      resources: const [AddonResource('meta'), AddonResource('stream')],
+      catalogs: const [],
+      transportUrl: Uri.parse('https://$id.example.com/tok/manifest.json'),
+    );
+    Map<String, dynamic> torrent(String q, String lang, String size, int s) => {
+      'name': q,
+      'title': 'Cosmos Laundromat $q $lang 👤 $s 💾 $size',
+      'infoHash': 'a' * 39 + '${q.length}${lang.length}$s'.substring(0, 1),
+    };
+    Map<String, dynamic> direct(String q, String lang, String size, String n) =>
+        {
+          'name': q,
+          'title': 'Cosmos Laundromat $q $lang 💾 $size',
+          'url': 'https://cdn.example.com/$n.mp4',
+        };
+
+    Future<void> shot(
+      String name, {
+      required Map<String, Map<String, dynamic>?> metas,
+      required Map<String, List<Map<String, dynamic>>> streams,
+      Set<String> failing = const {},
+      Map<String, AddonHealth> health = const {},
+      String type = 'movie',
+      String id = 'tt1',
+      bool onlyOneAddon = false,
+      bool metaError = false,
+    }) async {
+      final h = AppHarness(t);
+      final key = GlobalKey();
+      final ms = [
+        manifest('a1', 'Source Alpha'),
+        if (!onlyOneAddon) manifest('a2', 'Direct Plus'),
+      ];
+      await h.pump(
+        RepaintBoundary(
+          key: key,
+          child: DetailScreen(
+            preview: MetaPreview(
+              id: id,
+              type: type,
+              name: 'Cosmos Laundromat',
+              sourceAddonId: 'a1',
+              certification: 'G',
+            ),
+          ),
+        ),
+        extra: [
+          addonsProvider.overrideWith(() => _RAddons(ms)),
+          addonClientProvider.overrideWithValue(
+            _RClient(metas, streams, failing, metaError: metaError),
+          ),
+          healthSnapshotProvider.overrideWith((ref) => Stream.value(health)),
+          if (metaError)
+            playbackLauncherProvider.overrideWith(
+              (ref) => _BrokenLauncher(ref),
+            ),
+        ],
+      );
+      await h.settle(14);
+      await _save(t, key, name);
+      await h.close();
+    }
+
+    const reliable = AddonHealth(
+      median: Duration(milliseconds: 300),
+      successRate: 1,
+      samples: 20,
+    );
+    const slow = AddonHealth(
+      median: Duration(seconds: 4),
+      successRate: 0.9,
+      samples: 20,
+    );
+    const failing = AddonHealth(
+      median: Duration(milliseconds: 4200),
+      successRate: 0.38,
+      samples: 20,
+    );
+    final movie = {
+      'name': 'Cosmos Laundromat',
+      'description':
+          'Un mouton suicidaire rencontre un vendeur excentrique qui lui offre une infinité de vies.',
+      'releaseInfo': '2015',
+      'genres': ['Animation', 'Fantastique'],
+    };
+    await shot(
+      'r-TV06',
+      metas: {'a1': movie, 'a2': movie},
+      streams: {
+        'a1': [
+          torrent('1080p', 'FR EN', '2.1 GB', 128),
+          torrent('720p', 'FR', '980 MB', 9),
+        ],
+        'a2': [
+          direct('4K', 'EN', '6.4 GB', 'a'),
+          direct('1080p', 'FR', '1.4 GB', 'b'),
+        ],
+      },
+      health: {'a1': reliable, 'a2': slow},
+    );
+    await shot(
+      'r-P11',
+      metas: {'a1': movie},
+      streams: const {},
+      onlyOneAddon: true,
+    );
+    await shot(
+      'r-P12',
+      metas: {'a1': movie, 'a2': movie},
+      streams: {
+        'a2': [
+          direct('1080p', 'FR', '1.4 GB', 'a'),
+          direct('720p', 'FR', '640 MB', 'b'),
+        ],
+      },
+      failing: {'a1'},
+      health: {'a1': failing, 'a2': reliable},
+    );
+    final series = {
+      'name': 'Les Voisins du Phare',
+      'description':
+          "Une famille s'installe dans un phare désaffecté et découvre ses voisins.",
+      'releaseInfo': '2014',
+      'genres': ['Comédie', 'Drame'],
+      'videos': [
+        for (var s = 1; s <= 6; s++)
+          for (var e = 1; e <= 4; e++)
+            {
+              'id': 'tt9:$s:$e',
+              'season': s,
+              'episode': e,
+              'title': 'Épisode $e',
+            },
+      ],
+    };
+    await shot(
+      'r-TV40',
+      type: 'series',
+      id: 'tt9',
+      metas: {'a1': series, 'a2': series},
+      streams: {
+        'a1': [torrent('1080p', 'FR EN', '2.1 GB', 128)],
+        'a2': [direct('720p', 'FR', '980 MB', 'c')],
+      },
+      health: {'a1': reliable, 'a2': reliable},
+    );
+    await shot(
+      'r-P24',
+      metas: const {},
+      streams: const {},
+      onlyOneAddon: true,
+      metaError: true,
+    );
+  });
 }
 
 class _RAddons extends AddonsController {
@@ -458,4 +625,49 @@ class _RVoice implements VoiceInput {
 
   @override
   Future<void> stop() async {}
+}
+
+class _RClient extends AddonClient {
+  _RClient(this.metas, this.streams, this.failing, {this.metaError = false})
+    : super(_UpdateFetcher());
+  final bool metaError;
+  final Map<String, Map<String, dynamic>?> metas;
+  final Map<String, List<Map<String, dynamic>>> streams;
+  final Set<String> failing;
+
+  @override
+  Future<Map<String, dynamic>?> rawMeta(
+    AddonManifest a,
+    String type,
+    String id,
+  ) async {
+    if (metaError) throw StateError('hors ligne');
+    return metas[a.id];
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> rawStreams(
+    AddonManifest a,
+    String type,
+    String id,
+  ) async {
+    if (failing.contains(a.id)) throw StateError('hors ligne');
+    return streams[a.id] ?? const [];
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> rawSubtitles(
+    AddonManifest a,
+    String type,
+    String id,
+  ) async => const [];
+}
+
+/// Lanceur dont le chargement de la fiche échoue (pop-up P24).
+class _BrokenLauncher extends PlaybackLauncher {
+  _BrokenLauncher(super.ref);
+
+  @override
+  Future<Meta> loadMeta(MetaPreview p) =>
+      Future.error(StateError('hors ligne'));
 }

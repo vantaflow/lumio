@@ -15,8 +15,9 @@ import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/local/local_screen.dart' show openLocalDetail;
 import 'package:lumio/features/search/search_providers.dart';
 import 'package:lumio/providers.dart';
-import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/features/home/tv_cards.dart' show TvArtwork;
+import 'package:lumio/ui/common/tv_dialogs.dart' show TvPanel, tvScrim;
 import 'package:lumio/ui/common/tv_screen.dart' show tvMargin;
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
@@ -225,20 +226,61 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
   Widget build(BuildContext context) {
     return TvScaffold(
       child: Scaffold(
-        body: SafeArea(
-          child: switch (_phase) {
-            _Phase.loading => const StateView.loading(),
-            _Phase.error => StateView.error(
-              message: context.l10n.detailLoadError,
-              onRetry: _load,
-            ),
-            _Phase.refused => StateView.empty(
-              message: context.l10n.notAllowedForProfile,
-            ),
-            _Phase.ready => _body(context, _meta!),
-          },
-        ),
+        body: switch (_phase) {
+          _Phase.loading => const SafeArea(child: StateView.loading()),
+          // P24 : fiche indisponible, panneau sur le voile.
+          _Phase.error => _unavailable(context),
+          _Phase.refused => SafeArea(
+            child: StateView.empty(message: context.l10n.notAllowedForProfile),
+          ),
+          _Phase.ready => _body(context, _meta!),
+        },
       ),
+    );
+  }
+
+  Widget _unavailable(BuildContext context) {
+    final l = context.l10n;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const ColoredBox(color: tvScrim),
+        TvPanel(
+          width: 800,
+          contentPadding: EdgeInsets.zero,
+          title: l.detailLoadError,
+          onBack: () => Navigator.of(context).maybePop(),
+          actions: [
+            TvButton(
+              kind: TvButtonKind.secondary,
+              label: l.back,
+              height: 76,
+              horizontalPadding: 40,
+              fontSize: 28,
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            TvButton(
+              autofocus: true,
+              label: l.retry,
+              height: 76,
+              horizontalPadding: 40,
+              fontSize: 28,
+              onPressed: _load,
+            ),
+          ],
+          children: [
+            Text(
+              l.detailUnavailableBody,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 30,
+                height: 1.4,
+                color: Color(0xFFC9D0DA),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -270,12 +312,14 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         ref
             .watch(searchPrivateSourcesProvider)
             .contains(widget.preview.sourceAddonId);
+    final isSeries =
+        meta.type != 'movie' &&
+        (meta.type == 'series' || meta.videos.isNotEmpty);
 
-    final info = _Info(
-      meta: meta,
-      allowPrivate: allowPoster,
+    final buttons = _Buttons(
       inList: inList,
       canPlay: preferred != null && _videoId != null,
+      stacked: isSeries,
       onPlay: () {
         if (preferred != null) _play(preferred, fallbacks: fallbacks);
       },
@@ -299,22 +343,40 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         preferred: preferred,
         tracker: tracker,
         onSelect: _play,
+        showCount: !isSeries,
+        headerTop: isSeries ? 16 : 24,
       ),
       noEpisodes: meta.videos.isEmpty && meta.type == 'series',
     );
     return LayoutBuilder(
       builder: (context, c) {
+        final wide = c.maxWidth >= 1500;
+        final info = _Info(
+          meta: meta,
+          allowPrivate: allowPoster,
+          // Fiche série : boutons sous le synopsis (TV40) ; fiche film :
+          // en tête de la colonne des flux (TV06).
+          buttons: isSeries || c.maxWidth < 900 ? buttons : null,
+        );
         if (c.maxWidth >= 900) {
           return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(
-                width: c.maxWidth >= 1500 ? 720 : 480,
+              Container(
+                width: wide ? 680 : 480,
+                decoration: BoxDecoration(
+                  // Maquettes TV06/TV40 : dégradé 180° #1B2A33 -> #0E1116.
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [const Color(0xFF1B2A33), context.lumio.bg],
+                  ),
+                ),
                 child: SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
-                    c.maxWidth >= 1500 ? tvMargin : LumioSpacing.xl,
-                    c.maxWidth >= 1500 ? 56 : LumioSpacing.md,
-                    LumioSpacing.lg,
+                    wide ? tvMargin : LumioSpacing.xl,
+                    wide ? 80 : LumioSpacing.md,
+                    wide ? 60 : LumioSpacing.lg,
                     LumioSpacing.xl,
                   ),
                   child: info,
@@ -323,12 +385,12 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
               Expanded(
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(
-                    12,
-                    c.maxWidth >= 1500 ? 56 : 0,
-                    c.maxWidth >= 1500 ? tvMargin : 0,
-                    LumioSpacing.xl,
+                    wide ? 40 : 12,
+                    wide ? (isSeries ? 72 : 80) : 0,
+                    wide ? tvMargin : 0,
+                    48,
                   ),
-                  children: [sources],
+                  children: [if (!isSeries) buttons, sources],
                 ),
               ),
             ],
@@ -349,27 +411,75 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
   }
 }
 
-class _Info extends StatelessWidget {
-  const _Info({
-    required this.meta,
-    required this.allowPrivate,
+/// Boutons « Lecture auto · meilleure source » et « + Ma liste » (TV06 : en
+/// ligne en haut des flux ; TV40 : l'un sous l'autre sous le synopsis).
+class _Buttons extends StatelessWidget {
+  const _Buttons({
     required this.inList,
     required this.canPlay,
+    required this.stacked,
     required this.onPlay,
     required this.onToggleList,
   });
 
-  final Meta meta;
-  final bool allowPrivate;
   final bool inList;
   final bool canPlay;
+  final bool stacked;
   final VoidCallback onPlay;
   final VoidCallback onToggleList;
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
+    final play = TvButton(
+      key: const ValueKey('detail-play'),
+      autofocus: canPlay,
+      onPressed: canPlay ? onPlay : null,
+      height: 72,
+      horizontalPadding: stacked ? 28 : 36,
+      fontSize: stacked ? 28 : 30,
+      label: l.autoPlayBest,
+    );
+    final list = TvButton(
+      key: const ValueKey('detail-list'),
+      autofocus: !canPlay,
+      onPressed: onToggleList,
+      kind: TvButtonKind.secondary,
+      weight: stacked ? null : FontWeight.w600,
+      height: 72,
+      horizontalPadding: stacked ? 40 : 32,
+      fontSize: stacked ? 28 : 30,
+      label: inList ? l.removeFromList : l.addToListShort,
+    );
+    if (stacked) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [play, const SizedBox(height: 16), list],
+        ),
+      );
+    }
+    return Wrap(spacing: 20, runSpacing: 16, children: [play, list]);
+  }
+}
+
+class _Info extends StatelessWidget {
+  const _Info({
+    required this.meta,
+    required this.allowPrivate,
+    required this.buttons,
+  });
+
+  final Meta meta;
+  final bool allowPrivate;
+  final Widget? buttons;
+
+  @override
+  Widget build(BuildContext context) {
     final lumio = context.lumio;
     final theme = Theme.of(context);
+    final wide = MediaQuery.sizeOf(context).width >= 1500;
     final line = [
       if (meta.releaseInfo != null) meta.releaseInfo!,
       if (meta.certification != null) meta.certification!,
@@ -378,24 +488,23 @@ class _Info extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (meta.poster != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(LumioRadius.md),
-            child: SizedBox(
-              width: 260,
-              height: 390,
-              child: Image(
-                image: GuardedNetworkImage(
-                  meta.poster!,
-                  allowPrivate: allowPrivate,
-                ),
-                fit: BoxFit.cover,
-                excludeFromSemantics: true,
-                errorBuilder: (_, _, _) => ColoredBox(color: lumio.surface),
-              ),
+        // Affiche 300 x 450, rayon 24 ; dégradé de repli sans affiche.
+        ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: SizedBox(
+            width: 300,
+            height: 450,
+            child: TvArtwork(
+              seed: meta.id,
+              url: meta.poster,
+              allowPrivate: allowPrivate,
+              width: 300,
+              scrim: false,
+              resize: false,
             ),
           ),
-        const SizedBox(height: LumioSpacing.md),
+        ),
+        const SizedBox(height: 32),
         Semantics(
           header: true,
           child: Text(
@@ -404,64 +513,35 @@ class _Info extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.headlineLarge?.copyWith(
               color: lumio.text,
-              fontSize: MediaQuery.sizeOf(context).width >= 1500 ? 56 : null,
+              fontSize: wide ? 56 : null,
+              height: 1.2,
             ),
           ),
         ),
         if (line.isNotEmpty) ...[
-          const SizedBox(height: LumioSpacing.xs),
+          const SizedBox(height: 8),
           Text(
             line,
-            style: theme.textTheme.bodyMedium?.copyWith(color: lumio.textMuted),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: lumio.textMuted,
+              fontSize: wide ? 26 : null,
+            ),
           ),
         ],
         if (meta.description != null) ...[
-          const SizedBox(height: LumioSpacing.md),
+          const SizedBox(height: 20),
           Text(
             meta.description!,
             maxLines: 6,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: lumio.text,
-              fontSize: MediaQuery.sizeOf(context).width >= 1500 ? 28 : null,
+              color: const Color(0xFFC9D0DA),
+              fontSize: wide ? 26 : null,
+              height: 1.45,
             ),
           ),
         ],
-        const SizedBox(height: LumioSpacing.lg),
-        // Ligne unique : le libellé ne passe plus sur deux lignes (D9).
-        Wrap(
-          spacing: LumioSpacing.lg,
-          runSpacing: LumioSpacing.md,
-          children: [
-            TvButton(
-              key: const ValueKey('detail-play'),
-              autofocus: canPlay,
-              onPressed: canPlay ? onPlay : null,
-              icon: Icon(Icons.play_arrow, size: 36, color: lumio.onAccent),
-              height: 80,
-              horizontalPadding: 40,
-              fontSize: 30,
-              label: context.l10n.autoPlayBest,
-            ),
-            TvButton(
-              key: const ValueKey('detail-list'),
-              autofocus: !canPlay,
-              onPressed: onToggleList,
-              kind: TvButtonKind.secondary,
-              height: 80,
-              horizontalPadding: 36,
-              fontSize: 30,
-              icon: Icon(
-                inList ? Icons.check : Icons.add,
-                size: 34,
-                color: lumio.text,
-              ),
-              label: inList
-                  ? context.l10n.removeFromList
-                  : context.l10n.addToList,
-            ),
-          ],
-        ),
+        ?buttons,
       ],
     );
   }
@@ -500,7 +580,6 @@ class _Sources extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lumio = context.lumio;
-    final theme = Theme.of(context);
     final seasons = <int>[];
     for (final v in meta.videos) {
       final s = v.season ?? -1;
@@ -518,73 +597,89 @@ class _Sources extends StatelessWidget {
             padding: const EdgeInsets.all(LumioSpacing.lg),
             child: Text(context.l10n.noEpisodes),
           ),
-        if (seasons.length > 1 && meta.type != 'movie')
+        // Maquette TV40 : titres 34, puces de saison 56, cartes d'épisode
+        // 280 x 112 (écart 20) ; 36 sous chaque bloc.
+        if (seasons.length > 1 && meta.type != 'movie') ...[
           TvRow(
             title: context.l10n.seasonsTitle,
             restorationId: 'detail-seasons',
             routeKey: detailRouteKey,
-            itemExtent: 200,
-            height: 64 + 2 * 14,
-            verticalPadding: 14,
-            horizontalPadding: 12,
+            gap: 12,
+            titleGap: 4,
+            titleHeight: 1.2,
+            height: 56 + 2 * 12,
+            verticalPadding: 12,
+            horizontalPadding: 0,
             items: [
               for (final s in seasons)
-                SizedBox(
-                  width: 200,
-                  child: TvButton(
-                    kind: s == season
-                        ? TvButtonKind.primary
-                        : TvButtonKind.secondary,
-                    height: 64,
-                    horizontalPadding: 20,
-                    fontSize: 26,
-                    scale: 1.04,
-                    label: seasonLabel(s, context.l10n),
-                    onPressed: () => onSeason(s),
-                  ),
+                TvButton(
+                  kind: s == season
+                      ? TvButtonKind.primary
+                      : TvButtonKind.secondary,
+                  height: 56,
+                  horizontalPadding: 24,
+                  fontSize: 26,
+                  scale: 1.04,
+                  label: seasonLabel(s, context.l10n),
+                  onPressed: () => onSeason(s),
                 ),
             ],
           ),
-        if (episodes.isNotEmpty && meta.type != 'movie')
+          const SizedBox(height: 24),
+        ],
+        if (episodes.isNotEmpty && meta.type != 'movie') ...[
           TvRow(
             title: season == null
                 ? context.l10n.seasonEpisodes
                 : seasonLabel(season!, context.l10n),
             restorationId: 'detail-episodes',
             routeKey: detailRouteKey,
-            itemExtent: 340,
-            height: 132 + 2 * 14,
-            verticalPadding: 14,
-            horizontalPadding: 12,
+            itemExtent: 280,
+            gap: 20,
+            titleGap: 4,
+            titleHeight: 1.2,
+            height: 112 + 2 * 12,
+            verticalPadding: 12,
+            horizontalPadding: 0,
             items: [
               for (final v in episodes)
                 SizedBox(
                   key: ValueKey('episode:${v.id}'),
-                  width: 340,
+                  width: 280,
                   child: FocusableCard(
+                    borderRadius: BorderRadius.circular(18),
                     onSelect: () => onEpisode(v),
                     semanticLabel:
                         '${_episodeCode(v, context.l10n)} ${v.title}'
                         ', ${watched.contains(v.id) ? context.l10n.watchedSemantic : context.l10n.unwatchedSemantic}',
                     child: Container(
-                      height: 132,
-                      padding: const EdgeInsets.all(LumioSpacing.md),
+                      height: 112,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 16,
+                      ),
                       decoration: BoxDecoration(
                         color: lumio.surface,
-                        borderRadius: BorderRadius.circular(LumioRadius.md),
-                        border: Border.all(
-                          color: v.id == videoId ? lumio.accent : lumio.outline,
-                          width: v.id == videoId ? 2 : 1,
-                        ),
+                        borderRadius: BorderRadius.circular(18),
                       ),
+                      // Épisode choisi : liseré ambre sans changer la mise en
+                      // page.
+                      foregroundDecoration: v.id == videoId
+                          ? BoxDecoration(
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: lumio.accent, width: 2),
+                            )
+                          : null,
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               Text(
                                 _episodeCode(v, context.l10n),
-                                style: theme.textTheme.titleMedium?.copyWith(
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
                                   color: lumio.accent,
                                   fontSize: 26,
                                   fontWeight: FontWeight.w700,
@@ -603,14 +698,16 @@ class _Sources extends StatelessWidget {
                                 ),
                             ],
                           ),
-                          const SizedBox(height: LumioSpacing.xs),
+                          const SizedBox(height: 4),
                           Text(
                             v.title,
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: lumio.text,
-                              fontSize: 26,
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              fontVariations: [FontVariation.weight(600)],
                             ),
                           ),
                         ],
@@ -620,32 +717,16 @@ class _Sources extends StatelessWidget {
                 ),
             ],
           ),
-        if (!noEpisodes)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: LumioSpacing.md),
-                Semantics(
-                  header: true,
-                  child: Text(
-                    context.l10n.sourcesTitle,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: lumio.text,
-                    ),
-                  ),
-                ),
-                streams,
-              ],
-            ),
-          ),
+          const SizedBox(height: 24),
+        ],
+        if (!noEpisodes) streams,
       ],
     );
   }
 
+  /// « S1 · É1 » (maquette TV40) ; « É4 » sans saison.
   static String _episodeCode(core.Video v, AppLocalizations l) =>
       v.season != null && v.episode != null
-      ? 'S${v.season}E${v.episode}'
+      ? 'S${v.season} · ${l.episodeLetter}${v.episode}'
       : (v.episode != null ? '${l.episodeLetter}${v.episode}' : '');
 }

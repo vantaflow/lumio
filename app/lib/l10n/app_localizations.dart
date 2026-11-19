@@ -3889,6 +3889,66 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Recherche dans tous vos addons, vos dossiers.'**
   String get searchCaption;
+
+  /// No description provided for @streamsAvailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Flux disponibles · {count}'**
+  String streamsAvailable(Object count);
+
+  /// No description provided for @streamGroupAddon.
+  ///
+  /// In fr, this message translates to:
+  /// **'ADDON'**
+  String get streamGroupAddon;
+
+  /// No description provided for @healthLineGood.
+  ///
+  /// In fr, this message translates to:
+  /// **'Santé : bonne'**
+  String get healthLineGood;
+
+  /// No description provided for @healthLineSlow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Santé : lente'**
+  String get healthLineSlow;
+
+  /// No description provided for @healthLineBad.
+  ///
+  /// In fr, this message translates to:
+  /// **'Santé : mauvaise'**
+  String get healthLineBad;
+
+  /// No description provided for @seedersCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} seeders'**
+  String seedersCount(Object count);
+
+  /// No description provided for @detailUnavailableBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fiche indisponible. Réessayez.'**
+  String get detailUnavailableBody;
+
+  /// No description provided for @addToListShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'+ Ma liste'**
+  String get addToListShort;
+
+  /// No description provided for @streamBadgeDirect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Direct'**
+  String get streamBadgeDirect;
+
+  /// No description provided for @streamBadgeTorrent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Torrent'**
+  String get streamBadgeTorrent;
 }
 
 class _AppLocalizationsDelegate

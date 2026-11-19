@@ -1060,5 +1060,25 @@
       "minutes": {}
     }
   },
-  "searchCaption": "Searches all your addons and folders."
+  "searchCaption": "Searches all your addons and folders.",
+  "streamsAvailable": "Available streams · {count}",
+  "@streamsAvailable": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "streamGroupAddon": "ADDON",
+  "healthLineGood": "Health: good",
+  "healthLineSlow": "Health: slow",
+  "healthLineBad": "Health: poor",
+  "seedersCount": "{count} seeders",
+  "@seedersCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "detailUnavailableBody": "Page unavailable. Try again.",
+  "addToListShort": "+ My list",
+  "streamBadgeDirect": "Direct",
+  "streamBadgeTorrent": "Torrent"
 }

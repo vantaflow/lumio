@@ -25,7 +25,15 @@ class TvPanel extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 48, vertical: 44),
     this.titleSize = 44,
     this.fitActions = false,
+    this.contentPadding = const EdgeInsets.symmetric(
+      horizontal: 12,
+      vertical: 12,
+    ),
   });
+
+  /// Marge autour du contenu défilant (12 : laisse la place à l'anneau de
+  /// focus ; nulle pour un simple texte).
+  final EdgeInsetsGeometry contentPadding;
 
   /// Réduit la rangée d'actions si elle dépasse (boutons sans flex).
   final bool fitActions;
@@ -78,10 +86,7 @@ class TvPanel extends StatelessWidget {
                   Flexible(
                     child: SingleChildScrollView(
                       clipBehavior: Clip.none,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
+                      padding: contentPadding,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -333,7 +338,6 @@ void showTvSnack(BuildContext context, String message, {bool error = false}) {
       ),
     );
 }
-
 
 /// Champ des fenêtres (maquettes P08 et P14) : étiquette de 24, champ de 80
 /// (fond #0E1116, bordure de 2, rayon 18), message d'erreur éventuel en rouge

@@ -2263,4 +2263,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchCaption => 'Searches all your addons and folders.';
+
+  @override
+  String streamsAvailable(Object count) {
+    return 'Available streams · $count';
+  }
+
+  @override
+  String get streamGroupAddon => 'ADDON';
+
+  @override
+  String get healthLineGood => 'Health: good';
+
+  @override
+  String get healthLineSlow => 'Health: slow';
+
+  @override
+  String get healthLineBad => 'Health: poor';
+
+  @override
+  String seedersCount(Object count) {
+    return '$count seeders';
+  }
+
+  @override
+  String get detailUnavailableBody => 'Page unavailable. Try again.';
+
+  @override
+  String get addToListShort => '+ My list';
+
+  @override
+  String get streamBadgeDirect => 'Direct';
+
+  @override
+  String get streamBadgeTorrent => 'Torrent';
 }
