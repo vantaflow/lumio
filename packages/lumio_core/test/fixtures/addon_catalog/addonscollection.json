@@ -1,0 +1,367 @@
+[
+ {
+  "transportUrl": "https://anime-kitsu.strem.fun/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "community.anime.kitsu",
+   "version": "0.0.10",
+   "name": "Anime Kitsu",
+   "description": "Unofficial Kitsu.io anime catalog addon",
+   "logo": "https://i.imgur.com/7N6XGoO.png",
+   "resources": [
+    "catalog",
+    "meta",
+    "subtitles"
+   ],
+   "types": [
+    "anime",
+    "movie",
+    "series"
+   ],
+   "catalogs": [
+    {
+     "id": "kitsu-anime-trending",
+     "name": "Kitsu Trending",
+     "type": "anime"
+    }
+   ],
+   "idPrefixes": [
+    "kitsu",
+    "mal",
+    "anilist",
+    "anidb"
+   ]
+  }
+ },
+ {
+  "transportUrl": "https://aftercredits.almosteffective.com/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "com.almosteffective.aftercredits",
+   "version": "1.0.0",
+   "name": "AfterCredits",
+   "description": "Are there mid-credits or after credits scenes?",
+   "resources": [
+    "stream"
+   ],
+   "types": [
+    "movie"
+   ],
+   "catalogs": [],
+   "idPrefixes": [
+    "tt"
+   ]
+  }
+ },
+ {
+  "transportUrl": "https://stremio-cast-search.onrender.com/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "org.community.cast-search",
+   "version": "1.0.0",
+   "name": "Cast Search",
+   "description": "Makes cast members clickable and searchable on Android TV",
+   "types": [
+    "movie",
+    "series"
+   ],
+   "resources": [
+    "stream"
+   ],
+   "catalogs": [],
+   "idPrefixes": [
+    "tt"
+   ],
+   "behaviorHints": {
+    "configurable": true,
+    "configurationRequired": false
+   },
+   "config": [
+    {
+     "key": "premiumKey",
+     "type": "text",
+     "title": "Premium Access Key",
+     "description": "Enter your premium key to unlock all cast members",
+     "required": false
+    }
+   ]
+  }
+ },
+ {
+  "transportUrl": "https://stremio-content-deepdive-addon-dc8f7b513289.herokuapp.com/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "behaviorHints": {
+    "adult": false,
+    "configurable": true,
+    "configurationRequired": false,
+    "p2p": false
+   },
+   "catalogs": [],
+   "description": "A comprehensive companion addon that provides detailed content information, cast details, reviews, and production insights for movies and series.",
+   "id": "org.stremio.deepdivecompanion",
+   "idPrefixes": [
+    "tt"
+   ],
+   "logo": "https://stremio-content-deepdive-addon-dc8f7b513289.herokuapp.com/DeepDiveLogo.png",
+   "name": "Content Deep Dive Companion",
+   "resources": [
+    {
+     "idPrefixes": [
+      "tt"
+     ],
+     "name": "meta",
+     "types": [
+      "movie",
+      "series"
+     ]
+    },
+    {
+     "idPrefixes": [
+      "tt"
+     ],
+     "name": "stream",
+     "types": [
+      "movie",
+      "series"
+     ]
+    }
+   ],
+   "types": [
+    "movie",
+    "series"
+   ],
+   "version": "4.1.1"
+  }
+ },
+ {
+  "transportUrl": "https://discussio.elfhosted.com/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "com.discussio",
+   "version": "1.0.3",
+   "name": "Discussio | ElfHosted",
+   "description": "Opens Google search for TV show episodes and movie discussions with one click. Simply select an episode or movie to search for its discussions online. \n\nHosted by ElfHosted!",
+   "logo": "https://api.logo.com/api/v2/images?design=lg_aiGdQc9PParm0yrELH&width=250&height=250&fit=contain&margin_ratio=0&background=%23294fff&u=2025-02-19T10%3A24%3A54.398Z&format=png&quality=30",
+   "resources": [
+    "stream"
+   ],
+   "types": [
+    "series",
+    "movie"
+   ],
+   "idPrefixes": [
+    "tt"
+   ],
+   "catalogs": []
+  }
+ },
+ {
+  "transportUrl": "https://stremio-ratings-v3-production.up.railway.app/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "imdb.ratings.local",
+   "version": "1.0.0",
+   "name": "IMDb Ratings",
+   "logo": "https://raw.githubusercontent.com/kgenovz/stremio-ratings-v3/main/logo.png",
+   "description": "Shows IMDb ratings for movies and individual TV episodes with a completely configurable format. Works with anime.",
+   "resources": [
+    "stream"
+   ],
+   "types": [
+    "movie",
+    "series"
+   ],
+   "catalogs": [],
+   "idPrefixes": [
+    "tt",
+    "kitsu",
+    "tmdb"
+   ],
+   "behaviorHints": {
+    "configurable": true,
+    "configurationRequired": false
+   }
+  }
+ },
+ {
+  "transportUrl": "https://1fe84bc728af-stremio-radios.baby-beamup.club/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "org.radios",
+   "version": "1.0.0",
+   "logo": "https://www.shareicon.net/data/128x128/2016/08/04/806702_music_512x512.png",
+   "name": "Radios",
+   "description": "Over 93.000 radio stations from SHOUTcast.",
+   "resources": [
+    "catalog",
+    "meta",
+    "stream"
+   ],
+   "types": [
+    "music",
+    "movie"
+   ],
+   "idPrefixes": [
+    "radios:"
+   ],
+   "catalogs": [
+    {
+     "id": "radios",
+     "name": "Radios",
+     "type": "music",
+     "extra": [
+      {
+       "name": "search"
+      },
+      {
+       "name": "skip"
+      },
+      {
+       "name": "genre"
+      }
+     ],
+     "genres": [
+      "Alternative",
+      "Blues",
+      "Classical",
+      "Country",
+      "Decades",
+      "Easy Listening",
+      "Electronic",
+      "Folk",
+      "Inspirational",
+      "International",
+      "Jazz",
+      "Latin",
+      "Metal",
+      "Misc",
+      "New Age",
+      "Pop",
+      "Public Radio",
+      "R&amp;B and Urban",
+      "Rap",
+      "Reggae",
+      "Rock",
+      "Seasonal and Holiday",
+      "Soundtracks",
+      "Talk",
+      "Themes"
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "transportUrl": "https://addon.peario.xyz/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "community.peario",
+   "version": "0.1.0",
+   "name": "Peario",
+   "description": "Watch movies with your all your friends in sync !",
+   "logo": "https://addon.peario.xyz/public/icon.png",
+   "catalogs": [],
+   "resources": [
+    "stream"
+   ],
+   "types": [
+    "movie",
+    "series"
+   ],
+   "idPrefixes": [
+    "tt"
+   ]
+  }
+ },
+ {
+  "transportUrl": "https://stremio-stinger-pro.onrender.com/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "org.stinger.pro",
+   "version": "2.0.1",
+   "name": "Stremio Stinger Pro",
+   "description": "Detects mid/post-credit scenes and optionally bloopers/outtakes and sequel setups. Powered by a multi-tiered scraping system including AfterCredits, MediaStinger, TMDB, and Wikipedia.",
+   "logo": "https://github.com/schultz911/stremio-stinger-pro/blob/main/icon.png?raw=true",
+   "types": [
+    "movie"
+   ],
+   "catalogs": [],
+   "resources": [
+    "stream"
+   ],
+   "idPrefixes": [
+    "tt"
+   ],
+   "behaviorHints": {
+    "configurable": true,
+    "configurationRequired": false
+   }
+  }
+ },
+ {
+  "transportUrl": "https://099757617587-watch-next.baby-beamup.club/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "community.watch.next",
+   "version": "0.0.1",
+   "catalogs": [],
+   "resources": [
+    "stream"
+   ],
+   "types": [
+    "movie",
+    "series"
+   ],
+   "name": "Watch Next",
+   "description": "Shows similar movies and series right below what you’re currently watching using TMDb recommendations.",
+   "idPrefixes": [
+    "tt"
+   ],
+   "logo": "https://myth-115.github.io/Dummy1/logo.png"
+  }
+ },
+ {
+  "transportUrl": "https://a00f518e60ff-doesthedogdie.baby-beamup.club/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "org.stremio.doesTheDogDie",
+   "version": "1.0.1",
+   "name": "DoesTheDogDie (Jump Scares)",
+   "description": "Adds jump scare information from DoesTheDogDie.com, with link to full page. Open source at <a href='https://github.com/neon-ninja/stremio_doesthedogdie'>https://github.com/neon-ninja/stremio_doesthedogdie</a>",
+   "resources": [
+    "stream"
+   ],
+   "types": [
+    "movie",
+    "series"
+   ],
+   "idPrefixes": [
+    "tt"
+   ],
+   "catalogs": []
+  }
+ },
+ {
+  "transportUrl": "https://a00f518e60ff-wheresthejump.baby-beamup.club/manifest.json",
+  "transportName": "http",
+  "manifest": {
+   "id": "org.stremio.wheresthejump",
+   "version": "1.0.1",
+   "name": "Where's The Jump",
+   "description": "Adds jump scare information and subtitles from wheresthejump.com. Open source at <a href='https://github.com/neon-ninja/wheresthejump'>https://github.com/neon-ninja/wheresthejump</a>",
+   "resources": [
+    "stream",
+    "subtitles"
+   ],
+   "types": [
+    "movie",
+    "series"
+   ],
+   "idPrefixes": [
+    "tt"
+   ],
+   "catalogs": []
+  }
+ }
+]
