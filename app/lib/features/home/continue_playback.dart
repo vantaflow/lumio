@@ -90,10 +90,24 @@ class DefaultContinuePlayback implements ContinuePlayback {
   }
 
   /// Libellé « SxEy » d'après la saison et l'épisode mémorisés.
-  static String? _storedEpisode(ProgressEntry e) =>
-      e.season != null && e.episode != null
-      ? 'S${e.season}E${e.episode}'
-      : null;
+  static String? _storedEpisode(ProgressEntry e) {
+    if (e.season != null && e.episode != null) {
+      return 'S${e.season}E${e.episode}';
+    }
+    // Épisode ajouté à 0 s (suite d'un épisode vu) : ni saison ni épisode
+    // mémorisés, mais l'identifiant de la vidéo les porte (`meta:S:E` ou
+    // `meta:E`).
+    final prefix = '${e.metaId}:';
+    if (!e.videoId.startsWith(prefix)) return null;
+    final rest = e.videoId.substring(prefix.length).split(':');
+    final nums = [for (final r in rest) int.tryParse(r)];
+    if (nums.any((n) => n == null)) return null;
+    return switch (nums.length) {
+      1 => 'E${nums[0]}',
+      2 => 'S${nums[0]}E${nums[1]}',
+      _ => null,
+    };
+  }
 
   String get _unknown =>
       lookupAppLocalizations(_ref.read(localeProvider)).unknownTitle;

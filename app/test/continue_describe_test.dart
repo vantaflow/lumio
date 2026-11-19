@@ -100,4 +100,41 @@ void main() {
       expect(info.title, isNot(contains('tt0458339')));
     },
   );
+
+  group('épisode affiché même sans saison/épisode mémorisés', () {
+    ProgressEntry at0(String metaId, String videoId) => ProgressEntry(
+      profileId: 'p',
+      metaId: metaId,
+      videoId: videoId,
+      position: Duration.zero,
+      duration: Duration.zero,
+      watched: false,
+      updatedAt: DateTime.utc(2026),
+      title: 'Série',
+    );
+
+    test('série à 0 s : « SxEy » tiré de la vidéo', () async {
+      final c = _container(_Launcher(null));
+      final info = await c
+          .read(_playback)
+          .describe(at0('tt0458339', 'tt0458339:3:3'));
+      expect(info.subtitle, 'S3E3');
+    });
+
+    test('anime (kitsu:id:épisode) à 0 s : « E5 »', () async {
+      final c = _container(_Launcher(null));
+      final info = await c
+          .read(_playback)
+          .describe(at0('kitsu:1', 'kitsu:1:5'));
+      expect(info.subtitle, 'E5');
+    });
+
+    test('film : aucun libellé', () async {
+      final c = _container(_Launcher(null));
+      final info = await c
+          .read(_playback)
+          .describe(at0('tt0458339', 'tt0458339'));
+      expect(info.subtitle, isNull);
+    });
+  });
 }
