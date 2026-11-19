@@ -70,3 +70,26 @@ Correctifs (tests verts : core 531, app 741, analyze et format propres) :
 - d. Badge « Installé » placé sur la ligne de méta, plus de chevauchement.
 - e. Portail : `configurable` (behaviorHints) ; bouton masqué seulement si le manifeste dit non (inconnu = affiché).
 - f. Titre du lecteur = film ou « Série · SxEy » ; sous-titre = source, qualité, langue.
+
+
+## Passe 4 : cause de « La lecture a échoué », sous-titres, émulateur perdu de nouveau
+Émulateur 127.0.0.1:5601, APK de 20e8e31. En cours de passe l'appareil est passé « offline » puis a disparu d'adb ; conformément à la consigne il n'a pas été relancé (ni reconnect). Tout ce qui suit a été vérifié AVANT la perte ; le reste n'est pas joué.
+
+### Échec de lecture : cause et correctif
+- Rejoué avec le journal `LUMIO_PLAYER` : « Reprendre » de Captain America (reprise à ~3:50 sur 14:48, temps cohérent avec « 11 min restantes ») et lecture de Tenzing (0:20 sur 12:14) démarrent et avancent : plus d'écran « La lecture a échoué » (correctif 20e8e31 confirmé). Ni la reprise à une position, ni le proxy, ni l'expiration d'URL ne sont en cause.
+- Le journal montre bien l'événement `engine_error` (« Can not open external file <url> », opened=true), maintenant ignoré. Avant 20e8e31 il faisait passer le lecteur en échec.
+- Vraie cause de l'erreur moteur : le sous-titre français de l'addon de test (sintel_fr.srt) commence par un retour à la ligne puis un BOM UTF-8 (octets 0A EF BB BF 31…). `decodeSubtitleBytes` ne retirait le BOM qu'en tête absolue ; libmpv ne reconnaît pas un SRT qui ne commence pas par son premier numéro et refuse le fichier. Le sous-titre anglais (ASCII) passait. Constaté : choix « English · Films libres (test) » = texte affiché (« We're almost done. Shhh… », « Get him, Scales! Come on! », « Yeah! Come on! ») ; choix « Français » = `engine_error`, rien d'affiché alors que le panneau marquait la ligne comme choisie.
+- Correctif (a265d0c), en TDD (rouge puis vert, core 532 tests) : après décodage, retrait des blancs et BOM de tête (UTF-8 et UTF-16).
+- Second défaut découvert : les réglages Taille et Fond opaque ne changeaient rien à l'écran (taille 164 % et fond opaque réglés, texte inchangé). media_kit dessine lui-même le texte (SubtitleView Flutter) ; seul `sub-delay` agit via libmpv. Correctif (617e09e) : `SubtitleStyle.viewConfiguration()` (taille 32 x rapport, fond noir plein ou ombre) passé à `Video(subtitleViewConfiguration)`, mis à jour à chaud. Test unitaire ajouté ; app 743 tests verts, analyze et format propres. NON revérifié à l'écran (APK construit, émulateur perdu).
+
+### Étapes
+| Étape | Résultat |
+|---|---|
+| F | Sous-titre d'addon (anglais) affiché à l'écran : OK. Panneau : libellés « Langue · Addon n° » lisibles (« English · Films libres (test) », « English · OpenSubtitles v3 1… 9 »), réglages Taille (±, 164 %), Décalage (+0,4 s), Fond opaque (bascule) manipulables au clavier. Langue préférée : le français a été sélectionné automatiquement au démarrage (fallback sur le sous-titre d'addon de même langue), mais le fichier était refusé (cause ci-dessus). Taille et fond : sans effet à l'écran avant 617e09e (à revérifier). OpenSubtitles : liste d'une centaine d'entrées, voir AUDIT-UI. |
+| G | NON joué dans cette passe (retrait depuis la fiche : bouton « Retirer de ma liste » présent sur la fiche de Tenzing, rangée « Ma liste » présente sur l'accueil). |
+| H | Partiel : reprise à la bonne position (Captain America 3:59/14:48 pour « 11 min restantes ») OK. Série multi-saisons, « Continuer » sur le bon épisode, « Épisode suivant », fin de lecture : NON joués. |
+| I | NON joué (rafales, `--longpress`). Aucun FATAL dans logcat sur la partie jouée. |
+| Titres variés | Films : Captain America (2011, ancien) et Tenzing (2026). Série multi-saisons et anime : NON joués ; Cinemeta est installé (rangée « MCU Chronologically Order » vue sur l'accueil), mais aucun catalogue anime n'est présent. |
+
+### Reste à faire (prochaine passe, nouvel émulateur)
+APK de 617e09e déjà construit sur la machine IA (`~/lumio-build/src/app/build/app/outputs/flutter-apk/app-release.apk`). À jouer : F (français appliqué, taille et fond visibles), G, H série, I, anime.
