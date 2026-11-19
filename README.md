@@ -45,6 +45,27 @@ l'écran sur la TV, laissez-le ouvert pendant que vous utilisez le téléphone,
 puis rechargez la page. Détails :
 `docs/superpowers/specs/2026-11-19-page-web-box-design.md`.
 
+## Guides pas à pas et aide
+
+Chaque étape délicate a son guide, en français et en anglais, sans jargon :
+
+- **Ajouter un addon** : le bouton **Aide** de l'écran ouvre le guide de
+  l'onglet courant (Catalogue, Par lien, Depuis le téléphone).
+- **Configurer depuis le portail** : l'écran de la TV affiche l'encadré
+  « Sur votre téléphone » en 5 étapes ; à l'arrivée d'une demande, la TV le
+  signale (« Demande reçue du téléphone »).
+- **Page de réglage d'un addon** (portail) : où trouver « Copier le lien »
+  (ou « Install » / « Copy link »), appui long sur « Install › Copier
+  l'adresse du lien », la clé reste chiffrée sur la TV, rappel de confirmer
+  sur la TV, et le nouveau lien remplace l'ancien dans « Mes addons ».
+- **Trakt** : 1 Connecter · 2 trakt.tv/activate (ou QR) · 3 code · 4 accepter,
+  sur la TV et sur le portail (onglet **Trakt** : état, « Connecter Trakt »,
+  code et bouton vers trakt.tv/activate, mise à jour automatique,
+  « Déconnecter » avec confirmation ; aucun jeton n'est envoyé au téléphone).
+- **Page Aide** : Réglages › Général › **Aide** sur la TV, lien **Aide** dans
+  l'en-tête du portail : addons, réglage d'un addon, portail, Trakt, profils
+  et code PIN, sous-titres.
+
 ## Fonctionnalités
 
 - **Addons** : protocole d'addons (catalogues, fiches, flux, sous-titres),
@@ -84,7 +105,8 @@ retirées) ; toutes sont réalisées.
 | Addons | Catalogue intégré (stremio-addons.net + addons officiels), portail web servi par la TV, réglage des addons depuis le téléphone | Terminé |
 | Test global | Parcours complet sur émulateur : addons, lecture, sous-titres, reprise, séries, anime | Terminé |
 | Validation sur la box | Écrans, fluidité, HEVC, portail, torrents 1080p, endurance 8 h | En cours |
-| À venir | VPN WireGuard intégré (configuré depuis le portail), guides pas à pas, Trakt sur le portail | Prévu |
+| Guides et Trakt | Guides pas à pas dans la TV et le portail, page Aide, section Trakt du portail | Terminé |
+| À venir | VPN WireGuard intégré (configuré depuis le portail) | Prévu |
 
 ## Captures d'écran
 

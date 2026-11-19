@@ -11,6 +11,7 @@ import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/secret_store.dart';
 import 'package:lumio/data/tracking_repository.dart';
+import 'package:lumio/features/phone/phone_providers.dart' show AppPhoneBackend;
 import 'package:lumio/features/settings/settings_screen.dart';
 import 'package:lumio/features/tracking/tracking_providers.dart';
 import 'package:lumio/features/tracking/tracking_screen.dart';
@@ -29,6 +30,8 @@ import 'package:lumio_core/lumio_core.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'support/app_harness.dart';
+
+final _refProvider = Provider<Ref>((ref) => ref);
 
 /// Faux Trakt en mémoire : journal des POST et statut des scrobbles.
 class _MemTrakt implements HttpPostFetcher {
@@ -202,6 +205,7 @@ void main() {
       String id = 'cid',
       String secret = 'sec',
       bool token = true,
+      List<Override> extra = const [],
     }) {
       db = AppDatabase(NativeDatabase.memory());
       secrets = MemorySecretStore();
@@ -226,6 +230,7 @@ void main() {
           trackingFetcherProvider.overrideWithValue(net),
           trackingClockProvider.overrideWithValue(() => now),
           traktCredentialsProvider.overrideWithValue((id: id, secret: secret)),
+          ...extra,
         ],
       );
       addTearDown(() async {
@@ -291,6 +296,41 @@ void main() {
       await svc.onPlayback(
         play(PlaybackAction.start, meta: 'jellyfin:s:i', video: 'jellyfin:s:i'),
       );
+      expect(net.posts, isEmpty);
+    });
+
+    test('portail : connexion Trakt pilotée depuis le téléphone', () async {
+      c = make(
+        token: false,
+        extra: [trackingSleepProvider.overrideWithValue((_) async {})],
+      );
+      final b = AppPhoneBackend(c.read(_refProvider));
+      expect((await b.traktState()).connected, isFalse);
+      final st = await b.traktConnect();
+      expect(st.pending, isTrue);
+      expect(st.userCode, 'ABCD1234');
+      expect(st.verificationUrl.toString(), 'https://trakt.tv/activate');
+      // L'utilisateur accepte sur trakt.tv : la TV obtient le jeton.
+      net.deviceTokenStatus = 200;
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        if ((await b.traktState()).connected) break;
+      }
+      final done = await b.traktState();
+      expect(done.connected, isTrue);
+      expect(done.pending, isFalse);
+      expect(done.userCode, isNull);
+      // Le jeton reste dans le coffre de la TV.
+      expect(await secrets.read('trakt.token.default'), contains('acc-new'));
+      await b.traktDisconnect();
+      expect((await b.traktState()).connected, isFalse);
+    });
+
+    test('portail : non configuré, aucune demande', () async {
+      c = make(id: '', secret: '', token: false);
+      final b = AppPhoneBackend(c.read(_refProvider));
+      final st = await b.traktConnect();
+      expect(st.failure, 'not_configured');
       expect(net.posts, isEmpty);
     });
 

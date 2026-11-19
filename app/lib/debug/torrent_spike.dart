@@ -9,6 +9,18 @@ import 'package:lumio/torrent/torrent_engine.dart';
 /// Écran de debug du spike 0.6 (`--dart-define=LUMIO_DEBUG_TORRENT=1`).
 /// Mesure au niveau moteur uniquement ; journal `LUMIO_TORRENT {json}`.
 const _sintelHash = '08ada5a7a6183aae1e09d831df6748d566095a10';
+
+/// Torrent mesuré et durée de la lecture continue, réglables au build :
+/// `--dart-define=LUMIO_TORRENT_HASH=<infohash>` et
+/// `--dart-define=LUMIO_TORRENT_SECONDS=300` (test de débit 1080p).
+const _hash = String.fromEnvironment(
+  'LUMIO_TORRENT_HASH',
+  defaultValue: _sintelHash,
+);
+const _readSeconds = int.fromEnvironment(
+  'LUMIO_TORRENT_SECONDS',
+  defaultValue: 30,
+);
 const _trackers = [
   'wss://tracker.openwebtorrent.com',
   'wss://tracker.btorrent.xyz',
@@ -55,7 +67,7 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
       await engine.init(TorrentSettings(savePath: dir.path));
       _log({'event': 'init', 'ms': sw.elapsedMilliseconds});
       id = await engine.add(
-        '${magnetFromInfoHash(_sintelHash, trackers: _trackers)}&dn=Sintel',
+        '${magnetFromInfoHash(_hash, trackers: _trackers)}&dn=Sintel',
       );
       sw.reset();
 
@@ -149,10 +161,28 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
         final req = await dl.getUrl(url);
         req.headers.set('Range', 'bytes=1048576-');
         final resp = await req.close().timeout(const Duration(minutes: 2));
-        final end = DateTime.now().add(const Duration(seconds: 30));
+        final end = DateTime.now().add(const Duration(seconds: _readSeconds));
+        var windowStart = DateTime.now();
+        var windowBytes = 0;
         await for (final chunk in resp) {
           total += chunk.length;
-          if (DateTime.now().isAfter(end)) break;
+          windowBytes += chunk.length;
+          final now = DateTime.now();
+          if (now.difference(windowStart) >= const Duration(seconds: 10)) {
+            _log({
+              'event': 'window_10s',
+              'bytesPerSec':
+                  (windowBytes *
+                          1000 /
+                          now.difference(windowStart).inMilliseconds)
+                      .round(),
+              'peers': peers,
+              'totalBytes': total,
+            });
+            windowStart = now;
+            windowBytes = 0;
+          }
+          if (now.isAfter(end)) break;
         }
       } catch (e) {
         _log({'event': 'read30_fail', 'error': e.toString()});
@@ -161,7 +191,8 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
       }
       final secs = (sw.elapsedMilliseconds - t2) / 1000;
       _log({
-        'event': 'read_30s',
+        'event': 'read_continuous',
+        'seconds_target': _readSeconds,
         'bytes': total,
         'seconds': secs,
         'bytesPerSec': secs > 0 ? (total / secs).round() : 0,

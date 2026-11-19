@@ -145,6 +145,45 @@ abstract class PhoneBackend {
   Future<Uri?> reconfigureUrl(String id);
 }
 
+/// État de la connexion Trakt vu par le téléphone : jamais un jeton ni le
+/// code d'appareil secret, seulement le code à saisir et l'adresse publique.
+class PhoneTraktState {
+  const PhoneTraktState({
+    required this.configured,
+    required this.connected,
+    this.blocked = false,
+    this.userCode,
+    this.verificationUrl,
+    this.expiresIn,
+    this.failure,
+  });
+
+  /// Les identifiants de l'application Trakt sont présents.
+  final bool configured;
+  final bool connected;
+
+  /// Profil enfant sans autorisation d'un parent : connexion impossible.
+  final bool blocked;
+
+  /// Code à saisir sur trakt.tv/activate pendant l'attente (sinon `null`).
+  final String? userCode;
+  final Uri? verificationUrl;
+  final Duration? expiresIn;
+
+  /// `denied`, `expired`, `unavailable` ou `not_configured` après un échec.
+  final String? failure;
+
+  bool get pending => userCode != null;
+}
+
+/// Connexion Trakt pilotée depuis le téléphone : le flux de code d'appareil
+/// tourne dans l'application (TV), le téléphone ne voit que le code.
+abstract class PhoneTraktBackend {
+  Future<PhoneTraktState> traktState();
+  Future<PhoneTraktState> traktConnect();
+  Future<void> traktDisconnect();
+}
+
 enum PhoneServerStatus { stopped, starting, listening, noNetwork, error }
 
 class PhoneServerState {
@@ -230,6 +269,7 @@ class PhoneServer implements PhoneSession {
     required this.adds,
     required this.lan,
     required this.lang,
+    this.trakt,
     this.preferredPort = defaultPort,
     this.fontLoader = _bundleFont,
     this.idleTimeout = const Duration(minutes: 10),
@@ -254,6 +294,9 @@ class PhoneServer implements PhoneSession {
   static const cookieName = 'lumio_sid';
 
   final PhoneBackend backend;
+
+  /// Section Trakt du portail ; absente, ses routes répondent 404.
+  final PhoneTraktBackend? trakt;
   @override
   final PhoneAddCoordinator adds;
   final LanAddressSource lan;
@@ -611,6 +654,23 @@ class PhoneServer implements PhoneSession {
         return _json(req, 200, {'ok': true});
       }
     }
+    if (seg.length >= 2 && seg[1] == 'trakt') {
+      final tb = trakt;
+      if (tb == null) throw _HttpError(404, 'not_found');
+      if (m == 'GET' && seg.length == 2) {
+        return _json(req, 200, _traktJson(await tb.traktState()));
+      }
+      if (m == 'POST' && seg.length == 3 && seg[2] == 'connect') {
+        await _body(req);
+        return _json(req, 200, _traktJson(await tb.traktConnect()));
+      }
+      if (m == 'POST' && seg.length == 3 && seg[2] == 'disconnect') {
+        await _body(req);
+        await tb.traktDisconnect();
+        return _json(req, 200, _traktJson(await tb.traktState()));
+      }
+      throw _HttpError(404, 'not_found');
+    }
     if (m == 'POST' && seg.length == 2 && seg[1] == 'add') {
       final body = await _body(req);
       final link = body['link'];
@@ -635,6 +695,18 @@ class PhoneServer implements PhoneSession {
     }
     throw _HttpError(404, 'not_found');
   }
+
+  Map<String, Object?> _traktJson(PhoneTraktState t) => {
+    'configured': t.configured,
+    'connected': t.connected,
+    'blocked': t.blocked,
+    'pending': t.pending,
+    if (t.userCode != null) 'code': t.userCode,
+    if (t.verificationUrl != null && t.verificationUrl!.scheme == 'https')
+      'url': t.verificationUrl.toString(),
+    if (t.expiresIn != null) 'expires': t.expiresIn!.inSeconds,
+    if (t.failure != null) 'failure': t.failure,
+  };
 
   // --- sécurité ---
 

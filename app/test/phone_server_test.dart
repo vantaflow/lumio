@@ -114,6 +114,33 @@ class _Backend implements PhoneBackend {
       Uri.parse('https://secret.example/configure');
 }
 
+class _Trakt implements PhoneTraktBackend {
+  final calls = <String>[];
+  var connected = false;
+  var pending = false;
+  @override
+  Future<PhoneTraktState> traktState() async => PhoneTraktState(
+    configured: true,
+    connected: connected,
+    userCode: pending ? 'DNBQR4GW' : null,
+    verificationUrl: pending ? Uri.parse('https://trakt.tv/activate') : null,
+    expiresIn: pending ? const Duration(minutes: 10) : null,
+  );
+  @override
+  Future<PhoneTraktState> traktConnect() async {
+    calls.add('connect');
+    pending = true;
+    return traktState();
+  }
+
+  @override
+  Future<void> traktDisconnect() async {
+    calls.add('disconnect');
+    connected = false;
+    pending = false;
+  }
+}
+
 class _Clock {
   var t = DateTime(2026, 11, 19, 12);
   DateTime call() => t;
@@ -131,6 +158,7 @@ class _Resp {
 class _Fixture {
   late PhoneServer server;
   final backend = _Backend();
+  final trakt = _Trakt();
   final clock = _Clock();
   late PhoneAddCoordinator adds;
   final http = HttpClient();
@@ -142,6 +170,7 @@ class _Fixture {
     adds = PhoneAddCoordinator(now: clock.call);
     server = PhoneServer(
       backend: backend,
+      trakt: trakt,
       adds: adds,
       lan: _Lan(addr ?? InternetAddress.loopbackIPv4),
       lang: 'fr',
@@ -214,6 +243,76 @@ void main() {
     await f.start();
   });
   tearDown(() => f.close());
+
+  group('Trakt', () {
+    test('état : code et adresse publique, jamais de jeton', () async {
+      final (cookie, csrf) = await f.login();
+      final r0 = await f.req('GET', '/api/trakt', cookie: cookie);
+      expect(r0.status, 200);
+      expect(r0.json['connected'], isFalse);
+      expect(r0.json['pending'], isFalse);
+      final c = await f.req(
+        'POST',
+        '/api/trakt/connect',
+        body: {},
+        cookie: cookie,
+        origin: true,
+        headers: {'x-csrf-token': csrf},
+      );
+      expect(c.status, 200);
+      expect(c.json['pending'], isTrue);
+      expect(c.json['code'], 'DNBQR4GW');
+      expect(c.json['url'], 'https://trakt.tv/activate');
+      expect(c.body, isNot(contains('token')));
+      expect(c.body, isNot(contains('device')));
+      expect(f.trakt.calls, ['connect']);
+    });
+
+    test('sans session : 401 ; sans CSRF : 403, rien n\'est lancé', () async {
+      expect((await f.req('GET', '/api/trakt')).status, 401);
+      final (cookie, csrf) = await f.login();
+      final noCsrf = await f.req(
+        'POST',
+        '/api/trakt/connect',
+        body: {},
+        cookie: cookie,
+        origin: true,
+      );
+      expect(noCsrf.status, 403);
+      final badOrigin = await f.req(
+        'POST',
+        '/api/trakt/disconnect',
+        body: {},
+        cookie: cookie,
+        headers: {'x-csrf-token': csrf},
+      );
+      expect(badOrigin.status, 403);
+      expect(f.trakt.calls, isEmpty);
+    });
+
+    test('déconnexion : appelle la TV et renvoie l\'état', () async {
+      final (cookie, csrf) = await f.login();
+      f.trakt.connected = true;
+      final r = await f.req(
+        'POST',
+        '/api/trakt/disconnect',
+        body: {},
+        cookie: cookie,
+        origin: true,
+        headers: {'x-csrf-token': csrf},
+      );
+      expect(r.status, 200);
+      expect(r.json['connected'], isFalse);
+      expect(f.trakt.calls, ['disconnect']);
+    });
+
+    test('adresse non https jamais transmise', () async {
+      final (cookie, _) = await f.login();
+      f.trakt.pending = true;
+      final r = await f.req('GET', '/api/trakt', cookie: cookie);
+      expect(r.json['url'], startsWith('https://'));
+    });
+  });
 
   group('catalogue et configuration', () {
     Future<String> firstId(_Fixture f, String cookie, [int i = 0]) async {
@@ -707,7 +806,15 @@ void main() {
         r'https?://[a-z0-9-]+\.[a-z0-9.-]+[^\s"\x27)]*',
       ).allMatches(all);
       for (final m in urls) {
-        expect(m.group(0), startsWith('https://stremio-addons.net'));
+        // Seuls liens : le site des addons et la page d'activation de Trakt
+        // (ouverts par l'utilisateur, jamais chargés par la page).
+        expect(
+          m.group(0),
+          anyOf(
+            startsWith('https://stremio-addons.net'),
+            'https://trakt.tv/activate',
+          ),
+        );
       }
       expect(all, isNot(contains('<link rel="stylesheet" href="http')));
       expect(all, isNot(contains('@import')));
