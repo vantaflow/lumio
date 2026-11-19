@@ -1084,7 +1084,7 @@ void main() {
     });
 
     test(
-      "au-delà de la limite par adresse, la plus ancienne connexion est "
+      'au-delà de la limite par adresse, la plus ancienne connexion est '
       'fermée et la nouvelle est servie',
       () async {
         final open = <Socket>[];

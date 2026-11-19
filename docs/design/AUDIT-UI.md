@@ -191,3 +191,14 @@ Maquettes existantes non modifiées (aucun libellé faux relevé). Les maquettes
 - Accueil vide : pas de focus initial au démarrage à froid ; après fermeture du menu avatar, le focus revient sur l'onglet Accueil — à corriger.
 - Flèches d'un clavier (source keyboard) : testées avec `input keyevent DPAD_*` sur l'émulateur, elles déplacent bien le focus de Lumio (langue, accueil, catalogue) ; les raccourcis de l'application n'écartent aucune touche fléchée (`WidgetsApp.defaultShortcuts` + `ActivateIntent` pour OK). Un blocage ne se reproduit donc qu'avec des appuis très rapprochés ; à surveiller sur la box.
 - Onboarding profil : le choix d'avatar de la maquette TV02 n'existe pas (le profil n'a pas d'avatar) — écart de conception, pas corrigé.
+
+## Test global sur l'émulateur (2026-11-19, soir)
+Compte rendu complet : `docs/rapports/2026-11-19-test-global-emulateur.md`.
+- Portail web (ERR_EMPTY_RESPONSE dans un vrai navigateur) : la limite de 4 connexions par adresse bloquait les 6 connexions keep-alive d'un navigateur — corrigé (8 par adresse, 24 au total, éviction de la plus ancienne connexion de la même adresse, idleTimeout 5 s ; tests ajoutés).
+- Accueil, « Continuer à regarder » : sans addon de métadonnées pour l'identifiant (ici seulement un addon de catalogue), la carte et le héros affichent l'identifiant brut (`tt0458339`) sans affiche. Cause : la progression ne mémorise ni titre ni affiche ; `ContinueController.describe` les redemande aux addons `meta`. Correctif proposé : stocker titre et affiche dans `Progress` (migration v12) — NON fait.
+- Catalogue intégré : ni Cinemeta ni OpenSubtitles v3 (officiels) n'y figurent (source stremio-addons.net) ; l'onglet « Sous-titres » propose des clones tiers. Proposé : rangée « Essentiels » (collection officielle) — NON fait.
+- Catalogue, onglet « Populaires » : le premier focus tombe sur Torrentio ; une confirmation distraite installe un addon de torrents. À réfléchir (focus initial sur la barre de puces).
+- Portail, fiche « Configurer » : après l'envoi par le formulaire principal (et non par le bouton du panneau), le panneau reste ouvert et un second exemplaire de l'addon est installé au lieu de remplacer l'existant — NON corrigé.
+- Réglages : la carte « Gérer depuis le téléphone » ouvre un écran titré « Ajouter un addon » — libellé à harmoniser.
+- Dialogue « Choisir une instance » (Marvel) : terme technique pour le grand public — à reformuler.
+- Lecteur : la première touche ne fait que réveiller les commandes ; sur l'émulateur l'image vidéo reste noire sur les captures (rendu logiciel de media_kit), seule la lecture (temps qui avance) est vérifiable.
