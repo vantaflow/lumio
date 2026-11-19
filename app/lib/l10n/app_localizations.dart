@@ -908,6 +908,12 @@ abstract class AppLocalizations {
   /// **'Retirer de ma liste'**
   String get removeFromList;
 
+  /// No description provided for @openSheet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir la fiche'**
+  String get openSheet;
+
   /// No description provided for @addToList.
   ///
   /// In fr, this message translates to:

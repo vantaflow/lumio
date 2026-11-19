@@ -145,6 +145,7 @@ class TvMediaCard extends StatelessWidget {
     this.badge,
     this.progress,
     this.semanticLabel,
+    this.onLongPress,
     this.width = tvCardWidth,
     this.height = tvCardHeight,
     this.radius = 20,
@@ -169,6 +170,9 @@ class TvMediaCard extends StatelessWidget {
   final String? semanticLabel;
   final VoidCallback onSelect;
 
+  /// Appui long sur OK (menu de la carte) ; absent : OK ouvre simplement.
+  final VoidCallback? onLongPress;
+
   @override
   Widget build(BuildContext context) {
     final c = context.lumio;
@@ -177,6 +181,7 @@ class TvMediaCard extends StatelessWidget {
       height: height,
       child: FocusableCard(
         onSelect: onSelect,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(radius),
         semanticLabel: semanticLabel ?? title,
         child: ClipRRect(

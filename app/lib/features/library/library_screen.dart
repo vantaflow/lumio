@@ -51,6 +51,12 @@ class LibraryScreen extends ConsumerWidget {
           width: 220,
           height: 330,
           onSelect: () => onOpenItem?.call(items[i]),
+          onLongPress: () => showListItemMenu(
+            context,
+            ref,
+            items[i],
+            onOpen: () => onOpenItem?.call(items[i]),
+          ),
         ),
       );
     }

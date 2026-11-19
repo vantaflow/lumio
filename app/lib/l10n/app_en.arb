@@ -135,6 +135,7 @@
   "detailLoadError": "Couldn't load the details.",
   "autoPlayBest": "Auto play · best source",
   "removeFromList": "Remove from my list",
+  "openSheet": "Open details",
   "addToList": "Add to my list",
   "seasonEpisodes": "Episodes",
   "seasonSpecials": "Specials",

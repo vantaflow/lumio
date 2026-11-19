@@ -472,6 +472,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeFromList => 'Remove from my list';
 
   @override
+  String get openSheet => 'Open details';
+
+  @override
   String get addToList => 'Add to my list';
 
   @override

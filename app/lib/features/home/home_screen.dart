@@ -38,6 +38,7 @@ import 'package:lumio/providers.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/row_traversal.dart';
@@ -52,6 +53,36 @@ const _posterHeight = 300.0;
 const _continueWidth = 320.0;
 const _rowPad = 28.0;
 const _continueHeight = 180.0;
+
+/// Menu d'un titre de « Ma liste » (appui long sur OK) : ouvrir la fiche ou le
+/// retirer de la liste, comme depuis la fiche.
+Future<void> showListItemMenu(
+  BuildContext context,
+  WidgetRef ref,
+  MetaPreview item, {
+  required VoidCallback onOpen,
+}) async {
+  final l = context.l10n;
+  final choice = await showTvChoice<String>(
+    context,
+    title: item.name,
+    current: null,
+    options: [('open', l.openSheet), ('remove', l.removeFromList)],
+  );
+  if (choice == 'open') {
+    onOpen();
+  } else if (choice == 'remove') {
+    try {
+      await ref
+          .read(libraryRepositoryProvider)
+          .remove(ref.read(currentProfileIdProvider), item.id);
+    } on Object {
+      if (context.mounted) {
+        showTvSnack(context, l.listUpdateFailed, error: true);
+      }
+    }
+  }
+}
 
 String sourceLabel(String kind, [AppLocalizations? l]) {
   l ??= AppLocalizationsFr();
@@ -583,6 +614,8 @@ class _LibraryRow extends ConsumerWidget {
       title: context.l10n.myList,
       items: items,
       onOpenItem: onOpenItem,
+      onLongSelect: (m) =>
+          showListItemMenu(context, ref, m, onOpen: () => onOpenItem?.call(m)),
     );
   }
 }
@@ -616,6 +649,7 @@ class _PosterRow extends ConsumerWidget {
     required this.title,
     required this.items,
     required this.onOpenItem,
+    this.onLongSelect,
     this.allowPrivate = false,
   });
 
@@ -624,6 +658,10 @@ class _PosterRow extends ConsumerWidget {
   final String title;
   final List<MetaPreview> items;
   final void Function(MetaPreview item)? onOpenItem;
+
+  /// Appui long sur une carte (menu « Retirer de ma liste » de la rangée
+  /// Ma liste).
+  final void Function(MetaPreview item)? onLongSelect;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -664,6 +702,9 @@ class _PosterRow extends ConsumerWidget {
                         sourceLabel(m.sourceKind, context.l10n),
                       ),
                 onSelect: () => onOpenItem?.call(m),
+                onLongPress: onLongSelect == null
+                    ? null
+                    : () => onLongSelect!(m),
               ),
           ],
         ),
@@ -684,6 +725,7 @@ class _PosterRow extends ConsumerWidget {
             item: m,
             allowPrivate: allowPrivate,
             onSelect: () => onOpenItem?.call(m),
+            onLongPress: onLongSelect == null ? null : () => onLongSelect!(m),
           ),
       ],
     );
@@ -882,6 +924,7 @@ class PosterCard extends StatelessWidget {
     super.key,
     required this.item,
     required this.onSelect,
+    this.onLongPress,
     this.allowPrivate = false,
     this.width = _posterWidth,
     this.height = _posterHeight,
@@ -890,6 +933,9 @@ class PosterCard extends StatelessWidget {
   final MetaPreview item;
   final bool allowPrivate;
   final VoidCallback onSelect;
+
+  /// Appui long sur OK (menu de la carte) ; absent : OK ouvre simplement.
+  final VoidCallback? onLongPress;
   final double width;
   final double height;
 
@@ -901,6 +947,7 @@ class PosterCard extends StatelessWidget {
       width: width,
       child: FocusableCard(
         onSelect: onSelect,
+        onLongPress: onLongPress,
         semanticLabel: _year(item.releaseInfo) == null
             ? context.l10n.itemSemantic(item.name, source)
             : context.l10n.itemSemanticYear(

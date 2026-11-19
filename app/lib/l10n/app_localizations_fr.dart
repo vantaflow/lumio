@@ -477,6 +477,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get removeFromList => 'Retirer de ma liste';
 
   @override
+  String get openSheet => 'Ouvrir la fiche';
+
+  @override
   String get addToList => 'Ajouter à ma liste';
 
   @override

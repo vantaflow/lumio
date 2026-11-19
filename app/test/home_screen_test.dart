@@ -599,6 +599,57 @@ void main() {
       await h.close();
     });
 
+    testWidgets('Ma liste : appui long sur une carte, menu et retrait', (
+      t,
+    ) async {
+      final h = _H(t);
+      await h.pump(
+        addons: [_installed(_manifest('a'))],
+        aggregator: _FakeAggregator([
+          [
+            _row('a', 'top', [_meta('1')]),
+          ],
+        ]),
+      );
+      final lib = h.container.read(libraryRepositoryProvider);
+      await t.runAsync(() => lib.add(defaultProfileId, _meta('9')));
+      await h.settle();
+      bool onNine() {
+        final ctx = FocusManager.instance.primaryFocus?.context;
+        if (ctx == null) return false;
+        return find
+            .descendant(
+              of: find.ancestor(
+                of: find.text('Film 9'),
+                matching: find.byType(PosterCard),
+              ),
+              matching: find.byWidget(ctx.widget),
+            )
+            .evaluate()
+            .isNotEmpty;
+      }
+
+      var guard = 0;
+      while (!onNine() && guard++ < 20) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await t.pump(const Duration(milliseconds: 100));
+      }
+      expect(onNine(), isTrue);
+      // Appui court : la fiche s'ouvrirait ; appui long : le menu.
+      await t.sendKeyDownEvent(LogicalKeyboardKey.select);
+      await t.pump(const Duration(milliseconds: 700));
+      await t.sendKeyUpEvent(LogicalKeyboardKey.select);
+      await h.settle();
+      expect(find.text('Ouvrir la fiche'), findsOneWidget);
+      expect(find.text('Retirer de ma liste'), findsOneWidget);
+      expect(find.byType(DetailScreen), findsNothing);
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await t.sendKeyEvent(LogicalKeyboardKey.select);
+      await h.settle();
+      expect(find.text('Ma liste'), findsNothing);
+      await h.close();
+    });
+
     testWidgets('sélection d\'une affiche : la fiche du titre s\'ouvre', (
       t,
     ) async {

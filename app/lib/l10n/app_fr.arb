@@ -276,6 +276,7 @@
   "detailLoadError": "Impossible de charger la fiche.",
   "autoPlayBest": "Lecture auto · meilleure source",
   "removeFromList": "Retirer de ma liste",
+  "openSheet": "Ouvrir la fiche",
   "addToList": "Ajouter à ma liste",
   "seasonEpisodes": "Épisodes",
   "seasonSpecials": "Spéciaux",
