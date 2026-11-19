@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/player/subtitle_groups.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/ui/theme.dart';
+import 'package:lumio_core/lumio_core.dart' show SubtitleItem;
 
 /// Panneau du lecteur à droite (maquette P23, 780 de large) : pistes audio, sous-titres
 /// (internes et d'addons), décalage, taille et fond. Entièrement utilisable au
@@ -31,6 +33,7 @@ class TracksPanel extends StatefulWidget {
 
 class _TracksPanelState extends State<TracksPanel> {
   StreamSubscription<String>? _errSub;
+  bool _otherLangs = false;
 
   /// Piège le focus : les flèches et Tab restent dans le panneau.
   final _scope = FocusScopeNode(debugLabel: 'tracks-panel')
@@ -75,6 +78,28 @@ class _TracksPanelState extends State<TracksPanel> {
     final size = MediaQuery.sizeOf(context);
     final big = size.width >= 1280;
     final sizes = SubtitleSize.values;
+    final prefLangs = <String?>[
+      c.settings.subtitleLang,
+      c.defaultSubtitleLang,
+      l.localeName,
+    ];
+    final selId = c.addonSelectedId;
+    final grouped = groupSubtitles(
+      c.addonSubtitles,
+      preferred: prefLangs,
+      locale: l.localeName,
+      selectedId: selId,
+    );
+    final showOthers =
+        _otherLangs ||
+        (selId != null &&
+            grouped.others.any((g) => g.shown.any((s) => s.id == selId)));
+    Widget addonChip(SubtitleItem s) => _Chip(
+      key: ValueKey('addon-${s.id}'),
+      label: c.addonLabel(s),
+      selected: c.addonSelectedId == s.id,
+      onPressed: () => c.selectAddonSubtitle(s),
+    );
     final sizeIndex = sizes.indexOf(c.style.size);
     return FocusScope(
       node: _scope,
@@ -151,39 +176,11 @@ class _TracksPanelState extends State<TracksPanel> {
                               ),
                           ]),
                           const SizedBox(height: 28),
-                          TvSectionLabel(l.subtitles, top: 0),
-                          const SizedBox(height: 14),
-                          _Chips([
-                            _Chip(
-                              key: const ValueKey('sub-off'),
-                              autofocus: audio.isEmpty,
-                              label: l.subtitlesOff,
-                              selected:
-                                  selSub == null && c.addonSelectedId == null,
-                              onPressed: () => c.selectSubtitle(null),
-                            ),
-                            for (final t in subs)
-                              _Chip(
-                                key: ValueKey('sub-${t.id}'),
-                                label: t.label,
-                                selected:
-                                    t.id == selSub && c.addonSelectedId == null,
-                                onPressed: () => c.selectSubtitle(t),
-                              ),
-                            for (final s in c.addonSubtitles)
-                              _Chip(
-                                key: ValueKey('addon-${s.id}'),
-                                label: c.addonLabel(s),
-                                selected: c.addonSelectedId == s.id,
-                                onPressed: () => c.selectAddonSubtitle(s),
-                              ),
-                          ]),
-                          const SizedBox(height: 28),
                           TvSectionLabel(l.subtitleAppearance, top: 0),
                           const SizedBox(height: 14),
                           _StepRow(
                             label: l.subtitleSize,
-                            value: '${_sizePercent(c.style.size)} %',
+                            value: _sizeName(l, c.style.size),
                             valueKey: const ValueKey('size-value'),
                             minusKey: const ValueKey('size-minus'),
                             plusKey: const ValueKey('size-plus'),
@@ -215,6 +212,54 @@ class _TracksPanelState extends State<TracksPanel> {
                             on: c.style.opaqueBackground,
                             onPressed: c.toggleBackground,
                           ),
+                          const SizedBox(height: 28),
+                          TvSectionLabel(l.subtitles, top: 0),
+                          const SizedBox(height: 14),
+                          _Chips([
+                            _Chip(
+                              key: const ValueKey('sub-off'),
+                              autofocus: audio.isEmpty,
+                              label: l.subtitlesOff,
+                              selected:
+                                  selSub == null && c.addonSelectedId == null,
+                              onPressed: () => c.selectSubtitle(null),
+                            ),
+                            for (final t in subs)
+                              _Chip(
+                                key: ValueKey('sub-${t.id}'),
+                                label: t.label,
+                                selected:
+                                    t.id == selSub && c.addonSelectedId == null,
+                                onPressed: () => c.selectSubtitle(t),
+                              ),
+                            for (final g in grouped.preferred)
+                              for (final s in g.shown) addonChip(s),
+                            if (grouped.others.isNotEmpty)
+                              _Chip(
+                                key: const ValueKey('sub-other-langs'),
+                                label: showOthers
+                                    ? l.subtitleHideOtherLanguages
+                                    : l.subtitleOtherLanguages,
+                                selected: false,
+                                onPressed: () =>
+                                    setState(() => _otherLangs = !showOthers),
+                              ),
+                          ]),
+                          if (showOthers)
+                            for (final g in grouped.others) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                g.name,
+                                style: TextStyle(
+                                  fontFamily: 'Manrope',
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.textMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _Chips([for (final s in g.shown) addonChip(s)]),
+                            ],
                           const SizedBox(height: 24),
                           Align(
                             alignment: AlignmentDirectional.centerEnd,
@@ -242,9 +287,13 @@ class _TracksPanelState extends State<TracksPanel> {
   }
 }
 
-/// Taille en pourcentage de la taille moyenne (M = 100 %).
-int _sizePercent(SubtitleSize s) =>
-    (s.mpvFontSize * 100 / SubtitleSize.m.mpvFontSize).round();
+/// Taille en mots (Petite, Normale, Grande, Très grande).
+String _sizeName(AppLocalizations l, SubtitleSize s) => switch (s) {
+  SubtitleSize.s => l.subtitleSizeSmall,
+  SubtitleSize.m => l.subtitleSizeNormal,
+  SubtitleSize.l => l.subtitleSizeLarge,
+  SubtitleSize.xl => l.subtitleSizeXLarge,
+};
 
 /// Décalage lisible : « +0,3 s », « −1,2 s », « 0 s ».
 String formatDelay(int ms) {
@@ -409,11 +458,14 @@ class _StepRow extends StatelessWidget {
             width: 166,
             child: Semantics(
               liveRegion: true,
-              child: Text(
-                value,
-                key: valueKey,
-                textAlign: TextAlign.center,
-                style: style(34),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  key: valueKey,
+                  textAlign: TextAlign.center,
+                  style: style(34),
+                ),
               ),
             ),
           ),

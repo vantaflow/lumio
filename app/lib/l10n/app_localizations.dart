@@ -3842,6 +3842,42 @@ abstract class AppLocalizations {
   /// **'Agrandir les sous-titres'**
   String get subtitleLarger;
 
+  /// No description provided for @subtitleSizeSmall.
+  ///
+  /// In fr, this message translates to:
+  /// **'Petite'**
+  String get subtitleSizeSmall;
+
+  /// No description provided for @subtitleSizeNormal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Normale'**
+  String get subtitleSizeNormal;
+
+  /// No description provided for @subtitleSizeLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Grande'**
+  String get subtitleSizeLarge;
+
+  /// No description provided for @subtitleSizeXLarge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Très grande'**
+  String get subtitleSizeXLarge;
+
+  /// No description provided for @subtitleOtherLanguages.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres langues…'**
+  String get subtitleOtherLanguages;
+
+  /// No description provided for @subtitleHideOtherLanguages.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer les autres langues'**
+  String get subtitleHideOtherLanguages;
+
   /// No description provided for @seekBackShort.
   ///
   /// In fr, this message translates to:

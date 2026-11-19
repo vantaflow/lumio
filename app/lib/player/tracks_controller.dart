@@ -8,6 +8,8 @@ import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/features/settings/settings_screen.dart'
     show languageChoices;
 import 'package:lumio/l10n/app_localizations_fr.dart';
+import 'package:lumio/player/playback_report.dart' show isIgnorableEngineError;
+import 'package:lumio/player/subtitle_groups.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:media_kit/media_kit.dart';
@@ -44,8 +46,14 @@ abstract class TracksBackend {
   Future<void> applySubtitleStyle(SubtitleStyle style);
 }
 
+/// Moteur capable de signaler qu'il a refusé un fichier de sous-titres
+/// (message d'erreur libmpv sur un fichier externe).
+abstract interface class SubtitleErrorSource {
+  Stream<String> get subtitleErrors;
+}
+
 /// Implémentation media_kit / libmpv.
-class MediaKitTracksBackend implements TracksBackend {
+class MediaKitTracksBackend implements TracksBackend, SubtitleErrorSource {
   MediaKitTracksBackend(this._player, {AppLocalizations? l10n})
     : l10n = l10n ?? AppLocalizationsFr();
   final Player _player;
@@ -92,6 +100,10 @@ class MediaKitTracksBackend implements TracksBackend {
     }
     return out;
   }
+
+  @override
+  Stream<String> get subtitleErrors =>
+      _player.stream.error.where(isIgnorableEngineError);
 
   @override
   String? get selectedAudioId {
@@ -232,6 +244,7 @@ class TracksController extends ChangeNotifier {
     AppLocalizations? l10n,
     this.defaultAudioLang,
     this.defaultSubtitleLang,
+    this.refusalWindow = const Duration(milliseconds: 1500),
   }) : _style = style,
        l10n = l10n ?? AppLocalizationsFr() {
     _settings = store.forTitle(profileId, metaId);
@@ -251,6 +264,9 @@ class TracksController extends ChangeNotifier {
   /// sous-titre) ; utilisées quand le titre n'a pas de mémorisation.
   final String? defaultAudioLang;
   final String? defaultSubtitleLang;
+
+  /// Délai pendant lequel un refus du moteur annule le choix d'un sous-titre.
+  final Duration refusalWindow;
   final TitleSettingsStore store;
   final String profileId;
   final String metaId;
@@ -292,7 +308,7 @@ class TracksController extends ChangeNotifier {
       for (final (c, n) in languageChoices(l10n)) {
         if (c == code) return n;
       }
-      return code == 'und' ? l10n.langUnknown : code.toUpperCase();
+      return languageDisplayName(code, l10n.localeName);
     }
 
     final name = s.addonName?.trim();
@@ -413,9 +429,30 @@ class TracksController extends ChangeNotifier {
       final text = decodeSubtitleBytes(bytes);
       final path = await tmp.write(item.url, text);
       if (_disposed) return;
-      await backend.loadExternalSubtitle(path, title: item.lang);
-      _appliedSubs = true;
-      _addonSelectedId = item.id;
+      final src = backend is SubtitleErrorSource
+          ? (backend as SubtitleErrorSource).subtitleErrors
+          : null;
+      var refused = false;
+      final sub = src?.listen((_) => refused = true);
+      try {
+        await backend.loadExternalSubtitle(path, title: item.lang);
+        _appliedSubs = true;
+        _addonSelectedId = item.id;
+        _notify();
+        // Le moteur signale un fichier refusé après coup : la ligne ne reste
+        // pas marquée « choisie ».
+        if (src != null) await Future<void>.delayed(refusalWindow);
+      } finally {
+        await sub?.cancel();
+      }
+      if (_disposed) return;
+      if (refused) {
+        if (_addonSelectedId == item.id) _addonSelectedId = null;
+        _emit(l10n.subtitleUnreadable);
+        _notify();
+        return;
+      }
+      if (_addonSelectedId != item.id) return; // un autre choix a suivi
       _save(_settings.copyWith(subtitleLang: item.lang));
       _notify();
     } on Object {

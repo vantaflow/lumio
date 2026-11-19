@@ -2240,6 +2240,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subtitleLarger => 'Make subtitles larger';
 
   @override
+  String get subtitleSizeSmall => 'Small';
+
+  @override
+  String get subtitleSizeNormal => 'Normal';
+
+  @override
+  String get subtitleSizeLarge => 'Large';
+
+  @override
+  String get subtitleSizeXLarge => 'Extra large';
+
+  @override
+  String get subtitleOtherLanguages => 'Other languages…';
+
+  @override
+  String get subtitleHideOtherLanguages => 'Hide other languages';
+
+  @override
   String get seekBackShort => '−10 s';
 
   @override

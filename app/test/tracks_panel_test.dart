@@ -85,6 +85,27 @@ class FakeBackend implements TracksBackend {
       calls.add('style:${style.size.name}:${style.opaqueBackground}');
 }
 
+class ErrBackend extends FakeBackend implements SubtitleErrorSource {
+  final errs = StreamController<String>.broadcast();
+  @override
+  Stream<String> get subtitleErrors => errs.stream;
+  @override
+  Future<void> loadExternalSubtitle(
+    String path, {
+    String? title,
+    String? lang,
+  }) async {
+    await super.loadExternalSubtitle(path, title: title, lang: lang);
+    // Le moteur refuse le fichier juste après l'ajout.
+    Timer(const Duration(milliseconds: 10), () => errs.add('Can not open'));
+  }
+}
+
+class _OkBackend extends FakeBackend implements SubtitleErrorSource {
+  @override
+  Stream<String> get subtitleErrors => const Stream.empty();
+}
+
 TracksController make(
   FakeBackend b,
   InMemoryTitleSettingsStore store, {
@@ -163,12 +184,12 @@ void main() {
     final b = FakeBackend();
     final c = make(b, InMemoryTitleSettingsStore());
     await pumpHost(t, c);
-    // M (100 %) -> L -> XL avec « + ».
+    // Normale -> Grande -> Très grande avec « + ».
     await t.tap(find.byKey(const ValueKey('size-plus')));
     await t.pump();
     await t.tap(find.byKey(const ValueKey('size-plus')));
     await t.pump();
-    expect(find.text('164 %'), findsOneWidget);
+    expect(find.text('Très grande'), findsOneWidget);
     await t.tap(find.byKey(const ValueKey('bg-toggle')));
     await t.pump();
     expect(b.calls, contains('style:xl:false'));
@@ -224,6 +245,51 @@ void main() {
     expect(c.addonSelectedId, 'a1');
   });
 
+  test(
+    'fichier refusé par le moteur : plus choisi, message, non mémorisé',
+    () async {
+      final b = ErrBackend();
+      final item = addonSub('a1', 'https://x.test/s.srt');
+      final c = TracksController(
+        backend: b,
+        store: InMemoryTitleSettingsStore(),
+        profileId: 'p',
+        metaId: 'm',
+        addonSubtitles: [item],
+        download: (_) async =>
+            '1\n00:00:01,000 --> 00:00:02,000\nA\n'.codeUnits,
+        tempStore: SubtitleTempStore(() async => Directory.systemTemp),
+        refusalWindow: const Duration(milliseconds: 100),
+      );
+      final msgs = <String>[];
+      c.errors.listen(msgs.add);
+      await c.selectAddonSubtitle(item);
+      await Future<void>.delayed(Duration.zero);
+      expect(c.addonSelectedId, isNull);
+      expect(msgs, ['Sous-titre illisible']);
+      expect(c.settings.subtitleLang, isNull);
+      c.dispose();
+    },
+  );
+
+  test('fichier accepté : reste choisi et mémorisé après la fenêtre', () async {
+    final item = addonSub('a1', 'https://x.test/s.srt');
+    final c = TracksController(
+      backend: _OkBackend(),
+      store: InMemoryTitleSettingsStore(),
+      profileId: 'p',
+      metaId: 'm',
+      addonSubtitles: [item],
+      download: (_) async => '1\n00:00:01,000 --> 00:00:02,000\nA\n'.codeUnits,
+      tempStore: SubtitleTempStore(() async => Directory.systemTemp),
+      refusalWindow: const Duration(milliseconds: 50),
+    );
+    await c.selectAddonSubtitle(item);
+    expect(c.addonSelectedId, 'a1');
+    expect(c.settings.subtitleLang, 'fr');
+    c.dispose();
+  });
+
   testWidgets('libellés des sous-titres d\'addons : langue, source, rang', (
     t,
   ) async {
@@ -257,7 +323,7 @@ void main() {
   });
 
   testWidgets(
-    'D-pad : ordre audio, sous-titres, taille, décalage, fond, fermer',
+    'D-pad : ordre audio, taille, décalage, fond, sous-titres, fermer',
     (t) async {
       final b = FakeBackend();
       final c = make(b, InMemoryTitleSettingsStore());
@@ -271,13 +337,13 @@ void main() {
       final order = <Key>[
         const ValueKey('audio-1'),
         const ValueKey('audio-2'),
-        const ValueKey('sub-off'),
-        const ValueKey('sub-10'),
         const ValueKey('size-minus'),
         const ValueKey('size-plus'),
         const ValueKey('delay-minus'),
         const ValueKey('delay-plus'),
         const ValueKey('bg-toggle'),
+        const ValueKey('sub-off'),
+        const ValueKey('sub-10'),
         const ValueKey('tracks-close'),
       ];
       await t.pump();
