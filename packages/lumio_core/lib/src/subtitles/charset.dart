@@ -15,7 +15,24 @@ class SubtitleDecodeException implements Exception {
 /// Ordre : rejet des binaires (PNG/ZIP/JPEG, octets NUL), BOM UTF-8 puis
 /// UTF-16 LE/BE, UTF-8 strict, Windows-1256 si les octets arabes dominent,
 /// sinon Windows-1252.
-String decodeSubtitleBytes(List<int> bytes) {
+String decodeSubtitleBytes(List<int> bytes) => _stripLeading(_decode(bytes));
+
+/// Retire les lignes vides et les BOM qui précèdent le premier bloc : libmpv
+/// ne reconnaît pas un SRT qui ne commence pas par son premier numéro.
+String _stripLeading(String s) {
+  var i = 0;
+  while (i < s.length) {
+    final c = s.codeUnitAt(i);
+    if (c == 0xFEFF || c == 0x20 || c == 0x09 || c == 0x0A || c == 0x0D) {
+      i++;
+    } else {
+      break;
+    }
+  }
+  return s.substring(i);
+}
+
+String _decode(List<int> bytes) {
   if (_hasBinaryMagic(bytes)) {
     throw const SubtitleDecodeException('Le fichier n\'est pas un texte.');
   }

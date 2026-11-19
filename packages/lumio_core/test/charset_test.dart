@@ -12,6 +12,19 @@ void main() {
     expect(decodeSubtitleBytes([0xEF, 0xBB, 0xBF, ...utf8.encode('é')]), 'é');
   });
 
+  test('ligne vide puis BOM avant le premier bloc : retirés', () {
+    final bytes = <int>[
+      0x0A,
+      0xEF,
+      0xBB,
+      0xBF,
+      ...ascii.encode('1\n00:00:01,000 --> 00:00:02,000\nSalut\n'),
+    ];
+    expect(decodeSubtitleBytes(bytes), startsWith('1\n00:00:01'));
+    final utf16 = [0xFF, 0xFE, 0x0D, 0x00, 0x0A, 0x00, 0xFF, 0xFE, 0x31, 0x00];
+    expect(decodeSubtitleBytes(utf16), '1');
+  });
+
   test('UTF-16 LE et BE avec BOM', () {
     expect(decodeSubtitleBytes([0xFF, 0xFE, 0x61, 0x00, 0xE9, 0x00]), 'aé');
     expect(decodeSubtitleBytes([0xFE, 0xFF, 0x00, 0x61, 0x00, 0xE9]), 'aé');
