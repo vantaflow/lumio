@@ -81,6 +81,17 @@ class _Backend implements PhoneBackend {
   }
 
   @override
+  Future<PhoneCatalogCard?> catalogCard(String slug) async =>
+      slug == 'torrentio-x'
+      ? const PhoneCatalogCard(
+          slug: 'torrentio-x',
+          name: 'Torrentio',
+          meta: '',
+          installed: false,
+        )
+      : null;
+
+  @override
   Future<PhoneCatalogChoice?> catalogChoice(String slug) async {
     catalogCalls.add('choice:$slug');
     return switch (slug) {
@@ -300,6 +311,46 @@ void main() {
         origin: true,
       );
       expect(nocsrf.status, 403);
+    });
+
+    test('fiche précise du lien du QR : valide, inconnue, slug piégé',
+        () async {
+      final (cookie, csrf) = await f.login();
+      final ok = await f.req(
+        'GET',
+        '/api/catalog/one?slug=torrentio-x',
+        cookie: cookie,
+      );
+      expect(ok.status, 200);
+      final item = ok.json['item']! as Map<String, Object?>;
+      expect(ok.body, isNot(contains('KEY123')));
+      final cfg = await post(
+        f,
+        '/api/catalog/${item['id']}/configure',
+        cookie,
+        csrf,
+      );
+      expect(cfg.status, 200);
+      expect(
+        (await f.req('GET', '/api/catalog/one?slug=inconnu', cookie: cookie))
+            .status,
+        404,
+      );
+      expect(
+        (await f.req('GET', '/api/catalog/one?slug=..%2Fx', cookie: cookie))
+            .status,
+        400,
+      );
+    });
+
+    test('liste des addons : référence non secrète pour Reconfigurer',
+        () async {
+      final (cookie, _) = await f.login();
+      final r = await f.req('GET', '/api/addons', cookie: cookie);
+      final a = (r.json['addons']! as List).first as Map<String, Object?>;
+      expect(a['ref'], addonPortalRef('org.alpha'));
+      expect(a['ref'], isNot(a['id']));
+      expect((a['ref']! as String).length, 12);
     });
 
     test(
