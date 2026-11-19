@@ -123,7 +123,14 @@ class _FocusableCardState extends State<FocusableCard> {
       }
       return KeyEventResult.handled;
     }
-    return KeyEventResult.handled; // répétition : absorbée
+    // Répétition : absorbée. Quand le système en émet une, la touche est
+    // maintenue : c'est l'appui long (sans attendre le minuteur).
+    if (hasLong && _selectDown && !_longFired) {
+      _timer?.cancel();
+      _longFired = true;
+      widget.onLongPress?.call();
+    }
+    return KeyEventResult.handled;
   }
 
   @override

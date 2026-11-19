@@ -122,6 +122,28 @@ void main() {
     expect((sel, long), (1, 1));
   });
 
+  testWidgets('répétition de touche (touche maintenue) : appui long', (
+    t,
+  ) async {
+    var sel = 0, long = 0;
+    await t.pumpWidget(
+      _app(
+        FocusableCard(
+          autofocus: true,
+          onSelect: () => sel++,
+          onLongPress: () => long++,
+          child: const SizedBox(width: 100, height: 60),
+        ),
+      ),
+    );
+    await t.pump();
+    await t.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await t.sendKeyRepeatEvent(LogicalKeyboardKey.select);
+    await t.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await t.pump(const Duration(seconds: 1));
+    expect((sel, long), (0, 1));
+  });
+
   testWidgets('échelle au focus, sans animation si réduite', (t) async {
     for (final reduce in [false, true]) {
       await t.pumpWidget(
