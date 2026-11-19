@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/features/addons/addon_logo.dart' show AddonLogo;
+import 'package:lumio/features/addons/add_addon_screen.dart'
+    show AddAddonTab, showAddAddonScreen;
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/health_pill.dart';
 import 'package:lumio/features/addons/health_providers.dart';
@@ -9,6 +11,7 @@ import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_providers.dart';
 import 'package:lumio/features/local/local_screen.dart';
+import 'package:lumio/features/phone/phone_server.dart' show addonPortalRef;
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/tv_dialogs.dart';
@@ -191,6 +194,8 @@ class SourcesBody extends ConsumerWidget {
         ('down', LumioIcon.arrowDown, l.menuMoveDown, false),
       if (a.manifest != null && health.samples > 0)
         ('reset', LumioIcon.refresh, l.menuResetHealth, false),
+      if (a.manifest != null)
+        ('reconf', LumioIcon.refresh, l.addonReconfigurePortal, false),
       ('delete', LumioIcon.trash, l.delete, true),
     ];
     final picked = await showTvPanel<String>(
@@ -250,6 +255,13 @@ class SourcesBody extends ConsumerWidget {
         await run(() => ctl.move(a.id, 1));
       case 'reset':
         await ref.read(addonHealthServiceProvider).reset(a.id);
+      case 'reconf':
+        await showAddAddonScreen(
+          context,
+          initialTab: AddAddonTab.phone,
+          portalQuery: 'reconf=${addonPortalRef(a.id)}',
+          portalName: a.name,
+        );
       case 'delete':
         final ok = await showTvConfirm(
           context,

@@ -100,7 +100,6 @@ class _Backend implements PhoneBackend {
   @override
   Future<Uri?> reconfigureUrl(String id) async =>
       Uri.parse('https://secret.example/configure');
-
 }
 
 class _Clock {
@@ -226,26 +225,28 @@ void main() {
       headers: {'x-csrf-token': csrf},
     );
 
-    test('catalogue : mêmes puces, pas d\'adresse de manifest, logo https seul',
-        () async {
-      final (cookie, _) = await f.login();
-      final r = await f.req(
-        'GET',
-        '/api/catalog?chip=movies&page=2&refresh=1',
-        cookie: cookie,
-      );
-      expect(r.status, 200);
-      expect(r.body, isNot(contains('KEY123')));
-      expect(r.body, isNot(contains('manifest.json')));
-      expect(r.json['chips'], hasLength(2));
-      expect(r.json['hasMore'], isFalse);
-      expect(r.json['note'], 'offline');
-      final items = (r.json['items']! as List).cast<Map<String, Object?>>();
-      expect(items[0]['logo'], 'https://cdn.example/logo.png');
-      expect(items[1].containsKey('logo'), isFalse);
-      expect(items[1]['installed'], isTrue);
-      expect(f.backend.catalogCalls.last, 'movies|null|2|true');
-    });
+    test(
+      'catalogue : mêmes puces, pas d\'adresse de manifest, logo https seul',
+      () async {
+        final (cookie, _) = await f.login();
+        final r = await f.req(
+          'GET',
+          '/api/catalog?chip=movies&page=2&refresh=1',
+          cookie: cookie,
+        );
+        expect(r.status, 200);
+        expect(r.body, isNot(contains('KEY123')));
+        expect(r.body, isNot(contains('manifest.json')));
+        expect(r.json['chips'], hasLength(2));
+        expect(r.json['hasMore'], isFalse);
+        expect(r.json['note'], 'offline');
+        final items = (r.json['items']! as List).cast<Map<String, Object?>>();
+        expect(items[0]['logo'], 'https://cdn.example/logo.png');
+        expect(items[1].containsKey('logo'), isFalse);
+        expect(items[1]['installed'], isTrue);
+        expect(f.backend.catalogCalls.last, 'movies|null|2|true');
+      },
+    );
 
     test('page hors bornes : refusée', () async {
       final (cookie, _) = await f.login();
@@ -301,27 +302,31 @@ void main() {
       expect(nocsrf.status, 403);
     });
 
-    test('Reconfigurer : page de base ; le lien renvoyé remplace l\'ancien',
-        () async {
-      final (cookie, csrf) = await f.login();
-      final list = await f.req('GET', '/api/addons', cookie: cookie);
-      final id = ((list.json['addons']! as List).first
-          as Map<String, Object?>)['id']! as String;
-      final c = await post(f, '/api/addons/$id/reconfigure', cookie, csrf);
-      expect(c.json['url'], 'https://secret.example/configure');
-      expect(c.body, isNot(contains('org.alpha')));
-      final a = await post(f, '/api/add', cookie, csrf, {
-        'link': 'stremio://secret.example/NEW/manifest.json',
-        'replaces': id,
-      });
-      expect(a.status, 202);
-      expect(f.adds.pending.value!.replaces, 'org.alpha');
-      final bad = await post(f, '/api/add', cookie, csrf, {
-        'link': 'https://x.example/manifest.json',
-        'replaces': 'zzz',
-      });
-      expect(bad.status, 404);
-    });
+    test(
+      'Reconfigurer : page de base ; le lien renvoyé remplace l\'ancien',
+      () async {
+        final (cookie, csrf) = await f.login();
+        final list = await f.req('GET', '/api/addons', cookie: cookie);
+        final id =
+            ((list.json['addons']! as List).first
+                    as Map<String, Object?>)['id']!
+                as String;
+        final c = await post(f, '/api/addons/$id/reconfigure', cookie, csrf);
+        expect(c.json['url'], 'https://secret.example/configure');
+        expect(c.body, isNot(contains('org.alpha')));
+        final a = await post(f, '/api/add', cookie, csrf, {
+          'link': 'stremio://secret.example/NEW/manifest.json',
+          'replaces': id,
+        });
+        expect(a.status, 202);
+        expect(f.adds.pending.value!.replaces, 'org.alpha');
+        final bad = await post(f, '/api/add', cookie, csrf, {
+          'link': 'https://x.example/manifest.json',
+          'replaces': 'zzz',
+        });
+        expect(bad.status, 404);
+      },
+    );
   });
 
   group('démarrage', () {

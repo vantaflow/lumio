@@ -10,10 +10,21 @@ import 'package:qr_flutter/qr_flutter.dart';
 /// Onglet « Depuis le téléphone » (maquette TV09) : QR (adresse + code),
 /// adresse à taper, code de sécurité, état de la page.
 class PhoneTab extends StatelessWidget {
-  const PhoneTab({super.key, required this.session, required this.onRestart});
+  const PhoneTab({
+    super.key,
+    required this.session,
+    required this.onRestart,
+    this.portalQuery,
+    this.portalName,
+  });
 
   final PhoneSession session;
   final VoidCallback onRestart;
+
+  /// Paramètre ajouté au lien du QR pour ouvrir la fiche d'un addon précis sur
+  /// le portail (`addon=<id du site>` ou `reconf=<référence>`), et son nom.
+  final String? portalQuery;
+  final String? portalName;
 
   /// « 482913 » devient « 482 913 ».
   static String spaced(String code) =>
@@ -24,7 +35,13 @@ class PhoneTab extends StatelessWidget {
       ValueListenableBuilder<PhoneServerState>(
         valueListenable: session.state,
         builder: (context, s, _) {
-          if (s.listening) return _Pairing(state: s);
+          if (s.listening) {
+            return _Pairing(
+              state: s,
+              portalQuery: portalQuery,
+              portalName: portalName,
+            );
+          }
           return switch (s.status) {
             PhoneServerStatus.starting => const Center(
               child: CircularProgressIndicator(),
@@ -52,9 +69,11 @@ class PhoneTab extends StatelessWidget {
 }
 
 class _Pairing extends StatefulWidget {
-  const _Pairing({required this.state});
+  const _Pairing({required this.state, this.portalQuery, this.portalName});
 
   final PhoneServerState state;
+  final String? portalQuery;
+  final String? portalName;
 
   @override
   State<_Pairing> createState() => _PairingState();
@@ -65,6 +84,10 @@ class _PairingState extends State<_Pairing> {
   bool _expired = false;
 
   PhoneServerState get state => widget.state;
+
+  String get _qrData => widget.portalQuery == null
+      ? state.url
+      : '${state.url}&${widget.portalQuery}';
 
   @override
   void initState() {
@@ -161,8 +184,8 @@ class _PairingState extends State<_Pairing> {
                 borderRadius: BorderRadius.circular(36),
               ),
               child: QrImageView(
-                key: ValueKey('qr:${state.url}'),
-                data: state.url,
+                key: ValueKey('qr:$_qrData'),
+                data: _qrData,
                 size: 472,
                 padding: EdgeInsets.zero,
                 backgroundColor: c.text,
@@ -180,6 +203,18 @@ class _PairingState extends State<_Pairing> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (widget.portalName != null) ...[
+                  Text(
+                    l.portalAddonHint(widget.portalName!),
+                    key: const ValueKey('portal-addon-hint'),
+                    style: t.bodyMedium?.copyWith(
+                      fontSize: 28,
+                      height: 1.35,
+                      color: c.accent,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
                 step(1, l.phoneStep1),
                 const SizedBox(height: 32),
                 step(2, l.phoneStep2),

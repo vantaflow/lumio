@@ -275,12 +275,9 @@ void main() {
       await _open(h, t);
       await t.tap(find.byKey(const ValueKey('card:cfg')));
       await h.settle();
-      expect(find.text('À configurer sur le téléphone'), findsOneWidget);
-      expect(find.byType(QrImageView), findsOneWidget);
-      expect(
-        t.widget<Text>(find.byKey(const ValueKey('configure-host'))).data,
-        'cfg.example.com/configure',
-      );
+      expect(find.text('Configurer depuis le portail'), findsOneWidget);
+      expect(find.byKey(const ValueKey('sheet-install')), findsNothing);
+      expect(find.byType(QrImageView), findsNothing);
       expect(find.byKey(const ValueKey('link-install')), findsNothing);
       expect(
         await t.runAsync(
@@ -293,7 +290,7 @@ void main() {
   );
 
   testWidgets(
-    'instance configurable mais pas obligatoire : installation directe',
+    'instance configurable mais pas obligatoire : Installer reste possible',
     (t) async {
       final site = FakeCatalogSite(
         cards: [_cards.first],
@@ -311,6 +308,10 @@ void main() {
       );
       await _open(h, t);
       await t.tap(find.byKey(const ValueKey('card:alpha')));
+      await h.settle();
+      expect(find.byKey(const ValueKey('sheet-install')), findsOneWidget);
+      expect(find.text('Configurer depuis le portail'), findsOneWidget);
+      await t.tap(find.byKey(const ValueKey('sheet-install')));
       await h.settle();
       expect(find.byKey(const ValueKey('link-install')), findsOneWidget);
       await h.close();

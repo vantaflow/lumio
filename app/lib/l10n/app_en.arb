@@ -1186,8 +1186,6 @@
   },
   "chooseInstanceTitle": "Choose an instance",
   "instanceNeedsSetup": "needs setup",
-  "configureOnPhoneTitle": "Set up on your phone",
-  "configureOnPhoneBody": "This addon needs setup before it works (debrid key, languages…). Scan the code to set it up on your phone, then paste the resulting link in the “By link” tab.",
   "addonLinkHelp": "manifest.json link or stremio:// link. A link copied on this device is offered automatically.",
   "addonPreviewLabel": "PREVIEW · v{version}",
   "@addonPreviewLabel": {
@@ -1216,18 +1214,14 @@
   "phoneAddWaiting": "Link received from the phone: check the preview and confirm here.",
   "addonInstall": "Install",
   "addonConfigure": "Configure",
-  "addonConfigureTitle": "Configure {name}",
-  "@addonConfigureTitle": {
+  "addonConfigurePortal": "Configure from the portal",
+  "addonReconfigurePortal": "Reconfigure from the portal",
+  "addonSheetRequired": "This addon needs setup before it works (debrid key, languages…). Use the web portal on your phone or computer to configure it.",
+  "addonSheetConfigurable": "Install it as is, or choose your settings from the web portal.",
+  "portalAddonHint": "Open this page on the portal: the “{name}” page shows up directly.",
+  "@portalAddonHint": {
     "placeholders": {
       "name": {}
     }
-  },
-  "addonOrPhone": "Or configure on your phone",
-  "configureHelp": "OK: confirm · Back: cancel · the install link is picked up automatically",
-  "configureUseCopied": "Use the copied link",
-  "configureNoLink": "No addon link on the clipboard.",
-  "configureBlocked": "Page blocked: it leaves the addon.",
-  "configureLoadError": "The setup page did not load.",
-  "addonSheetRequired": "This addon needs setup before it works (debrid key, languages…). Set it up here with the remote.",
-  "addonSheetConfigurable": "Install it as is, or choose your settings first."
+  }
 }

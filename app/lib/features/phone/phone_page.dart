@@ -214,6 +214,7 @@ const phoneJs = r'''
   var addons = [];
   var confirming = null;
   var catalog = [];
+  var deepAddon = null, deepRef = null;
   var cat = { chip: 'popular', more: null, page: 1, hasMore: false, chips: [], moreList: [], busy: false };
   var replaces = null;
   var pollTimer = null;
@@ -264,7 +265,7 @@ const phoneJs = r'''
 
   function login(code) {
     return api('POST', '/api/login', { code: code }).then(function (r) {
-      if (r.status === 200) { csrf = r.json.csrf; clearBanner(); showMain(); loadCatalog(false, false); return loadList(); }
+      if (r.status === 200) { csrf = r.json.csrf; clearBanner(); showMain(); loadCatalog(false, false); openDeepAddon(); return loadList(); }
       if (r.status === 429) {
         var s = parseInt(r.retry || '60', 10);
         showLogin(r.json.error === 'locked' ? fmt(t.locked, { s: s }) : t.rate);
@@ -276,6 +277,10 @@ const phoneJs = r'''
   function boot() {
     i18n();
     $('host').textContent = fmt(t.connected, { h: location.hostname });
+    var ma = /[#&]addon=([A-Za-z0-9._-]{1,80})/.exec(location.hash);
+    if (ma) deepAddon = ma[1];
+    var mr = /[#&]reconf=([0-9a-f]{12})/.exec(location.hash);
+    if (mr) deepRef = mr[1];
     var m = /(?:^|[#&])c=(\d{6})/.exec(location.hash);
     if (m) {
       try { history.replaceState(null, '', location.pathname); } catch (e) { location.hash = ''; }
@@ -283,7 +288,7 @@ const phoneJs = r'''
       return;
     }
     api('GET', '/api/session').then(function (r) {
-      if (r.status === 200) { csrf = r.json.csrf; showMain(); loadCatalog(false, false); loadList(); } else showLogin('');
+      if (r.status === 200) { csrf = r.json.csrf; showMain(); loadCatalog(false, false); loadList(); openDeepAddon(); } else showLogin('');
     }, function () { showLogin(''); });
   }
 
@@ -299,6 +304,7 @@ const phoneJs = r'''
       if (r.status !== 200) { banner('er', t.generic); return; }
       addons = r.json.addons || [];
       render();
+      openDeepRef();
     }, closed);
   }
   function typesLabel(a) {
@@ -388,6 +394,35 @@ const phoneJs = r'''
       renderCatalog();
     }, function () { cat.busy = false; closed(); });
   }
+  // Lien du QR de la TV : fiche d'un addon précis du catalogue.
+  function openDeepAddon() {
+    if (!deepAddon) return;
+    var slug = deepAddon;
+    deepAddon = null;
+    api('GET', '/api/catalog/one?slug=' + encodeURIComponent(slug)).then(function (r) {
+      if (r.status === 401) { showLogin(''); return; }
+      var it = r.json && r.json.item;
+      if (r.status !== 200 || !it) { banner('er', t.catLoadError); return; }
+      var box = $('deep');
+      while (box.firstChild) box.removeChild(box.firstChild);
+      box.appendChild(buildCard(it));
+      show('deep', true);
+      openConfig('/api/catalog/' + it.id + '/configure', it.name, null);
+    }, closed);
+  }
+  // Lien du QR de la TV : reconfigurer un addon installé (référence non secrète).
+  function openDeepRef() {
+    if (!deepRef) return;
+    for (var i = 0; i < addons.length; i++) {
+      if (addons[i].ref === deepRef) {
+        var a = addons[i];
+        deepRef = null;
+        openConfig('/api/addons/' + a.id + '/reconfigure', a.name, a.id);
+        return;
+      }
+    }
+    deepRef = null;
+  }
   function chipBtn(label, on, fn, key) {
     var b = document.createElement('button');
     b.type = 'button';
@@ -397,6 +432,37 @@ const phoneJs = r'''
     b.addEventListener('click', fn);
     if (key) b.setAttribute('data-k', key);
     return b;
+  }
+  function buildCard(c) {
+    var tpl = $('cat-tpl');
+      var li = tpl.content.firstElementChild.cloneNode(true);
+      var q = function (k) { return li.querySelector('.' + k); };
+      var lg = q('lg');
+      lg.textContent = (c.name || '?').charAt(0).toUpperCase();
+      lg.style.background = colorOf(c.name || '?');
+      if (c.logo) {
+        var im = document.createElement('img');
+        im.alt = '';
+        im.referrerPolicy = 'no-referrer';
+        im.loading = 'lazy';
+        im.addEventListener('error', function () { if (im.parentNode) im.parentNode.removeChild(im); });
+        im.src = c.logo;
+        lg.appendChild(im);
+      }
+      q('nm').textContent = c.name;
+      q('meta').textContent = c.meta || '';
+      q('meta').classList.toggle('hidden', !c.meta);
+      q('bdg').textContent = t.catInstalled;
+      q('bdg').classList.toggle('hidden', !c.installed);
+      q('d').textContent = c.description || '';
+      q('d').classList.toggle('hidden', !c.description);
+      q('ci').textContent = t.install;
+      q('cc').textContent = t.configure;
+      q('ci').setAttribute('aria-label', t.install + ' : ' + c.name);
+      q('cc').setAttribute('aria-label', t.configure + ' : ' + c.name);
+      q('ci').addEventListener('click', function () { installCat(c); });
+      q('cc').addEventListener('click', function () { openConfig('/api/catalog/' + c.id + '/configure', c.name, null); });
+    return li;
   }
   function renderCatalog() {
     var ch = $('chips');
@@ -425,37 +491,7 @@ const phoneJs = r'''
     note.classList.toggle('hidden', !cat.note);
     var list = $('cat');
     while (list.firstChild) list.removeChild(list.firstChild);
-    var tpl = $('cat-tpl');
-    catalog.forEach(function (c) {
-      var li = tpl.content.firstElementChild.cloneNode(true);
-      var q = function (k) { return li.querySelector('.' + k); };
-      var lg = q('lg');
-      lg.textContent = (c.name || '?').charAt(0).toUpperCase();
-      lg.style.background = colorOf(c.name || '?');
-      if (c.logo) {
-        var im = document.createElement('img');
-        im.alt = '';
-        im.referrerPolicy = 'no-referrer';
-        im.loading = 'lazy';
-        im.addEventListener('error', function () { if (im.parentNode) im.parentNode.removeChild(im); });
-        im.src = c.logo;
-        lg.appendChild(im);
-      }
-      q('nm').textContent = c.name;
-      q('meta').textContent = c.meta || '';
-      q('meta').classList.toggle('hidden', !c.meta);
-      q('bdg').textContent = t.catInstalled;
-      q('bdg').classList.toggle('hidden', !c.installed);
-      q('d').textContent = c.description || '';
-      q('d').classList.toggle('hidden', !c.description);
-      q('ci').textContent = t.install;
-      q('cc').textContent = t.configure;
-      q('ci').setAttribute('aria-label', t.install + ' : ' + c.name);
-      q('cc').setAttribute('aria-label', t.configure + ' : ' + c.name);
-      q('ci').addEventListener('click', function () { installCat(c); });
-      q('cc').addEventListener('click', function () { openConfig('/api/catalog/' + c.id + '/configure', c.name, null); });
-      list.appendChild(li);
-    });
+    catalog.forEach(function (c) { list.appendChild(buildCard(c)); });
     $('catnone').classList.toggle('hidden', catalog.length > 0);
     var lm = $('catmore');
     lm.textContent = t.catLoadMore;
@@ -590,6 +626,7 @@ const _html = r'''<!doctype html>
 <label class="l" for="cu" data-t="cfgLabel"></label>
 <input class="in" id="cu" type="text" inputmode="url" autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="2048">
 <div class="row"><button class="bt b2 f1" id="cclose" type="button" data-t="cfgClose"></button><button class="bt b1 f2" id="csend" type="button" data-t="send"></button></div></div>
+<ul id="deep" class="col lst hidden"></ul>
 <h2 class="hd h20" data-t="catTitle"></h2>
 <div class="sm" data-t="catHelp"></div>
 <div id="chips" class="chips" role="group"></div>

@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/addon_logo.dart';
 import 'package:lumio/features/addons/catalog_providers.dart';
-import 'package:lumio/features/addons/configure_addon_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/addon_repository.dart' show InstalledAddon;
 import 'package:lumio/providers.dart';
@@ -15,7 +14,6 @@ import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 /// Puces de catégories de la maquette TV16 ; [categories] vide = toutes.
 class CatalogChip {
@@ -59,16 +57,17 @@ String chipLabel(String id, AppLocalizations l) => switch (id) {
   _ => id,
 };
 
-String catalogMoreLabel(String category, AppLocalizations l) => switch (category) {
-  CatalogCategories.httpStreams => l.catHttpStreams,
-  CatalogCategories.usenet => l.catUsenet,
-  CatalogCategories.asianDrama => l.catAsianDrama,
-  CatalogCategories.bollywood => l.catBollywood,
-  CatalogCategories.music => l.catMusic,
-  CatalogCategories.radios => l.catRadios,
-  CatalogCategories.liveTv => l.catLiveTv,
-  _ => l.catMisc,
-};
+String catalogMoreLabel(String category, AppLocalizations l) =>
+    switch (category) {
+      CatalogCategories.httpStreams => l.catHttpStreams,
+      CatalogCategories.usenet => l.catUsenet,
+      CatalogCategories.asianDrama => l.catAsianDrama,
+      CatalogCategories.bollywood => l.catBollywood,
+      CatalogCategories.music => l.catMusic,
+      CatalogCategories.radios => l.catRadios,
+      CatalogCategories.liveTv => l.catLiveTv,
+      _ => l.catMisc,
+    };
 
 /// Ligne d'infos d'une carte (partagée avec le portail du téléphone).
 String catalogCardMeta(CatalogEntry e, AppLocalizations l) {
@@ -91,15 +90,23 @@ String catalogCardMeta(CatalogEntry e, AppLocalizations l) {
   return v == null ? '' : 'v$v';
 }
 
-enum _SheetChoice { install, configure, phone }
+enum _SheetChoice { install, configure }
 
 /// Onglet « Catalogue » (maquette TV16) : puces de catégories, grille de
 /// cartes, badge « Installé », note de bas de page.
 class CatalogTab extends ConsumerStatefulWidget {
-  const CatalogTab({super.key, required this.onUseLink, this.active = true});
+  const CatalogTab({
+    super.key,
+    required this.onUseLink,
+    required this.onConfigure,
+    this.active = true,
+  });
 
   /// Confie l'adresse choisie au flux d'installation « Par lien ».
   final ValueChanged<String> onUseLink;
+
+  /// Configuration depuis le portail web : identifiant du site et nom.
+  final void Function(String slug, String name) onConfigure;
   final bool active;
 
   @override
@@ -199,7 +206,9 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
     final picked = await showTvChoice<String>(
       context,
       title: l.catMoreTitle,
-      options: [for (final c in catalogMoreCategories) (c, catalogMoreLabel(c, l))],
+      options: [
+        for (final c in catalogMoreCategories) (c, catalogMoreLabel(c, l)),
+      ],
       current: _more,
     );
     if (picked == null || !mounted) return;
@@ -244,15 +253,18 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
       );
     }
     if (pick == null || !mounted) return;
+    if (!pick.configurable && !pick.configurationRequired) {
+      widget.onUseLink(pick.manifestUrl.toString());
+      return;
+    }
     await _sheet(e, pick);
   }
 
-  /// Fiche d'un addon (maquette TV16) : Installer (sauf si la configuration est
-  /// requise) et Configurer (page de l'addon dans l'app), le QR du téléphone
-  /// restant une option.
+  /// Fiche d'un addon configurable (maquette TV16) : « Installer » (sauf si la
+  /// configuration est requise) ou « Configurer depuis le portail » (QR vers la
+  /// fiche de cet addon sur le portail web).
   Future<void> _sheet(CatalogEntry e, CatalogInstance pick) async {
     final l = context.l10n;
-    final configure = pick.configureUrl;
     final required = pick.configurationRequired;
     final choice = await showTvPanel<_SheetChoice>(
       context,
@@ -270,16 +282,15 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
               fontSize: 28,
               onPressed: () => Navigator.of(ctx).pop(_SheetChoice.install),
             ),
-          if (configure != null)
-            TvButton(
-              key: const ValueKey('sheet-configure'),
-              autofocus: required,
-              label: l.addonConfigure,
-              kind: TvButtonKind.secondary,
-              height: 76,
-              fontSize: 28,
-              onPressed: () => Navigator.of(ctx).pop(_SheetChoice.configure),
-            ),
+          TvButton(
+            key: const ValueKey('sheet-configure'),
+            autofocus: required,
+            label: l.addonConfigurePortal,
+            kind: TvButtonKind.secondary,
+            height: 76,
+            fontSize: 28,
+            onPressed: () => Navigator.of(ctx).pop(_SheetChoice.configure),
+          ),
           TvButton(
             key: const ValueKey('sheet-close'),
             label: l.close,
@@ -310,15 +321,6 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
               ctx,
             ).textTheme.bodyMedium?.copyWith(fontSize: 26, height: 1.4),
           ),
-          if (configure != null)
-            TvButton(
-              key: const ValueKey('sheet-phone'),
-              label: l.addonOrPhone,
-              kind: TvButtonKind.ghost,
-              height: 64,
-              fontSize: 24,
-              onPressed: () => Navigator.of(ctx).pop(_SheetChoice.phone),
-            ),
         ],
       ),
     );
@@ -326,98 +328,11 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
     switch (choice) {
       case _SheetChoice.install:
         widget.onUseLink(pick.manifestUrl.toString());
-      case _SheetChoice.phone:
-        await _configureOnPhone(e.name, pick);
       case _SheetChoice.configure:
-        if (configure == null) return;
-        final manifest = await Navigator.of(context).push<Uri>(
-          MaterialPageRoute(
-            builder: (_) =>
-                ConfigureAddonScreen(name: e.name, start: configure),
-          ),
-        );
-        if (manifest != null && mounted) {
-          widget.onUseLink(manifest.toString());
-        }
+        widget.onConfigure(e.slug, e.name);
     }
   }
 
-  Future<void> _configureOnPhone(String name, CatalogInstance i) {
-    final l = context.l10n;
-    final url = i.configureUrl ?? i.manifestUrl;
-    return showTvPanel<void>(
-      context,
-      builder: (ctx) => TvPanel(
-        title: l.configureOnPhoneTitle,
-        width: 900,
-        onBack: () => Navigator.of(ctx).pop(),
-        actions: [
-          TvButton(
-            key: const ValueKey('configure-close'),
-            autofocus: true,
-            label: l.close,
-            kind: TvButtonKind.secondary,
-            height: 76,
-            fontSize: 28,
-            onPressed: () => Navigator.of(ctx).pop(),
-          ),
-        ],
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                key: const ValueKey('configure-qr'),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: QrImageView(
-                  data: url.toString(),
-                  size: 240,
-                  padding: EdgeInsets.zero,
-                  backgroundColor: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 32),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: Theme.of(
-                        ctx,
-                      ).textTheme.titleLarge?.copyWith(fontSize: 34),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      l.configureOnPhoneBody,
-                      style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                        fontSize: 26,
-                        height: 1.4,
-                        color: ctx.lumio.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${url.host}${url.path}',
-                      key: const ValueKey('configure-host'),
-                      style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                        fontSize: 24,
-                        color: ctx.lumio.secondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -459,7 +374,9 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
                     const SizedBox(width: 12),
                     _Chip(
                       key: const ValueKey('chip:more'),
-                      label: _more == null ? l.catMore : catalogMoreLabel(_more!, l),
+                      label: _more == null
+                          ? l.catMore
+                          : catalogMoreLabel(_more!, l),
                       selected: _more != null,
                       onSelect: _pickMore,
                     ),

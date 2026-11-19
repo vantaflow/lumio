@@ -106,7 +106,9 @@ class AppPhoneBackend implements PhoneBackend {
     };
     return PhoneCatalogPage(
       chips: [for (final c in catalogChips) (c.id, chipLabel(c.id, l))],
-      more: [for (final c in catalogMoreCategories) (c, catalogMoreLabel(c, l))],
+      more: [
+        for (final c in catalogMoreCategories) (c, catalogMoreLabel(c, l)),
+      ],
       chip: chipId,
       moreSelected: moreId,
       moreLabel: moreId == null ? null : catalogMoreLabel(moreId, l),
@@ -128,6 +130,23 @@ class AppPhoneBackend implements PhoneBackend {
             installed: installed.contains(e.name.trim().toLowerCase()),
           ),
       ],
+    );
+  }
+
+  @override
+  Future<PhoneCatalogCard?> catalogCard(String slug) async {
+    final d = (await _ref.read(addonCatalogServiceProvider).detail(slug)).value;
+    final installed = <String>{
+      for (final a in await _ref.read(addonsProvider.future))
+        a.name.trim().toLowerCase(),
+    };
+    return PhoneCatalogCard(
+      slug: d.slug,
+      name: d.name,
+      description: d.description,
+      logo: d.logo,
+      meta: '',
+      installed: installed.contains(d.name.trim().toLowerCase()),
     );
   }
 

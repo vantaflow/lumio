@@ -33,11 +33,18 @@ Future<bool> showAddAddonScreen(
   BuildContext context, {
   String? initialUrl,
   AddAddonTab? initialTab,
+  String? portalQuery,
+  String? portalName,
 }) async {
   final ok = await Navigator.of(context).push<bool>(
     MaterialPageRoute<bool>(
       builder: (_) =>
-          AddAddonScreen(initialUrl: initialUrl, initialTab: initialTab),
+          AddAddonScreen(
+            initialUrl: initialUrl,
+            initialTab: initialTab,
+            portalQuery: portalQuery,
+            portalName: portalName,
+          ),
     ),
   );
   return ok ?? false;
@@ -50,11 +57,17 @@ class AddAddonScreen extends ConsumerStatefulWidget {
     super.key,
     this.initialUrl,
     this.initialTab,
+    this.portalQuery,
+    this.portalName,
     this.debounce = const Duration(milliseconds: 600),
   });
 
   final String? initialUrl;
   final AddAddonTab? initialTab;
+
+  /// Ouvre l'onglet du téléphone avec un QR vers la fiche d'un addon précis.
+  final String? portalQuery;
+  final String? portalName;
   final Duration debounce;
 
   @override
@@ -76,6 +89,11 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
   /// Demande d'ajout venue du téléphone et en cours sur l'onglet « Par lien ».
   String? _phoneReq;
 
+  /// Fiche d'addon à ouvrir sur le portail (QR du téléphone) : paramètre du lien
+  /// et nom affiché.
+  String? _portalQuery;
+  String? _portalName;
+
   /// L'application est en arrière-plan : le serveur reste arrêté.
   bool _backgrounded = false;
 
@@ -95,6 +113,8 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
       onResume: () => _backgrounded = false,
     );
     _linkUrl = widget.initialUrl;
+    _portalQuery = widget.portalQuery;
+    _portalName = widget.portalName;
     _tab =
         widget.initialTab ??
         (widget.initialUrl == null ? AddAddonTab.catalog : AddAddonTab.link);
@@ -224,7 +244,20 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
     _sync();
   }
 
+  /// « Configurer depuis le portail » : onglet du téléphone, QR vers la fiche.
+  void _openPortal(String query, String name) {
+    _select(AddAddonTab.phone);
+    setState(() {
+      _portalQuery = query;
+      _portalName = name;
+    });
+  }
+
   void _select(AddAddonTab t) {
+    if (t != AddAddonTab.phone || _tab != AddAddonTab.phone) {
+      _portalQuery = null;
+      _portalName = null;
+    }
     final id = _phoneReq;
     if (id != null && t != AddAddonTab.link) {
       _phone?.adds.resolve(id, PhoneAddState.cancelled);
@@ -329,6 +362,8 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
                       CatalogTab(
                         active: _tab == AddAddonTab.catalog,
                         onUseLink: _useLink,
+                        onConfigure: (slug, name) =>
+                            _openPortal('addon=${Uri.encodeQueryComponent(slug)}', name),
                       )
                     else
                       const SizedBox.shrink(),
@@ -359,7 +394,12 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
                     else
                       const SizedBox.shrink(),
                     if (_visited.contains(AddAddonTab.phone) && _phone != null)
-                      PhoneTab(session: _phone!, onRestart: _sync)
+                      PhoneTab(
+                        session: _phone!,
+                        onRestart: _sync,
+                        portalQuery: _portalQuery,
+                        portalName: _portalName,
+                      )
                     else
                       const SizedBox.shrink(),
                   ],

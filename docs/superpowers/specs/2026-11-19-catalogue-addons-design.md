@@ -33,3 +33,6 @@ Si le site est injoignable (hors ligne exclu, cache vide) ou si son format a cha
 
 ## Tests
 Core : fixtures HTML réelles (liste films+séries, liste sous-titres, page 2, trois fiches dont une multi-instances), cas cassés, service (cache frais/périmé/hors ligne/repli/rafraîchissement), limiteur, garde réseau. App : widget (onglets, puces, grille, installé, configuration requise + QR, choix d'instance, repli), rendu PNG comparé aux maquettes.
+
+## Installer et configurer depuis la TV (cycle d'émulateur)
+Appui sur une carte : choix d'instance si besoin, puis fiche de l'addon (TV16) avec « Installer » (sauf configuration requise), « Configurer » (page de l'addon dans l'app, TV17) et « Ou configurer sur le téléphone » (QR, option secondaire). La note de bas d'écran du catalogue est supprimée ; la grille défile dans une zone découpée entre l'en-tête et le bas de l'écran (`TvScrollClip`, appliqué aussi à la recherche, aux réglages, à Jellyfin et aux dossiers locaux).

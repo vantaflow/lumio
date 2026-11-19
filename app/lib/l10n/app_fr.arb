@@ -1415,8 +1415,6 @@
   },
   "chooseInstanceTitle": "Choisir une instance",
   "instanceNeedsSetup": "à configurer",
-  "configureOnPhoneTitle": "À configurer sur le téléphone",
-  "configureOnPhoneBody": "Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Scannez le code pour le configurer sur votre téléphone, puis collez le lien obtenu dans l'onglet « Par lien ».",
   "addonLinkHelp": "Lien manifest.json ou lien stremio://. Un lien copié sur cet appareil est proposé automatiquement.",
   "addonPreviewLabel": "APERÇU · v{version}",
   "@addonPreviewLabel": {
@@ -1445,18 +1443,14 @@
   "phoneAddWaiting": "Lien reçu du téléphone : vérifiez l'aperçu et confirmez ici.",
   "addonInstall": "Installer",
   "addonConfigure": "Configurer",
-  "addonConfigureTitle": "Configurer {name}",
-  "@addonConfigureTitle": {
+  "addonConfigurePortal": "Configurer depuis le portail",
+  "addonReconfigurePortal": "Reconfigurer depuis le portail",
+  "addonSheetRequired": "Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Le portail web du téléphone ou de l'ordinateur sert à le configurer.",
+  "addonSheetConfigurable": "Installez-le tel quel, ou choisissez vos réglages depuis le portail web.",
+  "portalAddonHint": "Ouvrez cette page sur le portail : la fiche de « {name} » s’affiche directement.",
+  "@portalAddonHint": {
     "placeholders": {
       "name": {}
     }
-  },
-  "addonOrPhone": "Ou configurer sur le téléphone",
-  "configureHelp": "OK : valider · Retour : annuler · le lien d'installation est capté automatiquement",
-  "configureUseCopied": "Utiliser le lien copié",
-  "configureNoLink": "Aucun lien d'addon dans le presse-papiers.",
-  "configureBlocked": "Page bloquée : elle sort de l'addon.",
-  "configureLoadError": "La page de configuration ne s'est pas chargée.",
-  "addonSheetRequired": "Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Configurez-le ici avec la télécommande.",
-  "addonSheetConfigurable": "Installez-le tel quel ou choisissez vos réglages avant."
+  }
 }

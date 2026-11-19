@@ -89,6 +89,8 @@ class _B implements PhoneBackend {
     page: 1,
   );
   @override
+  Future<PhoneCatalogCard?> catalogCard(String slug) async => null;
+  @override
   Future<PhoneCatalogChoice?> catalogChoice(String slug) async => null;
   @override
   Future<Uri?> reconfigureUrl(String id) async => null;

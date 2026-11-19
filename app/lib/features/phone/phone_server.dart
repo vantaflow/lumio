@@ -39,6 +39,12 @@ class PhoneAddonView {
   final bool broken;
 }
 
+/// Référence courte et NON secrète d'un addon installé (début du SHA-256 de
+/// son identifiant) : la TV l'ajoute au lien du QR (`reconf=`) pour ouvrir sa
+/// page de reconfiguration sur le portail ; jamais l'adresse installée.
+String addonPortalRef(String id) =>
+    sha256.convert(utf8.encode(id)).toString().substring(0, 12);
+
 /// Carte du catalogue telle que la voit le téléphone : les mêmes données que
 /// la TV (nom, description, logo public, étoiles/version, badge « Installé »),
 /// jamais l'adresse d'un manifest.
@@ -120,6 +126,9 @@ abstract class PhoneBackend {
     int page = 1,
     bool refresh = false,
   });
+
+  /// Carte d'un addon précis du catalogue (lien du QR de la TV).
+  Future<PhoneCatalogCard?> catalogCard(String slug);
 
   /// Adresse d'installation et page de configuration d'un addon du catalogue.
   Future<PhoneCatalogChoice?> catalogChoice(String slug);
@@ -463,6 +472,7 @@ class PhoneServer implements PhoneSession {
           for (final a in list)
             {
               'id': _opaque(a.id),
+              'ref': addonPortalRef(a.id),
               'name': a.name,
               'types': a.types,
               'health': a.health,
@@ -515,6 +525,27 @@ class PhoneServer implements PhoneSession {
               'installed': c.installed,
             },
         ],
+      });
+    }
+    if (m == 'GET' && seg.length == 3 && seg[1] == 'catalog' && seg[2] == 'one') {
+      final slug = req.uri.queryParameters['slug'] ?? '';
+      if (!RegExp(r'^[A-Za-z0-9._-]{1,80}$').hasMatch(slug)) {
+        throw _HttpError(400, 'bad_request');
+      }
+      final c = await backend.catalogCard(slug);
+      if (c == null) throw _HttpError(404, 'not_found');
+      final id = _opaque('catalog:${c.slug}');
+      _catalogSlugs[id] = c.slug;
+      return _json(req, 200, {
+        'item': {
+          'id': id,
+          'name': c.name,
+          if (c.description != null) 'description': c.description,
+          if (c.logo != null && c.logo!.scheme == 'https')
+            'logo': c.logo.toString(),
+          'meta': c.meta,
+          'installed': c.installed,
+        },
       });
     }
     if (m == 'POST' &&
