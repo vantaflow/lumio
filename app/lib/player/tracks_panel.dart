@@ -125,13 +125,20 @@ class _TracksPanelState extends State<TracksPanel> {
                             header: true,
                             child: Text(
                               l.tracksAndSubtitles,
-                              style: theme.textTheme.headlineMedium?.copyWith(
+                              style: TextStyle(
+                                fontFamily: 'Bricolage Grotesque',
                                 fontSize: 44,
                                 height: 1.15,
+                                fontWeight: FontWeight.w700,
+                                fontVariations: const [
+                                  FontVariation.weight(700),
+                                ],
+                                color: colors.text,
                               ),
                             ),
                           ),
                           TvSectionLabel(l.audio, top: 20),
+                          const SizedBox(height: 14),
                           if (audio.isEmpty) _Hint(l.noAudioTrack),
                           _Chips([
                             for (final t in audio)
@@ -143,7 +150,9 @@ class _TracksPanelState extends State<TracksPanel> {
                                 onPressed: () => c.selectAudio(t),
                               ),
                           ]),
-                          TvSectionLabel(l.subtitles, top: 16),
+                          const SizedBox(height: 28),
+                          TvSectionLabel(l.subtitles, top: 0),
+                          const SizedBox(height: 14),
                           _Chips([
                             _Chip(
                               key: const ValueKey('sub-off'),
@@ -169,7 +178,9 @@ class _TracksPanelState extends State<TracksPanel> {
                                 onPressed: () => c.selectAddonSubtitle(s),
                               ),
                           ]),
-                          TvSectionLabel(l.subtitleAppearance, top: 16),
+                          const SizedBox(height: 28),
+                          TvSectionLabel(l.subtitleAppearance, top: 0),
+                          const SizedBox(height: 14),
                           _StepRow(
                             label: l.subtitleSize,
                             value: '${_sizePercent(c.style.size)} %',
@@ -185,6 +196,7 @@ class _TracksPanelState extends State<TracksPanel> {
                                 ? () => c.setSize(sizes[sizeIndex + 1])
                                 : null,
                           ),
+                          const SizedBox(height: 12),
                           _StepRow(
                             label: l.subtitleDelay,
                             value: formatDelay(c.delayMs),
@@ -196,13 +208,14 @@ class _TracksPanelState extends State<TracksPanel> {
                             onMinus: () => c.changeDelay(-subtitleDelayStepMs),
                             onPlus: () => c.changeDelay(subtitleDelayStepMs),
                           ),
+                          const SizedBox(height: 12),
                           _ToggleRow(
                             key: const ValueKey('bg-toggle'),
                             label: l.opaqueBackground,
                             on: c.style.opaqueBackground,
                             onPressed: c.toggleBackground,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 24),
                           Align(
                             alignment: AlignmentDirectional.centerEnd,
                             child: TvButton(
@@ -263,7 +276,7 @@ class _Chips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(4),
+    padding: EdgeInsets.zero,
     child: Wrap(spacing: 12, runSpacing: 12, children: children),
   );
 }
@@ -347,6 +360,7 @@ class _StepRow extends StatelessWidget {
         height: 72,
         fontSize: 28,
         horizontalPadding: 0,
+        expand: true,
         onPressed: f,
       ),
     );

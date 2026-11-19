@@ -265,62 +265,124 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                   ),
                 ),
               ),
-              Positioned(
-                top: _manage ? 90 : 100,
-                left: 0,
-                right: 0,
-                child: Text(
-                  l.whoIsWatching,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 72,
-                    fontWeight: FontWeight.w700,
-                    fontVariations: [FontVariation.weight(700)],
-                    height: 1.15,
+              if (_manage) ...[
+                Positioned(
+                  top: 90,
+                  left: 0,
+                  right: 0,
+                  child: Text(
+                    l.whoIsWatching,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Bricolage Grotesque',
+                      fontSize: 72,
+                      fontWeight: FontWeight.w700,
+                      fontVariations: [FontVariation.weight(700)],
+                      height: 1.15,
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 290,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    clipBehavior: Clip.none,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (var i = 0; i < list.length; i++) ...[
-                          if (i > 0) SizedBox(width: gap),
-                          _ProfileTile(
-                            key: ValueKey('profile-${list[i].id}'),
-                            profile: list[i],
-                            color: _avatarColors[i % _avatarColors.length],
-                            locked: isProfileLocked(
-                              list[i],
-                              list,
-                              hasPin: _hasPin,
+                Positioned(
+                  top: 290,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      clipBehavior: Clip.none,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var i = 0; i < list.length; i++) ...[
+                            if (i > 0) SizedBox(width: gap),
+                            _ProfileTile(
+                              key: ValueKey('profile-${list[i].id}'),
+                              profile: list[i],
+                              color: _avatarColors[i % _avatarColors.length],
+                              locked: isProfileLocked(
+                                list[i],
+                                list,
+                                hasPin: _hasPin,
+                              ),
+                              manage: _manage,
+                              autofocus: remembered == null
+                                  ? i == 0
+                                  : list[i].id == remembered,
+                              onFocus: () =>
+                                  memory.remember(profilesRouteKey, list[i].id),
+                              onSelect: () => _open(list[i], list),
                             ),
-                            manage: _manage,
-                            autofocus: remembered == null
-                                ? i == 0
-                                : list[i].id == remembered,
-                            onFocus: () =>
-                                memory.remember(profilesRouteKey, list[i].id),
-                            onSelect: () => _open(list[i], list),
+                          ],
+                          if (list.length < maxProfiles) ...[
+                            if (list.isNotEmpty) SizedBox(width: gap),
+                            _AddTile(manage: _manage, onSelect: _add),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ] else
+                // TV04 : titre + avatars centrés verticalement à l'écran.
+                Positioned.fill(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l.whoIsWatching,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Bricolage Grotesque',
+                            fontSize: 72,
+                            fontWeight: FontWeight.w700,
+                            fontVariations: [FontVariation.weight(700)],
+                            height: 1.15,
                           ),
-                        ],
-                        if (list.length < maxProfiles) ...[
-                          if (list.isNotEmpty) SizedBox(width: gap),
-                          _AddTile(manage: _manage, onSelect: _add),
-                        ],
+                        ),
+                        const SizedBox(height: 107),
+                        Center(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            clipBehavior: Clip.none,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (var i = 0; i < list.length; i++) ...[
+                                  if (i > 0) SizedBox(width: gap),
+                                  _ProfileTile(
+                                    key: ValueKey('profile-${list[i].id}'),
+                                    profile: list[i],
+                                    color:
+                                        _avatarColors[i % _avatarColors.length],
+                                    locked: isProfileLocked(
+                                      list[i],
+                                      list,
+                                      hasPin: _hasPin,
+                                    ),
+                                    manage: _manage,
+                                    autofocus: remembered == null
+                                        ? i == 0
+                                        : list[i].id == remembered,
+                                    onFocus: () => memory.remember(
+                                      profilesRouteKey,
+                                      list[i].id,
+                                    ),
+                                    onSelect: () => _open(list[i], list),
+                                  ),
+                                ],
+                                if (list.length < maxProfiles) ...[
+                                  if (list.isNotEmpty) SizedBox(width: gap),
+                                  _AddTile(manage: _manage, onSelect: _add),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ),
               if (_manage) ...[
                 Positioned(
                   top: 760,
@@ -576,11 +638,25 @@ class _AddTile extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: c.surface,
                 ),
-                child: LumioIconView(
-                  LumioIcon.plus,
-                  size: 72,
-                  color: c.textMuted,
-                ),
+                // TV04 : signe « + » en police de titre (72) ; TV35 : icône SVG.
+                child: manage
+                    ? LumioIconView(
+                        LumioIcon.plus,
+                        size: 72,
+                        color: c.textMuted,
+                      )
+                    : Center(
+                        child: Text(
+                          '+',
+                          style: TextStyle(
+                            fontFamily: 'Bricolage Grotesque',
+                            fontSize: 72,
+                            fontWeight: FontWeight.w700,
+                            fontVariations: const [FontVariation.weight(700)],
+                            color: c.textMuted,
+                          ),
+                        ),
+                      ),
               ),
             ),
           ),

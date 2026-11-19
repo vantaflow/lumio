@@ -1804,10 +1804,12 @@ class _ProgressBarState extends State<_ProgressBar> {
                     onHorizontalDragUpdate: (d) =>
                         _seekFromDx(d.localPosition.dx, w),
                     child: SizedBox(
-                      height: math.max(
-                        handle + 2 * lumioFocusWidth,
-                        lumioTouchMin,
-                      ),
+                      height: widget.big
+                          ? 36
+                          : math.max(
+                              handle + 2 * lumioFocusWidth,
+                              lumioTouchMin,
+                            ),
                       child: Stack(
                         alignment: AlignmentDirectional.centerStart,
                         clipBehavior: Clip.none,
