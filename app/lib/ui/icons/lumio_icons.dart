@@ -41,6 +41,14 @@ enum LumioIcon {
   ),
   pause('<p M8 5v14M16 5v14>'),
   replay('<p M5 12a7 7 0 107-7H8M8 2L5 5l3 3>'),
+  refresh('<p M4 12a8 8 0 0114-5M20 12a8 8 0 01-14 5M18 3v4h-4M6 21v-4h4>'),
+  folder(
+    '<p M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z>',
+  ),
+  trash('<p M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13>'),
+  clapper('<p M4 5h16v14H4zM4 9h16M8 5v4M12 5v4M16 5v4>'),
+  keyboard('<p M3 7h18v10H3zM7 11h.01M11 11h.01M15 11h.01M7 14h10>'),
+  inbox('<p M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z>'),
   alert('<p M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5v.5>'),
 
   /// Variantes pleines du lecteur (TV07 : pause = deux barres arrondies).

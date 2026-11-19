@@ -4,6 +4,7 @@ import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 
 /// Voile des pop-ups (maquettes P09/P13 : rgba(6,8,12,.76)).
@@ -259,4 +260,53 @@ class _ConfirmButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Message en bas d'écran des maquettes (`.snack`) : icône + texte, fond
+/// #2A3340, rayon 18, centré à 64 du bas.
+void showTvSnack(BuildContext context, String message, {bool error = false}) {
+  final c = context.lumio;
+  ScaffoldMessenger.maybeOf(context)
+    ?..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        padding: EdgeInsets.zero,
+        margin: const EdgeInsets.only(bottom: 64, left: 240, right: 240),
+        content: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 22),
+            decoration: BoxDecoration(
+              color: c.surfaceFocus,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LumioIconView(
+                  error ? LumioIcon.alert : LumioIcon.check,
+                  size: 32,
+                  color: error ? c.error : c.accent,
+                ),
+                const SizedBox(width: 14),
+                Flexible(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      fontVariations: const [FontVariation.weight(600)],
+                      color: c.text,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
 }

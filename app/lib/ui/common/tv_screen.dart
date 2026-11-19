@@ -380,13 +380,23 @@ class TvSwitchTile extends StatelessWidget {
 class TvIconButton extends StatelessWidget {
   const TvIconButton({
     super.key,
-    required this.icon,
+    this.icon,
+    this.lumioIcon,
+    this.iconColor,
+    this.background,
     required this.label,
     required this.onPressed,
     this.size = 72,
   });
 
-  final IconData icon;
+  final IconData? icon;
+
+  /// Icône SVG des maquettes (prioritaire sur [icon]).
+  final LumioIcon? lumioIcon;
+  final Color? iconColor;
+
+  /// Fond du rond (par défaut #2A3340 ; #0E1116 dans les lignes).
+  final Color? background;
   final String label;
   final VoidCallback? onPressed;
   final double size;
@@ -411,9 +421,15 @@ class TvIconButton extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: c.surfaceFocus,
+              color: background ?? c.surfaceFocus,
             ),
-            child: Icon(icon, size: size * 0.5, color: c.text),
+            child: lumioIcon != null
+                ? LumioIconView(
+                    lumioIcon!,
+                    size: size * 0.45,
+                    color: iconColor ?? c.text,
+                  )
+                : Icon(icon, size: size * 0.5, color: iconColor ?? c.text),
           ),
         ),
       ),

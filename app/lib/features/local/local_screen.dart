@@ -15,8 +15,11 @@ import 'package:lumio/player/play_router.dart' show LocalFileSource;
 import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
-import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart'
     show MetaPreview, StreamItem, UnsafeUrlException;
@@ -29,9 +32,11 @@ import 'package:lumio_core/lumio_core.dart'
 Future<int?> addLocalFolderFlow(BuildContext context, WidgetRef ref) async {
   final l = context.l10n;
   final messenger = ScaffoldMessenger.maybeOf(context);
-  void tell(String m) => messenger
-    ?..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(m)));
+  void tell(String m, {bool error = false}) {
+    if (messenger != null && context.mounted) {
+      showTvSnack(context, m, error: error);
+    }
+  }
 
   bool granted;
   try {
@@ -40,7 +45,7 @@ Future<int?> addLocalFolderFlow(BuildContext context, WidgetRef ref) async {
     granted = false;
   }
   if (!granted) {
-    tell(l.localPermissionDenied);
+    tell(l.localPermissionDenied, error: true);
     return null;
   }
   if (!context.mounted) return null;
@@ -50,27 +55,38 @@ Future<int?> addLocalFolderFlow(BuildContext context, WidgetRef ref) async {
   if (Platform.isAndroid) {
     // Sur Android le sélecteur n'atteint que le stockage interne : on laisse
     // aussi saisir un chemin (carte SD, clé USB).
-    final choice = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(ctx.l10n.localAddFolder),
+    final choice = await showTvPanel<bool>(
+      context,
+      builder: (ctx) => TvPanel(
+        title: ctx.l10n.localAddFolder,
+        width: 820,
+        onBack: () => Navigator.pop(ctx),
         children: [
-          FocusRing(
-            child: ListTile(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: TvTile(
               key: const ValueKey('local-choose'),
               autofocus: true,
-              leading: const Icon(Icons.folder_open),
-              title: Text(ctx.l10n.localChooseFolder),
-              onTap: () => Navigator.pop(ctx, true),
+              minHeight: 104,
+              color: ctx.lumio.surfaceFocus,
+              semanticLabel: ctx.l10n.localChooseFolder,
+              onSelect: () => Navigator.pop(ctx, true),
+              child: _ChoiceRow(
+                icon: LumioIcon.folder,
+                title: ctx.l10n.localChooseFolder,
+              ),
             ),
           ),
-          FocusRing(
-            child: ListTile(
-              key: const ValueKey('local-type'),
-              leading: const Icon(Icons.keyboard),
-              title: Text(ctx.l10n.localTypePath),
-              subtitle: Text(ctx.l10n.localSdNote),
-              onTap: () => Navigator.pop(ctx, false),
+          TvTile(
+            key: const ValueKey('local-type'),
+            minHeight: 104,
+            color: ctx.lumio.bg,
+            semanticLabel: ctx.l10n.localTypePath,
+            onSelect: () => Navigator.pop(ctx, false),
+            child: _ChoiceRow(
+              icon: LumioIcon.keyboard,
+              title: ctx.l10n.localTypePath,
+              subtitle: ctx.l10n.localSdNote,
             ),
           ),
         ],
@@ -85,7 +101,7 @@ Future<int?> addLocalFolderFlow(BuildContext context, WidgetRef ref) async {
       if (path == null) return null; // annulé
     } on Object {
       typed = true;
-      tell(l.localPickerUnavailable);
+      tell(l.localPickerUnavailable, error: true);
     }
   }
   if (typed) {
@@ -103,9 +119,9 @@ Future<int?> addLocalFolderFlow(BuildContext context, WidgetRef ref) async {
     );
     return n;
   } on LocalFolderForbiddenException {
-    tell(l.localFolderForbidden);
+    tell(l.localFolderForbidden, error: true);
   } on LocalFolderOverlapException {
-    tell(l.localFolderOverlap);
+    tell(l.localFolderOverlap, error: true);
   } on LocalScanException catch (e) {
     tell(switch (e.failure) {
       LocalScanFailure.missing => l.localFolderMissing,
@@ -118,13 +134,13 @@ Future<int?> addLocalFolderFlow(BuildContext context, WidgetRef ref) async {
   return null;
 }
 
-Future<String?> _askPath(BuildContext context) => showDialog<String>(
-  context: context,
+Future<String?> _askPath(BuildContext context) => showTvPanel<String>(
+  context,
   builder: (ctx) => _TextPrompt(
     title: ctx.l10n.localPathTitle,
     label: ctx.l10n.localPathLabel,
     hint: ctx.l10n.localPathHint,
-    confirmLabel: ctx.l10n.localAddFolder,
+    confirmLabel: ctx.l10n.add,
     fieldKey: const ValueKey('local-path'),
     confirmKey: const ValueKey('local-path-ok'),
   ),
@@ -168,35 +184,128 @@ class _TextPromptState extends State<_TextPrompt> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.title),
-    content: TvTextField(
-      key: widget.fieldKey,
-      controller: _ctl,
-      autofocus: true,
-      maxLength: widget.maxLength,
-      decoration: InputDecoration(
-        labelText: widget.label,
-        hintText: widget.hint,
-        helperText: widget.helper,
-      ),
-      onSubmitted: (v) => Navigator.pop(context, v),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: Text(context.l10n.cancel),
-      ),
-      if (widget.resetLabel != null)
-        TextButton(
-          key: widget.resetKey,
-          onPressed: () => Navigator.pop(context, ''),
-          child: Text(widget.resetLabel!),
+  Widget build(BuildContext context) {
+    final c = context.lumio;
+    final muted = TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 24,
+      fontWeight: FontWeight.w600,
+      fontVariations: const [FontVariation.weight(600)],
+      color: c.textMuted,
+    );
+    // Maquette P08 (droite) : étiquette 24, champ de 80, aide 24, boutons.
+    return TvPanel(
+      title: widget.title,
+      width: 820,
+      onBack: () => Navigator.pop(context),
+      actions: [
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 16,
+              children: [
+                TvButton(
+                  label: context.l10n.cancel,
+                  kind: TvButtonKind.ghost,
+                  height: 76,
+                  fontSize: 28,
+                  horizontalPadding: 40,
+                  onPressed: () => Navigator.pop(context),
+                ),
+                if (widget.resetLabel != null)
+                  TvButton(
+                    key: widget.resetKey,
+                    label: widget.resetLabel!,
+                    kind: TvButtonKind.secondary,
+                    height: 76,
+                    fontSize: 28,
+                    horizontalPadding: 40,
+                    onPressed: () => Navigator.pop(context, ''),
+                  ),
+                TvButton(
+                  key: widget.confirmKey,
+                  label: widget.confirmLabel,
+                  height: 76,
+                  fontSize: 28,
+                  horizontalPadding: 40,
+                  onPressed: () => Navigator.pop(context, _ctl.text),
+                ),
+              ],
+            ),
+          ),
         ),
-      FilledButton(
-        key: widget.confirmKey,
-        onPressed: () => Navigator.pop(context, _ctl.text),
-        child: Text(widget.confirmLabel),
+      ],
+      children: [
+        Text(widget.label, style: muted),
+        const SizedBox(height: 8),
+        FocusRing(
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            height: 80,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              color: c.bg,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: c.outline, width: 2),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TvTextField(
+                    key: widget.fieldKey,
+                    controller: _ctl,
+                    autofocus: true,
+                    maxLength: widget.maxLength,
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 30,
+                      fontWeight: FontWeight.w600,
+                      fontVariations: [FontVariation.weight(600)],
+                    ),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      counterText: '',
+                      isCollapsed: true,
+                      hintText: widget.hint,
+                      hintStyle: TextStyle(color: c.textMuted),
+                    ),
+                    onSubmitted: (v) => Navigator.pop(context, v),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (widget.helper != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(widget.helper!, style: muted.copyWith(fontSize: 24)),
+          ),
+      ],
+    );
+  }
+}
+
+class _ChoiceRow extends StatelessWidget {
+  const _ChoiceRow({required this.icon, required this.title, this.subtitle});
+
+  final LumioIcon icon;
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      LumioIconView(icon, size: 40, color: context.lumio.secondary),
+      const SizedBox(width: 24),
+      Expanded(
+        child: TvTileText(title: title, subtitle: subtitle, maxLines: 3),
       ),
     ],
   );
@@ -212,8 +321,8 @@ Future<void> showFixTitleDialog(
   LocalItem item,
 ) async {
   final library = ref.read(localLibraryProvider);
-  final result = await showDialog<String>(
-    context: context,
+  final result = await showTvPanel<String>(
+    context,
     builder: (ctx) => _TextPrompt(
       title: ctx.l10n.localFixTitle,
       label: ctx.l10n.localFixLabel,
@@ -245,10 +354,7 @@ Future<void> playLocalItem(
 }) async {
   final l = context.l10n;
   final navigator = Navigator.of(context);
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  void tell(String m) => messenger
-    ?..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(m)));
+  void tell(String m) => showTvSnack(context, m, error: true);
   if (!allowed) {
     tell(l.notAllowedForProfile);
     return;
@@ -311,55 +417,35 @@ class LocalTitleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.lumio;
-    // Teinte stable selon le titre : ambre ou turquoise (jamais de violet).
-    final tint = title.codeUnits.fold<int>(0, (a, b) => a + b).isEven
-        ? c.accent
-        : c.secondary;
+    // Maquette TV31 : dégradé turquoise vers le fond, titre en bas à gauche.
     return Semantics(
       excludeSemantics: true,
       child: DecoratedBox(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [c.surfaceRaised, c.bgAlt],
+            begin: Alignment(-0.45, -1),
+            end: Alignment(0.45, 1.2),
+            colors: [Color(0xFF2E6F7A), Color(0xFF10151B)],
           ),
         ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            PositionedDirectional(
-              start: 0,
-              end: 0,
-              top: 0,
-              child: ColoredBox(color: tint, child: const SizedBox(height: 6)),
-            ),
-            Padding(
-              padding: EdgeInsets.all(
-                large ? LumioSpacing.lg : LumioSpacing.md,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.movie_outlined,
-                    size: large ? 56 : 36,
-                    color: tint,
-                  ),
-                  const SizedBox(height: LumioSpacing.sm),
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    maxLines: large ? 6 : 4,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: c.text),
-                  ),
-                ],
+        child: Padding(
+          padding: EdgeInsets.all(large ? 16 : LumioSpacing.md),
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: Text(
+              title,
+              maxLines: large ? 6 : 4,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Bricolage Grotesque',
+                fontSize: large ? 26 : 22,
+                height: 1.15,
+                fontWeight: FontWeight.w700,
+                fontVariations: const [FontVariation.weight(700)],
+                color: c.text,
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -373,18 +459,6 @@ Future<void> openLocalDetail(BuildContext context, MetaPreview item) =>
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => LocalDetailScreen(id: item.id)),
     );
-
-String _size(int bytes) {
-  if (bytes <= 0) return '';
-  const units = ['o', 'Ko', 'Mo', 'Go'];
-  var v = bytes.toDouble();
-  var i = 0;
-  while (v >= 1024 && i < units.length - 1) {
-    v /= 1024;
-    i++;
-  }
-  return '${v.toStringAsFixed(i < 2 ? 0 : 1)} ${units[i]}';
-}
 
 /// Fiche : titre (corrigeable), lecture. Les fichiers locaux n'ont ni
 /// certification ni affiche : un profil enfant n'y a pas accès.
@@ -411,14 +485,10 @@ class LocalDetailScreen extends ConsumerWidget {
     } else {
       body = _Body(item: item);
     }
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(allowed ? item?.displayTitle ?? '' : ''),
-          backgroundColor: Colors.transparent,
-        ),
-        body: body,
-      ),
+    // Maquette TV31 : retour rond + titre de 56, puis affiche et texte.
+    return TvScreen(
+      title: allowed ? item?.displayTitle ?? '' : '',
+      child: body,
     );
   }
 }
@@ -431,74 +501,96 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
-    final theme = Theme.of(context);
     final c = context.lumio;
-    final meta = [
-      ?item.episodeLabel,
-      ?item.year?.toString(),
-      if (_size(item.sizeBytes).isNotEmpty) _size(item.sizeBytes),
-    ].join(' · ');
+    final detected = [item.title, ?item.year?.toString()].join(' · ');
+    TextStyle style(
+      double size,
+      Color color, [
+      FontWeight w = FontWeight.w400,
+    ]) => TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: size,
+      height: 1.35,
+      fontWeight: w,
+      fontVariations: [FontVariation.weight(w.value.toDouble())],
+      color: color,
+    );
     return ListView(
-      padding: const EdgeInsets.all(LumioSpacing.lg),
+      padding: const EdgeInsets.only(top: 24),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 200,
-              height: 300,
+              width: 360,
+              height: 540,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(LumioRadius.md),
+                borderRadius: BorderRadius.circular(18),
                 child: LocalTitleCard(title: item.displayTitle, large: true),
               ),
             ),
-            const SizedBox(width: LumioSpacing.lg),
+            const SizedBox(width: 64),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.displayTitle, style: theme.textTheme.headlineSmall),
-                  if (meta.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: LumioSpacing.xs),
-                      child: Text(
-                        meta,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: c.textMuted,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.displayTitle,
+                      style: const TextStyle(
+                        fontFamily: 'Bricolage Grotesque',
+                        fontSize: 64,
+                        fontWeight: FontWeight.w700,
+                        fontVariations: [FontVariation.weight(700)],
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      l.localDetected(detected),
+                      style: style(28, c.textMuted),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(item.fileName, style: style(24, c.textMuted)),
+                    const SizedBox(height: 34),
+                    Row(
+                      children: [
+                        TvButton(
+                          key: const ValueKey('local-play'),
+                          autofocus: true,
+                          label: l.play,
+                          height: 76,
+                          fontSize: 28,
+                          horizontalPadding: 40,
+                          icon: LumioIconView(
+                            LumioIcon.play,
+                            size: 32,
+                            color: c.onAccent,
+                          ),
+                          onPressed: () =>
+                              playLocalFromWidget(context, ref, item),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                        TvButton(
+                          key: const ValueKey('local-fix'),
+                          label: l.localFixTitle,
+                          kind: TvButtonKind.secondary,
+                          height: 76,
+                          fontSize: 28,
+                          horizontalPadding: 40,
+                          icon: LumioIconView(
+                            LumioIcon.pencil,
+                            size: 32,
+                            color: c.text,
+                          ),
+                          onPressed: () =>
+                              showFixTitleDialog(context, ref, item),
+                        ),
+                      ],
                     ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: LumioSpacing.xs),
-                    child: Text(
-                      item.fileName,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: c.textMuted,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: LumioSpacing.lg),
-                  Wrap(
-                    spacing: LumioSpacing.sm,
-                    runSpacing: LumioSpacing.sm,
-                    children: [
-                      FilledButton.icon(
-                        key: const ValueKey('local-play'),
-                        autofocus: true,
-                        onPressed: () =>
-                            playLocalFromWidget(context, ref, item),
-                        icon: const Icon(Icons.play_arrow),
-                        label: Text(l.play),
-                      ),
-                      OutlinedButton.icon(
-                        key: const ValueKey('local-fix'),
-                        onPressed: () => showFixTitleDialog(context, ref, item),
-                        icon: const Icon(Icons.edit_outlined),
-                        label: Text(l.localFixTitle),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -523,7 +615,6 @@ class _LocalFoldersScreenState extends ConsumerState<LocalFoldersScreen> {
   bool _scanning = false;
 
   Future<void> _scanAll() async {
-    final messenger = ScaffoldMessenger.of(context);
     final l = context.l10n;
     setState(() => _scanning = true);
     try {
@@ -535,31 +626,23 @@ class _LocalFoldersScreenState extends ConsumerState<LocalFoldersScreen> {
         for (final f in await library.grantedFolders())
           if (library.isIncomplete(f)) f,
       ].isNotEmpty;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              incomplete ? l.localScanIncomplete : l.localScanDone(n),
-            ),
-          ),
+      if (mounted) {
+        showTvSnack(
+          context,
+          incomplete ? l.localScanIncomplete : l.localScanDone(n),
         );
+      }
     } on Object {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l.localScanFailed)));
+      if (mounted) showTvSnack(context, l.localScanFailed, error: true);
     } finally {
       if (mounted) setState(() => _scanning = false);
     }
   }
 
   Future<void> _remove(LocalFolder f) async {
-    final messenger = ScaffoldMessenger.of(context);
     final text = context.l10n.localFolderRemoved;
     await ref.read(localLibraryProvider).removeFolder(f.path);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(text)));
+    if (mounted) showTvSnack(context, text);
   }
 
   @override
@@ -568,106 +651,212 @@ class _LocalFoldersScreenState extends ConsumerState<LocalFoldersScreen> {
     final folders = ref.watch(localFoldersProvider);
     final items = ref.watch(localItemsProvider).value ?? const <LocalItem>[];
     final c = context.lumio;
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l.localFolders),
-          actions: [
-            if (folders.value?.isNotEmpty ?? false)
-              IconButton(
-                key: const ValueKey('local-scan'),
-                tooltip: l.localScanNow,
-                onPressed: _scanning ? null : _scanAll,
-                icon: _scanning
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
-              ),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: LumioSpacing.sm),
-              child: FilledButton.icon(
-                key: const ValueKey('local-add'),
-                autofocus: true,
-                onPressed: () => addLocalFolderFlow(context, ref),
-                icon: const Icon(Icons.add),
-                label: Text(l.localAddFolder),
-              ),
-            ),
-          ],
-        ),
-        body: folders.when(
-          loading: () => const StateView.loading(),
-          error: (_, _) => StateView.error(
-            message: l.localScanFailed,
-            onRetry: () => ref.invalidate(localFoldersProvider),
+    return TvScreen(
+      title: l.localFolders,
+      subtitle: l.localSubtitle,
+      actions: [
+        if (folders.value?.isNotEmpty ?? false)
+          TvIconButton(
+            key: const ValueKey('local-scan'),
+            lumioIcon: LumioIcon.refresh,
+            label: l.localScanNow,
+            onPressed: _scanning ? null : _scanAll,
           ),
-          data: (list) {
-            if (list.isEmpty) return StateView.empty(message: l.localEmpty);
-            return ListView(
-              padding: const EdgeInsets.all(LumioSpacing.md),
-              children: [
-                if (_scanning)
-                  Semantics(
-                    liveRegion: true,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: LumioSpacing.sm),
-                      child: Text(l.localScanning),
+        TvButton(
+          key: const ValueKey('local-add'),
+          autofocus: true,
+          label: l.localAddFolder,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          icon: LumioIconView(LumioIcon.plus, size: 32, color: c.onAccent),
+          onPressed: () => addLocalFolderFlow(context, ref),
+        ),
+      ],
+      child: folders.when(
+        loading: () => const StateView.loading(),
+        error: (_, _) => StateView.error(
+          message: l.localScanFailed,
+          onRetry: () => ref.invalidate(localFoldersProvider),
+        ),
+        data: (list) {
+          if (list.isEmpty) {
+            // Maquette TV49 : pastille de 96, message de 34, à 420 du haut.
+            return Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 268),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 96,
+                      height: 96,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: c.surface,
+                      ),
+                      child: LumioIconView(
+                        LumioIcon.inbox,
+                        size: 48,
+                        color: c.textMuted,
+                      ),
                     ),
-                  ),
-                for (final f in list)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: LumioSpacing.sm),
-                    child: FocusRing(
-                      child: ListTile(
-                        key: ValueKey('local-folder:${f.path}'),
-                        leading: const Icon(Icons.folder_outlined),
-                        title: Text(f.path),
-                        subtitle: Text(
-                          l.localVideoCount(
-                            items.where((i) => i.folderPath == f.path).length,
+                    const SizedBox(height: 24),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: Text(
+                        l.localEmpty,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 34,
+                          height: 1.4,
+                          color: Color(0xFFC9D0DA),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return ListView(
+            clipBehavior: Clip.none,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            children: [
+              if (_scanning)
+                Semantics(
+                  liveRegion: true,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 4,
+                            color: c.accent,
+                            backgroundColor: c.outline,
                           ),
                         ),
-                        trailing: IconButton(
+                        const SizedBox(width: 14),
+                        Text(
+                          l.localScanning,
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 28,
+                            height: 1.4,
+                            color: c.accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              for (final f in list)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Container(
+                    key: ValueKey('local-folder:${f.path}'),
+                    constraints: const BoxConstraints(minHeight: 96),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: c.surface,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Row(
+                      children: [
+                        LumioIconView(
+                          LumioIcon.folder,
+                          size: 40,
+                          color: c.secondary,
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: TvTileText(
+                            title: f.path,
+                            subtitle: l.localVideoCount(
+                              items.where((i) => i.folderPath == f.path).length,
+                            ),
+                          ),
+                        ),
+                        TvIconButton(
                           key: ValueKey('local-remove:${f.path}'),
-                          tooltip: l.localRemoveFolder(f.path),
+                          lumioIcon: LumioIcon.trash,
+                          iconColor: c.error,
+                          background: c.bg,
+                          label: l.localRemoveFolder(f.path),
                           onPressed: () => _remove(f),
-                          icon: Icon(Icons.delete_outline, color: c.error),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                const SizedBox(height: LumioSpacing.md),
-                for (final i in items)
-                  FocusRing(
-                    child: ListTile(
-                      key: ValueKey('local-item:${i.id}'),
-                      leading: const Icon(Icons.movie_outlined),
-                      title: Text(i.displayTitle),
-                      subtitle: Text(
-                        [?i.episodeLabel, i.fileName].join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => LocalDetailScreen(id: i.id),
+                ),
+              for (final i in items)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 96),
+                    padding: const EdgeInsetsDirectional.only(end: 32),
+                    decoration: BoxDecoration(
+                      color: c.surface,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TvTile(
+                            key: ValueKey('local-item:${i.id}'),
+                            minHeight: 96,
+                            color: Colors.transparent,
+                            semanticLabel: i.displayTitle,
+                            onSelect: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => LocalDetailScreen(id: i.id),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                LumioIconView(
+                                  LumioIcon.clapper,
+                                  size: 40,
+                                  color: c.textMuted,
+                                ),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  child: TvTileText(
+                                    title: i.displayTitle,
+                                    subtitle: [
+                                      ?i.episodeLabel,
+                                      i.fileName,
+                                    ].join(' · '),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      trailing: IconButton(
-                        key: ValueKey('local-edit:${i.id}'),
-                        tooltip: l.localFixTitle,
-                        onPressed: () => showFixTitleDialog(context, ref, i),
-                        icon: const Icon(Icons.edit_outlined),
-                      ),
+                        const SizedBox(width: 12),
+                        TvIconButton(
+                          key: ValueKey('local-edit:${i.id}'),
+                          lumioIcon: LumioIcon.pencil,
+                          background: c.bg,
+                          label: l.localFixTitle,
+                          onPressed: () => showFixTitleDialog(context, ref, i),
+                        ),
+                      ],
                     ),
                   ),
-              ],
-            );
-          },
-        ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

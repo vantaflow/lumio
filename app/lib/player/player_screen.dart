@@ -1392,7 +1392,8 @@ class _Controls extends StatelessWidget {
                     onSeekBy: onSeekBy,
                     onSeekTo: onSeekTo,
                   ),
-                  const SizedBox(height: 28),
+                  // 22 + demi-ligne de 48 = 28 + demi-ligne de 36 (maquette).
+                  const SizedBox(height: 22),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -1805,7 +1806,7 @@ class _ProgressBarState extends State<_ProgressBar> {
                         _seekFromDx(d.localPosition.dx, w),
                     child: SizedBox(
                       height: widget.big
-                          ? 36
+                          ? 48
                           : math.max(
                               handle + 2 * lumioFocusWidth,
                               lumioTouchMin,

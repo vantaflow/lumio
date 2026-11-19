@@ -1050,5 +1050,6 @@
   "nextShort": "Next",
   "playbackSpeed": "Speed {rate}×",
   "castShort": "Cast",
-  "partyShort": "Together"
+  "partyShort": "Together",
+  "localSubtitle": "Videos stored on this device"
 }

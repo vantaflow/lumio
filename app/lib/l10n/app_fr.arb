@@ -1279,5 +1279,6 @@
     }
   },
   "castShort": "Diffuser",
-  "partyShort": "Ensemble"
+  "partyShort": "Ensemble",
+  "localSubtitle": "Les vidéos stockées sur cet appareil"
 }

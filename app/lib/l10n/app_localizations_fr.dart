@@ -2266,4 +2266,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get partyShort => 'Ensemble';
+
+  @override
+  String get localSubtitle => 'Les vidéos stockées sur cet appareil';
 }

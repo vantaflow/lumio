@@ -3859,6 +3859,12 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ensemble'**
   String get partyShort;
+
+  /// No description provided for @localSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les vidéos stockées sur cet appareil'**
+  String get localSubtitle;
 }
 
 class _AppLocalizationsDelegate

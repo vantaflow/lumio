@@ -95,6 +95,10 @@ class _H {
     if (profile != null) {
       container.read(currentProfileProvider.notifier).select(profile);
     }
+    // Écran TV de la maquette (1920 x 1080).
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
