@@ -231,6 +231,7 @@ class PlaybackLauncher {
                     url: s.url,
                     lang: s.lang,
                     addonId: a.storageId,
+                    addonName: a.manifest.name,
                   ),
               ],
             )

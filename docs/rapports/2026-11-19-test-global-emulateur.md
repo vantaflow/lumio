@@ -58,3 +58,15 @@ Correctifs livrés (commit « catalogue Officiels, titre mémorisé, lecteur 6 s
 3. Carte du catalogue : le badge « Installé » chevauche un nom long (« OpenSubtitles v3 »).
 4. Portail : « Changer les réglages » s'affiche aussi pour un addon sans page de réglage (message « pas de page de réglage » au clic).
 5. Fiche de lecture : le titre du lecteur est le nom du flux (« Flux de test (contenu libre) ») et non celui du film.
+
+
+## Passe 3 : correctifs (code livré, vérification sur émulateur INTERROMPUE)
+L'émulateur emulator-5580 a disparu d'adb (`adb devices` vide) juste après l'installation de l'APK corrigé ; conformément à la consigne il n'a pas été relancé. Étapes F, G, H, I et titres variés : NON JOUÉES dans cette passe.
+
+Correctifs (tests verts : core 531, app 741, analyze et format propres) :
+- a. Cause établie par lecture de media_kit 1.2.6 : tout message d'erreur libmpv de préfixe cplayer, stream, file, vd ou ad est relayé comme erreur du lecteur ; un refus d'ajout de sous-titre (« Can not open external file ») faisait donc passer le lecteur en « La lecture a échoué ». Correctif : `isIgnorableEngineError` (sous-titres) ignoré, plus journal `LUMIO_PLAYER {"event":"engine_error"}` sans adresse. À confirmer sur émulateur (le correctif n'a pas pu être revérifié ; une relecture « Reprendre » de Tenzing échouait aussi juste avant, cause non établie faute de journal).
+- b. Libellés « Langue · Addon [n°] » (SubtitleItem.addonName).
+- c. « Continuer » et héros se redécrivent quand les addons changent.
+- d. Badge « Installé » placé sur la ligne de méta, plus de chevauchement.
+- e. Portail : `configurable` (behaviorHints) ; bouton masqué seulement si le manifeste dit non (inconnu = affiché).
+- f. Titre du lecteur = film ou « Série · SxEy » ; sous-titre = source, qualité, langue.

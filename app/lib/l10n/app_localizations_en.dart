@@ -315,9 +315,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subtitlesOff => 'Off';
 
   @override
-  String addonSubtitle(Object lang) {
-    return 'Addon · $lang';
+  String subtitleLabel(String lang, String source) {
+    return '$lang · $source';
   }
+
+  @override
+  String subtitleLabelN(String lang, String source, int n) {
+    return '$lang · $source $n';
+  }
+
+  @override
+  String get langUnknown => 'Unknown language';
 
   @override
   String get subtitleDelay => 'Subtitle delay';
@@ -2515,7 +2523,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneStep2 => 'Scan the code: this TV\'s Lumio page opens';
 
   @override
-  String get phoneStep3 => 'Pick an addon, tap Install, then confirm here on the TV';
+  String get phoneStep3 =>
+      'Pick an addon, tap Install, then confirm here on the TV';
 
   @override
   String get phoneOrType => 'Or type in the phone\'s browser';

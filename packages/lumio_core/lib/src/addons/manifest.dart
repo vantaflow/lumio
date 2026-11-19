@@ -90,6 +90,7 @@ class AddonManifest {
     this.description,
     this.logo,
     this.idPrefixes,
+    this.configurable,
     this.warnings = const [],
   });
 
@@ -103,6 +104,10 @@ class AddonManifest {
   final List<CatalogDecl> catalogs;
   final List<String>? idPrefixes;
   final Uri transportUrl;
+
+  /// L'addon a une page de réglage (`behaviorHints.configurable` ou
+  /// `configurationRequired`) ; `null` quand le manifeste ne le dit pas.
+  final bool? configurable;
 
   /// Anomalies tolérées (version non semver, catalogue ignoré…).
   final List<String> warnings;
@@ -225,6 +230,12 @@ class AddonManifest {
       }
     }
 
+    final hints = json['behaviorHints'];
+    final bool? configurable = hints is Map
+        ? (hints['configurable'] == true ||
+              hints['configurationRequired'] == true)
+        : null;
+
     return AddonManifest(
       id: id,
       version: version,
@@ -238,6 +249,7 @@ class AddonManifest {
       catalogs: catalogs,
       idPrefixes: _optStringList(json['idPrefixes']),
       transportUrl: transportUrl,
+      configurable: configurable,
       warnings: warnings,
     );
   }

@@ -387,5 +387,6 @@ class AddonRepository {
         },
     ],
     'idPrefixes': ?m.idPrefixes,
+    'behaviorHints': {'configurable': m.configurable ?? false},
   };
 }

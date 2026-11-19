@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -16,7 +17,11 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:lumio/player/next_episode_overlay.dart' show parseCreditsStart;
 
 export 'package:lumio/player/playback_report.dart'
-    show PlaybackReport, explainFailure;
+    show
+        PlaybackReport,
+        explainFailure,
+        isIgnorableEngineError,
+        redactEngineMessage;
 
 /// État de lecture exposé à l'écran.
 enum PlayerPhase { idle, opening, playing, paused, buffering, failed, ended }
@@ -276,6 +281,14 @@ class PlayerController {
     // Le moteur signale aussi des avertissements bénins après une image.
     if (_opened && message.isEmpty) return;
     if (!_gate.acceptsEngine) return; // erreur d'une source abandonnée
+    // Journal de diagnostic (jamais d'adresse).
+    // ignore: avoid_print
+    print(
+      'LUMIO_PLAYER {"event":"engine_error","opened":$_opened,"msg":'
+      '${jsonEncode(redactEngineMessage(message))}}',
+    );
+    // Un sous-titre refusé n'est pas un échec de lecture.
+    if (isIgnorableEngineError(message)) return;
     _fail(
       explainFailure(
         message,

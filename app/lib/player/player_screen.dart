@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/cast/cast_button.dart';
 import 'package:lumio/features/detail/streams_list.dart' show qualityLabel;
+import 'package:lumio/features/home/continue_playback.dart' show episodeLabel;
 import 'package:lumio/features/cast/player_cast.dart';
 import 'package:lumio/features/party/party_providers.dart';
 import 'package:lumio/features/party/party_screen.dart';
@@ -106,6 +107,15 @@ String formatClock(Duration d) {
   final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
   final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
   return h > 0 ? '$h:$m:$s' : '${d.inMinutes}:$s';
+}
+
+/// Titre affiché par le lecteur : celui du film (ou « Série · SxEy »), pas le
+/// nom du flux ; [fallback] (nom du flux) quand la fiche est inconnue.
+String playerTitle(Meta? meta, String? videoId, String fallback) {
+  final name = meta?.name.trim() ?? '';
+  if (meta == null || name.isEmpty) return fallback;
+  final ep = videoId == null ? null : episodeLabel(meta, videoId);
+  return ep == null ? name : '$name · $ep';
 }
 
 class PlayerScreen extends ConsumerStatefulWidget {
@@ -216,7 +226,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   Timer? _hide;
   bool _controls = true;
   late String? _videoId = widget.videoId ?? widget.metaId;
-  late String _title = widget.item.title;
+  late String _title = playerTitle(
+    widget.meta,
+    widget.videoId ?? widget.metaId,
+    widget.item.title,
+  );
   ProgressRecorder? _recorder;
   Duration? _credits;
   bool _creditsRead = false;
@@ -319,7 +333,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     );
     if (_disposed || played == null) return;
     if (!identical(played, item) && mounted) {
-      setState(() => _title = played.title);
       _tell(context.l10n.playingFallback(played.title));
     }
   }
@@ -874,7 +887,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     _recorder?.flush(st.duration, st.duration, force: true);
     setState(() {
       _videoId = next.id;
-      _title = item!.title;
+      _title = playerTitle(widget.meta, next.id, item!.title);
       _offerDone = false;
       _credits = null;
       _creditsRead = false;
@@ -921,10 +934,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     _armHide();
   }
 
-  /// Ligne sous le titre (maquette TV07) : qualité et langue de la source.
+  /// Ligne sous le titre (maquette TV07) : source, qualité et langue.
   String? _sourceLine() {
     final it = _current ?? widget.item;
+    final source = it.title.split('\n').first.trim();
     final parts = <String>[
+      if (source.isNotEmpty && source != _title) source,
       if (it.quality != Quality.unknown) qualityLabel(it.quality),
       if (it.language != null && it.language != 'multi')
         it.language!.toUpperCase(),

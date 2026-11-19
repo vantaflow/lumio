@@ -659,16 +659,51 @@ class _EntryCardState extends State<_EntryCard> {
                               fontVariations: const [FontVariation.weight(700)],
                             ),
                           ),
-                          if (widget.meta.isNotEmpty)
-                            Text(
-                              widget.meta,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: t.bodySmall?.copyWith(
-                                fontSize: 24,
-                                height: 1.35,
-                                color: c.textMuted,
-                              ),
+                          if (widget.installed || widget.meta.isNotEmpty)
+                            Row(
+                              children: [
+                                if (widget.installed)
+                                  Flexible(
+                                    child: Text(
+                                      l.catalogInstalled,
+                                      key: ValueKey('installed:${e.slug}'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: 'Manrope',
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
+                                        fontVariations: const [
+                                          FontVariation.weight(700),
+                                        ],
+                                        color: c.success,
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+                                if (widget.installed && widget.meta.isNotEmpty)
+                                  Text(
+                                    ' · ',
+                                    style: t.bodySmall?.copyWith(
+                                      fontSize: 24,
+                                      height: 1.35,
+                                      color: c.textMuted,
+                                    ),
+                                  ),
+                                if (widget.meta.isNotEmpty)
+                                  Flexible(
+                                    child: Text(
+                                      widget.meta,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: t.bodySmall?.copyWith(
+                                        fontSize: 24,
+                                        height: 1.35,
+                                        color: c.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                         ],
                       ),
@@ -691,23 +726,6 @@ class _EntryCardState extends State<_EntryCard> {
                   ),
               ],
             ),
-            if (widget.installed)
-              Positioned(
-                top: -4,
-                right: -4,
-                child: Text(
-                  l.catalogInstalled,
-                  key: ValueKey('installed:${e.slug}'),
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    fontVariations: const [FontVariation.weight(700)],
-                    color: c.success,
-                    height: 1.2,
-                  ),
-                ),
-              ),
           ],
         ),
       ),

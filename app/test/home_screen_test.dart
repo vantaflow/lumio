@@ -146,9 +146,12 @@ class _NoNet implements HttpFetcher {
 class _RecordingPlayback implements ContinuePlayback {
   final played = <String>[];
 
+  /// Titre renvoyé à la place de « Série … » (simule un addon meta installé).
+  String? label;
+
   @override
   Future<ContinueInfo> describe(ProgressEntry e) async =>
-      ContinueInfo(title: 'Série ${e.metaId}');
+      ContinueInfo(title: label ?? 'Série ${e.metaId}');
 
   @override
   Future<void> play(BuildContext context, ProgressEntry e) async =>
@@ -777,6 +780,21 @@ void main() {
         find.text('Vos addons ne proposent aucun catalogue'),
         findsOneWidget,
       );
+      await h.close();
+    });
+
+    testWidgets('un addon installé rafraîchit les titres de « Continuer »', (
+      t,
+    ) async {
+      final h = _H(t);
+      h.playback.label = 'Titre inconnu';
+      await h.pump(progress: [_progress()]);
+      expect(find.text('Titre inconnu'), findsWidgets);
+      h.playback.label = 'Vrai titre';
+      h.container.invalidate(addonsProvider);
+      await h.settle();
+      expect(find.text('Vrai titre'), findsWidgets);
+      expect(find.text('Titre inconnu'), findsNothing);
       await h.close();
     });
 

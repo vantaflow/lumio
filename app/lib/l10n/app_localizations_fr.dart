@@ -320,9 +320,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get subtitlesOff => 'Désactivés';
 
   @override
-  String addonSubtitle(Object lang) {
-    return 'Addon · $lang';
+  String subtitleLabel(String lang, String source) {
+    return '$lang · $source';
   }
+
+  @override
+  String subtitleLabelN(String lang, String source, int n) {
+    return '$lang · $source $n';
+  }
+
+  @override
+  String get langUnknown => 'Langue inconnue';
 
   @override
   String get subtitleDelay => 'Décalage des sous-titres';
@@ -2538,7 +2546,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Scannez le code : la page Lumio de cette TV s\'ouvre';
 
   @override
-  String get phoneStep3 => 'Choisissez un addon, appuyez sur Installer, puis confirmez ici sur la TV';
+  String get phoneStep3 =>
+      'Choisissez un addon, appuyez sur Installer, puis confirmez ici sur la TV';
 
   @override
   String get phoneOrType => 'Ou tapez dans le navigateur du téléphone';

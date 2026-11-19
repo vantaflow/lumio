@@ -13,7 +13,8 @@ import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/calendar/calendar_screen.dart';
 import 'package:lumio/features/detail/detail_screen.dart';
-import 'package:lumio/features/detail/playback_service.dart' show typeForVideo;
+import 'package:lumio/features/detail/playback_service.dart'
+    show ActiveAddon, activeAddonsProvider, typeForVideo;
 import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
 import 'package:lumio/features/library/library_screen.dart';
 import 'package:lumio/features/local/local_providers.dart';
@@ -721,6 +722,8 @@ class _ContinueRow extends ConsumerWidget {
     final entries = _continueEntries(ref);
     if (entries.isEmpty) return const SizedBox.shrink();
     final playback = ref.watch(continuePlaybackProvider);
+    // Un addon installé ou retiré peut fournir les titres manquants.
+    final addons = ref.watch(activeAddonsProvider);
     if (isTvLayout(context)) {
       return Padding(
         padding: EdgeInsets.only(top: tvTop),
@@ -740,6 +743,7 @@ class _ContinueRow extends ConsumerWidget {
                 key: ValueKey(e.videoId),
                 entry: e,
                 playback: playback,
+                addons: addons,
               ),
           ],
         ),
@@ -755,7 +759,12 @@ class _ContinueRow extends ConsumerWidget {
       height: _continueHeight + 12 + 26 * 1.25 + 24 * 1.3 + 2 * _rowPad,
       items: [
         for (final e in entries)
-          _ContinueCard(key: ValueKey(e.videoId), entry: e, playback: playback),
+          _ContinueCard(
+            key: ValueKey(e.videoId),
+            entry: e,
+            playback: playback,
+            addons: addons,
+          ),
       ],
     );
   }
@@ -825,6 +834,9 @@ class _HomeHeroState extends ConsumerState<_HomeHero> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final e = widget.entry;
+    ref.listen(activeAddonsProvider, (_, _) {
+      if (mounted) setState(() => _info = _describe());
+    });
     final playback = ref.watch(continuePlaybackProvider);
     final libs = ref.watch(libraryProvider).value;
     final inList = _inList ?? (libs?.any((m) => m.id == e.metaId) ?? false);
@@ -1021,10 +1033,18 @@ class _Poster extends StatelessWidget {
 }
 
 class _ContinueCard extends StatefulWidget {
-  const _ContinueCard({super.key, required this.entry, required this.playback});
+  const _ContinueCard({
+    super.key,
+    required this.entry,
+    required this.playback,
+    required this.addons,
+  });
 
   final ProgressEntry entry;
   final ContinuePlayback playback;
+
+  /// Addons actifs : une nouvelle liste relance la description du titre.
+  final List<ActiveAddon> addons;
 
   @override
   State<_ContinueCard> createState() => _ContinueCardState();
@@ -1046,7 +1066,8 @@ class _ContinueCardState extends State<_ContinueCard> {
   void didUpdateWidget(_ContinueCard old) {
     super.didUpdateWidget(old);
     if (old.entry.videoId != widget.entry.videoId ||
-        old.playback != widget.playback) {
+        old.playback != widget.playback ||
+        !identical(old.addons, widget.addons)) {
       _info = _describe();
     }
   }

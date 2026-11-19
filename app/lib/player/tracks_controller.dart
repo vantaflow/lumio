@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lumio/l10n/app_localizations.dart';
+import 'package:lumio/features/settings/settings_screen.dart'
+    show languageChoices;
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -282,6 +284,27 @@ class TracksController extends ChangeNotifier {
 
   /// Messages d'erreur français à afficher (SnackBar).
   Stream<String> get errors => _errors.stream;
+
+  /// Libellé d'un sous-titre d'addon : langue en clair, addon source et, si
+  /// plusieurs sous-titres ont la même langue et la même source, leur rang.
+  String addonLabel(SubtitleItem s) {
+    String langName(String code) {
+      for (final (c, n) in languageChoices(l10n)) {
+        if (c == code) return n;
+      }
+      return code == 'und' ? l10n.langUnknown : code.toUpperCase();
+    }
+
+    final name = s.addonName?.trim();
+    final source = (name == null || name.isEmpty) ? l10n.addonFallback : name;
+    final same = [
+      for (final o in addonSubtitles)
+        if (o.addonId == s.addonId && o.lang == s.lang) o,
+    ];
+    final lang = langName(s.lang);
+    if (same.length < 2) return l10n.subtitleLabel(lang, source);
+    return l10n.subtitleLabelN(lang, source, same.indexOf(s) + 1);
+  }
 
   int get delayMs => _delay;
   SubtitleStyle get style => _style;

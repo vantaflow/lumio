@@ -173,7 +173,7 @@ class _TracksPanelState extends State<TracksPanel> {
                             for (final s in c.addonSubtitles)
                               _Chip(
                                 key: ValueKey('addon-${s.id}'),
-                                label: l.addonSubtitle(s.lang),
+                                label: c.addonLabel(s),
                                 selected: c.addonSelectedId == s.id,
                                 onPressed: () => c.selectAddonSubtitle(s),
                               ),

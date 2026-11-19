@@ -155,12 +155,11 @@
   "noAudioTrack": "Aucune piste audio disponible",
   "subtitles": "Sous-titres",
   "subtitlesOff": "Désactivés",
-  "addonSubtitle": "Addon · {lang}",
-  "@addonSubtitle": {
-    "placeholders": {
-      "lang": {}
-    }
-  },
+  "subtitleLabel": "{lang} · {source}",
+  "@subtitleLabel": {"placeholders": {"lang": {"type": "String"}, "source": {"type": "String"}}},
+  "subtitleLabelN": "{lang} · {source} {n}",
+  "@subtitleLabelN": {"placeholders": {"lang": {"type": "String"}, "source": {"type": "String"}, "n": {"type": "int"}}},
+  "langUnknown": "Langue inconnue",
   "subtitleDelay": "Décalage des sous-titres",
   "subtitleAdvance": "Avancer les sous-titres de 100 ms",
   "subtitleRetard": "Retarder les sous-titres de 100 ms",

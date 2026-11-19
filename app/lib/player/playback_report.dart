@@ -6,6 +6,21 @@ import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio_core/lumio_core.dart';
 
+/// Erreur du moteur qui ne concerne pas la lecture elle-même : un fichier de
+/// sous-titres externe refusé ou une piste de sous-titres non prise en charge
+/// n'interrompent jamais l'image ni le son.
+bool isIgnorableEngineError(String message) {
+  final t = message.toLowerCase();
+  return t.contains('external file') ||
+      t.contains('subtitle') ||
+      t.contains('sub-add') ||
+      t.contains('lumio-subs-');
+}
+
+/// Texte d'erreur du moteur sans aucune adresse (pour le journal).
+String redactEngineMessage(String message) =>
+    message.replaceAll(RegExp(r'[a-zA-Z][a-zA-Z0-9+.-]*://\S+'), '<url>');
+
 /// Message expliquant un échec de lecture (français par défaut), sans jamais
 /// citer d'URL.
 ///

@@ -7,6 +7,33 @@ import 'package:lumio/player/player_controller.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 void main() {
+  group('erreurs du moteur ignorables', () {
+    test('sous-titre externe illisible : ignoré', () {
+      expect(
+        isIgnorableEngineError(
+          'Can not open external file /data/user/0/dev.lumio.app/cache/lumio-subs-a/b.srt.',
+        ),
+        isTrue,
+      );
+      expect(isIgnorableEngineError('Unsupported subtitle codec'), isTrue);
+    });
+    test('erreurs de lecture : jamais ignorées', () {
+      expect(isIgnorableEngineError('tcp: Connection timed out'), isFalse);
+      expect(
+        isIgnorableEngineError('Failed to recognize file format.'),
+        isFalse,
+      );
+      expect(isIgnorableEngineError(''), isFalse);
+    });
+    test('le journal ne contient aucune adresse', () {
+      final r = redactEngineMessage(
+        'tcp: Failed to open https://addon.example/x/y.json?token=abc now',
+      );
+      expect(r, isNot(contains('addon.example')));
+      expect(r, isNot(contains('token')));
+      expect(r, contains('<url>'));
+    });
+  });
   group('explainFailure', () {
     test('403 cite le code', () {
       expect(explainFailure('x', httpStatus: 403), contains('403'));

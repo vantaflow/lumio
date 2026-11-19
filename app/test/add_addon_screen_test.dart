@@ -187,6 +187,28 @@ void main() {
     await h.close();
   });
 
+  testWidgets('badge Installé : ne chevauche pas un nom long', (t) async {
+    final site = FakeCatalogSite(
+      cards: const [('os', 'OpenSubtitles v3', 'Sous-titres', 100, '1.0.0')],
+      details: {
+        'os': [(_alpha, false, false)],
+      },
+    );
+    final h = AppHarness(t, size: const Size(1920, 1080));
+    await h.pump(
+      _Launcher(ValueNotifier(null)),
+      extra: [
+        catalogOverride(site),
+        addonsProvider.overrideWith(() => _Installed('opensubtitles v3')),
+      ],
+    );
+    await _open(h, t);
+    final badge = t.getRect(find.byKey(const ValueKey('installed:os')));
+    final name = t.getRect(find.text('OpenSubtitles v3'));
+    expect(badge.overlaps(name), isFalse);
+    await h.close();
+  });
+
   testWidgets('installer depuis le catalogue : aperçu puis Installer', (
     t,
   ) async {

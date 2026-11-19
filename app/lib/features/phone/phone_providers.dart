@@ -64,6 +64,7 @@ class AppPhoneBackend implements PhoneBackend {
           enabled: a.enabled,
           position: i,
           broken: a.broken,
+          configurable: a.manifest?.configurable != false,
         ),
     ];
   }

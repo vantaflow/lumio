@@ -195,7 +195,7 @@ void main() {
       download: (_) async => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A],
     );
     await pumpHost(t, c);
-    await t.tap(find.text('Addon · fr'));
+    await t.tap(find.text('Français · Addon'));
     await t.pump();
     await t.pump();
     expect(find.text('Sous-titre illisible'), findsOneWidget);
@@ -222,6 +222,38 @@ void main() {
     await t.pump();
     expect(b.calls.where((x) => x.startsWith('ext:')), hasLength(1));
     expect(c.addonSelectedId, 'a1');
+  });
+
+  testWidgets('libellés des sous-titres d\'addons : langue, source, rang', (
+    t,
+  ) async {
+    SubtitleItem sub(String id, String lang, String addonId, String? name) =>
+        SubtitleItem(
+          id: id,
+          url: Uri.parse('https://x.test/$id.srt'),
+          lang: lang,
+          addonId: addonId,
+          addonName: name,
+        );
+    final items = [
+      sub('1', 'en', 'os', 'OpenSubtitles v3'),
+      sub('2', 'en', 'os', 'OpenSubtitles v3'),
+      sub('3', 'en', 'os', 'OpenSubtitles v3'),
+      sub('4', 'fr', 'os', 'OpenSubtitles v3'),
+      sub('5', 'en', 'fl', 'Films libres (test)'),
+      sub('6', 'und', 'fl', 'Films libres (test)'),
+    ];
+    final c = make(FakeBackend(), InMemoryTitleSettingsStore(), addon: items);
+    final labels = [for (final s in items) c.addonLabel(s)];
+    expect(labels, [
+      'English · OpenSubtitles v3 1',
+      'English · OpenSubtitles v3 2',
+      'English · OpenSubtitles v3 3',
+      'Français · OpenSubtitles v3',
+      'English · Films libres (test)',
+      'Langue inconnue · Films libres (test)',
+    ]);
+    expect(labels.toSet(), hasLength(items.length));
   });
 
   testWidgets(

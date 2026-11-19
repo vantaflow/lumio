@@ -32,6 +32,7 @@ class _Backend implements PhoneBackend {
       health: 'slow',
       enabled: false,
       position: 1,
+      configurable: false,
     ),
   ];
   @override
@@ -360,6 +361,17 @@ void main() {
         expect(a['ref'], addonPortalRef('org.alpha'));
         expect(a['ref'], isNot(a['id']));
         expect((a['ref']! as String).length, 12);
+      },
+    );
+
+    test(
+      'liste des addons : « configurable » seulement avec une page',
+      () async {
+        final (cookie, _) = await f.login();
+        final r = await f.req('GET', '/api/addons', cookie: cookie);
+        final l = (r.json['addons']! as List).cast<Map<String, Object?>>();
+        expect(l[0]['configurable'], isTrue);
+        expect(l[1]['configurable'], isFalse);
       },
     );
 

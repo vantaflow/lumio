@@ -396,7 +396,7 @@ const phoneJs = r'''
       var rc = q('rc');
       rc.textContent = t.change;
       rc.setAttribute('aria-label', t.change + ' : ' + a.name);
-      rc.classList.toggle('hidden', !!a.broken);
+      rc.classList.toggle('hidden', !!a.broken || a.configurable === false);
       rc.addEventListener('click', function () { openConfig('/api/addons/' + a.id + '/reconfigure', a.name, a.id); });
       var cf = q('cf');
       if (confirming === a.id) {

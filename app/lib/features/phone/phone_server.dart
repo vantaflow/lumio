@@ -26,6 +26,7 @@ class PhoneAddonView {
     required this.enabled,
     required this.position,
     this.broken = false,
+    this.configurable = true,
   });
 
   final String id;
@@ -37,6 +38,9 @@ class PhoneAddonView {
   final bool enabled;
   final int position;
   final bool broken;
+
+  /// Une page de réglage existe (faux seulement si le manifeste dit non).
+  final bool configurable;
 }
 
 /// Référence courte et NON secrète d'un addon installé (début du SHA-256 de
@@ -482,6 +486,7 @@ class PhoneServer implements PhoneSession {
               'enabled': a.enabled,
               'position': a.position,
               'broken': a.broken,
+              'configurable': a.configurable,
             },
         ],
       });

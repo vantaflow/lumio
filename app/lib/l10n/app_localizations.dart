@@ -650,11 +650,23 @@ abstract class AppLocalizations {
   /// **'Désactivés'**
   String get subtitlesOff;
 
-  /// No description provided for @addonSubtitle.
+  /// No description provided for @subtitleLabel.
   ///
   /// In fr, this message translates to:
-  /// **'Addon · {lang}'**
-  String addonSubtitle(Object lang);
+  /// **'{lang} · {source}'**
+  String subtitleLabel(String lang, String source);
+
+  /// No description provided for @subtitleLabelN.
+  ///
+  /// In fr, this message translates to:
+  /// **'{lang} · {source} {n}'**
+  String subtitleLabelN(String lang, String source, int n);
+
+  /// No description provided for @langUnknown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue inconnue'**
+  String get langUnknown;
 
   /// No description provided for @subtitleDelay.
   ///
@@ -4301,7 +4313,7 @@ abstract class AppLocalizations {
   /// No description provided for @phoneStep3.
   ///
   /// In fr, this message translates to:
-  /// **'Collez un lien, puis confirmez ici sur la TV'**
+  /// **'Choisissez un addon, appuyez sur Installer, puis confirmez ici sur la TV'**
   String get phoneStep3;
 
   /// No description provided for @phoneOrType.

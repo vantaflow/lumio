@@ -66,6 +66,23 @@ void main() {
     expect(m.name, matches(RegExp(r'[؀-ۿ]')));
   });
 
+  test('behaviorHints : page de réglage connue ou inconnue', () {
+    Map<String, Object?> base(Object? hints) => {
+      'id': 'x',
+      'version': '1.0.0',
+      'name': 'X',
+      'types': ['movie'],
+      'resources': ['catalog'],
+      'catalogs': <Object?>[],
+      'behaviorHints': ?hints,
+    };
+    AddonManifest p(Object? h) => AddonManifest.fromJson(base(h), _url);
+    expect(p(null).configurable, isNull);
+    expect(p({'configurable': true}).configurable, isTrue);
+    expect(p({'configurationRequired': true}).configurable, isTrue);
+    expect(p({'adult': false}).configurable, isFalse);
+  });
+
   test('version_not_semver : valide avec avertissement', () {
     final m = _parse('version_not_semver.json');
     expect(m.version, 'v2-beta');
