@@ -4172,12 +4172,6 @@ abstract class AppLocalizations {
   /// **'Autres catégories'**
   String get catMoreTitle;
 
-  /// No description provided for @catalogFootnote.
-  ///
-  /// In fr, this message translates to:
-  /// **'Catalogue communautaire stremio-addons.net. Les addons à configurer (clé de débrideur, langues…) s\'ouvrent sur votre téléphone. Installez uniquement des sources de confiance.'**
-  String get catalogFootnote;
-
   /// No description provided for @catalogInstalled.
   ///
   /// In fr, this message translates to:

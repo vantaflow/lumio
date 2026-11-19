@@ -394,99 +394,101 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ),
     );
     return FocusTraversalGroup(
-      child: TvScrollClip(child: SingleChildScrollView(
-        clipBehavior: Clip.none,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(child: field),
-                if (_micAvailable) ...[
-                  const SizedBox(width: 16),
-                  _MicKey(
-                    key: const ValueKey('key-mic'),
-                    listening: _listening,
-                    semantic: _listening
-                        ? context.l10n.dictationStop
-                        : context.l10n.dictationStart,
-                    onSelect: _toggleMic,
+      child: TvScrollClip(
+        child: SingleChildScrollView(
+          clipBehavior: Clip.none,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: field),
+                  if (_micAvailable) ...[
+                    const SizedBox(width: 16),
+                    _MicKey(
+                      key: const ValueKey('key-mic'),
+                      listening: _listening,
+                      semantic: _listening
+                          ? context.l10n.dictationStop
+                          : context.l10n.dictationStart,
+                      onSelect: _toggleMic,
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 28),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (var i = 0; i < keys.length; i++)
+                    _Key(
+                      key: ValueKey('key-${keys[i]}'),
+                      label: _arabic ? keys[i] : keys[i].toUpperCase(),
+                      semantic: keys[i],
+                      autofocus: i == 0,
+                      onSelect: () => _type(keys[i]),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _Key(
+                    key: const ValueKey('key-space'),
+                    label: context.l10n.kbSpace,
+                    semantic: context.l10n.kbSpace,
+                    width: 164,
+                    fontSize: 28,
+                    onSelect: () => _type(' '),
+                  ),
+                  const SizedBox(width: 10),
+                  _Key(
+                    key: const ValueKey('key-backspace'),
+                    label: context.l10n.kbErase,
+                    semantic: context.l10n.kbErase,
+                    width: 150,
+                    fontSize: 26,
+                    onSelect: _backspace,
+                  ),
+                  const SizedBox(width: 10),
+                  _Key(
+                    key: const ValueKey('key-clear'),
+                    label: context.l10n.kbClearAll,
+                    semantic: context.l10n.kbClearAll,
+                    width: 200,
+                    fontSize: 26,
+                    onSelect: () => _setText(''),
+                  ),
+                  const SizedBox(width: 10),
+                  _Key(
+                    key: const ValueKey('key-layout'),
+                    label: _arabic ? 'ABC' : 'ع',
+                    semantic: _arabic
+                        ? context.l10n.kbLatin
+                        : context.l10n.kbArabic,
+                    width: 80,
+                    fontSize: 28,
+                    onSelect: () => setState(() => _arabic = !_arabic),
                   ),
                 ],
-              ],
-            ),
-            const SizedBox(height: 28),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (var i = 0; i < keys.length; i++)
-                  _Key(
-                    key: ValueKey('key-${keys[i]}'),
-                    label: _arabic ? keys[i] : keys[i].toUpperCase(),
-                    semantic: keys[i],
-                    autofocus: i == 0,
-                    onSelect: () => _type(keys[i]),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Text(
+                  context.l10n.searchCaption,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 26,
+                    height: 1.4,
+                    color: lumio.textMuted,
                   ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _Key(
-                  key: const ValueKey('key-space'),
-                  label: context.l10n.kbSpace,
-                  semantic: context.l10n.kbSpace,
-                  width: 164,
-                  fontSize: 28,
-                  onSelect: () => _type(' '),
-                ),
-                const SizedBox(width: 10),
-                _Key(
-                  key: const ValueKey('key-backspace'),
-                  label: context.l10n.kbErase,
-                  semantic: context.l10n.kbErase,
-                  width: 150,
-                  fontSize: 26,
-                  onSelect: _backspace,
-                ),
-                const SizedBox(width: 10),
-                _Key(
-                  key: const ValueKey('key-clear'),
-                  label: context.l10n.kbClearAll,
-                  semantic: context.l10n.kbClearAll,
-                  width: 200,
-                  fontSize: 26,
-                  onSelect: () => _setText(''),
-                ),
-                const SizedBox(width: 10),
-                _Key(
-                  key: const ValueKey('key-layout'),
-                  label: _arabic ? 'ABC' : 'ع',
-                  semantic: _arabic
-                      ? context.l10n.kbLatin
-                      : context.l10n.kbArabic,
-                  width: 80,
-                  fontSize: 28,
-                  onSelect: () => setState(() => _arabic = !_arabic),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(
-                context.l10n.searchCaption,
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 26,
-                  height: 1.4,
-                  color: lumio.textMuted,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      )),
+      ),
     );
   }
 
@@ -573,68 +575,70 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ? -1
           : visible.indexWhere((m) => m.id == _restoreId);
       if (restoreIndex >= 0) _scheduleRestore(restoreIndex, 5);
-      body = TvScrollClip(child: GridView.builder(
-        controller: _grid,
-        clipBehavior: Clip.none,
-        padding: EdgeInsets.zero,
-        // Maquette TV12 : cartes 230 x 340, écart 24.
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          mainAxisExtent: 340,
-          crossAxisSpacing: 24,
-          mainAxisSpacing: 24,
-        ),
-        itemCount: visible.length,
-        itemBuilder: (context, i) {
-          final m = visible[i];
-          Widget card = Focus(
-            skipTraversal: true,
-            canRequestFocus: false,
-            onFocusChange: (f) {
-              if (!f) return;
-              ref
-                  .read(focusMemoryProvider.notifier)
-                  .remember(searchRouteKey, m.id);
-              Scrollable.ensureVisible(
-                context,
-                alignment: 0.5,
-                duration:
-                    (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
-                    ? Duration.zero
-                    : LumioMotion.focus,
-              );
-            },
-            child: Align(
-              alignment: AlignmentDirectional.topStart,
-              child: TvMediaCard(
-                key: ValueKey('result-${m.id}'),
-                title: m.name,
-                seed: m.id,
-                poster: m.poster,
-                allowPrivate: priv.contains(m.sourceAddonId),
-                width: 230,
-                height: 340,
-                radius: 18,
-                inset: 14,
-                badge: m.sourceKind == 'local' || m.sourceKind == 'jellyfin'
-                    ? sourceLabel(m.sourceKind, context.l10n)
-                    : null,
-                semanticLabel: _semantic(context, m),
-                onSelect: () => widget.onOpenItem?.call(m),
-              ),
-            ),
-          );
-          if (i == restoreIndex) {
-            card = Focus(
-              focusNode: _restoreNode,
+      body = TvScrollClip(
+        child: GridView.builder(
+          controller: _grid,
+          clipBehavior: Clip.none,
+          padding: EdgeInsets.zero,
+          // Maquette TV12 : cartes 230 x 340, écart 24.
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisExtent: 340,
+            crossAxisSpacing: 24,
+            mainAxisSpacing: 24,
+          ),
+          itemCount: visible.length,
+          itemBuilder: (context, i) {
+            final m = visible[i];
+            Widget card = Focus(
               skipTraversal: true,
               canRequestFocus: false,
-              child: card,
+              onFocusChange: (f) {
+                if (!f) return;
+                ref
+                    .read(focusMemoryProvider.notifier)
+                    .remember(searchRouteKey, m.id);
+                Scrollable.ensureVisible(
+                  context,
+                  alignment: 0.5,
+                  duration:
+                      (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+                      ? Duration.zero
+                      : LumioMotion.focus,
+                );
+              },
+              child: Align(
+                alignment: AlignmentDirectional.topStart,
+                child: TvMediaCard(
+                  key: ValueKey('result-${m.id}'),
+                  title: m.name,
+                  seed: m.id,
+                  poster: m.poster,
+                  allowPrivate: priv.contains(m.sourceAddonId),
+                  width: 230,
+                  height: 340,
+                  radius: 18,
+                  inset: 14,
+                  badge: m.sourceKind == 'local' || m.sourceKind == 'jellyfin'
+                      ? sourceLabel(m.sourceKind, context.l10n)
+                      : null,
+                  semanticLabel: _semantic(context, m),
+                  onSelect: () => widget.onOpenItem?.call(m),
+                ),
+              ),
             );
-          }
-          return card;
-        },
-      ));
+            if (i == restoreIndex) {
+              card = Focus(
+                focusNode: _restoreNode,
+                skipTraversal: true,
+                canRequestFocus: false,
+                child: card,
+              );
+            }
+            return card;
+          },
+        ),
+      );
     }
 
     return Column(

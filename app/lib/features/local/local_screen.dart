@@ -727,140 +727,145 @@ class _LocalFoldersScreenState extends ConsumerState<LocalFoldersScreen> {
               ),
             );
           }
-          return TvScrollClip(child: ListView(
-            clipBehavior: Clip.none,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            children: [
-              if (_scanning)
-                Semantics(
-                  liveRegion: true,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 4,
-                            color: c.accent,
-                            backgroundColor: c.outline,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Text(
-                          l.localScanning,
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 28,
-                            height: 1.4,
-                            color: c.accent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              for (final f in list)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Container(
-                    key: ValueKey('local-folder:${f.path}'),
-                    constraints: const BoxConstraints(minHeight: 96),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Row(
-                      children: [
-                        LumioIconView(
-                          LumioIcon.folder,
-                          size: 40,
-                          color: c.secondary,
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: TvTileText(
-                            title: f.path,
-                            subtitle: l.localVideoCount(
-                              items.where((i) => i.folderPath == f.path).length,
+          return TvScrollClip(
+            child: ListView(
+              clipBehavior: Clip.none,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              children: [
+                if (_scanning)
+                  Semantics(
+                    liveRegion: true,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 4,
+                              color: c.accent,
+                              backgroundColor: c.outline,
                             ),
                           ),
-                        ),
-                        TvIconButton(
-                          key: ValueKey('local-remove:${f.path}'),
-                          lumioIcon: LumioIcon.trash,
-                          iconColor: c.error,
-                          background: c.bg,
-                          label: l.localRemoveFolder(f.path),
-                          onPressed: () => _remove(f),
-                        ),
-                      ],
+                          const SizedBox(width: 14),
+                          Text(
+                            l.localScanning,
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 28,
+                              height: 1.4,
+                              color: c.accent,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              for (final i in items)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 96),
-                    padding: const EdgeInsetsDirectional.only(end: 32),
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TvTile(
-                            key: ValueKey('local-item:${i.id}'),
-                            minHeight: 96,
-                            color: Colors.transparent,
-                            semanticLabel: i.displayTitle,
-                            onSelect: () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => LocalDetailScreen(id: i.id),
+                for (final f in list)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Container(
+                      key: ValueKey('local-folder:${f.path}'),
+                      constraints: const BoxConstraints(minHeight: 96),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: c.surface,
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Row(
+                        children: [
+                          LumioIconView(
+                            LumioIcon.folder,
+                            size: 40,
+                            color: c.secondary,
+                          ),
+                          const SizedBox(width: 24),
+                          Expanded(
+                            child: TvTileText(
+                              title: f.path,
+                              subtitle: l.localVideoCount(
+                                items
+                                    .where((i) => i.folderPath == f.path)
+                                    .length,
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                LumioIconView(
-                                  LumioIcon.clapper,
-                                  size: 40,
-                                  color: c.textMuted,
-                                ),
-                                const SizedBox(width: 20),
-                                Expanded(
-                                  child: TvTileText(
-                                    title: i.displayTitle,
-                                    subtitle: [
-                                      ?i.episodeLabel,
-                                      i.fileName,
-                                    ].join(' · '),
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        TvIconButton(
-                          key: ValueKey('local-edit:${i.id}'),
-                          lumioIcon: LumioIcon.pencil,
-                          background: c.bg,
-                          label: l.localFixTitle,
-                          onPressed: () => showFixTitleDialog(context, ref, i),
-                        ),
-                      ],
+                          TvIconButton(
+                            key: ValueKey('local-remove:${f.path}'),
+                            lumioIcon: LumioIcon.trash,
+                            iconColor: c.error,
+                            background: c.bg,
+                            label: l.localRemoveFolder(f.path),
+                            onPressed: () => _remove(f),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
-          ));
+                for (final i in items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 96),
+                      padding: const EdgeInsetsDirectional.only(end: 32),
+                      decoration: BoxDecoration(
+                        color: c.surface,
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TvTile(
+                              key: ValueKey('local-item:${i.id}'),
+                              minHeight: 96,
+                              color: Colors.transparent,
+                              semanticLabel: i.displayTitle,
+                              onSelect: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => LocalDetailScreen(id: i.id),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  LumioIconView(
+                                    LumioIcon.clapper,
+                                    size: 40,
+                                    color: c.textMuted,
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: TvTileText(
+                                      title: i.displayTitle,
+                                      subtitle: [
+                                        ?i.episodeLabel,
+                                        i.fileName,
+                                      ].join(' · '),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          TvIconButton(
+                            key: ValueKey('local-edit:${i.id}'),
+                            lumioIcon: LumioIcon.pencil,
+                            background: c.bg,
+                            label: l.localFixTitle,
+                            onPressed: () =>
+                                showFixTitleDialog(context, ref, i),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
         },
       ),
     );

@@ -2459,10 +2459,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get catMoreTitle => 'Autres catégories';
 
   @override
-  String get catalogFootnote =>
-      'Catalogue communautaire stremio-addons.net. Les addons à configurer (clé de débrideur, langues…) s\'ouvrent sur votre téléphone. Installez uniquement des sources de confiance.';
-
-  @override
   String get catalogInstalled => 'Installé';
 
   @override

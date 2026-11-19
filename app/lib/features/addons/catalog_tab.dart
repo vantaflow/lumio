@@ -463,31 +463,31 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
     // note), mais large sur les côtés pour laisser voir l'anneau de focus.
     return TvScrollClip(
       child: SingleChildScrollView(
-      clipBehavior: Clip.none,
-      padding: const EdgeInsets.only(top: 12, bottom: 24),
-      child: Wrap(
-        spacing: 32,
-        runSpacing: 32,
-        children: [
-          for (final (i, e) in _entries.indexed)
-            _EntryCard(
-              key: ValueKey('card:${e.slug}'),
-              entry: e,
-              meta: _cardMeta(e, l),
-              installed: installed.contains(e.name.trim().toLowerCase()),
-              autofocus: widget.active && !_focusedOnce && i == 0,
-              onFocus: () => _focusedOnce = true,
-              onSelect: () => unawaited(_open(e)),
-            ),
-          if (hasMore)
-            _MoreCard(
-              key: const ValueKey('catalog-more'),
-              loading: _loadingMore,
-              onSelect: () => unawaited(_loadMore()),
-            ),
-        ],
+        clipBehavior: Clip.none,
+        padding: const EdgeInsets.only(top: 12, bottom: 24),
+        child: Wrap(
+          spacing: 32,
+          runSpacing: 32,
+          children: [
+            for (final (i, e) in _entries.indexed)
+              _EntryCard(
+                key: ValueKey('card:${e.slug}'),
+                entry: e,
+                meta: _cardMeta(e, l),
+                installed: installed.contains(e.name.trim().toLowerCase()),
+                autofocus: widget.active && !_focusedOnce && i == 0,
+                onFocus: () => _focusedOnce = true,
+                onSelect: () => unawaited(_open(e)),
+              ),
+            if (hasMore)
+              _MoreCard(
+                key: const ValueKey('catalog-more'),
+                loading: _loadingMore,
+                onSelect: () => unawaited(_loadMore()),
+              ),
+          ],
+        ),
       ),
-    ),
     );
   }
 

@@ -2437,10 +2437,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catMoreTitle => 'Other categories';
 
   @override
-  String get catalogFootnote =>
-      'Community catalogue from stremio-addons.net. Addons that need setup (debrid key, languages…) open on your phone. Only install sources you trust.';
-
-  @override
   String get catalogInstalled => 'Installed';
 
   @override

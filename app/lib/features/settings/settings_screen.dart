@@ -310,19 +310,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 24),
                         Expanded(
-                          child: TvScrollClip(child: SingleChildScrollView(
-                            clipBehavior: Clip.none,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                for (final cat in cats)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: railItem(cat),
-                                  ),
-                              ],
+                          child: TvScrollClip(
+                            child: SingleChildScrollView(
+                              clipBehavior: Clip.none,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final cat in cats)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: railItem(cat),
+                                    ),
+                                ],
+                              ),
                             ),
-                          )),
+                          ),
                         ),
                         const SizedBox(height: 14),
                         _PhoneCard(
@@ -1406,62 +1408,64 @@ class AboutScreen extends StatelessWidget {
     final credit = md().copyWith(height: 1.7);
     return TvScreen(
       title: l.settingsAbout,
-      child: TvScrollClip(child: ListView(
-        padding: EdgeInsets.zero,
-        clipBehavior: Clip.none,
-        children: [
-          Align(
-            alignment: AlignmentDirectional.topStart,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1308),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l.gplTitle,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontSize: 52,
-                      height: 1.15,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Text(l.gplText, style: lead),
-                  const SizedBox(height: 34),
-                  Text(
-                    l.aboutCredits,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontSize: 36,
-                      height: 1.15,
-                      color: c.text,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Text(l.creditsLibmpv, style: credit),
-                  Text(l.creditsMediaKit, style: credit),
-                  Text(l.creditsLibtorrent, style: credit),
-                  Text(l.creditsFonts, style: credit),
-                  const SizedBox(height: 34),
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: TvButton(
-                      key: const ValueKey('about:licenses'),
-                      autofocus: true,
-                      kind: TvButtonKind.secondary,
-                      height: 76,
-                      fontSize: 28,
-                      label: l.openSourceLicenses,
-                      onPressed: () => showLicensePage(
-                        context: context,
-                        applicationName: 'Lumio',
+      child: TvScrollClip(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          clipBehavior: Clip.none,
+          children: [
+            Align(
+              alignment: AlignmentDirectional.topStart,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1308),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l.gplTitle,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontSize: 52,
+                        height: 1.15,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 22),
+                    Text(l.gplText, style: lead),
+                    const SizedBox(height: 34),
+                    Text(
+                      l.aboutCredits,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontSize: 36,
+                        height: 1.15,
+                        color: c.text,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Text(l.creditsLibmpv, style: credit),
+                    Text(l.creditsMediaKit, style: credit),
+                    Text(l.creditsLibtorrent, style: credit),
+                    Text(l.creditsFonts, style: credit),
+                    const SizedBox(height: 34),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TvButton(
+                        key: const ValueKey('about:licenses'),
+                        autofocus: true,
+                        kind: TvButtonKind.secondary,
+                        height: 76,
+                        fontSize: 28,
+                        label: l.openSourceLicenses,
+                        onPressed: () => showLicensePage(
+                          context: context,
+                          applicationName: 'Lumio',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      )),
+          ],
+        ),
+      ),
     );
   }
 }
