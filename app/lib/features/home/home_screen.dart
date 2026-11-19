@@ -25,7 +25,7 @@ import 'package:lumio/features/home/home_layout.dart';
 import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/tv_cards.dart';
 import 'package:lumio/features/home/tv_home.dart';
-import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/addons/add_addon_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart'
     show JellyfinAddDialog;
 import 'package:lumio/features/home/row_editor_screen.dart';
@@ -137,7 +137,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _addAddon() async {
     if (!await requireParent(context, ref)) return;
     if (!mounted) return;
-    await showAddAddonDialog(context);
+    await showAddAddonScreen(context);
   }
 
   Future<void> _openLibrary() => Navigator.of(context).push(

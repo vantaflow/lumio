@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/addon_repository.dart';
-import 'package:lumio/features/addons/add_addon_dialog.dart' show AddonLogo;
+import 'package:lumio/features/addons/addon_logo.dart' show AddonLogo;
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/health_pill.dart';
 import 'package:lumio/features/addons/health_providers.dart';

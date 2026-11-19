@@ -3,7 +3,7 @@ import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart';
-import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/addons/add_addon_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart'
     show JellyfinAddDialog;
 import 'package:lumio/features/local/local_screen.dart' show addLocalFolderFlow;
@@ -251,7 +251,7 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
   }
 
   Future<void> _addAddon({String? url}) async {
-    final ok = await showAddAddonDialog(context, initialUrl: url);
+    final ok = await showAddAddonScreen(context, initialUrl: url);
     if (ok && mounted) setState(() => _installed++);
   }
 

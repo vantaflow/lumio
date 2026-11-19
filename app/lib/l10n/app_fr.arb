@@ -1364,5 +1364,68 @@
         "type": "int"
       }
     }
-  }
+  },
+  "addAddonBreadcrumb": "Réglages › Sources",
+  "addonTabCatalog": "Catalogue",
+  "addonTabLink": "Par lien",
+  "addonTabPhone": "Depuis le téléphone",
+  "catPopular": "Populaires",
+  "catMoviesSeries": "Films et séries",
+  "catTorrents": "Torrents",
+  "catDebrid": "Débrideurs",
+  "catSubtitles": "Sous-titres",
+  "catAnime": "Anime",
+  "catMetadata": "Métadonnées",
+  "catTracking": "Suivi",
+  "catMore": "Plus…",
+  "catHttpStreams": "Flux directs",
+  "catUsenet": "Usenet",
+  "catAsianDrama": "Drames asiatiques",
+  "catBollywood": "Bollywood",
+  "catMusic": "Musique",
+  "catRadios": "Radios",
+  "catLiveTv": "TV en direct",
+  "catMisc": "Divers",
+  "catMoreTitle": "Autres catégories",
+  "catalogFootnote": "Catalogue communautaire stremio-addons.net. Les addons à configurer (clé de débrideur, langues…) s'ouvrent sur votre téléphone. Installez uniquement des sources de confiance.",
+  "catalogInstalled": "Installé",
+  "catalogLoadMore": "Voir plus",
+  "catalogRefresh": "Actualiser",
+  "catalogOffline": "Hors ligne : liste enregistrée le {date}.",
+  "@catalogOffline": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "catalogFallbackNote": "Le site du catalogue est inaccessible : liste officielle réduite.",
+  "catalogLoadError": "Impossible de charger le catalogue.",
+  "catalogEmpty": "Aucun addon dans cette catégorie.",
+  "catalogDetailError": "Impossible de lire la fiche de cet addon.",
+  "catalogCardMeta": "★ {stars} · v{version}",
+  "@catalogCardMeta": {
+    "placeholders": {
+      "stars": {},
+      "version": {}
+    }
+  },
+  "catalogCardStars": "★ {stars}",
+  "@catalogCardStars": {
+    "placeholders": {
+      "stars": {}
+    }
+  },
+  "chooseInstanceTitle": "Choisir une instance",
+  "instanceNeedsSetup": "à configurer",
+  "configureOnPhoneTitle": "À configurer sur le téléphone",
+  "configureOnPhoneBody": "Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Scannez le code pour le configurer sur votre téléphone, puis collez le lien obtenu dans l'onglet « Par lien ».",
+  "addonLinkHelp": "Lien manifest.json ou lien stremio://. Un lien copié sur cet appareil est proposé automatiquement.",
+  "addonPreviewLabel": "APERÇU · v{version}",
+  "@addonPreviewLabel": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "addonLinkTrust": "Installez uniquement des sources de confiance : le lien peut contenir une clé personnelle, gardée chiffrée sur cet appareil.",
+  "phoneTabSoonTitle": "Bientôt disponible",
+  "phoneTabSoonBody": "L'ajout depuis le téléphone arrive : une page servie par la box pour envoyer le lien depuis votre téléphone. En attendant, utilisez le catalogue ou l'onglet « Par lien »."
 }

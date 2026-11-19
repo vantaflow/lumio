@@ -14,6 +14,7 @@ import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+import 'support/fake_catalog.dart';
 
 const _urlA = 'https://a.example.com/tok-a/manifest.json';
 const _urlB = 'https://b.example.com/tok-b/manifest.json';
@@ -41,6 +42,10 @@ class _Harness {
   late AddonRepository repo;
 
   Future<void> start() async {
+    // Écran de télévision : les écrans TV sont dessinés en 1920 x 1080.
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     db = AppDatabase(NativeDatabase.memory());
     secrets = MemorySecretStore();
     fetcher = FakeAddonFetcher({
@@ -62,6 +67,7 @@ class _Harness {
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
           addonRepositoryProvider.overrideWithValue(r ?? repo),
+          catalogOverride(FakeCatalogSite(offline: true)),
         ],
         child: MaterialApp(
           theme: LumioTheme.dark(),
@@ -80,6 +86,18 @@ class _Harness {
       );
       await tester.pump(const Duration(milliseconds: 700));
     }
+  }
+
+  /// Ouvre « Ajouter un addon » puis l'onglet « Par lien ».
+  Future<void> openLinkTab() async {
+    await tester.tap(
+      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
+          ? find.byKey(const ValueKey('addons-add'))
+          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
+    );
+    await settle();
+    await tester.tap(find.byKey(const ValueKey('addtab:link')));
+    await settle();
   }
 
   Future<void> dispose() async {
@@ -119,27 +137,17 @@ void main() {
     );
     await h.pumpScreen();
 
-    await tester.tap(
-      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
-          ? find.byKey(const ValueKey('addons-add'))
-          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
-    );
-    await h.settle();
-    expect(find.text('Installer'), findsOneWidget);
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Installer'))
-          .onPressed,
-      isNull,
-    );
+    await h.openLinkTab();
+    // Sans aperçu, pas de bouton Installer.
+    expect(find.byKey(const ValueKey('link-install')), findsNothing);
 
     await tester.tap(find.text('Coller'));
     await h.settle();
     expect(find.text('Alpha'), findsOneWidget);
     expect(find.text('Films'), findsOneWidget);
-    expect(find.textContaining('Fournit : Catalogues'), findsOneWidget);
+    expect(find.text('Catalogues · Flux'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Installer'));
+    await tester.tap(find.byKey(const ValueKey('link-install')));
     await h.settle();
     expect(find.text('Alpha'), findsOneWidget);
     expect(find.text('Installer'), findsNothing);
@@ -153,22 +161,12 @@ void main() {
     final h = _Harness(tester);
     await h.start();
     await h.pumpScreen();
-    await tester.tap(
-      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
-          ? find.byKey(const ValueKey('addons-add'))
-          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
-    );
-    await h.settle();
+    await h.openLinkTab();
 
     await tester.enterText(find.byType(TextField), 'https://nul.example.com/x');
     await h.settle();
     expect(find.text('Addon injoignable'), findsOneWidget);
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Installer'))
-          .onPressed,
-      isNull,
-    );
+    expect(find.byKey(const ValueKey('link-install')), findsNothing);
     await h.dispose();
   });
 
@@ -178,12 +176,7 @@ void main() {
     final h = _Harness(tester);
     await h.start();
     await h.pumpScreen();
-    await tester.tap(
-      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
-          ? find.byKey(const ValueKey('addons-add'))
-          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
-    );
-    await h.settle();
+    await h.openLinkTab();
 
     await tester.enterText(find.byType(TextField), _lan);
     await tester.pump(const Duration(milliseconds: 700));
@@ -204,7 +197,7 @@ void main() {
     await tester.tap(find.text('Continuer'));
     await h.settle();
     expect(find.text('Maison'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Installer'));
+    await tester.tap(find.byKey(const ValueKey('link-install')));
     await h.settle();
     expect((await tester.runAsync(h.repo.list))!.map((a) => a.name), [
       'Maison',
@@ -310,24 +303,14 @@ void main() {
     await h.start();
     await tester.runAsync(() => h.repo.install(_urlA));
     await h.pumpScreen();
-    await tester.tap(
-      find.byKey(const ValueKey('addons-add')).evaluate().isNotEmpty
-          ? find.byKey(const ValueKey('addons-add'))
-          : find.widgetWithText(FilledButton, 'Ajouter un addon'),
-    );
-    await h.settle();
+    await h.openLinkTab();
     await tester.enterText(
       find.byType(TextField),
       'https://A.example.com/tok-a',
     );
     await h.settle();
     expect(find.text('Déjà installé'), findsOneWidget);
-    expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Installer'))
-          .onPressed,
-      isNull,
-    );
+    expect(find.byKey(const ValueKey('link-install')), findsNothing);
     await h.dispose();
   });
 

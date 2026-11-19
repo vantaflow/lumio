@@ -68,6 +68,9 @@ import 'package:lumio/features/tracking/tracking_screen.dart';
 import 'package:lumio/providers.dart';
 
 import 'support/app_harness.dart';
+import 'support/fake_addon_fetcher.dart';
+import 'support/fake_catalog.dart';
+import 'package:lumio/features/addons/add_addon_screen.dart';
 
 final _dir = Platform.environment['LUMIO_RENDER_DIR'];
 
@@ -1249,6 +1252,103 @@ void main() {
         ),
       );
     }
+  });
+
+  testWidgets('cycle 3 : ajout d\'addon', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+    String c(
+      String name,
+      List<String> res,
+      List<String> types,
+      String d,
+    ) => jsonEncode({
+      'transportUrl':
+          'https://${name.toLowerCase().replaceAll(' ', '-')}.example.com/manifest.json',
+      'manifest': {
+        'id': 'x.$name',
+        'version': '1.0.0',
+        'name': name,
+        'description': d,
+        'resources': res,
+        'types': types,
+      },
+    });
+    final collection =
+        '[${[
+          c('Cinemeta', ['catalog', 'meta'], ['movie', 'series'], 'Films et séries populaires, fiches et épisodes.'),
+          c('OpenSubtitles', ['subtitles'], ['movie', 'series'], 'Sous-titres dans votre langue pour vos lectures.'),
+          c('Anime Kitsu', ['catalog', 'meta'], ['anime'], "Catalogue et fiches d'anime."),
+          c('IMDb Ratings', ['meta'], ['movie'], 'Les notes IMDb affichées sur chaque fiche.'),
+          c('Radios', ['catalog'], ['radio'], 'Stations de radio en ligne.'),
+          c('Watch Next', ['meta'], ['movie'], 'Idées de titres proches de celui que vous regardez.'),
+        ].join(',')}]';
+    final site = FakeCatalogSite(siteDown: true, collectionJson: collection);
+    final h = AppHarness(t);
+    final key = GlobalKey();
+    await h.pump(
+      RepaintBoundary(key: key, child: const AddAddonScreen()),
+      extra: [
+        catalogOverride(site),
+        addonsProvider.overrideWith(
+          () => _RAddons([
+            AddonManifest(
+              id: 'cm',
+              version: '3.0.0',
+              name: 'Cinemeta',
+              types: const ['movie'],
+              resources: const [AddonResource('catalog')],
+              catalogs: const [],
+              transportUrl: Uri.parse('https://cm.example.com/manifest.json'),
+            ),
+          ]),
+        ),
+      ],
+    );
+    await h.settle();
+    await _save(t, key, 'r-TV16');
+    await t.tap(find.byKey(const ValueKey('addtab:link')));
+    await h.settle();
+    await _save(t, key, 'r-TV08-vide');
+    await h.close();
+
+    final h2 = AppHarness(t);
+    final k2 = GlobalKey();
+    await h2.pump(
+      RepaintBoundary(
+        key: k2,
+        child: const AddAddonScreen(
+          initialUrl: 'https://source-alpha.example/manifest.json',
+        ),
+      ),
+      extra: [
+        catalogOverride(site),
+        addonRepositoryProvider.overrideWith(
+          (ref) => AddonRepository(
+            ref.watch(appDatabaseProvider),
+            MemorySecretStore(),
+            clientFactory: ({required allowPrivate}) => AddonClient(
+              FakeAddonFetcher({
+                'https://source-alpha.example/manifest.json': {
+                  'id': 'alpha',
+                  'version': '2.4.0',
+                  'name': 'Source Alpha',
+                  'description': 'Catalogues et flux pour films et séries.',
+                  'types': ['movie', 'series'],
+                  'resources': ['catalog', 'stream'],
+                  'catalogs': [
+                    {'type': 'movie', 'id': 'top', 'name': 'Top'},
+                  ],
+                },
+              }),
+              allowPrivate: allowPrivate,
+            ),
+          ),
+        ),
+      ],
+    );
+    await h2.settle();
+    await _save(t, k2, 'r-TV08');
+    await h2.close();
   });
 }
 

@@ -4039,6 +4039,258 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{count, plural, =0{Aucun serveur} =1{1 serveur} other{{count} serveurs}}'**
   String jellyfinServersCount(int count);
+
+  /// No description provided for @addAddonBreadcrumb.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages › Sources'**
+  String get addAddonBreadcrumb;
+
+  /// No description provided for @addonTabCatalog.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catalogue'**
+  String get addonTabCatalog;
+
+  /// No description provided for @addonTabLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par lien'**
+  String get addonTabLink;
+
+  /// No description provided for @addonTabPhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Depuis le téléphone'**
+  String get addonTabPhone;
+
+  /// No description provided for @catPopular.
+  ///
+  /// In fr, this message translates to:
+  /// **'Populaires'**
+  String get catPopular;
+
+  /// No description provided for @catMoviesSeries.
+  ///
+  /// In fr, this message translates to:
+  /// **'Films et séries'**
+  String get catMoviesSeries;
+
+  /// No description provided for @catTorrents.
+  ///
+  /// In fr, this message translates to:
+  /// **'Torrents'**
+  String get catTorrents;
+
+  /// No description provided for @catDebrid.
+  ///
+  /// In fr, this message translates to:
+  /// **'Débrideurs'**
+  String get catDebrid;
+
+  /// No description provided for @catSubtitles.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sous-titres'**
+  String get catSubtitles;
+
+  /// No description provided for @catAnime.
+  ///
+  /// In fr, this message translates to:
+  /// **'Anime'**
+  String get catAnime;
+
+  /// No description provided for @catMetadata.
+  ///
+  /// In fr, this message translates to:
+  /// **'Métadonnées'**
+  String get catMetadata;
+
+  /// No description provided for @catTracking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivi'**
+  String get catTracking;
+
+  /// No description provided for @catMore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus…'**
+  String get catMore;
+
+  /// No description provided for @catHttpStreams.
+  ///
+  /// In fr, this message translates to:
+  /// **'Flux directs'**
+  String get catHttpStreams;
+
+  /// No description provided for @catUsenet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Usenet'**
+  String get catUsenet;
+
+  /// No description provided for @catAsianDrama.
+  ///
+  /// In fr, this message translates to:
+  /// **'Drames asiatiques'**
+  String get catAsianDrama;
+
+  /// No description provided for @catBollywood.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bollywood'**
+  String get catBollywood;
+
+  /// No description provided for @catMusic.
+  ///
+  /// In fr, this message translates to:
+  /// **'Musique'**
+  String get catMusic;
+
+  /// No description provided for @catRadios.
+  ///
+  /// In fr, this message translates to:
+  /// **'Radios'**
+  String get catRadios;
+
+  /// No description provided for @catLiveTv.
+  ///
+  /// In fr, this message translates to:
+  /// **'TV en direct'**
+  String get catLiveTv;
+
+  /// No description provided for @catMisc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Divers'**
+  String get catMisc;
+
+  /// No description provided for @catMoreTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres catégories'**
+  String get catMoreTitle;
+
+  /// No description provided for @catalogFootnote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catalogue communautaire stremio-addons.net. Les addons à configurer (clé de débrideur, langues…) s\'ouvrent sur votre téléphone. Installez uniquement des sources de confiance.'**
+  String get catalogFootnote;
+
+  /// No description provided for @catalogInstalled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installé'**
+  String get catalogInstalled;
+
+  /// No description provided for @catalogLoadMore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir plus'**
+  String get catalogLoadMore;
+
+  /// No description provided for @catalogRefresh.
+  ///
+  /// In fr, this message translates to:
+  /// **'Actualiser'**
+  String get catalogRefresh;
+
+  /// No description provided for @catalogOffline.
+  ///
+  /// In fr, this message translates to:
+  /// **'Hors ligne : liste enregistrée le {date}.'**
+  String catalogOffline(Object date);
+
+  /// No description provided for @catalogFallbackNote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le site du catalogue est inaccessible : liste officielle réduite.'**
+  String get catalogFallbackNote;
+
+  /// No description provided for @catalogLoadError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de charger le catalogue.'**
+  String get catalogLoadError;
+
+  /// No description provided for @catalogEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun addon dans cette catégorie.'**
+  String get catalogEmpty;
+
+  /// No description provided for @catalogDetailError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de lire la fiche de cet addon.'**
+  String get catalogDetailError;
+
+  /// No description provided for @catalogCardMeta.
+  ///
+  /// In fr, this message translates to:
+  /// **'★ {stars} · v{version}'**
+  String catalogCardMeta(Object stars, Object version);
+
+  /// No description provided for @catalogCardStars.
+  ///
+  /// In fr, this message translates to:
+  /// **'★ {stars}'**
+  String catalogCardStars(Object stars);
+
+  /// No description provided for @chooseInstanceTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une instance'**
+  String get chooseInstanceTitle;
+
+  /// No description provided for @instanceNeedsSetup.
+  ///
+  /// In fr, this message translates to:
+  /// **'à configurer'**
+  String get instanceNeedsSetup;
+
+  /// No description provided for @configureOnPhoneTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'À configurer sur le téléphone'**
+  String get configureOnPhoneTitle;
+
+  /// No description provided for @configureOnPhoneBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Scannez le code pour le configurer sur votre téléphone, puis collez le lien obtenu dans l\'onglet « Par lien ».'**
+  String get configureOnPhoneBody;
+
+  /// No description provided for @addonLinkHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lien manifest.json ou lien stremio://. Un lien copié sur cet appareil est proposé automatiquement.'**
+  String get addonLinkHelp;
+
+  /// No description provided for @addonPreviewLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'APERÇU · v{version}'**
+  String addonPreviewLabel(Object version);
+
+  /// No description provided for @addonLinkTrust.
+  ///
+  /// In fr, this message translates to:
+  /// **'Installez uniquement des sources de confiance : le lien peut contenir une clé personnelle, gardée chiffrée sur cet appareil.'**
+  String get addonLinkTrust;
+
+  /// No description provided for @phoneTabSoonTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bientôt disponible'**
+  String get phoneTabSoonTitle;
+
+  /// No description provided for @phoneTabSoonBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'ajout depuis le téléphone arrive : une page servie par la box pour envoyer le lien depuis votre téléphone. En attendant, utilisez le catalogue ou l\'onglet « Par lien ».'**
+  String get phoneTabSoonBody;
 }
 
 class _AppLocalizationsDelegate

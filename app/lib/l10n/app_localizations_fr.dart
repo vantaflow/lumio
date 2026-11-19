@@ -2391,4 +2391,144 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get addAddonBreadcrumb => 'Réglages › Sources';
+
+  @override
+  String get addonTabCatalog => 'Catalogue';
+
+  @override
+  String get addonTabLink => 'Par lien';
+
+  @override
+  String get addonTabPhone => 'Depuis le téléphone';
+
+  @override
+  String get catPopular => 'Populaires';
+
+  @override
+  String get catMoviesSeries => 'Films et séries';
+
+  @override
+  String get catTorrents => 'Torrents';
+
+  @override
+  String get catDebrid => 'Débrideurs';
+
+  @override
+  String get catSubtitles => 'Sous-titres';
+
+  @override
+  String get catAnime => 'Anime';
+
+  @override
+  String get catMetadata => 'Métadonnées';
+
+  @override
+  String get catTracking => 'Suivi';
+
+  @override
+  String get catMore => 'Plus…';
+
+  @override
+  String get catHttpStreams => 'Flux directs';
+
+  @override
+  String get catUsenet => 'Usenet';
+
+  @override
+  String get catAsianDrama => 'Drames asiatiques';
+
+  @override
+  String get catBollywood => 'Bollywood';
+
+  @override
+  String get catMusic => 'Musique';
+
+  @override
+  String get catRadios => 'Radios';
+
+  @override
+  String get catLiveTv => 'TV en direct';
+
+  @override
+  String get catMisc => 'Divers';
+
+  @override
+  String get catMoreTitle => 'Autres catégories';
+
+  @override
+  String get catalogFootnote =>
+      'Catalogue communautaire stremio-addons.net. Les addons à configurer (clé de débrideur, langues…) s\'ouvrent sur votre téléphone. Installez uniquement des sources de confiance.';
+
+  @override
+  String get catalogInstalled => 'Installé';
+
+  @override
+  String get catalogLoadMore => 'Voir plus';
+
+  @override
+  String get catalogRefresh => 'Actualiser';
+
+  @override
+  String catalogOffline(Object date) {
+    return 'Hors ligne : liste enregistrée le $date.';
+  }
+
+  @override
+  String get catalogFallbackNote =>
+      'Le site du catalogue est inaccessible : liste officielle réduite.';
+
+  @override
+  String get catalogLoadError => 'Impossible de charger le catalogue.';
+
+  @override
+  String get catalogEmpty => 'Aucun addon dans cette catégorie.';
+
+  @override
+  String get catalogDetailError => 'Impossible de lire la fiche de cet addon.';
+
+  @override
+  String catalogCardMeta(Object stars, Object version) {
+    return '★ $stars · v$version';
+  }
+
+  @override
+  String catalogCardStars(Object stars) {
+    return '★ $stars';
+  }
+
+  @override
+  String get chooseInstanceTitle => 'Choisir une instance';
+
+  @override
+  String get instanceNeedsSetup => 'à configurer';
+
+  @override
+  String get configureOnPhoneTitle => 'À configurer sur le téléphone';
+
+  @override
+  String get configureOnPhoneBody =>
+      'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Scannez le code pour le configurer sur votre téléphone, puis collez le lien obtenu dans l\'onglet « Par lien ».';
+
+  @override
+  String get addonLinkHelp =>
+      'Lien manifest.json ou lien stremio://. Un lien copié sur cet appareil est proposé automatiquement.';
+
+  @override
+  String addonPreviewLabel(Object version) {
+    return 'APERÇU · v$version';
+  }
+
+  @override
+  String get addonLinkTrust =>
+      'Installez uniquement des sources de confiance : le lien peut contenir une clé personnelle, gardée chiffrée sur cet appareil.';
+
+  @override
+  String get phoneTabSoonTitle => 'Bientôt disponible';
+
+  @override
+  String get phoneTabSoonBody =>
+      'L\'ajout depuis le téléphone arrive : une page servie par la box pour envoyer le lien depuis votre téléphone. En attendant, utilisez le catalogue ou l\'onglet « Par lien ».';
 }

@@ -20,6 +20,7 @@ import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+import 'support/fake_catalog.dart';
 
 class _FixedPicker implements FolderPicker {
   _FixedPicker(this.path);
@@ -70,6 +71,7 @@ class _H {
       overrides: [
         appDatabaseProvider.overrideWithValue(db),
         addonRepositoryProvider.overrideWithValue(repo),
+        catalogOverride(FakeCatalogSite(offline: true)),
         ...overrides,
       ],
     );
@@ -238,9 +240,11 @@ void main() {
     await h.tapKey('onboarding-next');
     await h.tapKey('onboarding-next');
     await h.tapKey('onboarding-add-addon');
+    await tester.tap(find.byKey(const ValueKey('addtab:link')));
+    await h.settle();
     await tester.enterText(find.byType(TextField), _url);
     await h.settle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Installer'));
+    await tester.tap(find.byKey(const ValueKey('link-install')));
     await h.settle();
     expect(find.text('1 addon installé'), findsOneWidget);
     await h.tapKey('onboarding-finish');

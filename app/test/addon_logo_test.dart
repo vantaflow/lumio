@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/addons/addon_logo.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/theme.dart';
 

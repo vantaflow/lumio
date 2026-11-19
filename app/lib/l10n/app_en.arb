@@ -1135,5 +1135,68 @@
         "type": "int"
       }
     }
-  }
+  },
+  "addAddonBreadcrumb": "Settings › Sources",
+  "addonTabCatalog": "Catalogue",
+  "addonTabLink": "By link",
+  "addonTabPhone": "From your phone",
+  "catPopular": "Popular",
+  "catMoviesSeries": "Movies and series",
+  "catTorrents": "Torrents",
+  "catDebrid": "Debrid",
+  "catSubtitles": "Subtitles",
+  "catAnime": "Anime",
+  "catMetadata": "Metadata",
+  "catTracking": "Tracking",
+  "catMore": "More…",
+  "catHttpStreams": "Direct streams",
+  "catUsenet": "Usenet",
+  "catAsianDrama": "Asian drama",
+  "catBollywood": "Bollywood",
+  "catMusic": "Music",
+  "catRadios": "Radios",
+  "catLiveTv": "Live TV",
+  "catMisc": "Misc",
+  "catMoreTitle": "Other categories",
+  "catalogFootnote": "Community catalogue from stremio-addons.net. Addons that need setup (debrid key, languages…) open on your phone. Only install sources you trust.",
+  "catalogInstalled": "Installed",
+  "catalogLoadMore": "Show more",
+  "catalogRefresh": "Refresh",
+  "catalogOffline": "Offline: list saved on {date}.",
+  "@catalogOffline": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "catalogFallbackNote": "The catalogue site is unreachable: reduced official list.",
+  "catalogLoadError": "Couldn't load the catalogue.",
+  "catalogEmpty": "No addon in this category.",
+  "catalogDetailError": "Couldn't read this addon's page.",
+  "catalogCardMeta": "★ {stars} · v{version}",
+  "@catalogCardMeta": {
+    "placeholders": {
+      "stars": {},
+      "version": {}
+    }
+  },
+  "catalogCardStars": "★ {stars}",
+  "@catalogCardStars": {
+    "placeholders": {
+      "stars": {}
+    }
+  },
+  "chooseInstanceTitle": "Choose an instance",
+  "instanceNeedsSetup": "needs setup",
+  "configureOnPhoneTitle": "Set up on your phone",
+  "configureOnPhoneBody": "This addon needs setup before it works (debrid key, languages…). Scan the code to set it up on your phone, then paste the resulting link in the “By link” tab.",
+  "addonLinkHelp": "manifest.json link or stremio:// link. A link copied on this device is offered automatically.",
+  "addonPreviewLabel": "PREVIEW · v{version}",
+  "@addonPreviewLabel": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "addonLinkTrust": "Only install sources you trust: the link may contain a personal key, kept encrypted on this device.",
+  "phoneTabSoonTitle": "Coming soon",
+  "phoneTabSoonBody": "Adding from your phone is coming: a page served by the box to send the link from your phone. Meanwhile, use the catalogue or the “By link” tab."
 }

@@ -10,13 +10,14 @@ import 'package:lumio/data/addon_repository.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/profile_repository.dart';
 import 'package:lumio/data/secret_store.dart';
-import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/addons/add_addon_screen.dart';
 import 'package:lumio/features/addons/install_link_handler.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 import 'support/fake_addon_fetcher.dart';
+import 'support/fake_catalog.dart';
 
 const _urlA = 'https://a.example.com/tok-a/manifest.json';
 
@@ -86,6 +87,7 @@ class _H {
         addonRepositoryProvider.overrideWithValue(addons),
         profileRepositoryProvider.overrideWithValue(profiles),
         installLinkSourceProvider.overrideWithValue(source),
+        catalogOverride(FakeCatalogSite(offline: true)),
       ],
     );
     addTearDown(container.dispose);
@@ -233,13 +235,16 @@ void main() {
       home: Builder(
         builder: (context) => Scaffold(
           body: TextButton(
-            onPressed: () => showAddAddonDialog(context),
+            onPressed: () => showAddAddonScreen(context),
             child: const Text('OUVRIR'),
           ),
         ),
       ),
     );
     await h.tester.tap(find.text('OUVRIR'));
+    await h.settle();
+    // Onglet « Par lien » : c'est lui qui propose le lien copié.
+    await h.tester.tap(find.byKey(const ValueKey('addtab:link')));
     await h.settle();
   }
 

@@ -2369,4 +2369,144 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get addAddonBreadcrumb => 'Settings › Sources';
+
+  @override
+  String get addonTabCatalog => 'Catalogue';
+
+  @override
+  String get addonTabLink => 'By link';
+
+  @override
+  String get addonTabPhone => 'From your phone';
+
+  @override
+  String get catPopular => 'Popular';
+
+  @override
+  String get catMoviesSeries => 'Movies and series';
+
+  @override
+  String get catTorrents => 'Torrents';
+
+  @override
+  String get catDebrid => 'Debrid';
+
+  @override
+  String get catSubtitles => 'Subtitles';
+
+  @override
+  String get catAnime => 'Anime';
+
+  @override
+  String get catMetadata => 'Metadata';
+
+  @override
+  String get catTracking => 'Tracking';
+
+  @override
+  String get catMore => 'More…';
+
+  @override
+  String get catHttpStreams => 'Direct streams';
+
+  @override
+  String get catUsenet => 'Usenet';
+
+  @override
+  String get catAsianDrama => 'Asian drama';
+
+  @override
+  String get catBollywood => 'Bollywood';
+
+  @override
+  String get catMusic => 'Music';
+
+  @override
+  String get catRadios => 'Radios';
+
+  @override
+  String get catLiveTv => 'Live TV';
+
+  @override
+  String get catMisc => 'Misc';
+
+  @override
+  String get catMoreTitle => 'Other categories';
+
+  @override
+  String get catalogFootnote =>
+      'Community catalogue from stremio-addons.net. Addons that need setup (debrid key, languages…) open on your phone. Only install sources you trust.';
+
+  @override
+  String get catalogInstalled => 'Installed';
+
+  @override
+  String get catalogLoadMore => 'Show more';
+
+  @override
+  String get catalogRefresh => 'Refresh';
+
+  @override
+  String catalogOffline(Object date) {
+    return 'Offline: list saved on $date.';
+  }
+
+  @override
+  String get catalogFallbackNote =>
+      'The catalogue site is unreachable: reduced official list.';
+
+  @override
+  String get catalogLoadError => 'Couldn\'t load the catalogue.';
+
+  @override
+  String get catalogEmpty => 'No addon in this category.';
+
+  @override
+  String get catalogDetailError => 'Couldn\'t read this addon\'s page.';
+
+  @override
+  String catalogCardMeta(Object stars, Object version) {
+    return '★ $stars · v$version';
+  }
+
+  @override
+  String catalogCardStars(Object stars) {
+    return '★ $stars';
+  }
+
+  @override
+  String get chooseInstanceTitle => 'Choose an instance';
+
+  @override
+  String get instanceNeedsSetup => 'needs setup';
+
+  @override
+  String get configureOnPhoneTitle => 'Set up on your phone';
+
+  @override
+  String get configureOnPhoneBody =>
+      'This addon needs setup before it works (debrid key, languages…). Scan the code to set it up on your phone, then paste the resulting link in the “By link” tab.';
+
+  @override
+  String get addonLinkHelp =>
+      'manifest.json link or stremio:// link. A link copied on this device is offered automatically.';
+
+  @override
+  String addonPreviewLabel(Object version) {
+    return 'PREVIEW · v$version';
+  }
+
+  @override
+  String get addonLinkTrust =>
+      'Only install sources you trust: the link may contain a personal key, kept encrypted on this device.';
+
+  @override
+  String get phoneTabSoonTitle => 'Coming soon';
+
+  @override
+  String get phoneTabSoonBody =>
+      'Adding from your phone is coming: a page served by the box to send the link from your phone. Meanwhile, use the catalogue or the “By link” tab.';
 }

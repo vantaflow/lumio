@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/data/addon_repository.dart';
-import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/addons/add_addon_screen.dart';
+import 'package:lumio/features/addons/addon_logo.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/health_pill.dart';
 import 'package:lumio/features/addons/health_providers.dart';
@@ -28,7 +29,7 @@ class AddonsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final addons = ref.watch(addonsProvider);
-    Future<void> add() => showAddAddonDialog(context);
+    Future<void> add() => showAddAddonScreen(context);
     var remembered = ref
         .read(focusMemoryProvider.notifier)
         .restore(addonsRouteKey);

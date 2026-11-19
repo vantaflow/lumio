@@ -5,7 +5,7 @@ import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
 import 'package:lumio/debug/torrent_spike.dart';
-import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/addons/add_addon_screen.dart';
 import 'package:lumio/features/home/tv_home.dart' show LumioMark;
 import 'package:lumio/features/profiles/profile_picker_screen.dart'
     show kidLabel, switchProfileFlow;
@@ -372,7 +372,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         label: '+ ${l.addAddon}',
         height: 72,
         fontSize: 28,
-        onPressed: () => showAddAddonDialog(context),
+        onPressed: () => showAddAddonScreen(context),
       ),
       children: const [SourcesBody()],
     );

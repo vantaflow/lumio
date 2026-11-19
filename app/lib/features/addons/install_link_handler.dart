@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumio/features/addons/add_addon_dialog.dart';
+import 'package:lumio/features/addons/add_addon_screen.dart';
 import 'package:lumio/features/profiles/pin_dialog.dart' show requireParent;
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -107,7 +107,7 @@ class _InstallLinkHandlerState extends ConsumerState<InstallLinkHandler> {
     try {
       if (!await requireParent(context, ref)) return;
       if (!mounted) return;
-      await showAddAddonDialog(context, initialUrl: url.toString());
+      await showAddAddonScreen(context, initialUrl: url.toString());
     } finally {
       _busy = false;
       final next = _queued;
