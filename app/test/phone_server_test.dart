@@ -1055,39 +1055,76 @@ void main() {
       timeout: const Timeout(Duration(seconds: 20)),
     );
 
-    test('5e connexion d\'une même adresse refusée', () async {
+    String getCss() =>
+        'GET /app.css HTTP/1.1\r\nHost: ${f.hostHeader}\r\n'
+        'Connection: close\r\n\r\n';
+
+    test("6 connexions keep-alive d'un navigateur puis une 7e : servie", () async {
       final open = <Socket>[];
-      final closedFlags = <bool>[];
-      for (var i = 0; i < 4; i++) {
+      for (var i = 0; i < 6; i++) {
         final so = await raw();
-        final idx = closedFlags.length;
-        closedFlags.add(false);
-        so.listen(
-          (_) {},
-          onDone: () => closedFlags[idx] = true,
-          onError: (_) => closedFlags[idx] = true,
-        );
+        so.listen((_) {}, onError: (_) {});
         open.add(so);
       }
       await Future<void>.delayed(const Duration(milliseconds: 200));
-      Socket? fifth;
-      try {
-        fifth = await raw();
-        await closes(fifth).timeout(const Duration(seconds: 2));
-      } on SocketException {
-        // Refusée dès la connexion : c'est aussi un refus.
-      }
-      expect(closedFlags, everyElement(isFalse));
-      for (final s in [...open, ?fifth]) {
+      final so = await raw();
+      final got = StringBuffer();
+      final closed = closes(
+        so,
+        (d) => got.write(utf8.decode(d, allowMalformed: true)),
+      );
+      so.write(getCss());
+      await so.flush();
+      await closed.timeout(const Duration(seconds: 6));
+      expect(got.toString(), startsWith('HTTP/1.1 200'));
+      for (final s in open) {
         s.destroy();
       }
+      so.destroy();
     });
 
-    test('au plus 16 connexions actives au total', () async {
-      // Les limites par adresse ne s'appliquent qu'à une même IP : on vérifie
-      // seulement que le plafond total existe.
-      expect(PhoneServer.maxConnections, 16);
-      expect(PhoneServer.maxConnectionsPerIp, 4);
+    test(
+      "au-delà de la limite par adresse, la plus ancienne connexion est "
+      'fermée et la nouvelle est servie',
+      () async {
+        final open = <Socket>[];
+        final closedFlags = <bool>[];
+        for (var i = 0; i < PhoneServer.maxConnectionsPerIp; i++) {
+          final so = await raw();
+          final idx = closedFlags.length;
+          closedFlags.add(false);
+          so.listen(
+            (_) {},
+            onDone: () => closedFlags[idx] = true,
+            onError: (_) => closedFlags[idx] = true,
+          );
+          open.add(so);
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        final so = await raw();
+        final got = StringBuffer();
+        final closed = closes(
+          so,
+          (d) => got.write(utf8.decode(d, allowMalformed: true)),
+        );
+        so.write(getCss());
+        await so.flush();
+        await closed.timeout(const Duration(seconds: 6));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        expect(got.toString(), startsWith('HTTP/1.1 200'));
+        expect(closedFlags.first, isTrue);
+        expect(closedFlags.last, isFalse);
+        for (final s in open) {
+          s.destroy();
+        }
+        so.destroy();
+      },
+    );
+
+    test('plafonds de connexions', () {
+      expect(PhoneServer.maxConnections, 24);
+      expect(PhoneServer.maxConnectionsPerIp, 8);
+      expect(PhoneServer.connectionIdleTimeout, const Duration(seconds: 5));
     });
   });
 }

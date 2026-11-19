@@ -239,9 +239,9 @@ class PhoneServer implements PhoneSession {
 
   /// Verrouillages tolérés par ouverture du serveur ; le suivant l'arrête.
   static const maxLocks = 3;
-  static const maxConnections = 16;
-  static const maxConnectionsPerIp = 4;
-  static const connectionIdleTimeout = Duration(seconds: 15);
+  static const maxConnections = 24;
+  static const maxConnectionsPerIp = 8;
+  static const connectionIdleTimeout = Duration(seconds: 5);
   static const rateLimit = 60;
   static const rateWindow = Duration(seconds: 10);
   static const cookieName = 'lumio_sid';
@@ -837,31 +837,36 @@ class PhoneServer implements PhoneSession {
   }
 }
 
-/// Socket d'écoute qui refuse (ferme aussitôt) les connexions au-delà de
-/// [maxTotal] actives, ou de [maxPerIp] pour une même adresse.
+/// Socket d'écoute qui borne les connexions actives : [maxTotal] au total et
+/// [maxPerIp] pour une même adresse. Au-delà, la plus ANCIENNE connexion de la
+/// même adresse (en pratique une connexion keep-alive inactive d'un
+/// navigateur) est fermée pour laisser place à la nouvelle ; une adresse qui
+/// n'a rien à céder est refusée.
 class _LimitedServerSocket extends StreamView<Socket> implements ServerSocket {
   _LimitedServerSocket._(this._inner, Stream<Socket> filtered)
     : super(filtered);
 
   factory _LimitedServerSocket(ServerSocket inner, int maxTotal, int maxPerIp) {
     var total = 0;
-    final perIp = <String, int>{};
+    final perIp = <String, List<Socket>>{};
     final filtered = inner.where((s) {
       final ip = s.remoteAddress.address;
-      if (total >= maxTotal || (perIp[ip] ?? 0) >= maxPerIp) {
+      final mine = perIp.putIfAbsent(ip, () => []);
+      if (mine.length >= maxPerIp || (total >= maxTotal && mine.isNotEmpty)) {
+        mine.first.destroy();
+        mine.removeAt(0);
+        total--;
+      }
+      if (total >= maxTotal) {
+        if (mine.isEmpty) perIp.remove(ip);
         s.destroy();
         return false;
       }
       total++;
-      perIp[ip] = (perIp[ip] ?? 0) + 1;
+      mine.add(s);
       void release() {
-        total--;
-        final n = (perIp[ip] ?? 1) - 1;
-        if (n <= 0) {
-          perIp.remove(ip);
-        } else {
-          perIp[ip] = n;
-        }
+        if (mine.remove(s)) total--;
+        if (mine.isEmpty && identical(perIp[ip], mine)) perIp.remove(ip);
       }
 
       s.done.then((_) => release(), onError: (Object _) => release());
