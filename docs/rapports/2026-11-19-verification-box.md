@@ -38,7 +38,7 @@ Vérifiés à l'écran : choix de profil, gestion des profils, éditeur de profi
 ## Défauts trouvés et corrigés (commits sur feat/lumio)
 1. PIN orphelin (voir Ménage). 2. Pastilles de limite d'âge collées (P02) : largeur naturelle, écart 16, test. 3. Badges crayon/cadenas des avatars sous l'anneau de focus : dessinés au-dessus, à cheval sur le bord, mis à l'échelle, test. 4. Champ de recherche : boîte dans la boîte (contours de thème), test. 5. Code Trakt sous le QR, test. 6. Carte « Gérer depuis le téléphone » affichait une adresse qui ne répondait pas (portail fermé) : « Appuyez sur OK », phrase « Laissez cet écran ouvert », README. 7. En-tête TvScreen : deux actions se partageaient la place et « Ajouter un dossier » était coupé, test. 8. Saccades du lecteur (mediacodec direct). 9. HLS : proxy sans connexions persistantes, maîtres à variantes multiples.
 
-## Défauts constatés non corrigés
+## Défauts constatés (passe 1) : état après la passe 2 ci-dessous
 - Annuler l'alerte IP d'un torrent affiche « La lecture a échoué. Torrent non démarré » au lieu de revenir à la fiche.
 - Panneau « Pistes et sous-titres » : le bouton « Fermer » est coupé en bas à 1080p.
 - Les onglets « Films » et « Séries » ouvrent la recherche (invite vide) au lieu d'un catalogue.
@@ -51,3 +51,32 @@ Torrents 1080p, endurance 8 h, HLS fMP4 (voir plus haut). Demandes reçues en co
 
 ## Tests
 Cœur : 538 ; application : 783 ; `flutter analyze`, `dart format` propres.
+
+## Passe 2 (2026-11-19, nuit)
+
+La box (192.168.0.47) a quitté le réseau par intermittence pendant cette passe (ping sans réponse, port adb fermé pendant de longues périodes) : les vérifications sur la box sont notées une par une ci-dessous ; ce qui n'a pu être vu à l'écran est marqué « non revérifié sur la box ».
+
+### Défauts de la passe 1 : corrigés (tests d'abord, 805 tests verts)
+| Défaut | Correctif |
+|---|---|
+| Annuler l'alerte IP d'un torrent affichait « La lecture a échoué » | refus volontaire : le lecteur se ferme (retour à la fiche), aucun message d'échec (`torrent_privacy_test`) |
+| Bouton « Fermer » du panneau Pistes coupé | « Fermer » sorti de la zone défilante : pied fixe du panneau (`tracks_panel_test`, 1920×1080) |
+| Films et Séries ouvraient une recherche vide | pages `TypePageScreen` : rangées des catalogues des addons du type, comme l'accueil (`home_screen_test`) |
+| Focus remonté sur « Films » | `RowTraversalPolicy.preferUp` : la flèche haute atterrit sur l'onglet courant (`row_traversal_test`) |
+| Titre « Gérer depuis le téléphone » sur tous les onglets | le titre fourni ne vaut que pour l'onglet du téléphone (`phone_tab_test`) |
+| Héros qui étire et floute une affiche basse définition | fond « background » de l'addon s'il existe (`ContinuePlayback.backdrop`), sinon affiche à sa taille d'origine (jamais agrandie) sur son reflet flou et assombri (`tv_hero_test`) |
+| Clavier de recherche en flux de 8 colonnes | rangées réelles AZERTYUIOP / QSDFGHJKLM / WXCVBN / chiffres, touches de 55 ; arabe en rangées de 10 (`search_screen_test`) |
+| « Désactivés » gardé malgré une langue préférée | `fallbackSubtitleLang` : première langue de flux, sinon langue de l'application, appliquée seule si un sous-titre existe et si l'audio n'est pas déjà dans cette langue (`tracks_panel_test`) |
+
+### Guides pas à pas (maquettes G01 à G04 dans docs/design/maquettes/project)
+- A : bouton **Aide** de l'écran « Ajouter un addon » (guide de l'onglet courant).
+- B : encadré « Sur votre téléphone » en 5 étapes sur l'écran « Configurer depuis le portail » ; message TV « Demande reçue du téléphone ».
+- C : portail, écran Régler (où trouver Copier le lien / Install / Copy link, appui long, clé chiffrée), rappel de confirmer sur la TV, phrase sur le remplacement dans Mes addons.
+- E : Trakt, 4 étapes sur l'écran du code de la TV.
+- F : page Aide (TV : Réglages › Général › Aide ; portail : lien Aide dans l'en-tête), 6 guides. Pas de guide VPN externe.
+
+### Section Trakt du portail (maquette M05d)
+Onglet **Trakt** : état, « Connecter Trakt » (le flux de code d'appareil tourne dans l'application sur la TV, le portail montre le code et un bouton vers https://trakt.tv/activate), mise à jour automatique toutes les 2,5 s pendant l'attente, « Déconnecter » avec confirmation. Routes `GET /api/trakt`, `POST /api/trakt/connect`, `POST /api/trakt/disconnect` (session, origine, CSRF) ; jamais de jeton ni de code d'appareil dans les réponses (tests `phone_server_test` et `tracking_test`). La section Torrents et VPN (M05e) n'est pas codée.
+
+### Débit torrent
+Le moteur de mesure (`LUMIO_DEBUG_TORRENT=1`) accepte maintenant `--dart-define=LUMIO_TORRENT_HASH=<infohash>` et `LUMIO_TORRENT_SECONDS=300` et journalise un débit toutes les 10 s (`window_10s`).
