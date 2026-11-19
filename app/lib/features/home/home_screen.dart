@@ -40,6 +40,7 @@ import 'package:lumio/ui/common/guarded_image.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/focus/row_traversal.dart';
 import 'package:lumio/ui/focus/tv_row.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
@@ -438,31 +439,33 @@ class _HomeBody extends ConsumerWidget {
     final lead = hero == null ? 0 : 1;
     return _HeroPresent(
       present: hero != null,
-      child: ListView.builder(
-        controller: scroll,
-        cacheExtent: 1500,
-        padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
-        itemCount: ids.length + lead,
-        itemBuilder: (context, index) {
-          if (hero != null && index == 0) {
-            return _HomeHero(key: const ValueKey('home-hero'), entry: hero);
-          }
-          final i = index - lead;
-          final id = ids[i];
-          return KeyedSubtree(
-            key: ValueKey(id),
-            child: switch (id) {
-              continueRowId => _ContinueRow(tvTop: hero != null ? 28 : 8),
-              libraryRowId => _LibraryRow(onOpenItem: onOpenItem),
-              localRowId => _LocalRow(onOpenItem: onOpenItem),
-              _ when id.startsWith('jf:') => _JellyfinRowView(
-                rowId: id,
-                onOpenItem: onOpenItem,
-              ),
-              _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
-            },
-          );
-        },
+      child: RowTraversalGroup(
+        child: ListView.builder(
+          controller: scroll,
+          cacheExtent: 1500,
+          padding: const EdgeInsets.only(bottom: LumioSpacing.xl),
+          itemCount: ids.length + lead,
+          itemBuilder: (context, index) {
+            if (hero != null && index == 0) {
+              return _HomeHero(key: const ValueKey('home-hero'), entry: hero);
+            }
+            final i = index - lead;
+            final id = ids[i];
+            return KeyedSubtree(
+              key: ValueKey(id),
+              child: switch (id) {
+                continueRowId => _ContinueRow(tvTop: hero != null ? 28 : 8),
+                libraryRowId => _LibraryRow(onOpenItem: onOpenItem),
+                localRowId => _LocalRow(onOpenItem: onOpenItem),
+                _ when id.startsWith('jf:') => _JellyfinRowView(
+                  rowId: id,
+                  onOpenItem: onOpenItem,
+                ),
+                _ => _CatalogRowView(rowId: id, onOpenItem: onOpenItem),
+              },
+            );
+          },
+        ),
       ),
     );
   }
