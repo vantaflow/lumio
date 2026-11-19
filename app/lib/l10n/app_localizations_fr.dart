@@ -2502,13 +2502,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get instanceNeedsSetup => 'à configurer';
 
   @override
-  String get configureOnPhoneTitle => 'À configurer sur le téléphone';
-
-  @override
-  String get configureOnPhoneBody =>
-      'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Scannez le code pour le configurer sur votre téléphone, puis collez le lien obtenu dans l\'onglet « Par lien ».';
-
-  @override
   String get addonLinkHelp =>
       'Lien manifest.json ou lien stremio://. Un lien copié sur cet appareil est proposé automatiquement.';
 
@@ -2590,35 +2583,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get addonConfigure => 'Configurer';
 
   @override
-  String addonConfigureTitle(Object name) {
-    return 'Configurer $name';
-  }
+  String get addonConfigurePortal => 'Configurer depuis le portail';
 
   @override
-  String get addonOrPhone => 'Ou configurer sur le téléphone';
-
-  @override
-  String get configureHelp =>
-      'OK : valider · Retour : annuler · le lien d\'installation est capté automatiquement';
-
-  @override
-  String get configureUseCopied => 'Utiliser le lien copié';
-
-  @override
-  String get configureNoLink => 'Aucun lien d\'addon dans le presse-papiers.';
-
-  @override
-  String get configureBlocked => 'Page bloquée : elle sort de l\'addon.';
-
-  @override
-  String get configureLoadError =>
-      'La page de configuration ne s\'est pas chargée.';
+  String get addonReconfigurePortal => 'Reconfigurer depuis le portail';
 
   @override
   String get addonSheetRequired =>
-      'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Configurez-le ici avec la télécommande.';
+      'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Le portail web du téléphone ou de l\'ordinateur sert à le configurer.';
 
   @override
   String get addonSheetConfigurable =>
-      'Installez-le tel quel ou choisissez vos réglages avant.';
+      'Installez-le tel quel, ou choisissez vos réglages depuis le portail web.';
+
+  @override
+  String portalAddonHint(Object name) {
+    return 'Ouvrez cette page sur le portail : la fiche de « $name » s’affiche directement.';
+  }
 }

@@ -271,6 +271,7 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
       builder: (ctx) => TvPanel(
         title: e.name,
         width: 900,
+        fitActions: true,
         onBack: () => Navigator.of(ctx).pop(),
         actions: [
           if (!required)
@@ -332,7 +333,6 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
         widget.onConfigure(e.slug, e.name);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

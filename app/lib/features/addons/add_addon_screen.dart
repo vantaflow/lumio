@@ -38,13 +38,12 @@ Future<bool> showAddAddonScreen(
 }) async {
   final ok = await Navigator.of(context).push<bool>(
     MaterialPageRoute<bool>(
-      builder: (_) =>
-          AddAddonScreen(
-            initialUrl: initialUrl,
-            initialTab: initialTab,
-            portalQuery: portalQuery,
-            portalName: portalName,
-          ),
+      builder: (_) => AddAddonScreen(
+        initialUrl: initialUrl,
+        initialTab: initialTab,
+        portalQuery: portalQuery,
+        portalName: portalName,
+      ),
     ),
   );
   return ok ?? false;
@@ -362,8 +361,10 @@ class _AddAddonScreenState extends ConsumerState<AddAddonScreen>
                       CatalogTab(
                         active: _tab == AddAddonTab.catalog,
                         onUseLink: _useLink,
-                        onConfigure: (slug, name) =>
-                            _openPortal('addon=${Uri.encodeQueryComponent(slug)}', name),
+                        onConfigure: (slug, name) => _openPortal(
+                          'addon=${Uri.encodeQueryComponent(slug)}',
+                          name,
+                        ),
                       )
                     else
                       const SizedBox.shrink(),

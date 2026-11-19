@@ -4244,18 +4244,6 @@ abstract class AppLocalizations {
   /// **'à configurer'**
   String get instanceNeedsSetup;
 
-  /// No description provided for @configureOnPhoneTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'À configurer sur le téléphone'**
-  String get configureOnPhoneTitle;
-
-  /// No description provided for @configureOnPhoneBody.
-  ///
-  /// In fr, this message translates to:
-  /// **'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Scannez le code pour le configurer sur votre téléphone, puis collez le lien obtenu dans l\'onglet « Par lien ».'**
-  String get configureOnPhoneBody;
-
   /// No description provided for @addonLinkHelp.
   ///
   /// In fr, this message translates to:
@@ -4394,59 +4382,35 @@ abstract class AppLocalizations {
   /// **'Configurer'**
   String get addonConfigure;
 
-  /// No description provided for @addonConfigureTitle.
+  /// No description provided for @addonConfigurePortal.
   ///
   /// In fr, this message translates to:
-  /// **'Configurer {name}'**
-  String addonConfigureTitle(Object name);
+  /// **'Configurer depuis le portail'**
+  String get addonConfigurePortal;
 
-  /// No description provided for @addonOrPhone.
+  /// No description provided for @addonReconfigurePortal.
   ///
   /// In fr, this message translates to:
-  /// **'Ou configurer sur le téléphone'**
-  String get addonOrPhone;
-
-  /// No description provided for @configureHelp.
-  ///
-  /// In fr, this message translates to:
-  /// **'OK : valider · Retour : annuler · le lien d\'installation est capté automatiquement'**
-  String get configureHelp;
-
-  /// No description provided for @configureUseCopied.
-  ///
-  /// In fr, this message translates to:
-  /// **'Utiliser le lien copié'**
-  String get configureUseCopied;
-
-  /// No description provided for @configureNoLink.
-  ///
-  /// In fr, this message translates to:
-  /// **'Aucun lien d\'addon dans le presse-papiers.'**
-  String get configureNoLink;
-
-  /// No description provided for @configureBlocked.
-  ///
-  /// In fr, this message translates to:
-  /// **'Page bloquée : elle sort de l\'addon.'**
-  String get configureBlocked;
-
-  /// No description provided for @configureLoadError.
-  ///
-  /// In fr, this message translates to:
-  /// **'La page de configuration ne s\'est pas chargée.'**
-  String get configureLoadError;
+  /// **'Reconfigurer depuis le portail'**
+  String get addonReconfigurePortal;
 
   /// No description provided for @addonSheetRequired.
   ///
   /// In fr, this message translates to:
-  /// **'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Configurez-le ici avec la télécommande.'**
+  /// **'Cet addon demande un réglage avant de fonctionner (clé de débrideur, langues…). Le portail web du téléphone ou de l\'ordinateur sert à le configurer.'**
   String get addonSheetRequired;
 
   /// No description provided for @addonSheetConfigurable.
   ///
   /// In fr, this message translates to:
-  /// **'Installez-le tel quel ou choisissez vos réglages avant.'**
+  /// **'Installez-le tel quel, ou choisissez vos réglages depuis le portail web.'**
   String get addonSheetConfigurable;
+
+  /// No description provided for @portalAddonHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrez cette page sur le portail : la fiche de « {name} » s’affiche directement.'**
+  String portalAddonHint(Object name);
 }
 
 class _AppLocalizationsDelegate

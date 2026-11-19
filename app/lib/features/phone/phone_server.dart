@@ -527,7 +527,10 @@ class PhoneServer implements PhoneSession {
         ],
       });
     }
-    if (m == 'GET' && seg.length == 3 && seg[1] == 'catalog' && seg[2] == 'one') {
+    if (m == 'GET' &&
+        seg.length == 3 &&
+        seg[1] == 'catalog' &&
+        seg[2] == 'one') {
       final slug = req.uri.queryParameters['slug'] ?? '';
       if (!RegExp(r'^[A-Za-z0-9._-]{1,80}$').hasMatch(slug)) {
         throw _HttpError(400, 'bad_request');

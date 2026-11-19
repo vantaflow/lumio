@@ -2480,13 +2480,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get instanceNeedsSetup => 'needs setup';
 
   @override
-  String get configureOnPhoneTitle => 'Set up on your phone';
-
-  @override
-  String get configureOnPhoneBody =>
-      'This addon needs setup before it works (debrid key, languages…). Scan the code to set it up on your phone, then paste the resulting link in the “By link” tab.';
-
-  @override
   String get addonLinkHelp =>
       'manifest.json link or stremio:// link. A link copied on this device is offered automatically.';
 
@@ -2567,34 +2560,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addonConfigure => 'Configure';
 
   @override
-  String addonConfigureTitle(Object name) {
-    return 'Configure $name';
-  }
+  String get addonConfigurePortal => 'Configure from the portal';
 
   @override
-  String get addonOrPhone => 'Or configure on your phone';
-
-  @override
-  String get configureHelp =>
-      'OK: confirm · Back: cancel · the install link is picked up automatically';
-
-  @override
-  String get configureUseCopied => 'Use the copied link';
-
-  @override
-  String get configureNoLink => 'No addon link on the clipboard.';
-
-  @override
-  String get configureBlocked => 'Page blocked: it leaves the addon.';
-
-  @override
-  String get configureLoadError => 'The setup page did not load.';
+  String get addonReconfigurePortal => 'Reconfigure from the portal';
 
   @override
   String get addonSheetRequired =>
-      'This addon needs setup before it works (debrid key, languages…). Set it up here with the remote.';
+      'This addon needs setup before it works (debrid key, languages…). Use the web portal on your phone or computer to configure it.';
 
   @override
   String get addonSheetConfigurable =>
-      'Install it as is, or choose your settings first.';
+      'Install it as is, or choose your settings from the web portal.';
+
+  @override
+  String portalAddonHint(Object name) {
+    return 'Open this page on the portal: the “$name” page shows up directly.';
+  }
 }
