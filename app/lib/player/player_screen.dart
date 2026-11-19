@@ -222,6 +222,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   final _playNode = FocusNode(debugLabel: 'player-play');
   final _tracksNode = FocusNode(debugLabel: 'player-tracks');
   TracksController? _tracks;
+  static final _noTracks = ValueNotifier<int>(0);
   bool _panel = false;
   Timer? _hide;
   bool _controls = true;
@@ -1022,10 +1023,16 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
                 fit: StackFit.expand,
                 children: [
                   widget.videoBuilder?.call(_ctl) ??
-                      Video(
-                        controller: _ctl.video,
-                        controls: NoVideoControls,
-                        fill: Colors.black,
+                      ListenableBuilder(
+                        listenable: _tracks ?? _noTracks,
+                        builder: (context, _) => Video(
+                          controller: _ctl.video,
+                          controls: NoVideoControls,
+                          fill: Colors.black,
+                          subtitleViewConfiguration:
+                              (_tracks?.style ?? const SubtitleStyle())
+                                  .viewConfiguration(),
+                        ),
                       ),
                   if (st.phase == PlayerPhase.buffering ||
                       st.phase == PlayerPhase.opening)

@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+import 'package:flutter/painting.dart';
 import 'package:lumio/data/db.dart';
+import 'package:media_kit_video/media_kit_video.dart'
+    show SubtitleViewConfiguration;
 
 /// Tailles de sous-titres proposées (S/M/L/XL).
 enum SubtitleSize {
@@ -44,6 +47,23 @@ class SubtitleStyle {
     'size': size.name,
     'opaqueBackground': opaqueBackground,
   };
+
+  /// Configuration du rendu des sous-titres par Flutter (media_kit dessine
+  /// lui-même le texte : les propriétés libmpv seules ne changent rien à
+  /// l'écran). La taille moyenne vaut 32, les autres suivent le même rapport
+  /// que `sub-font-size`.
+  SubtitleViewConfiguration viewConfiguration() => SubtitleViewConfiguration(
+    style: TextStyle(
+      height: 1.4,
+      fontSize: 32.0 * size.mpvFontSize / SubtitleSize.m.mpvFontSize,
+      color: const Color(0xFFFFFFFF),
+      backgroundColor: opaqueBackground ? const Color(0xFF000000) : null,
+      shadows: const [
+        Shadow(blurRadius: 4, color: Color(0xFF000000)),
+        Shadow(offset: Offset(1.5, 1.5), color: Color(0xFF000000)),
+      ],
+    ),
+  );
 
   /// Propriétés libmpv correspondantes.
   Map<String, String> get mpvProperties => {
