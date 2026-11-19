@@ -124,6 +124,17 @@ class CacheManager {
     );
   }
 
+  /// Octets occupés par le cache (affichage des Réglages, aucune suppression).
+  Future<int> usedBytes() async {
+    final dir = Directory(await savePath());
+    if (!dir.existsSync()) return 0;
+    var total = 0;
+    for (final e in dir.listSync(followLinks: false)) {
+      total += _sizeOf(e);
+    }
+    return total;
+  }
+
   /// Supprime les plus anciens dossiers de torrents jusqu'à passer sous
   /// [limit], sauf [playingId].
   Future<void> enforceLimit(int limit, {String? playingId}) async {

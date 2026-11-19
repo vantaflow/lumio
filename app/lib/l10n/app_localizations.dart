@@ -1373,13 +1373,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAudioLang.
   ///
   /// In fr, this message translates to:
-  /// **'Langue audio par défaut'**
+  /// **'Langue audio'**
   String get settingsAudioLang;
 
   /// No description provided for @settingsSubtitleLang.
   ///
   /// In fr, this message translates to:
-  /// **'Langue des sous-titres par défaut'**
+  /// **'Sous-titres'**
   String get settingsSubtitleLang;
 
   /// No description provided for @settingsQuality.
@@ -1391,13 +1391,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsPreferDirect.
   ///
   /// In fr, this message translates to:
-  /// **'Préférer les liens directs aux torrents'**
+  /// **'Préférer les liens directs'**
   String get settingsPreferDirect;
 
   /// No description provided for @preferDirectOn.
   ///
   /// In fr, this message translates to:
-  /// **'Liens directs en premier'**
+  /// **'Avant les torrents, à qualité égale.'**
   String get preferDirectOn;
 
   /// No description provided for @preferDirectOff.
@@ -1463,13 +1463,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsTorrentCache.
   ///
   /// In fr, this message translates to:
-  /// **'Cache torrents'**
+  /// **'Cache'**
   String get settingsTorrentCache;
 
   /// No description provided for @settingsUpload.
   ///
   /// In fr, this message translates to:
-  /// **'Débit montant'**
+  /// **'Limite d\'envoi'**
   String get settingsUpload;
 
   /// No description provided for @unlimited.
@@ -1487,7 +1487,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsClearCacheOnExit.
   ///
   /// In fr, this message translates to:
-  /// **'Vider le cache à la fermeture'**
+  /// **'Vider le cache en quittant'**
   String get settingsClearCacheOnExit;
 
   /// No description provided for @optionYes.
@@ -3751,6 +3751,54 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Retour : accueil'**
   String get settingsBackHome;
+
+  /// No description provided for @vpnCardActive.
+  ///
+  /// In fr, this message translates to:
+  /// **'VPN actif · {name}'**
+  String vpnCardActive(String name);
+
+  /// No description provided for @vpnCardStopHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les torrents s\'arrêtent si le VPN tombe.'**
+  String get vpnCardStopHint;
+
+  /// No description provided for @vpnCardIpHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre adresse IP est visible des autres pairs sans VPN.'**
+  String get vpnCardIpHint;
+
+  /// No description provided for @cacheUsedOf.
+  ///
+  /// In fr, this message translates to:
+  /// **'{used} utilisés sur'**
+  String cacheUsedOf(String used);
+
+  /// No description provided for @sizeGbDecimal.
+  ///
+  /// In fr, this message translates to:
+  /// **'{n} Go'**
+  String sizeGbDecimal(String n);
+
+  /// No description provided for @profileAdultShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adulte'**
+  String get profileAdultShort;
+
+  /// No description provided for @manageProfilesHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier un profil : nom, profil enfant et limite d\'âge, verrou par PIN. Six profils au maximum.'**
+  String get manageProfilesHint;
+
+  /// No description provided for @profileEditorHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour un profil adulte, l\'option « Verrouiller par PIN » remplace la limite d\'âge : « Le PIN parent est demandé pour ouvrir ce profil. »'**
+  String get profileEditorHint;
 }
 
 class _AppLocalizationsDelegate

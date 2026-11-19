@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
@@ -9,6 +11,7 @@ import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
@@ -186,8 +189,8 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   });
 
   Future<void> _edit(Profile? p) async {
-    final result = await showDialog<ProfileEdit>(
-      context: context,
+    final result = await showTvPanel<ProfileEdit>(
+      context,
       builder: (_) => ProfileEditorDialog(profile: p),
     );
     if (result == null || !mounted) return;
@@ -233,11 +236,13 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   @override
   Widget build(BuildContext context) {
     final list = ref.watch(profilesProvider).value ?? const <Profile>[];
-    final theme = Theme.of(context);
     final c = context.lumio;
+    final l = context.l10n;
     final memory = ref.read(focusMemoryProvider.notifier);
     var remembered = memory.restore(profilesRouteKey);
     if (!list.any((p) => p.id == remembered)) remembered = null;
+    // TV04 (choix) et TV35 (gestion) : titre 72 centré, avatars 200 en ligne.
+    final gap = _manage ? 88.0 : 96.0;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -246,26 +251,48 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       child: Scaffold(
         body: TvScaffold(
           onBack: _back,
-          child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(LumioSpacing.xl),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _manage
-                          ? context.l10n.manageProfiles
-                          : context.l10n.whoIsWatching,
-                      style: theme.textTheme.displayLarge,
+          child: Stack(
+            children: [
+              const Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.topCenter,
+                      radius: 0.9,
+                      colors: [Color(0xFF1B2A33), Color(0xFF0E1116)],
                     ),
-                    const SizedBox(height: LumioSpacing.xl),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: LumioSpacing.xl,
-                      runSpacing: LumioSpacing.xl,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: _manage ? 90 : 100,
+                left: 0,
+                right: 0,
+                child: Text(
+                  l.whoIsWatching,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Bricolage Grotesque',
+                    fontSize: 72,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: [FontVariation.weight(700)],
+                    height: 1.15,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 290,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    clipBehavior: Clip.none,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        for (var i = 0; i < list.length; i++)
+                        for (var i = 0; i < list.length; i++) ...[
+                          if (i > 0) SizedBox(width: gap),
                           _ProfileTile(
                             key: ValueKey('profile-${list[i].id}'),
                             profile: list[i],
@@ -283,24 +310,45 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                                 memory.remember(profilesRouteKey, list[i].id),
                             onSelect: () => _open(list[i], list),
                           ),
-                        if (list.length < maxProfiles) _AddTile(onSelect: _add),
+                        ],
+                        if (list.length < maxProfiles) ...[
+                          if (list.isNotEmpty) SizedBox(width: gap),
+                          _AddTile(manage: _manage, onSelect: _add),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: LumioSpacing.xl),
-                    OutlinedButton.icon(
-                      onPressed: _toggleManage,
-                      icon: Icon(_manage ? Icons.check : Icons.edit_outlined),
-                      label: Text(
-                        _manage
-                            ? context.l10n.done
-                            : context.l10n.manageProfiles,
-                      ),
-                      style: OutlinedButton.styleFrom(foregroundColor: c.text),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+              if (_manage) ...[
+                Positioned(
+                  top: 760,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: TvButton(
+                      key: const ValueKey('profiles-done'),
+                      label: l.done,
+                      height: 76,
+                      fontSize: 28,
+                      horizontalPadding: 40,
+                      icon: Icon(Icons.check, size: 30, color: c.onAccent),
+                      onPressed: _toggleManage,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 880,
+                  left: 0,
+                  right: 0,
+                  child: Text(
+                    l.manageProfilesHint,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 24, color: c.textMuted),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -320,6 +368,43 @@ const _avatarColors = [
   Color(0xFF64B5F6),
   Color(0xFFE6C17A),
 ];
+
+/// Pastille ronde 60 dp des badges d'avatar (TV35).
+Widget _avatarBadge(Color bg, IconData icon, double size, Color fg) =>
+    Container(
+      width: 60,
+      height: 60,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: bg),
+      child: Icon(icon, size: size, color: fg),
+    );
+
+/// Avatar focalisable : cercle de 200 dp, anneau à 8 dp, échelle 1,08.
+Widget _avatarCard({
+  required bool autofocus,
+  required String label,
+  required VoidCallback onSelect,
+  VoidCallback? onFocus,
+  required Widget circle,
+}) => SizedBox(
+  width: 200,
+  height: 200,
+  child: OverflowBox(
+    maxWidth: 208,
+    maxHeight: 208,
+    child: FocusableCard(
+      autofocus: autofocus,
+      scale: 1.08,
+      onFocusChange: (f) {
+        if (f) onFocus?.call();
+      },
+      semanticLabel: label,
+      borderRadius: BorderRadius.circular(104),
+      onSelect: onSelect,
+      child: SizedBox(width: 208, height: 208, child: Center(child: circle)),
+    ),
+  ),
+);
 
 class _ProfileTile extends StatelessWidget {
   const _ProfileTile({
@@ -344,70 +429,75 @@ class _ProfileTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.lumio;
-    final theme = Theme.of(context);
+    final l = context.l10n;
     final name = profile.name;
     final initial = name.characters.isEmpty ? '?' : name.characters.first;
-    final sub = profile.isKid ? kidLabel(profile, context.l10n) : null;
+    final kid = profile.isKid ? kidLabel(profile, l) : null;
+    // Gestion : « Adulte · PIN » ; choix : mention d'âge + cadenas « PIN ».
+    final manageSub = [
+      kid ?? l.profileAdultShort,
+      if (locked) l.pinBadge,
+    ].join(' · ');
+    final sub = manage ? manageSub : kid;
+    final subStyle = TextStyle(fontSize: manage ? 24 : 26, color: c.textMuted);
     return SizedBox(
-      width: 220,
+      width: 200,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FocusableCard(
+          _avatarCard(
             autofocus: autofocus,
-            onFocusChange: (f) {
-              if (f) onFocus();
-            },
-            semanticLabel: [
+            onFocus: onFocus,
+            label: [
               name,
               ?sub,
-              if (locked) context.l10n.lockedSemantic,
-              if (manage) context.l10n.editSemantic,
+              if (locked) l.lockedSemantic,
+              if (manage) l.editSemantic,
             ].join(', '),
-            borderRadius: BorderRadius.circular(LumioRadius.pill),
             onSelect: onSelect,
-            child: Container(
+            circle: Container(
               width: 200,
               height: 200,
               alignment: Alignment.center,
               decoration: BoxDecoration(shape: BoxShape.circle, color: color),
               child: Stack(
-                alignment: Alignment.center,
+                fit: StackFit.expand,
                 children: [
-                  Text(
-                    initial.toUpperCase(),
-                    style: TextStyle(
-                      color: c.onAccent,
-                      fontSize: 84,
-                      fontWeight: FontWeight.w700,
+                  Center(
+                    child: Text(
+                      initial.toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: 'Bricolage Grotesque',
+                        color: c.onAccent,
+                        fontSize: 88,
+                        fontWeight: FontWeight.w700,
+                        fontVariations: const [FontVariation.weight(700)],
+                      ),
                     ),
                   ),
-                  if (locked)
+                  if (manage) ...[
                     Positioned(
-                      right: 8,
-                      bottom: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(LumioSpacing.sm),
-                        decoration: BoxDecoration(
-                          color: c.bg.withValues(alpha: 0.88),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.lock, color: c.text, size: 28),
+                      left: 0,
+                      top: 0,
+                      child: _avatarBadge(
+                        c.bg,
+                        Icons.edit_outlined,
+                        30,
+                        c.text,
                       ),
                     ),
-                  if (manage)
-                    Positioned(
-                      left: 8,
-                      bottom: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(LumioSpacing.sm),
-                        decoration: BoxDecoration(
-                          color: c.bg.withValues(alpha: 0.88),
-                          shape: BoxShape.circle,
+                    if (locked)
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: _avatarBadge(
+                          c.bg,
+                          Icons.lock_outline,
+                          32,
+                          c.text,
                         ),
-                        child: Icon(Icons.edit, color: c.text, size: 28),
                       ),
-                    ),
+                  ],
                 ],
               ),
             ),
@@ -418,29 +508,34 @@ class _ProfileTile extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: LumioSpacing.md),
+                SizedBox(height: manage ? 14 : 20),
                 Text(
                   name,
-                  style: theme.textTheme.headlineMedium,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                    fontVariations: [FontVariation.weight(600)],
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
-                if (locked)
-                  Text(
-                    context.l10n.pinBadge,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: c.textMuted,
-                    ),
+                if (!manage && locked) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lock_outline, size: 26, color: c.textMuted),
+                      const SizedBox(width: 8),
+                      Text(l.pinBadge, style: subStyle),
+                    ],
                   ),
-                if (sub != null)
-                  Text(
-                    sub,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: c.secondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+                ],
+                if (sub != null && (manage || kid != null)) ...[
+                  SizedBox(height: manage ? 14 : 20),
+                  Text(sub, style: subStyle, textAlign: TextAlign.center),
+                ],
               ],
             ),
           ),
@@ -451,40 +546,55 @@ class _ProfileTile extends StatelessWidget {
 }
 
 class _AddTile extends StatelessWidget {
-  const _AddTile({required this.onSelect});
+  const _AddTile({required this.manage, required this.onSelect});
+  final bool manage;
   final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
     final c = context.lumio;
+    final l = context.l10n;
     return SizedBox(
-      width: 220,
+      width: 200,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FocusableCard(
-            semanticLabel: context.l10n.addProfileSemantic,
-            borderRadius: BorderRadius.circular(LumioRadius.pill),
+          _avatarCard(
+            autofocus: false,
+            label: l.addProfileSemantic,
             onSelect: onSelect,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: c.surfaceRaised,
-                border: Border.all(color: c.outline, width: 2),
+            circle: CustomPaint(
+              foregroundPainter: _DashedCirclePainter(const Color(0xFF5B6676)),
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: c.surface,
+                ),
+                child: Icon(Icons.add, size: 72, color: c.textMuted),
               ),
-              child: Icon(Icons.add, size: 72, color: c.textMuted),
             ),
           ),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: onSelect,
             child: Padding(
-              padding: const EdgeInsets.only(top: LumioSpacing.md),
-              child: Text(
-                context.l10n.add,
-                style: Theme.of(context).textTheme.headlineMedium,
+              padding: EdgeInsets.only(top: manage ? 14 : 20),
+              child: SizedBox(
+                width: 200,
+                child: Text(
+                  manage ? l.addProfileSemantic : l.add,
+                  textAlign: TextAlign.center,
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w600,
+                    fontVariations: [FontVariation.weight(600)],
+                  ),
+                ),
               ),
             ),
           ),
@@ -492,6 +602,36 @@ class _AddTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Cercle en pointillés (bordure 3 dp) du bouton « Ajouter ».
+class _DashedCirclePainter extends CustomPainter {
+  _DashedCirclePainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+    final r = size.width / 2 - 1.5;
+    final center = Offset(size.width / 2, size.height / 2);
+    const dashes = 36;
+    for (var i = 0; i < dashes; i++) {
+      final start = i * 2 * 3.141592653589793 / dashes;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: r),
+        start,
+        2 * 3.141592653589793 / dashes * 0.55,
+        false,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedCirclePainter old) => old.color != color;
 }
 
 /// Résultat de l'éditeur de profil.
@@ -563,26 +703,14 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
   }
 
   Future<void> _delete() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(ctx.l10n.deleteProfileTitle),
-        content: Text(ctx.l10n.deleteProfileBody),
-        actions: [
-          TextButton(
-            autofocus: true,
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: ctx.lumio.error),
-            child: Text(context.l10n.delete),
-          ),
-        ],
-      ),
+    final ok = await showTvConfirm(
+      context,
+      title: context.l10n.deleteProfileTitle,
+      body: context.l10n.deleteProfileBody,
+      confirmLabel: context.l10n.delete,
+      destructive: true,
     );
-    if (ok == true && mounted) {
+    if (ok && mounted) {
       Navigator.of(context).pop(
         const ProfileEdit(
           name: '',
@@ -602,90 +730,269 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
     (AgeLimit.age16, '16+'),
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.profile == null
-            ? context.l10n.newProfile
-            : context.l10n.editProfile,
-      ),
-      content: SizedBox(
-        width: 460,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+  /// Ligne à interrupteur du pop-up (maquette P02 : fond #0E1116, 104 min).
+  Widget _switchRow({
+    required Key key,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final c = context.lumio;
+    return Semantics(
+      toggled: value,
+      child: FocusableCard(
+        key: key,
+        scale: 1.01,
+        borderRadius: BorderRadius.circular(22),
+        semanticLabel: title,
+        onSelect: () => onChanged(!value),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 104),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: c.bg,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Row(
             children: [
-              TvTextField(
-                controller: _name,
-                autofocus: true,
-                maxLength: 20,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  labelText: context.l10n.nameLabel,
-                  errorText: _error,
-                ),
-                onChanged: (_) {
-                  if (_error != null) setState(() => _error = null);
-                },
-                onSubmitted: (_) => _save(),
-              ),
-              FocusRing(
-                child: SwitchListTile(
-                  value: _kid,
-                  onChanged: (v) => setState(() => _kid = v),
-                  title: Text(context.l10n.kidProfile),
-                  subtitle: Text(context.l10n.kidProfileHint),
-                ),
-              ),
-              if (_kid) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: LumioSpacing.sm,
-                  ),
-                  child: Text(context.l10n.ageLimit),
-                ),
-                Wrap(
-                  spacing: LumioSpacing.sm,
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final (limit, label) in _limits(context.l10n))
-                      FocusRing(
-                        borderRadius: BorderRadius.circular(LumioRadius.sm),
-                        child: ChoiceChip(
-                          label: Text(label),
-                          selected: _limit == limit,
-                          onSelected: (_) => setState(() => _limit = limit),
-                        ),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        fontVariations: [FontVariation.weight(700)],
                       ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 24,
+                        height: 1.35,
+                        color: c.textMuted,
+                      ),
+                    ),
                   ],
                 ),
-              ],
-              if (!_kid)
-                FocusRing(
-                  child: SwitchListTile(
-                    value: _locked,
-                    onChanged: (v) => setState(() => _locked = v),
-                    title: Text(context.l10n.lockByPin),
-                    subtitle: Text(context.l10n.lockByPinHint),
-                  ),
-                ),
+              ),
+              const SizedBox(width: 20),
+              TvSwitch(value: value),
             ],
           ),
         ),
       ),
-      actions: [
-        if (widget.profile != null)
-          TextButton(
-            onPressed: _delete,
-            style: TextButton.styleFrom(foregroundColor: context.lumio.error),
-            child: Text(context.l10n.delete),
-          ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(context.l10n.cancel),
+    );
+  }
+
+  Widget _chip(String label, bool selected, VoidCallback onTap) {
+    final c = context.lumio;
+    return FocusableCard(
+      scale: 1.04,
+      borderRadius: BorderRadius.circular(32),
+      semanticLabel: label,
+      onSelect: onTap,
+      child: Container(
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? c.accent : c.surfaceFocus,
+          borderRadius: BorderRadius.circular(32),
         ),
-        FilledButton(onPressed: _save, child: Text(context.l10n.save)),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            fontVariations: const [FontVariation.weight(700)],
+            color: selected ? c.onAccent : c.text,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _textButton(
+    String label,
+    Color color,
+    VoidCallback onTap, {
+    Key? key,
+  }) => FocusableCard(
+    key: key,
+    scale: 1.04,
+    borderRadius: BorderRadius.circular(38),
+    semanticLabel: label,
+    onSelect: onTap,
+    child: Container(
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Manrope',
+          fontSize: 28,
+          fontWeight: FontWeight.w600,
+          fontVariations: const [FontVariation.weight(600)],
+          color: color,
+        ),
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final c = context.lumio;
+    return TvPanel(
+      title: widget.profile == null ? l.newProfile : l.editProfile,
+      width: 1000,
+      onBack: () => Navigator.of(context).pop(),
+      actions: [
+        Expanded(
+          child: Row(
+            children: [
+              if (widget.profile != null)
+                _textButton(l.delete, c.error, _delete),
+              const Spacer(),
+              _textButton(l.cancel, const Color(0xFFC9D0DA), () {
+                Navigator.of(context).pop();
+              }),
+              const SizedBox(width: 16),
+              TvButton(
+                label: l.save,
+                height: 76,
+                fontSize: 28,
+                horizontalPadding: 40,
+                onPressed: _save,
+              ),
+            ],
+          ),
+        ),
+      ],
+      children: [
+        Text(
+          l.nameLabel,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            fontVariations: const [FontVariation.weight(600)],
+            color: c.textMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        FocusRing(
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            height: 80,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              color: c.bg,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: c.outline, width: 2),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TvTextField(
+                    controller: _name,
+                    autofocus: true,
+                    maxLength: 20,
+                    textInputAction: TextInputAction.done,
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 30,
+                      fontWeight: FontWeight.w600,
+                      fontVariations: [FontVariation.weight(600)],
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      counterText: '',
+                      isCollapsed: true,
+                    ),
+                    onChanged: (_) {
+                      if (_error != null) setState(() => _error = null);
+                      setState(() {});
+                    },
+                    onSubmitted: (_) => _save(),
+                  ),
+                ),
+                Text(
+                  '${_name.text.characters.length}/20',
+                  style: TextStyle(fontSize: 24, color: c.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline, size: 26, color: c.error),
+                const SizedBox(width: 10),
+                Text(
+                  _error!,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w600,
+                    color: c.error,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 20),
+        _switchRow(
+          key: const ValueKey('profile-kid'),
+          title: l.kidProfile,
+          subtitle: l.kidProfileHint,
+          value: _kid,
+          onChanged: (v) => setState(() => _kid = v),
+        ),
+        const SizedBox(height: 20),
+        if (_kid) ...[
+          Text(
+            l.ageLimit,
+            style: const TextStyle(fontSize: 28, color: Color(0xFFC9D0DA)),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            children: [
+              for (final (limit, label) in _limits(l))
+                _chip(
+                  label,
+                  _limit == limit,
+                  () => setState(() => _limit = limit),
+                ),
+            ],
+          ),
+        ] else
+          _switchRow(
+            key: const ValueKey('profile-lock'),
+            title: l.lockByPin,
+            subtitle: l.lockByPinHint,
+            value: _locked,
+            onChanged: (v) => setState(() => _locked = v),
+          ),
+        const SizedBox(height: 20),
+        Text(
+          l.profileEditorHint,
+          style: TextStyle(fontSize: 24, height: 1.35, color: c.textMuted),
+        ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -741,6 +1048,8 @@ Future<void> switchProfileFlow(
   ref
       .read(previousProfileProvider.notifier)
       .set(ref.read(currentProfileProvider));
+  // Retire les écrans empilés (Réglages…) pour laisser voir le sélecteur.
+  beforeSelect?.call();
   ref.read(currentProfileProvider.notifier).select(null);
 }
 

@@ -227,7 +227,7 @@ void main() {
     await h.pump(const SettingsScreen());
     await openSettingsPageFor(tester, 'preferDirect', h.settle);
     expect(
-      find.text('Préférer les liens directs aux torrents'),
+      find.text('Préférer les liens directs'),
       findsOneWidget,
     );
     expect(

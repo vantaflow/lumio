@@ -156,6 +156,7 @@ Future<T?> showTvChoice<T>(
                     style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                       fontSize: 30,
                       fontWeight: FontWeight.w700,
+                      fontVariations: const [FontVariation.weight(700)],
                     ),
                   ),
                 ),

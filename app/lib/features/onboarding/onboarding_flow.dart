@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart';
@@ -213,8 +214,8 @@ class _OnboardingFlowState extends ConsumerState<OnboardingFlow> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      final result = await showDialog<ProfileEdit>(
-        context: context,
+      final result = await showTvPanel<ProfileEdit>(
+        context,
         builder: (_) => const ProfileEditorDialog(),
       );
       if (result == null || result.delete || !mounted) return;

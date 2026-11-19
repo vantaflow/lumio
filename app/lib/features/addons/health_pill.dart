@@ -90,6 +90,7 @@ class HealthPill extends StatelessWidget {
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: c.text,
                         fontWeight: FontWeight.w600,
+                        fontVariations: const [FontVariation.weight(600)],
                       ),
                     ),
                   ),

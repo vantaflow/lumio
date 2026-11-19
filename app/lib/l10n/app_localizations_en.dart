@@ -2181,4 +2181,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsBackHome => 'Back: home';
+
+  @override
+  String vpnCardActive(String name) {
+    return 'VPN active · $name';
+  }
+
+  @override
+  String get vpnCardStopHint => 'Torrents stop if the VPN drops.';
+
+  @override
+  String get vpnCardIpHint =>
+      'Your IP address is visible to other peers without a VPN.';
+
+  @override
+  String cacheUsedOf(String used) {
+    return '$used used of';
+  }
+
+  @override
+  String sizeGbDecimal(String n) {
+    return '$n GB';
+  }
+
+  @override
+  String get profileAdultShort => 'Adult';
+
+  @override
+  String get manageProfilesHint =>
+      'Edit a profile: name, kid profile and age limit, PIN lock. Six profiles at most.';
+
+  @override
+  String get profileEditorHint =>
+      'For an adult profile, the \"Lock with PIN\" option replaces the age limit: \"The parent PIN is required to open this profile.\"';
 }

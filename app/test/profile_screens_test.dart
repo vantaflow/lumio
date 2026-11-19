@@ -146,7 +146,7 @@ void main() {
     await h.run(() => h.repo.createParentPin('1234'));
     final c = await h.pump(const ProfileGate(child: _child));
 
-    expect(find.byIcon(Icons.lock), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
     expect(find.text('PIN'), findsOneWidget);
 
     await tester.tap(find.text('Moi'));
@@ -426,11 +426,11 @@ void main() {
       // Le bouton de profil ouvre la gestion malgré l'unique profil.
       await tester.tap(find.text('Moi'));
       await h.settle();
-      expect(find.text('Gérer les profils'), findsWidgets);
+      expect(find.text('Qui regarde ?'), findsOneWidget);
       expect(find.text('Terminé'), findsOneWidget);
       expect(find.text('ACCUEIL'), findsNothing);
 
-      await tester.tap(find.text('Ajouter'));
+      await tester.tap(find.text('Ajouter un profil'));
       await h.settle();
       await tester.enterText(find.byType(TextField), 'Léa');
       await tester.tap(find.text('Profil enfant'));

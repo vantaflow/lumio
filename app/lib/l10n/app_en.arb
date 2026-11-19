@@ -1029,5 +1029,16 @@
   "addonsPriorityHint": "The order sets the priority of sources.",
   "profileAdult": "Adult profile",
   "profileChange": "Change",
-  "settingsBackHome": "Back: home"
+  "settingsBackHome": "Back: home",
+  "vpnCardActive": "VPN active · {name}",
+  "@vpnCardActive": {"placeholders": {"name": {"type": "String"}}},
+  "vpnCardStopHint": "Torrents stop if the VPN drops.",
+  "vpnCardIpHint": "Your IP address is visible to other peers without a VPN.",
+  "cacheUsedOf": "{used} used of",
+  "@cacheUsedOf": {"placeholders": {"used": {"type": "String"}}},
+  "sizeGbDecimal": "{n} GB",
+  "@sizeGbDecimal": {"placeholders": {"n": {"type": "String"}}},
+  "profileAdultShort": "Adult",
+  "manageProfilesHint": "Edit a profile: name, kid profile and age limit, PIN lock. Six profiles at most.",
+  "profileEditorHint": "For an adult profile, the \"Lock with PIN\" option replaces the age limit: \"The parent PIN is required to open this profile.\""
 }

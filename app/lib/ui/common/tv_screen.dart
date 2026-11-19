@@ -247,6 +247,7 @@ class TvTileText extends StatelessWidget {
           style: t.titleMedium?.copyWith(
             fontSize: 30,
             fontWeight: FontWeight.w700,
+            fontVariations: const [FontVariation.weight(700)],
             color: titleColor ?? c.text,
           ),
         ),
@@ -306,8 +307,10 @@ class TvSwitchTile extends StatelessWidget {
     this.autofocus = false,
     this.onFocusChange,
     this.color,
+    this.minHeight = 104,
   });
 
+  final double minHeight;
   final String title;
   final String? subtitle;
   final Color? subtitleColor;
@@ -326,6 +329,7 @@ class TvSwitchTile extends StatelessWidget {
       toggled: value,
       child: TvTile(
         autofocus: autofocus,
+        minHeight: minHeight,
         color: color ?? c.surfaceFocus,
         onFocusChange: onFocusChange,
         semanticLabel: title,
@@ -342,6 +346,7 @@ class TvSwitchTile extends StatelessWidget {
                     style: t.titleMedium?.copyWith(
                       fontSize: 30,
                       fontWeight: FontWeight.w700,
+                      fontVariations: const [FontVariation.weight(700)],
                     ),
                   ),
                   if (subtitle != null)

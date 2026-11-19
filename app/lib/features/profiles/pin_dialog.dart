@@ -240,6 +240,7 @@ class _PinDialogState extends State<PinDialog> {
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontSize: big ? 26 : null,
                             fontWeight: FontWeight.w600,
+                            fontVariations: const [FontVariation.weight(600)],
                             color: _busy && _message == null
                                 ? c.textMuted
                                 : c.error,
@@ -411,6 +412,7 @@ class _KeyFace extends StatelessWidget {
           color: c.text,
           fontSize: big ? (isDigit ? 44 : 28) : (isDigit ? 28 : 16),
           fontWeight: FontWeight.w700,
+          fontVariations: const [FontVariation.weight(700)],
         ),
       ),
     );
@@ -440,6 +442,7 @@ Future<void> showRecoveryCodeDialog(BuildContext context, String code) =>
                     color: c.accent,
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
+                    fontVariations: const [FontVariation.weight(700)],
                     letterSpacing: 2,
                   ),
                 ),

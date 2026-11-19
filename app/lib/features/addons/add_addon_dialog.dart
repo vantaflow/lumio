@@ -458,6 +458,7 @@ class AddonLogo extends StatelessWidget {
                   fontFamily: 'Bricolage Grotesque',
                   fontSize: size * 0.5,
                   fontWeight: FontWeight.w700,
+                  fontVariations: const [FontVariation.weight(700)],
                   color: c.onAccent,
                 ),
               ),

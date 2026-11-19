@@ -213,6 +213,7 @@ class _AddonTile extends StatelessWidget {
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontSize: 30,
                       fontWeight: FontWeight.w700,
+                      fontVariations: const [FontVariation.weight(700)],
                     ),
                   ),
                   Text(

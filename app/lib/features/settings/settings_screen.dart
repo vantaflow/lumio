@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/debug/loop_debug.dart';
 import 'package:lumio/debug/player_spike.dart';
@@ -21,7 +22,8 @@ import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/features/tracking/tracking_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
-import 'package:lumio/torrent/torrent_providers.dart' show networkProbeProvider;
+import 'package:lumio/torrent/torrent_providers.dart'
+    show cacheManagerProvider, networkProbeProvider;
 import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/common/tv_screen.dart';
@@ -83,6 +85,26 @@ const _qualityChoices = [
   Quality.hd1080,
   Quality.uhd2160,
 ];
+
+/// Octets utilisés par le cache torrents (0 si illisible).
+final torrentCacheUsedProvider = FutureProvider.autoDispose<int>((ref) async {
+  try {
+    return await ref.read(cacheManagerProvider).usedBytes();
+  } on Object {
+    return 0;
+  }
+});
+
+/// Interfaces réseau actives (vide si la sonde échoue).
+final upInterfacesProvider = FutureProvider.autoDispose<List<NetInterface>>((
+  ref,
+) async {
+  try {
+    return await ref.read(networkProbeProvider).upInterfaces();
+  } on Object {
+    return const [];
+  }
+});
 
 /// Catégories du rail des réglages (maquette TV10).
 enum SettingsCategory {
@@ -214,7 +236,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Text(
         l.settingsTitle,
         style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-          fontSize: narrow ? 28 : 56,
+          fontSize: narrow ? 28 : 44,
           height: 1.1,
         ),
       ),
@@ -260,16 +282,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Container(
                     width: 480,
                     color: c.bgAlt,
-                    padding: const EdgeInsets.fromLTRB(56, 56, 32, 32),
+                    padding: const EdgeInsets.fromLTRB(64, 56, 32, 40),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            const LumioMark(size: 40),
-                            const SizedBox(width: 14),
-                            Expanded(child: title),
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Row(
+                            children: [
+                              const LumioMark(size: 40),
+                              const SizedBox(width: 16),
+                              Expanded(child: title),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 20),
                         _ProfileCard(
@@ -281,7 +306,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ).popUntil((r) => r.isFirst),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         Expanded(
                           child: SingleChildScrollView(
                             clipBehavior: Clip.none,
@@ -290,7 +315,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               children: [
                                 for (final cat in cats)
                                   Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
+                                    padding: const EdgeInsets.only(bottom: 4),
                                     child: railItem(cat),
                                   ),
                               ],
@@ -302,6 +327,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ' · ${l.settingsBackHome}',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(fontSize: 24, color: c.textMuted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -385,10 +412,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       key: const ValueKey('page:playback'),
       title: l.settingsCatPlayback,
       subtitle: name == null ? null : l.settingsForProfile(name),
+      headGap: 7,
       children: [
-        _Section(l.secSourceChoice, top: 8),
+        _Section(l.secSourceChoice),
         _Tile(
           id: 'quality',
+          minHeight: 104,
           title: l.settingsQuality,
           value: _qualityName(l, prefs.maxQuality),
           onTap: () async {
@@ -404,6 +433,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         _SwitchTile(
           id: 'preferDirect',
+          minHeight: 104,
           title: l.settingsPreferDirect,
           subtitle: l.preferDirectOn,
           value: prefs.preferDirect,
@@ -412,6 +442,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _Section(l.secLanguages),
         _Tile(
           id: 'audio',
+          minHeight: 104,
           title: l.settingsAudioLang,
           value: _langName(l, audio),
           onTap: () async {
@@ -425,6 +456,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         _Tile(
           id: 'subtitles',
+          minHeight: 104,
           title: l.settingsSubtitleLang,
           value: subLang == null || subLang == 'off'
               ? l.subtitlesNone
@@ -455,7 +487,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       key: const ValueKey('page:torrents'),
       title: l.settingsCatTorrents,
       children: [
-        _Section(l.secProtection, top: 8),
+        _VpnCard(requireVpn: torrents.requireVpn),
+        _Section(l.secProtection),
         _SwitchTile(
           id: 'requireVpn',
           title: l.settingsRequireVpn,
@@ -499,6 +532,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _Tile(
           id: 'cache',
           title: l.settingsTorrentCache,
+          gauge: _cacheGauge(torrents.cacheGb),
+          valueNote: l.cacheUsedOf(_gbText(_cacheUsed(), l)),
           value: l.cacheGb(torrents.cacheGb),
           onTap: () async {
             final picked = await _choose<int>(
@@ -540,6 +575,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  int _cacheUsed() => ref.watch(torrentCacheUsedProvider).value ?? 0;
+
+  String _gbText(int bytes, AppLocalizations l) {
+    final gb = bytes / (1024 * 1024 * 1024);
+    final txt = NumberFormat('0.0', l.localeName).format(gb);
+    return l.sizeGbDecimal(txt);
+  }
+
+  double _cacheGauge(int cacheGb) {
+    if (cacheGb <= 0) return 0;
+    return (_cacheUsed() / (cacheGb * 1024 * 1024 * 1024)).clamp(0.0, 1.0);
+  }
+
   Widget _profilesPage(BuildContext context) {
     final l = context.l10n;
     final profiles = ref.watch(profilesProvider).value ?? const [];
@@ -549,7 +597,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       title: l.settingsCatProfiles,
       subtitle: l.settingsProfilesHint,
       children: [
-        _Section(l.secProfiles, top: 8),
+        _Section(l.secProfiles),
         _Tile(
           id: 'profiles',
           title: l.manageProfiles,
@@ -609,7 +657,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       key: const ValueKey('page:backup'),
       title: l.settingsCatBackup,
       children: [
-        _Section(l.settingsBackup, top: 8),
+        _Section(l.settingsBackup),
         _Tile(
           id: 'backupExport',
           title: l.backupExport,
@@ -640,10 +688,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return _Page(
       key: const ValueKey('page:general'),
       title: l.settingsCatGeneral,
+      headGap: 41,
       children: [
-        _Section(l.secInterfaceLanguage, top: 8),
+        _Section(l.secInterfaceLanguage, top: 0),
         _Tile(
           id: 'locale',
+          minHeight: 112,
           title: l.settingsLanguage,
           subtitle: locale.languageCode == 'en' ? l.langEnglish : l.langFrench,
           onTap: () async {
@@ -663,9 +713,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             }
           },
         ),
-        _Section(l.settingsVersion),
+        _Section(l.settingsVersion, top: 24),
         _Tile(
           id: 'version',
+          minHeight: 112,
           title: l.settingsVersion,
           subtitle: l.versionValue(version),
           onTap: _onVersionTap,
@@ -676,14 +727,84 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: l.debugMenuTitle,
             onTap: () => _push(const DebugMenuScreen()),
           ),
-        _Section(l.settingsAbout),
+        _Section(l.settingsAbout, top: 24),
         _Tile(
           id: 'about',
+          minHeight: 112,
           title: l.settingsAbout,
           subtitle: l.aboutLicense,
           onTap: () => _push(const AboutScreen()),
         ),
       ],
+    );
+  }
+}
+
+/// Carte d'état du VPN en tête de « Torrents et VPN » (maquette TV15).
+class _VpnCard extends ConsumerWidget {
+  const _VpnCard({required this.requireVpn});
+
+  final bool requireVpn;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.lumio;
+    final l = context.l10n;
+    final up = ref.watch(upInterfacesProvider).value ?? const <NetInterface>[];
+    final vpn = up.where((i) => i.isVpn).toList();
+    final active = vpn.isNotEmpty;
+    final named = vpn.where((i) => !i.anonymousVpn).toList();
+    final name = (named.isNotEmpty ? named.first : vpn.firstOrNull)?.name ?? '';
+    return Container(
+      key: const ValueKey('settings-vpn-card'),
+      margin: const EdgeInsets.only(top: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            active ? Icons.verified_user_outlined : Icons.gpp_maybe_outlined,
+            size: 56,
+            color: active ? c.success : c.accent,
+          ),
+          const SizedBox(width: 28),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  active ? l.vpnCardActive(name) : l.vpnNone,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                    fontVariations: [FontVariation.weight(700)],
+                  ),
+                ),
+                if (requireVpn)
+                  Text(
+                    l.vpnCardStopHint,
+                    style: TextStyle(fontSize: 24, color: c.textMuted),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 24),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(context).width * 0.32,
+            ),
+            child: Text(
+              l.vpnCardIpHint,
+              textAlign: TextAlign.end,
+              style: TextStyle(fontSize: 24, color: c.textMuted),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -704,20 +825,20 @@ class _ProfileCard extends ConsumerWidget {
     return FocusableCard(
       key: const ValueKey('settings-profile'),
       scale: 1.02,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(20),
       semanticLabel: '$name, ${l.profileChange}',
       onSelect: onChange,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
           color: c.surface,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 56,
+              height: 56,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -727,8 +848,9 @@ class _ProfileCard extends ConsumerWidget {
                 name.isEmpty ? '?' : name.characters.first.toUpperCase(),
                 style: TextStyle(
                   fontFamily: 'Bricolage Grotesque',
-                  fontSize: 30,
+                  fontSize: 28,
                   fontWeight: FontWeight.w700,
+                  fontVariations: const [FontVariation.weight(700)],
                   color: c.onAccent,
                 ),
               ),
@@ -744,8 +866,9 @@ class _ProfileCard extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontFamily: 'Manrope',
-                      fontSize: 28,
+                      fontSize: 26,
                       fontWeight: FontWeight.w700,
+                      fontVariations: [FontVariation.weight(700)],
                     ),
                   ),
                   Text(
@@ -759,8 +882,9 @@ class _ProfileCard extends ConsumerWidget {
               l.profileChange,
               style: TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: c.secondary,
+                fontWeight: FontWeight.w600,
+                fontVariations: const [FontVariation.weight(600)],
+                color: c.accent,
               ),
             ),
           ],
@@ -795,35 +919,39 @@ class _RailItem extends StatelessWidget {
     return FocusableCard(
       autofocus: autofocus,
       scale: 1.02,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       semanticLabel: label,
       onFocusChange: (f) {
         if (f) onFocus();
       },
       onSelect: onSelect,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 76),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: selected ? c.surfaceFocus : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 32, color: selected ? c.accent : c.textMuted),
-            const SizedBox(width: 24),
+            Icon(icon, size: 30, color: selected ? c.accent : c.textMuted),
+            const SizedBox(width: 18),
             Expanded(
-              child: Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                  fontVariations: const [FontVariation.weight(600)],
-                  height: 1.2,
-                  color: selected ? c.text : c.textMuted,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 26,
+                    fontWeight: FontWeight.w600,
+                    fontVariations: const [FontVariation.weight(600)],
+                    height: 1.2,
+                    color: selected ? c.text : c.textMuted,
+                  ),
                 ),
               ),
             ),
@@ -842,7 +970,12 @@ class _Page extends StatelessWidget {
     required this.children,
     this.subtitle,
     this.action,
+    this.headGap = 0,
   });
+
+  /// Espace entre l'en-tête et la première section (maquettes : 36 sur
+  /// Général et Sources, 0 ailleurs).
+  final double headGap;
 
   final String title;
   final String? subtitle;
@@ -862,14 +995,14 @@ class _Page extends StatelessWidget {
           child: Text(
             title,
             style: t.headlineLarge?.copyWith(
-              fontSize: narrow ? 32 : 56,
+              fontSize: narrow ? 32 : 44,
               height: 1.1,
             ),
           ),
         ),
         if (subtitle != null)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: 6),
             child: Text(
               subtitle!,
               maxLines: 2,
@@ -893,7 +1026,7 @@ class _Page extends StatelessWidget {
               if (action != null) ...[const SizedBox(width: 24), action!],
             ],
           ),
-        const SizedBox(height: 8),
+        SizedBox(height: headGap),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.only(bottom: 48, left: 6, right: 6),
@@ -924,12 +1057,19 @@ class _Tile extends ConsumerWidget {
     required this.onTap,
     this.subtitle,
     this.value,
+    this.gauge,
+    this.valueNote,
+    this.minHeight = 96,
   });
+
+  final double minHeight;
 
   final String id;
   final String title;
   final String? subtitle;
   final String? value;
+  final double? gauge;
+  final String? valueNote;
   final VoidCallback onTap;
 
   @override
@@ -942,6 +1082,7 @@ class _Tile extends ConsumerWidget {
       child: TvTile(
         key: ValueKey('setting:$id'),
         autofocus: remembered == id,
+        minHeight: minHeight,
         semanticLabel: [title, ?subtitle, ?value].join(', '),
         onFocusChange: (f) {
           if (f) memory.remember(settingsRouteKey, id);
@@ -950,9 +1091,44 @@ class _Tile extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-              child: TvTileText(title: title, subtitle: subtitle),
+              child: gauge == null
+                  ? TvTileText(title: title, subtitle: subtitle)
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TvTileText(title: title),
+                        const SizedBox(height: 10),
+                        Container(
+                          key: const ValueKey('setting:cache:gauge'),
+                          height: 10,
+                          width: 520,
+                          decoration: BoxDecoration(
+                            color: c.outline,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: gauge,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: c.accent,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
-            const SizedBox(width: 24),
+            if (valueNote != null) ...[
+              Text(
+                valueNote!,
+                style: TextStyle(fontSize: 24, color: c.textMuted),
+              ),
+              const SizedBox(width: 24),
+            ] else
+              const SizedBox(width: 24),
             if (value != null)
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 680),
@@ -980,7 +1156,7 @@ class _Tile extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Icon(Icons.expand_more, size: 30, color: c.textMuted),
+                      Icon(Icons.chevron_right, size: 20, color: c.textMuted),
                     ],
                   ),
                 ),
@@ -1001,8 +1177,10 @@ class _SwitchTile extends ConsumerWidget {
     required this.value,
     required this.onChanged,
     this.subtitle,
+    this.minHeight = 96,
   });
 
+  final double minHeight;
   final String id;
   final String title;
   final String? subtitle;
@@ -1018,6 +1196,7 @@ class _SwitchTile extends ConsumerWidget {
       child: TvSwitchTile(
         key: ValueKey('setting:$id'),
         autofocus: remembered == id,
+        minHeight: minHeight,
         color: context.lumio.surface,
         title: title,
         subtitle: subtitle,

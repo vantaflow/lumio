@@ -538,6 +538,7 @@ class _Key extends StatelessWidget {
                       color: fg,
                       fontSize: wide || medium ? 26 : 30,
                       fontWeight: FontWeight.w700,
+                      fontVariations: const [FontVariation.weight(700)],
                     ),
                   ),
           ),

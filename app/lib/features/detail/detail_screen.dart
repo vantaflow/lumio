@@ -588,6 +588,9 @@ class _Sources extends StatelessWidget {
                                   color: lumio.accent,
                                   fontSize: 26,
                                   fontWeight: FontWeight.w700,
+                                  fontVariations: const [
+                                    FontVariation.weight(700),
+                                  ],
                                 ),
                               ),
                               const Spacer(),

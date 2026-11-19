@@ -734,19 +734,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsPlayback => 'Lecture';
 
   @override
-  String get settingsAudioLang => 'Langue audio par défaut';
+  String get settingsAudioLang => 'Langue audio';
 
   @override
-  String get settingsSubtitleLang => 'Langue des sous-titres par défaut';
+  String get settingsSubtitleLang => 'Sous-titres';
 
   @override
   String get settingsQuality => 'Qualité préférée';
 
   @override
-  String get settingsPreferDirect => 'Préférer les liens directs aux torrents';
+  String get settingsPreferDirect => 'Préférer les liens directs';
 
   @override
-  String get preferDirectOn => 'Liens directs en premier';
+  String get preferDirectOn => 'Avant les torrents, à qualité égale.';
 
   @override
   String get preferDirectOff => 'Sans préférence';
@@ -790,10 +790,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsDownloads => 'Torrents';
 
   @override
-  String get settingsTorrentCache => 'Cache torrents';
+  String get settingsTorrentCache => 'Cache';
 
   @override
-  String get settingsUpload => 'Débit montant';
+  String get settingsUpload => 'Limite d\'envoi';
 
   @override
   String get unlimited => 'Illimité';
@@ -802,7 +802,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get uploadOff => 'Désactivé (pas d\'ensemencement)';
 
   @override
-  String get settingsClearCacheOnExit => 'Vider le cache à la fermeture';
+  String get settingsClearCacheOnExit => 'Vider le cache en quittant';
 
   @override
   String get optionYes => 'Oui';
@@ -2201,4 +2201,37 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsBackHome => 'Retour : accueil';
+
+  @override
+  String vpnCardActive(String name) {
+    return 'VPN actif · $name';
+  }
+
+  @override
+  String get vpnCardStopHint => 'Les torrents s\'arrêtent si le VPN tombe.';
+
+  @override
+  String get vpnCardIpHint =>
+      'Votre adresse IP est visible des autres pairs sans VPN.';
+
+  @override
+  String cacheUsedOf(String used) {
+    return '$used utilisés sur';
+  }
+
+  @override
+  String sizeGbDecimal(String n) {
+    return '$n Go';
+  }
+
+  @override
+  String get profileAdultShort => 'Adulte';
+
+  @override
+  String get manageProfilesHint =>
+      'Modifier un profil : nom, profil enfant et limite d\'âge, verrou par PIN. Six profils au maximum.';
+
+  @override
+  String get profileEditorHint =>
+      'Pour un profil adulte, l\'option « Verrouiller par PIN » remplace la limite d\'âge : « Le PIN parent est demandé pour ouvrir ce profil. »';
 }

@@ -51,6 +51,7 @@ class RowEditorScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
+                      fontVariations: const [FontVariation.weight(700)],
                       color: hidden ? lumio.textMuted : lumio.text,
                     ),
                   ),
