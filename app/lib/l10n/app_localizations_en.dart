@@ -2711,7 +2711,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get traktStepsTitle => 'To connect Trakt';
 
   @override
-  String get traktStep1 => 'You pressed \"Connect Trakt\": a code is shown.';
+  String get traktStep1 => 'Press \"Connect Trakt\": a code is shown.';
 
   @override
   String get traktStep2 =>

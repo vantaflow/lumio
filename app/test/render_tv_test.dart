@@ -23,6 +23,8 @@ import 'package:lumio/features/home/home_providers.dart';
 import 'package:lumio/features/home/home_screen.dart';
 import 'package:lumio/features/search/search_providers.dart';
 import 'package:lumio/features/search/search_screen.dart';
+import 'package:lumio/features/settings/help_screen.dart';
+import 'package:lumio/ui/common/tv_guide.dart' show TvGuidePanel;
 import 'package:lumio/features/update/update_banner.dart';
 import 'package:lumio_core/lumio_core.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
@@ -1363,6 +1365,49 @@ void main() {
     await h3.settle();
     await _save(t, k3, 'r-TV09');
     await h3.close();
+  });
+
+  testWidgets('lot guides : aide, guide, clavier', skip: skip != null, (
+    t,
+  ) async {
+    await t.runAsync(_fonts);
+    final h = AppHarness(t);
+    final k = GlobalKey();
+    await h.pump(RepaintBoundary(key: k, child: const HelpScreen()));
+    await _save(t, k, 'r-G04-aide');
+    await h.close();
+
+    final h1 = AppHarness(t);
+    final k1 = GlobalKey();
+    await h1.pump(
+      RepaintBoundary(
+        key: k1,
+        child: Builder(
+          builder: (c) {
+            final l = c.l10n;
+            return TvGuidePanel(
+              title: l.guideLinkTitle,
+              steps: [l.guideLinkStep1, l.guideLinkStep2, l.guideLinkStep3],
+              note: l.guideNoteKeyStays,
+              onClose: () {},
+            );
+          },
+        ),
+      ),
+    );
+    await _save(t, k1, 'r-G01-guide');
+    await h1.close();
+
+    final h2 = AppHarness(t);
+    final k2 = GlobalKey();
+    await h2.pump(
+      RepaintBoundary(key: k2, child: const SearchScreen(tvLayout: true)),
+    );
+    await _save(t, k2, 'r-TV12-clavier-azerty');
+    await t.tap(find.byKey(const ValueKey('key-layout')));
+    await h2.settle();
+    await _save(t, k2, 'r-TV12-clavier-arabe');
+    await h2.close();
   });
 }
 

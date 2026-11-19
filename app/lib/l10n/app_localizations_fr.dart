@@ -2740,7 +2740,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get traktStep1 =>
-      'Vous avez appuyé sur « Connecter Trakt » : un code s\'affiche.';
+      'Appuyez sur « Connecter Trakt » : un code s\'affiche.';
 
   @override
   String get traktStep2 =>

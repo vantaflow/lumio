@@ -139,18 +139,42 @@ Future<void> showTvGuide(
   required String title,
   required List<String> steps,
   String? note,
-}) {
-  final l = context.l10n;
-  return showTvPanel<void>(
-    context,
-    builder: (ctx) => TvPanel(
+}) => showTvPanel<void>(
+  context,
+  builder: (ctx) => TvGuidePanel(
+    title: title,
+    steps: steps,
+    note: note,
+    onClose: () => Navigator.of(ctx).pop(),
+  ),
+);
+
+/// Contenu de la fenêtre de guide.
+class TvGuidePanel extends StatelessWidget {
+  const TvGuidePanel({
+    super.key,
+    required this.title,
+    required this.steps,
+    required this.onClose,
+    this.note,
+  });
+
+  final String title;
+  final List<String> steps;
+  final String? note;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return TvPanel(
       title: title,
       width: 960,
       titleSize: 48,
       fitActions: true,
       gap: 28,
       actionsGap: 24,
-      onBack: () => Navigator.of(ctx).pop(),
+      onBack: onClose,
       actions: [
         TvButton(
           key: const ValueKey('guide-ok'),
@@ -159,7 +183,7 @@ Future<void> showTvGuide(
           height: 76,
           fontSize: 28,
           horizontalPadding: 40,
-          onPressed: () => Navigator.of(ctx).pop(),
+          onPressed: onClose,
         ),
       ],
       children: [
@@ -167,16 +191,16 @@ Future<void> showTvGuide(
         if (note != null) ...[
           const SizedBox(height: 28),
           Text(
-            note,
+            note!,
             style: TextStyle(
               fontFamily: 'Manrope',
               fontSize: 26,
               height: 1.35,
-              color: ctx.lumio.textMuted,
+              color: context.lumio.textMuted,
             ),
           ),
         ],
       ],
-    ),
-  );
+    );
+  }
 }

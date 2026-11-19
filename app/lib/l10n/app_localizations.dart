@@ -4649,7 +4649,7 @@ abstract class AppLocalizations {
   /// No description provided for @traktStep1.
   ///
   /// In fr, this message translates to:
-  /// **'Vous avez appuyé sur « Connecter Trakt » : un code s\'affiche.'**
+  /// **'Appuyez sur « Connecter Trakt » : un code s\'affiche.'**
   String get traktStep1;
 
   /// No description provided for @traktStep2.

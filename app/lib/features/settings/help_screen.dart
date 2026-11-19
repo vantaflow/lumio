@@ -91,26 +91,29 @@ class HelpScreen extends StatelessWidget {
                       horizontal: 32,
                       vertical: 18,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          g.title,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontSize: 36, height: 1.2),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          g.steps.first,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 26,
-                            color: c.textMuted,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            g.title,
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontSize: 36, height: 1.2),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            g.steps.first,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 26,
+                              color: c.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
