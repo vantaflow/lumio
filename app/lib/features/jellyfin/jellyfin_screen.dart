@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_scroll_clip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/jellyfin_repository.dart';
 import 'package:lumio/features/detail/playback_service.dart'
@@ -414,7 +415,7 @@ class _BrowseState extends ConsumerState<JellyfinBrowseScreen> {
     } else {
       // Maquette TV28 (volet Navigation) : lignes de 72, icône dossier ou
       // clap turquoise, titre 30 en gras, « Charger la suite » en bouton gris.
-      body = ListView(
+      body = TvScrollClip(child: ListView(
         clipBehavior: Clip.none,
         padding: const EdgeInsets.only(top: 8, bottom: 24),
         children: [
@@ -467,7 +468,7 @@ class _BrowseState extends ConsumerState<JellyfinBrowseScreen> {
               ),
             ),
         ],
-      );
+      ));
     }
     return TvScreen(
       title: _title.isEmpty ? l.jellyfinLibraries : _title,
@@ -613,7 +614,7 @@ class JellyfinServersScreen extends ConsumerWidget {
               ),
             );
           }
-          return ListView(
+          return TvScrollClip(child: ListView(
             clipBehavior: Clip.none,
             padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
@@ -673,7 +674,7 @@ class JellyfinServersScreen extends ConsumerWidget {
                   ),
                 ),
             ],
-          );
+          ));
         },
       ),
     );

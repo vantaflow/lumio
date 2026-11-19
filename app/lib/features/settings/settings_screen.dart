@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_scroll_clip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lumio/data/app_settings.dart';
@@ -309,7 +310,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 24),
                         Expanded(
-                          child: SingleChildScrollView(
+                          child: TvScrollClip(child: SingleChildScrollView(
                             clipBehavior: Clip.none,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -321,7 +322,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   ),
                               ],
                             ),
-                          ),
+                          )),
                         ),
                         const SizedBox(height: 14),
                         _PhoneCard(
@@ -1405,7 +1406,7 @@ class AboutScreen extends StatelessWidget {
     final credit = md().copyWith(height: 1.7);
     return TvScreen(
       title: l.settingsAbout,
-      child: ListView(
+      child: TvScrollClip(child: ListView(
         padding: EdgeInsets.zero,
         clipBehavior: Clip.none,
         children: [
@@ -1460,7 +1461,7 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

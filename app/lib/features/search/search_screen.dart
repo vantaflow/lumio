@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_scroll_clip.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -393,7 +394,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ),
     );
     return FocusTraversalGroup(
-      child: SingleChildScrollView(
+      child: TvScrollClip(child: SingleChildScrollView(
         clipBehavior: Clip.none,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -485,7 +486,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -572,7 +573,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ? -1
           : visible.indexWhere((m) => m.id == _restoreId);
       if (restoreIndex >= 0) _scheduleRestore(restoreIndex, 5);
-      body = GridView.builder(
+      body = TvScrollClip(child: GridView.builder(
         controller: _grid,
         clipBehavior: Clip.none,
         padding: EdgeInsets.zero,
@@ -633,7 +634,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           }
           return card;
         },
-      );
+      ));
     }
 
     return Column(

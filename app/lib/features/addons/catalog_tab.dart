@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_scroll_clip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/addons/addon_labels.dart';
 import 'package:lumio/features/addons/addon_logo.dart';
@@ -386,36 +387,22 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
             ),
             const SizedBox(height: 20),
             Expanded(child: _body(l, c, t, installed)),
-            if (MediaQuery.sizeOf(context).height >= 700) ...[
+            if (note != null) ...[
               const SizedBox(height: 16),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1500),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (note != null)
-                      Text(
-                        note,
-                        key: const ValueKey('catalog-note'),
-                        style: t.bodySmall?.copyWith(
-                          fontSize: 24,
-                          height: 1.35,
-                          color: c.accent,
-                        ),
-                      ),
-                    Text(
-                      l.catalogFootnote,
-                      style: t.bodySmall?.copyWith(
-                        fontSize: 24,
-                        height: 1.35,
-                        color: c.textMuted,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  note,
+                  key: const ValueKey('catalog-note'),
+                  style: t.bodySmall?.copyWith(
+                    fontSize: 24,
+                    height: 1.35,
+                    color: c.accent,
+                  ),
                 ),
               ),
-              const SizedBox(height: 56),
             ],
+            const SizedBox(height: 56),
           ],
         ),
         if (_opening)
@@ -474,8 +461,7 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
     final hasMore = _last?.value.hasMore ?? false;
     // Découpe verticale (la grille ne doit pas déborder sur l'en-tête ni sur la
     // note), mais large sur les côtés pour laisser voir l'anneau de focus.
-    return ClipRect(
-      clipper: const _GridClipper(),
+    return TvScrollClip(
       child: SingleChildScrollView(
       clipBehavior: Clip.none,
       padding: const EdgeInsets.only(top: 12, bottom: 24),
@@ -510,17 +496,6 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(x.day)}/${two(x.month)}/${x.year}';
   }
-}
-
-class _GridClipper extends CustomClipper<Rect> {
-  const _GridClipper();
-
-  @override
-  Rect getClip(Size size) =>
-      Rect.fromLTRB(-60, 0, size.width + 60, size.height);
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Rect> oldClipper) => false;
 }
 
 /// Puce de catégorie (maquette TV16 `.ch`) : 52 de haut, texte 24 ; la puce

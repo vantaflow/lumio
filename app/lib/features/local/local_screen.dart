@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:lumio/ui/common/tv_scroll_clip.dart';
 import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/db.dart';
@@ -726,7 +727,7 @@ class _LocalFoldersScreenState extends ConsumerState<LocalFoldersScreen> {
               ),
             );
           }
-          return ListView(
+          return TvScrollClip(child: ListView(
             clipBehavior: Clip.none,
             padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
@@ -859,7 +860,7 @@ class _LocalFoldersScreenState extends ConsumerState<LocalFoldersScreen> {
                   ),
                 ),
             ],
-          );
+          ));
         },
       ),
     );
