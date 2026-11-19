@@ -147,4 +147,44 @@ void main() {
     await t.pump();
     expect(_focused(), 'a1');
   });
+
+  testWidgets('rangée stricte : gauche/droite restent dans la rangée', (
+    t,
+  ) async {
+    // Puces à droite, au même niveau que le haut de la rangée de cartes
+    // (cas de la grille de résultats à demi masquée sous l'en-tête).
+    await t.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              Positioned(left: 600, top: 20, child: _row('chip', 2)),
+              Positioned(
+                left: 0,
+                top: 40,
+                child: RowTraversalGroup(strictRow: true, child: _row('a', 3)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    void focus(String l) => FocusManager.instance.rootScope.descendants
+        .firstWhere((n) => n.debugLabel == l)
+        .requestFocus();
+    focus('a0');
+    await t.pump();
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.pump();
+    expect(_focused(), 'a1');
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.pump();
+    expect(_focused(), 'a2');
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.pump();
+    expect(_focused(), 'a2', reason: 'fin de rangée : on reste, pas de saut');
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await t.pump();
+    expect(_focused(), 'a1');
+  });
 }

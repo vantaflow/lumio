@@ -12,8 +12,10 @@ import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/state_view.dart';
 import 'package:lumio/features/home/tv_cards.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
+import 'package:lumio/ui/focus/focus_return.dart';
 import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
+import 'package:lumio/ui/focus/row_traversal.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
@@ -72,6 +74,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _voice = ref.read(voiceInputProvider);
     _micAvailable = _voice.maySupport;
     _restoreId = ref.read(focusMemoryProvider.notifier).restore(searchRouteKey);
+    FocusReturn.register(this, _returnFocus);
+  }
+
+  /// Retour d'une fiche alors que la carte d'origine n'existe plus : le focus
+  /// revient sur le résultat mémorisé.
+  bool _returnFocus(Route<dynamic> route) {
+    if (!mounted || ModalRoute.of(context) != route) return false;
+    final id = ref.read(focusMemoryProvider.notifier).restore(searchRouteKey);
+    if (id == null) return false;
+    setState(() {
+      _restoreId = id;
+      _restoring = false;
+    });
+    return true;
   }
 
   String? _restoreId;
@@ -85,6 +101,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   void dispose() {
+    FocusReturn.unregister(this);
     if (_listening) unawaited(_voice.stop());
     _controller.dispose();
     _restoreNode.dispose();
@@ -492,6 +509,32 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  /// Colonnes de la grille et hauteur d'une rangée (carte 340 + écart 24).
+  static const _columns = 4;
+  static const _rowExtent = 340.0 + 24.0;
+
+  /// Garde la rangée de la carte [index] entièrement visible, au centre de la
+  /// zone des résultats : calculé d'après la géométrie fixe de la grille, donc
+  /// sans dépendre de la mise en page de la carte (la première rangée n'est
+  /// jamais à demi masquée sous l'en-tête, même après un retour de fiche).
+  void _showRow(int index, Duration duration) {
+    if (!_grid.hasClients || !_grid.position.hasContentDimensions) return;
+    final position = _grid.position;
+    final rowTop = (index ~/ _columns) * _rowExtent;
+    final target = (rowTop + 340 / 2 - position.viewportDimension / 2).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    if ((target - position.pixels).abs() < 1) return;
+    if (duration == Duration.zero) {
+      _grid.jumpTo(target);
+    } else {
+      unawaited(
+        _grid.animateTo(target, duration: duration, curve: Curves.easeOut),
+      );
+    }
+  }
+
   /// Rend le focus au résultat mémorisé dès qu'il est construit (la grille
   /// est paresseuse : on s'en approche d'abord par défilement estimé).
   void _scheduleRestore(int index, int attempts) {
@@ -504,19 +547,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           if (n.canRequestFocus && !n.skipTraversal) {
             n.requestFocus();
             _restoreId = null;
+            _restoring = false;
             return;
           }
         }
         if (left > 1) {
           if (_grid.hasClients && _restoreNode.context == null) {
-            const per = 3; // colonnes estimées (écran TV 1920)
             _grid.jumpTo(
-              (index ~/ per * 456.0).clamp(0, _grid.position.maxScrollExtent),
+              (index ~/ _columns * _rowExtent).clamp(
+                0,
+                _grid.position.maxScrollExtent,
+              ),
             );
           }
           step(left - 1);
         } else {
           _restoreId = null;
+          _restoring = false;
         }
       });
     }
@@ -575,68 +622,69 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ? -1
           : visible.indexWhere((m) => m.id == _restoreId);
       if (restoreIndex >= 0) _scheduleRestore(restoreIndex, 5);
-      body = TvScrollClip(
-        child: GridView.builder(
-          controller: _grid,
-          clipBehavior: Clip.none,
-          padding: EdgeInsets.zero,
-          // Maquette TV12 : cartes 230 x 340, écart 24.
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            mainAxisExtent: 340,
-            crossAxisSpacing: 24,
-            mainAxisSpacing: 24,
-          ),
-          itemCount: visible.length,
-          itemBuilder: (context, i) {
-            final m = visible[i];
-            Widget card = Focus(
-              skipTraversal: true,
-              canRequestFocus: false,
-              onFocusChange: (f) {
-                if (!f) return;
-                ref
-                    .read(focusMemoryProvider.notifier)
-                    .remember(searchRouteKey, m.id);
-                Scrollable.ensureVisible(
-                  context,
-                  alignment: 0.5,
-                  duration:
-                      (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
-                      ? Duration.zero
-                      : LumioMotion.focus,
-                );
-              },
-              child: Align(
-                alignment: AlignmentDirectional.topStart,
-                child: TvMediaCard(
-                  key: ValueKey('result-${m.id}'),
-                  title: m.name,
-                  seed: m.id,
-                  poster: m.poster,
-                  allowPrivate: priv.contains(m.sourceAddonId),
-                  width: 230,
-                  height: 340,
-                  radius: 18,
-                  inset: 14,
-                  badge: m.sourceKind == 'local' || m.sourceKind == 'jellyfin'
-                      ? sourceLabel(m.sourceKind, context.l10n)
-                      : null,
-                  semanticLabel: _semantic(context, m),
-                  onSelect: () => widget.onOpenItem?.call(m),
-                ),
-              ),
-            );
-            if (i == restoreIndex) {
-              card = Focus(
-                focusNode: _restoreNode,
+      body = RowTraversalGroup(
+        strictRow: true,
+        child: TvScrollClip(
+          child: GridView.builder(
+            controller: _grid,
+            clipBehavior: Clip.none,
+            padding: EdgeInsets.zero,
+            // Maquette TV12 : cartes 230 x 340, écart 24.
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisExtent: 340,
+              crossAxisSpacing: 24,
+              mainAxisSpacing: 24,
+            ),
+            itemCount: visible.length,
+            itemBuilder: (context, i) {
+              final m = visible[i];
+              Widget card = Focus(
                 skipTraversal: true,
                 canRequestFocus: false,
-                child: card,
+                onFocusChange: (f) {
+                  if (!f) return;
+                  ref
+                      .read(focusMemoryProvider.notifier)
+                      .remember(searchRouteKey, m.id);
+                  _showRow(
+                    i,
+                    (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+                        ? Duration.zero
+                        : LumioMotion.focus,
+                  );
+                },
+                child: Align(
+                  alignment: AlignmentDirectional.topStart,
+                  child: TvMediaCard(
+                    key: ValueKey('result-${m.id}'),
+                    title: m.name,
+                    seed: m.id,
+                    poster: m.poster,
+                    allowPrivate: priv.contains(m.sourceAddonId),
+                    width: 230,
+                    height: 340,
+                    radius: 18,
+                    inset: 14,
+                    badge: m.sourceKind == 'local' || m.sourceKind == 'jellyfin'
+                        ? sourceLabel(m.sourceKind, context.l10n)
+                        : null,
+                    semanticLabel: _semantic(context, m),
+                    onSelect: () => widget.onOpenItem?.call(m),
+                  ),
+                ),
               );
-            }
-            return card;
-          },
+              if (i == restoreIndex) {
+                card = Focus(
+                  focusNode: _restoreNode,
+                  skipTraversal: true,
+                  canRequestFocus: false,
+                  child: card,
+                );
+              }
+              return card;
+            },
+          ),
         ),
       );
     }

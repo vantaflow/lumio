@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
+import 'package:lumio/ui/focus/focus_return.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/theme.dart';
+
+/// Rangée de la mémoire de focus qui retient laquelle des rangées de l'écran a
+/// été focalisée en dernier (sa valeur est l'identifiant de rangée).
+const lastFocusedRowKey = '#derniere-rangee';
 
 /// Rangée horizontale de cartes (titre + liste défilante paresseuse).
 ///
@@ -107,6 +112,31 @@ class _TvRowState extends ConsumerState<TvRow> {
           : 0,
     );
     if (_restoreAt != null) _tryRestore(5);
+    FocusReturn.register(this, _returnFocus);
+  }
+
+  /// Retour sur l'écran (fiche, recherche, Ma liste fermées) alors que la
+  /// carte d'origine n'existe plus : si c'est cette rangée qui avait le focus
+  /// en dernier, il revient sur sa carte mémorisée.
+  bool _returnFocus(Route<dynamic> route) {
+    if (!mounted || ModalRoute.of(context) != route) return false;
+    final memory = ref.read(focusMemoryProvider.notifier);
+    if (memory.restore(_route, row: lastFocusedRowKey) !=
+        widget.restorationId) {
+      return false;
+    }
+    final i = _readMemory();
+    if (i == null) return false;
+    final extent = widget.itemExtent ?? widget.estimatedExtent;
+    final c = _controller;
+    if (c != null && c.hasClients) {
+      c.jumpTo(
+        (i * (extent + widget.gap)).clamp(0.0, c.position.maxScrollExtent),
+      );
+    }
+    setState(() => _restoreAt = i);
+    _tryRestore(6);
+    return true;
   }
 
   /// Rend le focus à l'élément mémorisé dès qu'il est construit (quelques
@@ -130,6 +160,7 @@ class _TvRowState extends ConsumerState<TvRow> {
 
   @override
   void dispose() {
+    FocusReturn.unregister(this);
     _controller?.dispose();
     _restoreNode.dispose();
     super.dispose();
@@ -140,6 +171,9 @@ class _TvRowState extends ConsumerState<TvRow> {
     ref
         .read(focusMemoryProvider.notifier)
         .remember(_route, '$index', row: widget.restorationId);
+    ref
+        .read(focusMemoryProvider.notifier)
+        .remember(_route, widget.restorationId, row: lastFocusedRowKey);
     final reduce = MediaQuery.maybeDisableAnimationsOf(itemContext) ?? false;
     final duration = reduce ? Duration.zero : LumioMotion.focus;
     // Horizontal : centre la carte dans CETTE rangée seulement. (Un

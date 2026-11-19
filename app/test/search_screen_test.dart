@@ -154,6 +154,7 @@ Future<void> _tap(WidgetTester t, String key) async {
 }
 
 void main() {
+  _searchGridTests();
   testWidgets('anti-rebond : une seule requête pour une frappe rapide', (
     t,
   ) async {
@@ -427,4 +428,56 @@ bool _focusIsResult(WidgetTester t) {
     return true;
   });
   return found;
+}
+
+void _searchGridTests() {
+  Future<_FakeSearch> open(WidgetTester t, String remembered, int n) async {
+    final s = await _pump(t, remembered: remembered);
+    await _tap(t, 'x');
+    await t.pump(searchDebounce);
+    s.streams['x']!.add([for (var i = 1; i <= n; i++) _meta('$i')]);
+    for (var i = 0; i < 10; i++) {
+      await t.pump(const Duration(milliseconds: 50));
+    }
+    return s;
+  }
+
+  bool onCard(String id) {
+    final ctx = FocusManager.instance.primaryFocus?.context;
+    if (ctx == null) return false;
+    return find
+        .descendant(
+          of: find.byKey(ValueKey('result-$id')),
+          matching: find.byWidget(ctx.widget),
+        )
+        .evaluate()
+        .isNotEmpty;
+  }
+
+  testWidgets('grille : droite depuis la 1re carte va à la 2e carte', (
+    t,
+  ) async {
+    await open(t, '1', 12);
+    expect(onCard('1'), isTrue);
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.pump(const Duration(milliseconds: 300));
+    expect(onCard('2'), isTrue);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('grille : haut jusqu\'à la 1re rangée, elle reste entière', (
+    t,
+  ) async {
+    await open(t, '9', 24);
+    expect(onCard('9'), isTrue);
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await t.pump(const Duration(milliseconds: 400));
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await t.pump(const Duration(milliseconds: 400));
+    expect(onCard('1'), isTrue);
+    final chips = t.getRect(find.byKey(const ValueKey('filter-all')));
+    final card = t.getRect(find.byKey(const ValueKey('result-1')));
+    expect(card.top, greaterThanOrEqualTo(chips.bottom));
+    await t.pumpWidget(const SizedBox());
+  });
 }

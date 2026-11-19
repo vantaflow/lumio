@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/ui/focus/focus_memory.dart';
+import 'package:lumio/ui/focus/focus_return.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_row.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
@@ -197,6 +198,61 @@ void main() {
     );
     await t.pumpAndSettle();
     expect(fresh[2].hasFocus, isTrue);
+  });
+
+  testWidgets('TvRow : retour d\'un écran, la dernière rangée a le focus', (
+    t,
+  ) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final a = List.generate(4, (_) => FocusNode());
+    final b = List.generate(4, (_) => FocusNode());
+    final other = FocusNode();
+    Widget row(String id, List<FocusNode> ns) => TvRow(
+      title: id,
+      restorationId: id,
+      itemExtent: 200,
+      height: 194,
+      items: [
+        for (var i = 0; i < 4; i++)
+          FocusableCard(
+            focusNode: ns[i],
+            autofocus: id == 'a' && i == 0,
+            onSelect: () {},
+            child: const SizedBox(width: 200, height: 170),
+          ),
+      ],
+    );
+    await t.pumpWidget(
+      _app(
+        Column(
+          children: [
+            TextButton(
+              focusNode: other,
+              onPressed: () {},
+              child: const Text('Accueil'),
+            ),
+            row('a', a),
+            row('b', b),
+          ],
+        ),
+        container: container,
+      ),
+    );
+    await t.pump();
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await t.pumpAndSettle();
+    expect(b[2].hasFocus, isTrue);
+    // L'écran est revenu au premier plan mais le focus est ailleurs.
+    other.requestFocus();
+    await t.pump();
+    expect(other.hasPrimaryFocus, isTrue);
+    final route = ModalRoute.of(t.element(find.byType(TvRow).first))!;
+    expect(FocusReturn.restore(route), isTrue);
+    await t.pumpAndSettle();
+    expect(b[2].hasPrimaryFocus, isTrue);
   });
 
   testWidgets('TvRow : la carte focalisée est entièrement visible', (t) async {

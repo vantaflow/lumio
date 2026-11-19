@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/addon_repository.dart';
@@ -20,6 +20,7 @@ import 'package:lumio/features/local/local_providers.dart';
 import 'package:lumio/features/local/local_screen.dart' show LocalTitleCard;
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/common/guarded_image.dart';
+import 'package:lumio/ui/focus/focus_rescue.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -186,6 +187,7 @@ class _H {
     Profile? profile,
     List<MetaPreview>? library,
     List<MetaPreview>? local,
+    List<NavigatorObserver> observers = const [],
   }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
@@ -215,7 +217,11 @@ class _H {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(theme: LumioTheme.dark(), home: const HomeScreen()),
+        child: MaterialApp(
+          theme: LumioTheme.dark(),
+          navigatorObservers: observers,
+          home: const HomeScreen(),
+        ),
       ),
     );
     await settle();
@@ -610,6 +616,57 @@ void main() {
       expect(find.byType(DetailScreen), findsOneWidget);
       await h.closeDeep();
     });
+
+    testWidgets(
+      'retour de la fiche : le focus revient sur la carte d\'origine',
+      (t) async {
+        final h = _H(t);
+        await h.pump(
+          addons: [_installed(_manifest('a'))],
+          aggregator: _FakeAggregator([
+            [
+              _row('a', 'top', [_meta('1'), _meta('2')]),
+            ],
+          ]),
+          library: [_meta('9', addon: 'lib')],
+          observers: [FocusRescueObserver()],
+        );
+        bool onCard(String film) {
+          final ctx = FocusManager.instance.primaryFocus?.context;
+          if (ctx == null) return false;
+          return find
+              .descendant(
+                of: find.ancestor(
+                  of: find.text(film),
+                  matching: find.byType(PosterCard),
+                ),
+                matching: find.byWidget(ctx.widget),
+              )
+              .evaluate()
+              .isNotEmpty;
+        }
+
+        var guard = 0;
+        while (!onCard('Film 9') && guard++ < 30) {
+          await t.sendKeyEvent(
+            guard.isOdd
+                ? LogicalKeyboardKey.arrowDown
+                : LogicalKeyboardKey.arrowRight,
+          );
+          await t.pump(const Duration(milliseconds: 100));
+        }
+        expect(onCard('Film 9'), isTrue);
+        await t.sendKeyEvent(LogicalKeyboardKey.select);
+        await h.settle();
+        expect(find.byType(DetailScreen), findsOneWidget);
+        t.state<NavigatorState>(find.byType(Navigator)).pop();
+        await h.settle();
+        await t.pump(const Duration(seconds: 1));
+        expect(find.byType(DetailScreen), findsNothing);
+        expect(onCard('Film 9'), isTrue);
+        await h.closeDeep();
+      },
+    );
 
     testWidgets('masquer une rangée dans l\'éditeur la retire', (t) async {
       final h = _H(t);
