@@ -517,6 +517,7 @@ void main() {
         return const PartyHttpResponse(204, '');
       };
       await t.pumpWidget(app(client()));
+      await t.ensureVisible(find.byKey(const ValueKey('party:create')));
       await t.tap(find.byKey(const ValueKey('party:create')));
       await settle(t);
       channel.emit(hello(host: true, participants: 1));
@@ -529,6 +530,7 @@ void main() {
       await settle(t);
       expect(find.text('3 participants'), findsOneWidget);
 
+      await t.ensureVisible(find.byKey(const ValueKey('party:allControl')));
       await t.tap(find.byKey(const ValueKey('party:allControl')));
       await t.pump();
       final control = http.requests.lastWhere(
@@ -552,6 +554,7 @@ void main() {
         find.byKey(const ValueKey('party:link')),
         'n importe quoi',
       );
+      await t.ensureVisible(find.byKey(const ValueKey('party:join')));
       await t.tap(find.byKey(const ValueKey('party:join')));
       await t.pump();
       expect(find.byKey(const ValueKey('party:error')), findsOneWidget);
@@ -565,6 +568,7 @@ void main() {
         find.byKey(const ValueKey('party:link')),
         partyLink(roomId, code).toString(),
       );
+      await t.ensureVisible(find.byKey(const ValueKey('party:join')));
       await t.tap(find.byKey(const ValueKey('party:join')));
       await settle(t);
       expect(connects.single.url.queryParameters['code'], code);
@@ -587,6 +591,7 @@ void main() {
         ),
       );
       await t.pump();
+      await t.ensureVisible(find.byKey(const ValueKey('party:openTitle')));
       await t.tap(find.byKey(const ValueKey('party:openTitle')));
       expect(opened, 'tt5|series');
       await t.tap(find.byKey(const ValueKey('party:leave')));
@@ -600,6 +605,7 @@ void main() {
         find.byKey(const ValueKey('party:link')),
         partyLink(roomId, code).toString(),
       );
+      await t.ensureVisible(find.byKey(const ValueKey('party:join')));
       await t.tap(find.byKey(const ValueKey('party:join')));
       await settle(t);
       expect(find.text('La salle est pleine (8 personnes).'), findsOneWidget);

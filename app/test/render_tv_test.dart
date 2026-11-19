@@ -27,7 +27,8 @@ import 'package:lumio_core/lumio_core.dart';
 import 'package:lumio/features/jellyfin/jellyfin_screen.dart';
 import 'package:lumio/features/local/local_screen.dart';
 import 'package:lumio/data/db.dart' show LocalFolder;
-import 'package:lumio/data/jellyfin_repository.dart' show JellyfinServer;
+import 'package:lumio/data/jellyfin_repository.dart'
+    show JellyfinRepository, JellyfinServer;
 import 'package:lumio/features/addons/addons_screen.dart';
 import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
 import 'package:lumio/features/local/local_providers.dart';
@@ -37,9 +38,17 @@ import 'package:lumio/features/onboarding/onboarding_flow.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/features/tracking/tracking_providers.dart';
 import 'package:lumio/features/library/library_screen.dart';
+import 'package:lumio/features/cast/cast_button.dart' show showCastPicker;
+import 'package:lumio/features/profiles/pin_dialog.dart' show showPinDialog;
+import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/torrent/ip_warning_dialog.dart';
+import 'package:lumio/data/party_client.dart';
+import 'package:lumio/features/party/party_screen.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart' show showTvSnack;
 import 'package:lumio/features/settings/backup_section.dart'
     show ImportPassphraseDialog;
-import 'package:lumio/ui/common/tv_dialogs.dart' show showTvPanel;
+import 'package:lumio/ui/common/tv_dialogs.dart'
+    show showTvChoice, showTvConfirm, showTvPanel;
 import 'package:lumio/features/calendar/calendar_providers.dart';
 import 'package:lumio/features/calendar/calendar_screen.dart';
 import 'package:lumio/features/home/row_editor_screen.dart';
@@ -873,6 +882,243 @@ void main() {
       },
     );
   });
+
+  testWidgets('lot 6 : jellyfin', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+    final ov = [
+      jellyfinRepositoryProvider.overrideWithValue(
+        _RJellyRepo(MemorySecretStore(), _UpdateFetcher()),
+      ),
+    ];
+    Future<void> shot(
+      String name,
+      Widget screen, {
+      Future<void> Function(AppHarness h)? after,
+    }) async {
+      final h = AppHarness(t);
+      final key = GlobalKey();
+      await h.pump(
+        RepaintBoundary(key: key, child: screen),
+        extra: ov,
+      );
+      await h.settle(4);
+      if (after != null) await after(h);
+      await _save(t, key, name);
+      await h.close();
+    }
+
+    await shot(
+      'r-TV28',
+      const JellyfinBrowseScreen(
+        serverId: 's1',
+        parentId: 'films',
+        title: 'Films',
+      ),
+      after: (h) async {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await h.settle(2);
+      },
+    );
+    await shot(
+      'r-TV29',
+      JellyfinDetailScreen(
+        preview: MetaPreview(
+          id: 'jellyfin:s1:it1',
+          type: 'movie',
+          name: 'Sintel',
+          sourceAddonId: 'jellyfin',
+        ),
+      ),
+    );
+  });
+
+  testWidgets('lot 6 : regarder ensemble', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+    final channel = _RChannel();
+    final client = PartyClient(
+      'https://api.example.com',
+      http: _RPartyHttp(),
+      connector: (url, protocols) async => channel,
+    );
+
+    Future<void> shot(
+      String name, {
+      Future<void> Function(AppHarness h)? after,
+    }) async {
+      final h = AppHarness(t);
+      final key = GlobalKey();
+      await h.pump(
+        RepaintBoundary(
+          key: key,
+          child: PartyScreen(client: client),
+        ),
+      );
+      if (after != null) await after(h);
+      await _save(t, key, name);
+      final leave = find.byKey(const ValueKey('party:leave'));
+      if (leave.evaluate().isNotEmpty) {
+        ScaffoldMessenger.of(
+          t.element(find.byType(Scaffold).first),
+        ).clearSnackBars();
+        await h.settle(2);
+        await t.tap(leave, warnIfMissed: false);
+        await h.settle(2);
+      }
+      await h.close();
+    }
+
+    await shot(
+      'r-TV27a',
+      after: (h) async {
+        _fill(t, find.byKey(const ValueKey('party:link')), 'lien');
+        await t.tap(find.byKey(const ValueKey('party:join')));
+        await h.settle(2);
+      },
+    );
+    await shot(
+      'r-TV27b',
+      after: (h) async {
+        await t.tap(find.byKey(const ValueKey('party:create')));
+        await h.settle(3);
+        channel.incoming.add(
+          jsonEncode({
+            'type': 'hello',
+            'participants': 3,
+            'host': true,
+            'allControl': true,
+            'expiresAt': DateTime.now()
+                .add(const Duration(hours: 6))
+                .millisecondsSinceEpoch,
+          }),
+        );
+        await h.settle(3);
+        showTvSnack(t.element(find.byType(Scaffold).first), 'Lien copié.');
+        await h.settle(2);
+      },
+    );
+  });
+
+  testWidgets('lot 6 : fenêtres', skip: skip != null, (t) async {
+    await t.runAsync(_fonts);
+
+    Future<void> shot(
+      String name,
+      Future<void> Function(BuildContext ctx, AppHarness h) open, {
+      String rail = 'playback',
+    }) async {
+      final h = AppHarness(t);
+      final key = GlobalKey();
+      await h.pump(const SettingsScreen(), boundary: key);
+      await t.tap(find.byKey(ValueKey('rail:$rail')));
+      await h.settle();
+      await open(t.element(find.byType(Scaffold).first), h);
+      await h.settle(3);
+      await _save(t, key, name);
+      await h.close();
+    }
+
+    await shot('r-P09', (ctx, h) async {
+      unawaited(
+        showTvConfirm(
+          ctx,
+          title: 'Supprimer cet addon ?',
+          body:
+              '« Direct Plus » sera retiré de Lumio. Ses catalogues et ses sources ne seront plus proposés.',
+          confirmLabel: 'Supprimer',
+          destructive: true,
+        ),
+      );
+    });
+    await shot('r-P13', (ctx, h) async {
+      unawaited(
+        showTvChoice<String>(
+          ctx,
+          title: 'Qualité préférée',
+          options: const [
+            ('sd', 'SD'),
+            ('720', '720p'),
+            ('1080', '1080p'),
+            ('4k', '4K'),
+          ],
+          current: '1080',
+        ),
+      );
+    });
+    CastDevice dev(String n) => CastDevice(
+      usn: n,
+      friendlyName: n,
+      location: Uri.parse('http://192.168.1.2/d.xml'),
+      address: InternetAddress('192.168.1.2'),
+      controlUrl: Uri.parse('http://192.168.1.2/c'),
+      serviceType: 'urn:schemas-upnp-org:service:AVTransport:1',
+    );
+    await shot('r-P03a', (ctx, h) async {
+      final c = StreamController<CastDevice>();
+      addTearDown(c.close);
+      unawaited(showCastPicker(ctx, discover: () => c.stream));
+      await h.settle();
+      c
+        ..add(dev('Salon (Chromecast)'))
+        ..add(dev('Chambre (Android TV)'));
+    });
+    await shot('r-P03b', (ctx, h) async {
+      unawaited(showCastPicker(ctx, discover: () => const Stream.empty()));
+    });
+    await shot('r-P04', (ctx, h) async {
+      unawaited(showIpWarningDialog(ctx));
+    });
+    await shot('r-P20a', (ctx, h) async {
+      unawaited(
+        showPinDialog(
+          ctx,
+          title: ctx.l10n.choosePin,
+          subtitle: ctx.l10n.pinHint,
+          width: 720,
+        ),
+      );
+    });
+    await shot('r-P20b', (ctx, h) async {
+      unawaited(
+        showPinDialog(
+          ctx,
+          title: ctx.l10n.confirmPin,
+          verify: (p) async => PinResult.wrong,
+          wrongMessage: ctx.l10n.pinMismatch,
+          width: 720,
+        ),
+      );
+      await h.settle();
+      for (final k in [
+        LogicalKeyboardKey.digit1,
+        LogicalKeyboardKey.digit2,
+        LogicalKeyboardKey.digit3,
+        LogicalKeyboardKey.digit4,
+      ]) {
+        await t.sendKeyEvent(k);
+      }
+    });
+    await shot('r-P22', (ctx, h) async {
+      unawaited(
+        showPinDialog(
+          ctx,
+          title: ctx.l10n.parentPin,
+          verify: (p) async => PinResult.wrong,
+          wrongMessage: ctx.l10n.pinWrong,
+          allowForgot: true,
+        ),
+      );
+      await h.settle();
+      for (final k in [
+        LogicalKeyboardKey.digit1,
+        LogicalKeyboardKey.digit2,
+        LogicalKeyboardKey.digit3,
+        LogicalKeyboardKey.digit4,
+      ]) {
+        await t.sendKeyEvent(k);
+      }
+    });
+  });
 }
 
 /// Remplit un champ (en mode TV les champs sont en lecture seule : on écrit
@@ -1081,4 +1327,96 @@ class _RJellyfinFail extends _RJellyfin {
     String password, {
     bool confirmedInsecure = false,
   }) => Future.error(const JellyfinAuthException());
+}
+
+class _RJellyClient extends JellyfinClient {
+  _RJellyClient()
+    : super(
+        Uri.parse('https://salon.example.com'),
+        _UpdateFetcher(),
+        deviceId: 'd',
+      );
+
+  @override
+  Future<JellyfinPage> items(
+    String parentId, {
+    int skip = 0,
+    int limit = 50,
+  }) async => JellyfinPage(
+    items: [
+      const JellyfinItem(
+        id: 'f1',
+        name: 'Courts métrages libres',
+        type: 'Folder',
+        isFolder: true,
+      ),
+      for (final (i, n) in [
+        'Sintel',
+        'Big Buck Bunny',
+        'Tears of Steel',
+        'Cosmos Laundromat',
+      ].indexed)
+        JellyfinItem(id: 'm$i', name: n, type: 'Movie'),
+    ],
+    total: 100,
+    skip: skip,
+  );
+
+  @override
+  Future<JellyfinItem> item(String itemId) async => const JellyfinItem(
+    id: 'it1',
+    name: 'Sintel',
+    type: 'Movie',
+    year: 2010,
+    overview:
+        "Une jeune guerrière part à la recherche du dragon qu'elle a élevé, et qu'on lui a enlevé. Son voyage la mène au bout du monde.",
+  );
+}
+
+class _RJellyRepo extends JellyfinRepository {
+  _RJellyRepo(super.store, super.fetcher);
+
+  @override
+  Future<JellyfinClient?> client(String serverId) async => _RJellyClient();
+
+  @override
+  Future<JellyfinServer?> server(String serverId) async => JellyfinServer(
+    id: serverId,
+    name: 'Salon',
+    url: Uri.parse('https://salon.example.com'),
+    allowPrivate: false,
+    userId: 'u',
+    userName: 'lilou',
+  );
+}
+
+class _RChannel implements PartyChannel {
+  final incoming = StreamController<String>.broadcast();
+
+  @override
+  Stream<String> get messages => incoming.stream;
+
+  @override
+  void send(String message) {}
+
+  @override
+  Future<void> close() async {}
+}
+
+class _RPartyHttp implements PartyHttp {
+  @override
+  Future<PartyHttpResponse> send(
+    String method,
+    Uri url, {
+    Map<String, String> headers = const {},
+    String? body,
+  }) async => PartyHttpResponse(
+    201,
+    jsonEncode({
+      'roomId': 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+      'inviteCode': 'K7M29QX4',
+      'hostKey': 'hk1',
+      'expiresAt': 1800000000000,
+    }),
+  );
 }

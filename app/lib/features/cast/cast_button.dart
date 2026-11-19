@@ -1,10 +1,15 @@
+// ignore_for_file: sort_child_properties_last
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lumio/l10n/l10n.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/focus/focus_ring.dart';
+import 'package:lumio/ui/common/tv_screen.dart' show TvTileText;
+import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -22,8 +27,8 @@ bool get castPlatformSupported =>
 Future<CastDevice?> showCastPicker(
   BuildContext context, {
   Stream<CastDevice> Function()? discover,
-}) => showDialog<CastDevice>(
-  context: context,
+}) => showTvPanel<CastDevice>(
+  context,
   builder: (_) =>
       CastPickerDialog(discover: discover ?? () => discoverDevices()),
 );
@@ -80,81 +85,124 @@ class _CastPickerDialogState extends State<CastPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final theme = Theme.of(context);
-    final colors = theme.extension<LumioColors>() ?? LumioColors.dark;
-    return AlertDialog(
-      title: Text(l.castChooseDevice),
-      content: SizedBox(
-        width: 480,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < _devices.length; i++)
-              FocusRing(
-                child: ListTile(
-                  key: ValueKey('cast:device:$i'),
-                  autofocus: i == 0,
-                  leading: Icon(Icons.tv, color: colors.secondary),
-                  title: Text(_devices[i].friendlyName),
-                  onTap: () => Navigator.pop(context, _devices[i]),
-                ),
+    final colors = context.lumio;
+    final empty = !_searching && _devices.isEmpty;
+    // Maquette P03 : panneau de 820, lignes de 92 (fond #0E1116, #2A3340 au
+    // focus), recherche avec pastille, boutons gris à droite.
+    return TvPanel(
+      title: l.castChooseDevice,
+      width: 820,
+      onBack: () => Navigator.pop(context),
+      fitActions: true,
+      contentPadding: EdgeInsets.zero,
+      gap: 20,
+      actionsGap: 32,
+      children: [
+        for (var i = 0; i < _devices.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: TvFocusTile(
+              key: ValueKey('cast:device:$i'),
+              minHeight: 92,
+              autofocus: i == 0,
+              idleColor: colors.bg,
+              semanticLabel: _devices[i].friendlyName,
+              onSelect: () => Navigator.pop(context, _devices[i]),
+              child: Row(
+                children: [
+                  LumioIconView(
+                    LumioIcon.monitor,
+                    size: 40,
+                    color: colors.secondary,
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(child: TvTileText(title: _devices[i].friendlyName)),
+                ],
               ),
-            if (_searching)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: LumioSpacing.md),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: colors.accent,
-                      ),
-                    ),
-                    const SizedBox(width: LumioSpacing.md),
-                    Flexible(
-                      child: Semantics(
-                        liveRegion: true,
-                        child: Text(l.castSearching),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            if (!_searching && _devices.isEmpty) ...[
-              Semantics(
-                liveRegion: true,
-                child: Text(l.castNoDevice, style: theme.textTheme.titleMedium),
-              ),
-              const SizedBox(height: LumioSpacing.sm),
-              Text(
-                l.castNoDeviceHint,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.textMuted,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-      actions: [
-        if (!_searching && _devices.isEmpty)
-          FocusRing(
-            child: FilledButton(
-              key: const ValueKey('cast:retry'),
-              autofocus: true,
-              onPressed: _search,
-              child: Text(l.retry),
             ),
           ),
-        FocusRing(
-          child: TextButton(
-            key: const ValueKey('cast:close'),
-            onPressed: () => Navigator.pop(context),
-            child: Text(l.close),
+        if (_searching)
+          Padding(
+            padding: EdgeInsets.zero,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4,
+                    color: colors.accent,
+                    backgroundColor: colors.outline,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Flexible(
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      l.castSearching,
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 28,
+                        height: 1.4,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+        if (empty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              children: [
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    l.castNoDevice,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontSize: 36,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  l.castNoDeviceHint,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 28,
+                    height: 1.4,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+      actions: [
+        if (empty)
+          TvButton(
+            key: const ValueKey('cast:retry'),
+            autofocus: true,
+            label: l.retry,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            onPressed: _search,
+          ),
+        TvButton(
+          key: const ValueKey('cast:close'),
+          kind: TvButtonKind.secondary,
+          label: l.close,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          onPressed: () => Navigator.pop(context),
         ),
       ],
     );

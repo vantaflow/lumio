@@ -31,9 +31,9 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | TV 24 · Phrase secrète | `TV24-PhraseSecrete.dc.html` | — retiré (synchro supprimée) |
 | TV 25 · Suivi Trakt et Simkl | `TV25-Suivi.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV25.png) — à vérifier sur la box ; cartes dans l'écran Suivi ; Simkl absent de l'app (Trakt seul) ; réglage parental non rendu (profil adulte) |
 | TV 26 · Code d'appareil Trakt | `TV26-TraktCode.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV26.png) — à vérifier sur la box ; colonne alignée en haut (200), cadre du code à largeur naturelle (864), pastille d'attente 36 ; adresse affichée « https://trakt.tv/activate » (donnée renvoyée par Trakt) au lieu de « trakt.tv/activate » |
-| TV 27 · Regarder ensemble | `TV27-WatchParty.dc.html` | à faire : écran Regarder ensemble encore en Material (deux colonnes TV27 à écrire) ; visible seulement avec PARTY_SERVER_URL |
-| TV 28 · Jellyfin · serveurs et navigation | `TV28-Jellyfin.dc.html` | partiel : liste des serveurs refaite (TvScreen, lignes 96, corbeille) ; navigation des bibliothèques (volet droit) et fiche encore en Material |
-| TV 29 · Fiche Jellyfin | `TV29-JellyfinFiche.dc.html` | à faire : fiche Jellyfin encore en Material |
+| TV 27 · Regarder ensemble | `TV27-WatchParty.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV27a.png entrée, cmp-TV27b.png salle) — à vérifier sur la box ; deux colonnes de 820 avec filet, l'app affiche l'état courant dans sa colonne (la maquette montre les deux états et les pastilles « Avant la salle / Salle ouverte » = annotations, non reproduites) ; écran étroit (< 1700) = barre d'application + une colonne ; message « Lien copié » centré (la maquette le met à gauche) |
+| TV 28 · Jellyfin · serveurs et navigation | `TV28-Jellyfin.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV28.png) — à vérifier sur la box ; serveurs = écran refait avant, navigation des bibliothèques = écran propre (TvScreen, titre = dossier, lignes de 72, icônes dossier/clap, « Charger la suite » gris) : la maquette est un composite à deux volets (annotations « Serveurs » et « Navigation » non reproduites) |
+| TV 29 · Fiche Jellyfin | `TV29-JellyfinFiche.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV29.png) — à vérifier sur la box ; affiche 400 x 600, titre 64, résumé 30, bouton Lecture ; l'info « Animation · 15 min » de la maquette n'existe pas dans le code (genres et durée non affichés) ; l'encart « Sur échec » est une annotation |
 | TV 30 · Dossiers locaux | `TV30-DossiersLocaux.dc.html` | à vérifier sur la box : cmp box (scratchpad/refonte4/cmp-dl.png) montrait en-tête non aligné à droite et bouton d'analyse trop clair, corrigés (TvScreen + fond surface) ; lignes conformes |
 | TV 31 · Fiche locale | `TV31-FicheLocale.dc.html` | à vérifier sur la box : cmp (scratchpad/refonte4/cmp-fl.png) sans écart hors données, 1-2 px d'écart vertical du titre |
 | TV 32 · Import depuis un autre client | `TV32-ImportStremio.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV32.png) — à vérifier sur la box ; maquette = états composites (fichier chargé, progression, bilan) |
@@ -42,17 +42,17 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | TV 35 · Gestion des profils | `TV35-ProfilsGestion.dc.html` | fait (comparaison maquette | box) |
 | Pop-up 01 · PIN | `P01-PIN.dc.html` | fait (comparaison maquette | box) |
 | Pop-up 02 · Éditeur de profil | `P02-EditeurProfil.dc.html` | fait (comparaison maquette | box) |
-| Pop-up 03 · Diffusion | `P03-Cast.dc.html` | à faire |
-| Pop-up 04 · Alerte adresse IP | `P04-AlerteIP.dc.html` | à faire |
+| Pop-up 03 · Diffusion | `P03-Cast.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P03a.png et cmp-P03b.png) — à vérifier sur la box ; panneau 820, lignes de 92 (fond #0E1116, #2A3340 au focus), recherche, état vide avec Réessayer ; rendu sur la page Lecture, la maquette est sur le lecteur |
+| Pop-up 04 · Alerte adresse IP | `P04-AlerteIP.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P04.png) — à vérifier sur la box ; passé de AlertDialog à TvPanel 920 ; focus sur Continuer, gauche/droite gardés |
 | Pop-up 05 · Chargement torrent | `P05-ChargementTorrent.dc.html` | à faire |
 | Pop-up 06 · Épisode suivant | `P06-EpisodeSuivant.dc.html` | à faire |
 | Pop-up 07 · Ajout Jellyfin | `P07-AjoutJellyfin.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P07.png) — à vérifier sur la box ; panneau 920, écarts et erreur rouge (graisse 600 corrigée) à 2 px près ; focus sur le bouton après la tentative (la maquette montre le 1er champ focalisé) |
 | Pop-up 08 · Choix du dossier | `P08-ChoixDossier.dc.html` | à vérifier sur la box (panneau de saisie de chemin refait au lot précédent) |
-| Pop-up 09 · Confirmation | `P09-Confirmation.dc.html` | à faire |
+| Pop-up 09 · Confirmation | `P09-Confirmation.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P09.png) — à vérifier sur la box ; panneau 820, bouton destructif rouge #FF7A70, focus par défaut sur Annuler |
 | Pop-up 10 · Erreur de lecture | `P10-ErreurLecture.dc.html` | à faire |
 | Pop-up 11 · Aucun flux | `P11-AucunFlux.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P11.png) — à vérifier sur la box ; carte « Aucun flux trouvé » calée ; la maquette montre un autre gabarit de fiche (en-tête + affiche à gauche, TV06 suivi) et un message éphémère « Aucune source disponible » que le code n'affiche pas |
 | Pop-up 12 · Addon hors ligne | `P12-AddonHorsLigne.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P12.png) — à vérifier sur la box ; en-tête « Ne répond pas » + pastille « Défaillant · Médiane… » ; lignes de flux au gabarit TV06 (la maquette en dessine d'autres) ; message éphémère « Délai dépassé » absent du code |
-| Pop-up 13 · Sélecteur d'option | `P13-SelecteurOption.dc.html` | à faire |
+| Pop-up 13 · Sélecteur d'option | `P13-SelecteurOption.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P13.png) — à vérifier sur la box ; lignes de 96 sans fond au repos, #2A3340 au focus, radios SVG, choix courant en 700 |
 | Pop-up 14 · Import de sauvegarde | `P14-ImportSauvegarde.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P14.png) — à vérifier sur la box ; panneau 960 sur la page Lecture ; libellé du champ = celui du code (« Phrase secrète de la sauvegarde », la maquette dit « de synchronisation ») |
 | TV 40 · Fiche série · saisons et épisodes | `TV40-FicheSerie.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV40.png) — à vérifier sur la box ; fond de la colonne gauche en dégradé #1B2A33, zone Sources = titre + en-têtes d'addon + lignes comme TV06 ; liseré ambre sur l'épisode choisi (état absent de la maquette) |
 | TV 41 · Ma liste · vide | `TV41-MaListeVide.dc.html` | fait (rendu : scratchpad/refonte6/cmp-TV41.png) — à vérifier sur la box ; sous-titre « 0 titre » ajouté ; le bouton « Recherche » de la maquette n'existe pas dans le code (non ajouté) : le groupe icône + texte est donc plus bas de 28 px que la maquette |
@@ -67,9 +67,9 @@ Règle : un écran est « fait » seulement quand l'image côte à côte maquett
 | TV 50 · Jellyfin · aucun serveur | `TV50-JellyfinVide.dc.html` | fait (rendu : scratchpad/refonte4/cmp-r-TV50.png) — à vérifier sur la box |
 | TV 51 · Addons · aucun addon et erreurs | `TV51-AddonsVide.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV51.png) — à vérifier sur la box ; bouton d'ajout toujours en tête, message d'échec d'action au gabarit des messages éphémères |
 | TV 52 · Accueil · mise à jour disponible | `TV52-AccueilMiseAJour.dc.html` | fait (rendu : scratchpad/refonte5/cmp-TV52.png, héros retiré du rendu comme la maquette) — à vérifier sur la box |
-| Pop-up 20 · Création du PIN | `P20-CreationPIN.dc.html` | à faire |
+| Pop-up 20 · Création du PIN | `P20-CreationPIN.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P20a.png et cmp-P20b.png) — à vérifier sur la box ; panneau 720, message d'erreur avec icône ; la maquette montre 2 points remplis (saisie en cours), l'app vide les points après l'erreur |
 | Pop-up 21 · Code de récupération | `P21-CodeRecuperation.dc.html` | fait (comparaison maquette | box) |
-| Pop-up 22 · PIN parent | `P22-PINParent.dc.html` | à faire |
+| Pop-up 22 · PIN parent | `P22-PINParent.dc.html` | fait (rendu : scratchpad/refonte6/cmp-P22.png) — à vérifier sur la box ; écarts points / message / pavé repris de la maquette ; panneau ~12 px plus haut que la maquette |
 | Pop-up 23 · Réglages des sous-titres | `P23-SousTitresReglages.dc.html` | fait (cmp : scratchpad/refonte4/cmp-pi.png) — mêmes positions que P23 ; ligne « Variante » = état d'erreur ; à vérifier sur la box |
 | Pop-up 24 · Fiche indisponible | `P24-ErreurFiche.dc.html` | fait (rendu : scratchpad/refonte5/cmp-P24.png) — à vérifier sur la box |
 

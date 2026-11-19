@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lumio/ui/common/tv_text_field.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/party_client.dart';
@@ -9,7 +8,10 @@ import 'package:lumio/features/detail/detail_screen.dart';
 import 'package:lumio/features/party/party_providers.dart';
 import 'package:lumio/features/party/party_session.dart';
 import 'package:lumio/l10n/l10n.dart';
-import 'package:lumio/ui/focus/focus_ring.dart';
+import 'package:lumio/ui/common/tv_dialogs.dart';
+import 'package:lumio/ui/common/tv_screen.dart';
+import 'package:lumio/ui/focus/tv_button.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart' show MetaPreview;
 import 'package:qr_flutter/qr_flutter.dart';
@@ -152,73 +154,152 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final session = ref.watch(partySessionProvider);
-    return Scaffold(
-      appBar: AppBar(title: Text(l.partyTitle)),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LumioSpacing.lg),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: session == null
-                ? _entry(context)
-                : ValueListenableBuilder<PartyView>(
-                    valueListenable: session,
-                    builder: (_, v, _) => _room(context, session, v),
-                  ),
+    // Maquette TV27 : deux colonnes de 820 séparées par un filet ; « Avant la
+    // salle » (créer, rejoindre) à gauche, « Salle ouverte » à droite. L'app
+    // n'affiche qu'un état à la fois, dans la colonne correspondante. Sur
+    // écran étroit (téléphone), une seule colonne centrée.
+    return LayoutBuilder(
+      builder: (context, box) {
+        final room = session == null
+            ? null
+            : ValueListenableBuilder<PartyView>(
+                valueListenable: session,
+                builder: (_, v, _) => _room(context, session, v),
+              );
+        if (box.maxWidth < 1700) {
+          // Écran étroit (téléphone, tests) : barre d'application et une seule
+          // colonne centrée.
+          return Scaffold(
+            appBar: AppBar(title: Text(l.partyTitle)),
+            body: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(12),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 820),
+                  child: room ?? _entry(context),
+                ),
+              ),
+            ),
+          );
+        }
+        final c = context.lumio;
+        return TvScreen(
+          title: l.partyTitle,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                width: 820,
+                child: session == null
+                    ? SingleChildScrollView(
+                        clipBehavior: Clip.none,
+                        padding: const EdgeInsets.only(top: 70),
+                        child: _entry(context),
+                      )
+                    : null,
+              ),
+              Container(width: 2, height: 760, color: c.surfaceFocus),
+              SizedBox(
+                width: 820,
+                child: room == null
+                    ? null
+                    : SingleChildScrollView(
+                        clipBehavior: Clip.none,
+                        padding: const EdgeInsets.only(top: 64),
+                        child: room,
+                      ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
+  static const _gap = SizedBox(height: 22);
+
   Widget _entry(BuildContext context) {
     final l = context.l10n;
+    final c = context.lumio;
     final theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l.partyCreateHint, style: theme.textTheme.bodyMedium),
-        const SizedBox(height: LumioSpacing.md),
-        FocusRing(
-          child: FilledButton.icon(
-            autofocus: true,
-            key: const ValueKey('party:create'),
-            onPressed: _busy ? null : _create,
-            icon: const Icon(Icons.groups_outlined),
-            label: Text(l.partyCreate),
+        Text(
+          l.partyCreateHint,
+          style: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 28,
+            height: 1.4,
+            color: Color(0xFFC9D0DA),
           ),
         ),
-        const SizedBox(height: LumioSpacing.xl),
-        Text(l.partyJoinTitle, style: theme.textTheme.titleMedium),
-        const SizedBox(height: LumioSpacing.sm),
-        TvTextField(
-          key: const ValueKey('party:link'),
-          controller: _link,
-          maxLength: 300,
-          decoration: InputDecoration(
-            labelText: l.partyJoinField,
-            hintText: l.partyJoinHint,
-            counterText: '',
+        _gap,
+        TvButton(
+          autofocus: true,
+          key: const ValueKey('party:create'),
+          label: l.partyCreate,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          icon: LumioIconView(LumioIcon.people, size: 32, color: c.onAccent),
+          onPressed: _busy ? null : _create,
+        ),
+        const SizedBox(height: 42),
+        Text(
+          l.partyJoinTitle,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontSize: 36,
+            height: 1.15,
           ),
+        ),
+        _gap,
+        TvLabeledField(
+          fieldKey: const ValueKey('party:link'),
+          controller: _link,
+          label: l.partyJoinField,
+          hint: l.partyJoinHint,
           onSubmitted: (_) => _join(),
         ),
-        const SizedBox(height: LumioSpacing.sm),
-        FocusRing(
-          child: OutlinedButton(
-            key: const ValueKey('party:join'),
-            onPressed: _busy ? null : _join,
-            child: Text(l.partyJoinButton),
-          ),
+        _gap,
+        TvButton(
+          key: const ValueKey('party:join'),
+          kind: TvButtonKind.secondary,
+          label: l.partyJoinButton,
+          height: 76,
+          fontSize: 28,
+          horizontalPadding: 40,
+          onPressed: _busy ? null : _join,
         ),
         if (_error != null) ...[
-          const SizedBox(height: LumioSpacing.md),
-          Text(
-            partyErrorText(l, _error!),
-            key: const ValueKey('party:error'),
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
+          _gap,
+          _errorLine(context, partyErrorText(l, _error!)),
         ],
+      ],
+    );
+  }
+
+  Widget _errorLine(BuildContext context, String text) {
+    final c = context.lumio;
+    return Row(
+      children: [
+        LumioIconView(LumioIcon.alert, size: 28, color: c.error),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(
+            text,
+            key: const ValueKey('party:error'),
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 26,
+              fontWeight: FontWeight.w600,
+              fontVariations: const [FontVariation.weight(600)],
+              color: c.error,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -229,8 +310,32 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
 
   Widget _room(BuildContext context, PartySession s, PartyView v) {
     final l = context.l10n;
+    final c = context.lumio;
     final theme = Theme.of(context);
     final err = v.error;
+    const md = TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 28,
+      height: 1.4,
+      color: Color(0xFFC9D0DA),
+    );
+    final sm = TextStyle(
+      fontFamily: 'Manrope',
+      fontSize: 24,
+      height: 1.35,
+      color: c.textMuted,
+    );
+    Widget leave({bool primary = false}) => TvButton(
+      autofocus: primary,
+      key: const ValueKey('party:leave'),
+      kind: primary ? TvButtonKind.primary : TvButtonKind.ghost,
+      destructive: !primary,
+      label: l.partyLeave,
+      height: 76,
+      fontSize: 28,
+      horizontalPadding: 40,
+      onPressed: () => unawaited(_leave(s)),
+    );
     if (v.status == PartyStatus.failed || v.status == PartyStatus.ended) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -238,115 +343,151 @@ class _PartyScreenState extends ConsumerState<PartyScreen> {
           Text(
             err == null ? l.partyErrUnavailable : partyErrorText(l, err),
             key: const ValueKey('party:error'),
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
-          const SizedBox(height: LumioSpacing.md),
-          FocusRing(
-            child: FilledButton(
-              autofocus: true,
-              key: const ValueKey('party:leave'),
-              onPressed: () => unawaited(_leave(s)),
-              child: Text(l.partyLeave),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 26,
+              fontWeight: FontWeight.w600,
+              fontVariations: const [FontVariation.weight(600)],
+              color: c.error,
             ),
           ),
+          const SizedBox(height: 16),
+          leave(primary: true),
         ],
       );
     }
     final info = _info;
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (v.status == PartyStatus.connecting)
-          Text(l.partyConnecting, textAlign: TextAlign.center)
+          Text(l.partyConnecting, textAlign: TextAlign.center, style: md)
         else ...[
           Text(
             v.host ? l.partyRoleHost : l.partyRoleGuest,
             textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontSize: 40,
+              height: 1.15,
+            ),
           ),
-          const SizedBox(height: LumioSpacing.xs),
+          const SizedBox(height: 16),
           Text(
             l.partyParticipants(v.participants),
             key: const ValueKey('party:count'),
             textAlign: TextAlign.center,
+            style: md,
           ),
         ],
         if (info != null) ...[
-          const SizedBox(height: LumioSpacing.lg),
-          Text(l.partyInviteCode, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          Text(l.partyInviteCode, textAlign: TextAlign.center, style: sm),
+          const SizedBox(height: 16),
           Text(
             _grouped(info.inviteCode),
             key: const ValueKey('party:code'),
             textAlign: TextAlign.center,
-            style: theme.textTheme.displaySmall,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontSize: 68,
+              letterSpacing: 10,
+              height: 1,
+              color: c.accent,
+            ),
           ),
-          const SizedBox(height: LumioSpacing.md),
-          Center(
-            child: Semantics(
-              label: l.partyQrLabel,
-              image: true,
-              child: Container(
-                padding: const EdgeInsets.all(LumioSpacing.md),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(LumioRadius.md),
-                ),
-                child: QrImageView(
-                  data: info.link.toString(),
-                  size: 200,
-                  backgroundColor: Colors.white,
-                ),
+          const SizedBox(height: 16),
+          Semantics(
+            label: l.partyQrLabel,
+            image: true,
+            child: Container(
+              // Maquette : le SVG en ligne laisse ~8 px sous l'image.
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: QrImageView(
+                data: info.link.toString(),
+                size: 160,
+                padding: EdgeInsets.zero,
+                backgroundColor: Colors.white,
               ),
             ),
           ),
-          const SizedBox(height: LumioSpacing.sm),
-          FocusRing(
-            child: TextButton.icon(
-              key: const ValueKey('party:copy'),
-              icon: const Icon(Icons.copy),
-              label: Text(l.partyCopyLink),
-              onPressed: () async {
-                await Clipboard.setData(
-                  ClipboardData(text: info.link.toString()),
-                );
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l.partyLinkCopied)));
-              },
-            ),
+          const SizedBox(height: 16),
+          Text(l.partyLinkLabel, textAlign: TextAlign.center, style: sm),
+          const SizedBox(height: 16),
+          TvButton(
+            key: const ValueKey('party:copy'),
+            kind: TvButtonKind.secondary,
+            label: l.partyCopyLink,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            icon: LumioIconView(LumioIcon.copy, size: 32, color: c.text),
+            onPressed: () async {
+              await Clipboard.setData(
+                ClipboardData(text: info.link.toString()),
+              );
+              if (!context.mounted) return;
+              showTvSnack(context, l.partyLinkCopied);
+            },
           ),
         ],
-        if (v.host)
-          SwitchListTile(
-            key: const ValueKey('party:allControl'),
-            title: Text(l.partyAllControl),
-            subtitle: Text(l.partyAllControlHint),
-            value: v.allControl,
-            onChanged: v.status == PartyStatus.connected
-                ? (x) => unawaited(s.setAllControl(x))
-                : null,
-          ),
         if (v.metaId != null && !v.host) ...[
-          const SizedBox(height: LumioSpacing.md),
-          FocusRing(
-            child: FilledButton.icon(
-              key: const ValueKey('party:openTitle'),
-              onPressed: () => _openTitle(v.metaId!, v.mediaType),
-              icon: const Icon(Icons.movie_outlined),
-              label: Text(l.partyOpenTitle),
+          const SizedBox(height: 16),
+          TvButton(
+            key: const ValueKey('party:openTitle'),
+            label: l.partyOpenTitle,
+            height: 76,
+            fontSize: 28,
+            horizontalPadding: 40,
+            icon: LumioIconView(LumioIcon.clapper, size: 32, color: c.onAccent),
+            onPressed: () => _openTitle(v.metaId!, v.mediaType),
+          ),
+        ],
+        if (v.host) ...[
+          const SizedBox(height: 16),
+          Semantics(
+            toggled: v.allControl,
+            child: TvTile(
+              key: const ValueKey('party:allControl'),
+              minHeight: 92,
+              color: c.bg,
+              horizontalPadding: 24,
+              semanticLabel: l.partyAllControl,
+              onSelect: v.status == PartyStatus.connected
+                  ? () => unawaited(s.setAllControl(!v.allControl))
+                  : null,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l.partyAllControl,
+                          style: const TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            fontVariations: [FontVariation.weight(700)],
+                          ),
+                        ),
+                        Text(l.partyAllControlHint, style: sm),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  TvSwitch(value: v.allControl),
+                ],
+              ),
             ),
           ),
         ],
-        const SizedBox(height: LumioSpacing.lg),
-        FocusRing(
-          child: OutlinedButton(
-            key: const ValueKey('party:leave'),
-            onPressed: () => unawaited(_leave(s)),
-            child: Text(l.partyLeave),
-          ),
-        ),
+        const SizedBox(height: 16),
+        leave(),
       ],
     );
   }

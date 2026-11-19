@@ -161,39 +161,44 @@ Future<T?> showTvChoice<T>(
   context,
   builder: (ctx) => TvPanel(
     title: title,
+    contentPadding: EdgeInsets.zero,
     onBack: () => Navigator.of(ctx).pop(),
     children: [
       for (final (i, (value, label)) in options.indexed)
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: TvTile(
+          padding: EdgeInsets.only(bottom: i == options.length - 1 ? 0 : 12),
+          child: TvFocusTile(
             key: ValueKey('choice:$label'),
-            minHeight: 88,
+            minHeight: 96,
             autofocus: value == current || (current == null && i == 0),
-            color: ctx.lumio.surfaceRaised,
+            idleColor: ctx.lumio.surface,
             semanticLabel: label,
             onSelect: () => Navigator.of(ctx).pop(value),
             child: Row(
               children: [
-                Icon(
-                  value == current
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
+                LumioIconView(
+                  value == current ? LumioIcon.radioOn : LumioIcon.radioOff,
                   size: 36,
                   color: value == current
                       ? ctx.lumio.accent
                       : ctx.lumio.textMuted,
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(width: 24),
                 Expanded(
                   child: Text(
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      fontVariations: const [FontVariation.weight(700)],
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 32,
+                      fontWeight: value == current
+                          ? FontWeight.w700
+                          : FontWeight.w600,
+                      fontVariations: [
+                        FontVariation.weight(value == current ? 700 : 600),
+                      ],
+                      color: ctx.lumio.text,
                     ),
                   ),
                 ),
@@ -204,6 +209,47 @@ Future<T?> showTvChoice<T>(
     ],
   ),
 );
+
+/// Ligne de fenêtre dont le fond passe de [idleColor] à #2A3340 au focus
+/// (maquettes P03 et P13).
+class TvFocusTile extends StatefulWidget {
+  const TvFocusTile({
+    super.key,
+    required this.child,
+    required this.onSelect,
+    required this.idleColor,
+    this.minHeight = 96,
+    this.autofocus = false,
+    this.semanticLabel,
+  });
+
+  final Widget child;
+  final VoidCallback onSelect;
+  final Color idleColor;
+  final double minHeight;
+  final bool autofocus;
+  final String? semanticLabel;
+
+  @override
+  State<TvFocusTile> createState() => _TvFocusTileState();
+}
+
+class _TvFocusTileState extends State<TvFocusTile> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) => TvTile(
+    minHeight: widget.minHeight,
+    autofocus: widget.autofocus,
+    color: _focused ? context.lumio.surfaceFocus : widget.idleColor,
+    semanticLabel: widget.semanticLabel,
+    onSelect: widget.onSelect,
+    onFocusChange: (f) {
+      if (f != _focused) setState(() => _focused = f);
+    },
+    child: widget.child,
+  );
+}
 
 /// Confirmation (maquette P09). Renvoie vrai si l'utilisateur confirme ;
 /// le focus initial est sur « Annuler ».
@@ -218,7 +264,7 @@ Future<bool> showTvConfirm(
     context,
     builder: (ctx) => TvPanel(
       title: title,
-      width: 860,
+      width: 820,
       onBack: () => Navigator.of(ctx).pop(false),
       actions: [
         TvButton(
@@ -357,11 +403,14 @@ class TvLabeledField extends StatelessWidget {
     required this.controller,
     required this.label,
     this.error,
+    this.hint,
     this.obscureText = false,
     this.autofocus = false,
     this.onSubmitted,
   });
 
+  /// Texte d'aide du champ vide (#6F7B8B, comme `.inp.ph` des maquettes).
+  final String? hint;
   final Key fieldKey;
   final TextEditingController controller;
   final String label;
@@ -413,12 +462,20 @@ class TvLabeledField extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 fontVariations: [FontVariation.weight(600)],
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 filled: false,
                 isCollapsed: true,
+                hintText: hint,
+                hintStyle: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
+                  fontVariations: [FontVariation.weight(600)],
+                  color: Color(0xFF6F7B8B),
+                ),
               ),
               onSubmitted: onSubmitted,
             ),

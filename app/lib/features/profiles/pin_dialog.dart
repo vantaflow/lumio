@@ -9,6 +9,7 @@ import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/focus/focusable_card.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
+import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -38,6 +39,7 @@ Future<PinEntry?> showPinDialog(
   Future<Duration> Function()? lockRemaining,
   String? wrongMessage,
   bool allowForgot = false,
+  double? width,
 }) => showDialog<PinEntry>(
   context: context,
   builder: (_) => PinDialog(
@@ -47,6 +49,7 @@ Future<PinEntry?> showPinDialog(
     lockRemaining: lockRemaining,
     wrongMessage: wrongMessage,
     allowForgot: allowForgot,
+    width: width,
   ),
 );
 
@@ -59,8 +62,11 @@ class PinDialog extends StatefulWidget {
     this.lockRemaining,
     this.wrongMessage,
     this.allowForgot = false,
+    this.width,
   });
 
+  /// Largeur du panneau (760 ; 720 pour la création du PIN, P20).
+  final double? width;
   final String title;
   final String? subtitle;
   final Future<PinResult> Function(String pin)? verify;
@@ -201,7 +207,9 @@ class _PinDialogState extends State<PinDialog> {
           canRequestFocus: false,
           onKeyEvent: _onKey,
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: big ? 760 : 440),
+            constraints: BoxConstraints(
+              maxWidth: big ? (widget.width ?? 760) : 440,
+            ),
             child: Padding(
               padding: EdgeInsets.all(big ? 40 : LumioSpacing.lg),
               child: SingleChildScrollView(
@@ -228,26 +236,44 @@ class _PinDialogState extends State<PinDialog> {
                     ],
                     const SizedBox(height: LumioSpacing.lg),
                     _Dots(filled: _digits.length, big: big),
-                    const SizedBox(height: LumioSpacing.sm),
+                    SizedBox(height: big ? 20 : LumioSpacing.sm),
                     SizedBox(
-                      height: big ? 56 : 48,
+                      height: big ? 58 : 48,
                       child: Center(
-                        child: Text(
-                          // Le calcul du PIN prend plusieurs secondes sur une
-                          // box lente : on le dit au lieu de rester muet.
-                          _busy && _message == null
-                              ? context.l10n.pinChecking
-                              : (_message ?? ''),
-                          key: const ValueKey('pin-message'),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: big ? 26 : null,
-                            fontWeight: FontWeight.w600,
-                            fontVariations: const [FontVariation.weight(600)],
-                            color: _busy && _message == null
-                                ? c.textMuted
-                                : c.error,
-                          ),
-                          textAlign: TextAlign.center,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_message != null && big) ...[
+                              LumioIconView(
+                                LumioIcon.alert,
+                                size: 28,
+                                color: c.error,
+                              ),
+                              const SizedBox(width: 10),
+                            ],
+                            Flexible(
+                              child: Text(
+                                // Le calcul du PIN prend plusieurs secondes sur
+                                // une box lente : on le dit au lieu de rester
+                                // muet.
+                                _busy && _message == null
+                                    ? context.l10n.pinChecking
+                                    : (_message ?? ''),
+                                key: const ValueKey('pin-message'),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontSize: big ? 26 : null,
+                                  fontWeight: FontWeight.w600,
+                                  fontVariations: const [
+                                    FontVariation.weight(600),
+                                  ],
+                                  color: _busy && _message == null
+                                      ? c.textMuted
+                                      : c.error,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -552,6 +578,7 @@ Future<String?> askNewPin(BuildContext context) async {
     context,
     title: context.l10n.choosePin,
     subtitle: context.l10n.pinHint,
+    width: 720,
   );
   final pin = first?.pin;
   if (pin == null || !context.mounted) return null;
@@ -560,6 +587,7 @@ Future<String?> askNewPin(BuildContext context) async {
     title: context.l10n.confirmPin,
     verify: (p) async => p == pin ? PinResult.ok : PinResult.wrong,
     wrongMessage: context.l10n.pinMismatch,
+    width: 720,
   );
   return second?.pin;
 }

@@ -498,7 +498,10 @@ void main() {
     testWidgets('dialogue IP : gauche/droite changent de bouton', (t) async {
       await pumpPlayer(t, FakeNetworkProbe([_wlan]));
       Finder btn(String k) => find.byKey(ValueKey('ipWarning:$k'));
-      bool focused(String k) => Focus.of(t.element(btn(k))).hasFocus;
+      // La clé est sur le TvButton : le focus est celui de la carte qu'il contient.
+      bool focused(String k) => Focus.of(
+        t.element(find.descendant(of: btn(k), matching: find.byType(Text))),
+      ).hasFocus;
       expect(focused('continue'), isTrue);
       await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
       await t.pump();

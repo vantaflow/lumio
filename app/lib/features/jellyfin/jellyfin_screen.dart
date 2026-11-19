@@ -9,6 +9,7 @@ import 'package:lumio/features/detail/playback_service.dart'
 import 'package:lumio/features/home/home_providers.dart'
     show contentAllowed, profileAllows;
 import 'package:lumio/features/jellyfin/jellyfin_providers.dart';
+import 'package:lumio/features/local/local_screen.dart' show LocalTitleCard;
 import 'package:lumio/l10n/error_messages.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/player/player_screen.dart';
@@ -19,8 +20,6 @@ import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/common/tv_screen.dart';
 import 'package:lumio/ui/focus/tv_button.dart';
 import 'package:lumio/ui/icons/lumio_icons.dart';
-import 'package:lumio/ui/focus/focus_ring.dart';
-import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
@@ -166,109 +165,121 @@ class _DetailState extends ConsumerState<JellyfinDetailScreen> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final profile = ref.watch(currentProfileProvider);
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.preview.name),
-          backgroundColor: Colors.transparent,
-        ),
-        body: FutureBuilder<JellyfinItem>(
-          future: _item,
-          builder: (context, snap) {
-            if (snap.hasError) {
-              return StateView.error(
-                message: l10nForError(l, snap.error!),
-                onRetry: () => setState(() => _item = _load()),
-              );
-            }
-            final it = snap.data;
-            if (it == null) return const StateView.loading();
-            if (!contentAllowed(profile, [it.certification])) {
-              return StateView.empty(message: l.notAllowedForProfile);
-            }
-            final theme = Theme.of(context);
-            final c = context.lumio;
-            final meta = [
-              ?it.seriesName,
-              if (it.season != null && it.episode != null)
-                'S${it.season}E${it.episode}',
-              ?it.year?.toString(),
-              ?it.officialRating,
-            ].join(' · ');
-            return ListView(
-              padding: const EdgeInsets.all(LumioSpacing.lg),
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (widget.preview.poster != null)
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(
-                          end: LumioSpacing.lg,
-                        ),
-                        child: SizedBox(
-                          width: 200,
-                          height: 300,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(LumioRadius.md),
-                            child: Image(
+    final c = context.lumio;
+    // Maquette TV29 : retour rond + titre de 56, puis affiche 400 x 600 et
+    // colonne de texte (titre 64, infos 28, résumé 30, bouton Lecture).
+    return TvScreen(
+      title: widget.preview.name,
+      child: FutureBuilder<JellyfinItem>(
+        future: _item,
+        builder: (context, snap) {
+          if (snap.hasError) {
+            return StateView.error(
+              message: l10nForError(l, snap.error!),
+              onRetry: () => setState(() => _item = _load()),
+            );
+          }
+          final it = snap.data;
+          if (it == null) return const StateView.loading();
+          if (!contentAllowed(profile, [it.certification])) {
+            return StateView.empty(message: l.notAllowedForProfile);
+          }
+          final meta = [
+            ?it.seriesName,
+            if (it.season != null && it.episode != null)
+              'S${it.season}E${it.episode}',
+            ?it.year?.toString(),
+            ?it.officialRating,
+          ].join(' · ');
+          TextStyle style(double size, Color color) => TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: size,
+            height: 1.4,
+            color: color,
+          );
+          final poster = widget.preview.poster;
+          return ListView(
+            padding: const EdgeInsets.only(top: 24),
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 400,
+                    height: 600,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: poster == null
+                          ? LocalTitleCard(title: it.name, large: true)
+                          : Image(
                               image: GuardedNetworkImage(
-                                widget.preview.poster!,
+                                poster,
                                 allowPrivate: _allowPrivate,
                               ),
                               fit: BoxFit.cover,
                               errorBuilder: (_, _, _) =>
-                                  const SizedBox.shrink(),
+                                  LocalTitleCard(title: it.name, large: true),
                             ),
-                          ),
-                        ),
-                      ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(it.name, style: theme.textTheme.headlineSmall),
-                          if (meta.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: LumioSpacing.xs,
+                    ),
+                  ),
+                  const SizedBox(width: 64),
+                  Expanded(
+                    child: Align(
+                      alignment: AlignmentDirectional.topStart,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1000),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              it.name,
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(fontSize: 64, height: 1.15),
+                            ),
+                            if (meta.isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              Text(meta, style: style(28, c.textMuted)),
+                            ],
+                            if (it.overview != null) ...[
+                              const SizedBox(height: 20),
+                              Text(
+                                it.overview!,
+                                style: style(30, const Color(0xFFC9D0DA)),
                               ),
-                              child: Text(
-                                meta,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: c.textMuted,
+                            ],
+                            const SizedBox(height: 32),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: TvButton(
+                                key: const ValueKey('jellyfin-play'),
+                                autofocus: true,
+                                label: l.play,
+                                height: 76,
+                                fontSize: 28,
+                                horizontalPadding: 40,
+                                icon: LumioIconView(
+                                  LumioIcon.play,
+                                  size: 32,
+                                  color: c.onAccent,
+                                ),
+                                onPressed: () => playJellyfinFromWidget(
+                                  context,
+                                  ref,
+                                  serverId: _ids.serverId,
+                                  itemId: _ids.itemId,
                                 ),
                               ),
                             ),
-                          if (it.overview != null)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: LumioSpacing.md,
-                              ),
-                              child: Text(it.overview!),
-                            ),
-                          const SizedBox(height: LumioSpacing.lg),
-                          FilledButton.icon(
-                            key: const ValueKey('jellyfin-play'),
-                            autofocus: true,
-                            onPressed: () => playJellyfinFromWidget(
-                              context,
-                              ref,
-                              serverId: _ids.serverId,
-                              itemId: _ids.itemId,
-                            ),
-                            icon: const Icon(Icons.play_arrow),
-                            label: Text(l.play),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -401,59 +412,66 @@ class _BrowseState extends ConsumerState<JellyfinBrowseScreen> {
     } else if (shown.isEmpty && !_hasMore) {
       body = StateView.empty(message: l.jellyfinEmptyFolder);
     } else {
+      // Maquette TV28 (volet Navigation) : lignes de 72, icône dossier ou
+      // clap turquoise, titre 30 en gras, « Charger la suite » en bouton gris.
       body = ListView(
-        padding: const EdgeInsets.all(LumioSpacing.md),
+        clipBehavior: Clip.none,
+        padding: const EdgeInsets.only(top: 8, bottom: 24),
         children: [
           for (final e in shown)
             Padding(
-              padding: const EdgeInsets.only(bottom: LumioSpacing.sm),
-              child: FocusRing(
-                child: ListTile(
-                  key: ValueKey('jellyfin-item:${e.id}'),
-                  leading: Icon(
-                    e.container ? Icons.folder_outlined : Icons.movie_outlined,
-                  ),
-                  title: Text(e.name),
-                  onTap: () => e.container
-                      ? Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => JellyfinBrowseScreen(
-                              serverId: widget.serverId,
-                              parentId: e.id,
-                              title: e.name,
-                            ),
+              padding: const EdgeInsets.only(bottom: 14),
+              child: TvTile(
+                key: ValueKey('jellyfin-item:${e.id}'),
+                minHeight: 72,
+                onSelect: () => e.container
+                    ? Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => JellyfinBrowseScreen(
+                            serverId: widget.serverId,
+                            parentId: e.id,
+                            title: e.name,
                           ),
-                        )
-                      : playJellyfinFromWidget(
-                          context,
-                          ref,
-                          serverId: widget.serverId,
-                          itemId: e.id,
                         ),
+                      )
+                    : playJellyfinFromWidget(
+                        context,
+                        ref,
+                        serverId: widget.serverId,
+                        itemId: e.id,
+                      ),
+                child: Row(
+                  children: [
+                    LumioIconView(
+                      e.container ? LumioIcon.folder : LumioIcon.clapper,
+                      size: 40,
+                      color: context.lumio.secondary,
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(child: TvTileText(title: e.name)),
+                  ],
                 ),
               ),
             ),
           if (_hasMore)
-            Padding(
-              padding: const EdgeInsets.only(top: LumioSpacing.sm),
-              child: Center(
-                child: OutlinedButton(
-                  key: const ValueKey('jellyfin-more'),
-                  onPressed: _more ? null : _loadMore,
-                  child: Text(l.jellyfinLoadMore),
-                ),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TvButton(
+                key: const ValueKey('jellyfin-more'),
+                kind: TvButtonKind.secondary,
+                label: l.jellyfinLoadMore,
+                height: 76,
+                fontSize: 28,
+                horizontalPadding: 40,
+                onPressed: _more ? null : _loadMore,
               ),
             ),
         ],
       );
     }
-    return TvScaffold(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_title.isEmpty ? l.jellyfinLibraries : _title),
-        ),
-        body: body,
-      ),
+    return TvScreen(
+      title: _title.isEmpty ? l.jellyfinLibraries : _title,
+      child: body,
     );
   }
 }

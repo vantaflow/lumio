@@ -55,6 +55,11 @@ enum LumioIcon {
   arrowDown('<p M12 5v14M6 13l6 6 6-6>'),
   mic('<r 9 3 6 11 3><p M5 11a7 7 0 0014 0M12 18v3>'),
 
+  /// Diffusion (P03) et sélecteur d'option (P13).
+  monitor('<p M3 6h18v12H3zM8 21h8>'),
+  radioOff('<p M12 3a9 9 0 100 18 9 9 0 000-18z>'),
+  radioOn('<p M12 3a9 9 0 100 18 9 9 0 000-18zM12 8a4 4 0 100 8 4 4 0 000-8z>'),
+
   /// Sauvegarde (TV33), import de fichier (TV32), Trakt (TV25).
   upload('<p M12 15V3M7 8l5-5 5 5M4 21h16>'),
   document('<p M6 3h8l4 4v14H6zM9 12h6M9 16h6>'),
