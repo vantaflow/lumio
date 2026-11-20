@@ -46,6 +46,7 @@ class FocusableCard extends StatefulWidget {
     this.autofocus = false,
     this.focusNode,
     this.scale,
+    this.ringGap = lumioFocusOffset,
     this.borderRadius = const BorderRadius.all(Radius.circular(LumioRadius.md)),
     this.semanticLabel,
     this.enabled = true,
@@ -60,6 +61,11 @@ class FocusableCard extends StatefulWidget {
 
   /// Échelle au focus (1,06 par défaut ; 1,08 pour les cartes de rangée).
   final double? scale;
+
+  /// Écart entre l'élément et l'anneau (4 par défaut ; 0 pour les petits
+  /// éléments serrés comme les touches du clavier : l'anneau ne chevauche
+  /// alors jamais un voisin).
+  final double ringGap;
   final BorderRadius borderRadius;
 
   /// Étiquette d'accessibilité (titre + source).
@@ -137,7 +143,7 @@ class _FocusableCardState extends State<FocusableCard> {
   Widget build(BuildContext context) {
     final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     final ring = context.lumio.focusRing;
-    const out = lumioFocusOffset + lumioFocusWidth;
+    final out = widget.ringGap + lumioFocusWidth;
     final scale = _focused && widget.enabled
         ? (widget.scale ?? FocusableCardScale.of(context))
         : 1.0;
@@ -158,7 +164,7 @@ class _FocusableCardState extends State<FocusableCard> {
                 decoration: BoxDecoration(
                   borderRadius:
                       widget.borderRadius +
-                      const BorderRadius.all(Radius.circular(out)),
+                      BorderRadius.all(Radius.circular(out)),
                   border: Border.all(color: ring, width: lumioFocusWidth),
                 ),
               ),

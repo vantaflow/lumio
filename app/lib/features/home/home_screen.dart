@@ -697,6 +697,7 @@ class _PosterRow extends ConsumerWidget {
                 key: ValueKey('${m.sourceAddonId}|${m.id}'),
                 title: m.name,
                 seed: m.id,
+                type: m.type,
                 poster: m.poster,
                 allowPrivate: allowPrivate,
                 badge:

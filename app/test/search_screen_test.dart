@@ -176,6 +176,47 @@ void main() {
     expect(x('p') - x('a'), lessThan(624));
   });
 
+  testWidgets('anneau de focus des touches : visible, sans chevaucher', (
+    t,
+  ) async {
+    await _pump(t);
+    final panel = t.getRect(find.byKey(const ValueKey('key-a'))).inflate(2000);
+    final keys = ['a', 'z', 'p', 'q', 'm', 'w', 'n', '1', '0'];
+    for (final k in keys) {
+      final node = Focus.of(
+        t.element(
+          find
+              .descendant(
+                of: find.byKey(ValueKey('key-$k')),
+                matching: find.byType(DecoratedBox),
+              )
+              .first,
+        ),
+      );
+      node.requestFocus();
+      await t.pump(const Duration(milliseconds: 300));
+      final ring = t.getRect(find.byKey(const ValueKey('focus-ring')));
+      final screen = Offset.zero & const Size(1920, 1080);
+      expect(
+        screen.contains(ring.topLeft) && screen.contains(ring.bottomRight),
+        isTrue,
+        reason: 'anneau de $k hors écran',
+      );
+      expect(panel.overlaps(ring), isTrue);
+      for (final other in keys.where((o) => o != k)) {
+        final r = t.getRect(find.byKey(ValueKey('key-$other')));
+        expect(
+          ring.overlaps(r.deflate(1)),
+          isFalse,
+          reason: 'anneau de $k chevauche la touche $other',
+        );
+      }
+      // L'élément focalisé garde sa taille (pas d'agrandissement).
+      final own = t.getRect(find.byKey(ValueKey('key-$k')));
+      expect(own.width, lessThan(80), reason: k);
+    }
+  });
+
   testWidgets('clavier arabe : rangées de 10', (t) async {
     await _pump(t);
     await _tap(t, 'layout');
