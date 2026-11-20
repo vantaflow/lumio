@@ -449,6 +449,7 @@ class _StremioImportScreenState extends ConsumerState<StremioImportScreen> {
             alignment: AlignmentDirectional.centerStart,
             child: TvButton(
               key: ValueKey('otherImport:$key:pick'),
+              autofocus: addons,
               label: l.otherImportChooseFile,
               kind: TvButtonKind.secondary,
               height: 76,

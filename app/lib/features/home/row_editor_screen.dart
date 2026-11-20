@@ -83,6 +83,7 @@ class RowEditorScreen extends ConsumerWidget {
                     width: 180,
                     child: TvButton(
                       key: ValueKey('toggle:$id'),
+                      autofocus: i == 0,
                       kind: TvButtonKind.secondary,
                       expand: true,
                       height: 76,

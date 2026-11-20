@@ -954,10 +954,13 @@ class PosterCard extends StatelessWidget {
     required this.onSelect,
     this.onLongPress,
     this.allowPrivate = false,
+    this.autofocus = false,
     this.width = _posterWidth,
     this.height = _posterHeight,
   });
 
+  /// Focus initial (première carte d'une page de grille).
+  final bool autofocus;
   final MetaPreview item;
   final bool allowPrivate;
   final VoidCallback onSelect;
@@ -974,6 +977,7 @@ class PosterCard extends StatelessWidget {
     return SizedBox(
       width: width,
       child: FocusableCard(
+        autofocus: autofocus,
         onSelect: onSelect,
         onLongPress: onLongPress,
         semanticLabel: _year(item.releaseInfo) == null

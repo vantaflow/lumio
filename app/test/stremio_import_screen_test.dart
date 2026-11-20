@@ -179,6 +179,13 @@ void main() {
     await h.dispose();
   });
 
+  testWidgets('à l\'ouverture, un bouton a le focus', (tester) async {
+    final h = _H(tester);
+    await h.pump();
+    expect(find.byKey(const ValueKey('focus-ring')), findsWidgets);
+    await h.dispose();
+  });
+
   testWidgets('addons collés : installés, doublon compté, adresse locale '
       'en attente puis autorisée', (tester) async {
     final h = _H(tester);
