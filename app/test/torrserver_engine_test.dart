@@ -184,6 +184,68 @@ void main() {
       expect(url.queryParameters['index'], '2');
     });
 
+    test('stream : URL toujours avec index >= 1 et &play', () async {
+      await engine.init(settings);
+      final id = await engine.add(_hash);
+      final url = await engine.stream(id);
+      expect(url.query, endsWith('&play'));
+      expect(int.parse(url.queryParameters['index']!), greaterThanOrEqualTo(1));
+    });
+
+    test(
+      'stream : fileIdx pointant un sous-titre, repli sur la vidéo',
+      () async {
+        await engine.init(settings);
+        final id = await engine.add(_hash);
+        // fileIdx 0 = sous-titres.srt ; le plus gros fichier vidéo est le 1.
+        final url = await engine.stream(id, fileIndex: 0);
+        expect(url.queryParameters['index'], '2');
+      },
+    );
+
+    test('stream : fileIdx hors liste, repli sur la vidéo', () async {
+      await engine.init(settings);
+      final id = await engine.add(_hash);
+      final url = await engine.stream(id, fileIndex: 42);
+      expect(url.queryParameters['index'], '2');
+    });
+
+    test('stream : sample plus petit ignoré, le film l\'emporte', () async {
+      server.fileStats = [
+        {'id': 1, 'path': 'T/Sample/sample.mkv', 'length': 30000000},
+        {'id': 2, 'path': 'T/film.mkv', 'length': 4000000000},
+        {'id': 3, 'path': 'T/leesmij.nfo', 'length': 900},
+      ];
+      await engine.init(settings);
+      final url = await engine.stream(await engine.add(_hash));
+      expect(url.queryParameters['index'], '2');
+    });
+
+    test('stream : aucun fichier vidéo, erreur et pas d\'URL', () async {
+      server.fileStats = [
+        {'id': 1, 'path': 'T/a.nfo', 'length': 900},
+        {'id': 2, 'path': 'T/b.srt', 'length': 90},
+      ];
+      await engine.init(settings);
+      await expectLater(
+        engine.stream(await engine.add(_hash)),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test(
+      'stream : corps texte (liste M3U) rejeté, jamais rendu à mpv',
+      () async {
+        server.alwaysPlaylist = true;
+        await engine.init(settings);
+        final id = await engine.add(_hash);
+        await expectLater(
+          engine.stream(id, fileIndex: 1),
+          throwsA(isA<TorrServerStreamException>()),
+        );
+      },
+    );
+
     test('status : pairs, graines, débits et tampon', () async {
       await engine.init(settings);
       final st = await engine.status(await engine.add(_hash)).first;

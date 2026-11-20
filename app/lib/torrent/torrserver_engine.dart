@@ -399,16 +399,27 @@ class TorrServerEngine implements TorrentEngine {
   Future<Uri> stream(String id, {int? fileIndex}) async {
     _requireReady();
     await _ensureHealthy();
-    var index = fileIndex;
-    if (index == null) {
-      final list = await files(id);
-      TorrentFile? best;
-      for (final f in list) {
-        if (f.streamable && (best == null || f.size > best.size)) best = f;
-      }
-      index = (best ?? (list.isEmpty ? null : list.first))?.index;
-      if (index == null) throw StateError('aucun fichier : $id');
+    // Le fichier visé doit être une vidéo : un `fileIdx` d'addon absent, hors
+    // liste ou pointant un sous-titre, un .nfo ou un échantillon non vidéo
+    // donnerait à mpv un fichier illisible. Repli sur la plus grosse vidéo.
+    final list = await files(id);
+    TorrentFile? best;
+    for (final f in list) {
+      if (f.streamable && (best == null || f.size > best.size)) best = f;
     }
+    TorrentFile? asked;
+    for (final f in list) {
+      if (f.index == fileIndex) asked = f;
+    }
+    int? index;
+    if (list.isEmpty) {
+      index = fileIndex; // métadonnées pas encore là : on garde la demande
+    } else if (asked != null && asked.streamable) {
+      index = asked.index;
+    } else {
+      index = best?.index;
+    }
+    if (index == null) throw StateError('aucun fichier vidéo : $id');
     Uri build() {
       final ep = _ep ?? (throw StateError('moteur arrêté'));
       return Uri(
@@ -455,7 +466,21 @@ class TorrServerEngine implements TorrentEngine {
         ..set(HttpHeaders.authorizationHeader, ep.authHeader)
         ..set(HttpHeaders.rangeHeader, 'bytes=0-0');
       final res = await req.close().timeout(const Duration(seconds: 4));
-      return res.statusCode;
+      final code = res.statusCode;
+      // Le moteur rend une liste M3U (texte, 200) quand l'URL n'a pas de bon
+      // `index` ou de `play` : mpv la lirait comme une playlist. Un flux vidéo
+      // n'est jamais texte.
+      final type = (res.headers.contentType?.mimeType ?? '').toLowerCase();
+      final textual =
+          type.startsWith('text/') ||
+          type.contains('mpegurl') ||
+          type.contains('json') ||
+          type.contains('html');
+      await res.drain<void>().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {},
+      );
+      return _ok(code) && textual ? 415 : code;
     } on TimeoutException {
       return 200;
     } on SocketException {

@@ -29,6 +29,14 @@ class FakeTorrServer {
   int? streamStatus;
   int settingsSets = 0;
 
+  /// Comme le vrai moteur : sans `index` > 0 ou sans `play`, `/stream` rend une
+  /// liste M3U en texte (200) au lieu du fichier.
+  bool m3uWithoutIndex = true;
+
+  /// Force une réponse texte (liste de lecture) quoi que demande l'URL.
+  bool alwaysPlaylist = false;
+  final streamQueries = <Map<String, String>>[];
+
   /// Fichiers rendus une fois les métadonnées reçues.
   List<Map<String, Object?>> fileStats = [
     {'id': 1, 'path': 'Film/sous-titres.srt', 'length': 1500},
@@ -92,8 +100,22 @@ class FakeTorrServer {
         out = _torrents(Map<String, Object?>.from(json as Map));
       case '/stream':
         final link = req.uri.queryParameters['link'];
+        final q = req.uri.queryParameters;
+        streamQueries.add(q);
+        final idx = int.tryParse(q['index'] ?? '') ?? 0;
+        if (alwaysPlaylist ||
+            (m3uWithoutIndex &&
+                torrents.containsKey(link) &&
+                (idx <= 0 || !q.containsKey('play')))) {
+          req.response.statusCode = 200;
+          req.response.headers.contentType = ContentType('audio', 'x-mpegurl');
+          req.response.write('#EXTM3U\n#EXTINF:0,x\nhttp://x/stream\n');
+          await req.response.close();
+          return;
+        }
         req.response.statusCode =
             streamStatus ?? (torrents.containsKey(link) ? 206 : 404);
+        req.response.headers.contentType = ContentType('video', 'x-matroska');
         req.response.add(List.filled(16, 1));
         await req.response.close();
         return;
