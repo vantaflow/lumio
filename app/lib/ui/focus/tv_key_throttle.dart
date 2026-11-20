@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lumio/ui/theme.dart';
 
 /// Cadence des flèches de la télécommande, centralisée pour toute l'interface.
 ///
@@ -78,4 +79,33 @@ Map<Type, Action<Intent>> tvActions() {
     ...WidgetsApp.defaultActions,
     DirectionalFocusIntent: ThrottledDirectionalFocusAction(),
   };
+}
+
+/// Parcours de focus par défaut de l'interface TV (listes sans parcours
+/// propre : sources, réglages, dialogues). Le défaut de Flutter déplace la
+/// liste d'un coup (sans animation), l'élément collé au bord de l'écran :
+/// ici elle défile en douceur, juste ce qu'il faut pour montrer l'élément.
+class TvTraversalPolicy extends ReadingOrderTraversalPolicy {
+  TvTraversalPolicy() : super(requestFocusCallback: _smoothFocus);
+
+  static void _smoothFocus(
+    FocusNode node, {
+    ScrollPositionAlignmentPolicy? alignmentPolicy,
+    double? alignment,
+    Duration? duration,
+    Curve? curve,
+  }) {
+    node.requestFocus();
+    final ctx = node.context;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeDisableAnimationsOf(ctx) ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      alignment: alignment ?? 1,
+      alignmentPolicy:
+          alignmentPolicy ?? ScrollPositionAlignmentPolicy.explicit,
+      duration: duration ?? (reduce ? Duration.zero : LumioMotion.focus),
+      curve: curve ?? Curves.easeOut,
+    );
+  }
 }

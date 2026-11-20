@@ -89,13 +89,20 @@ void _startPerfLog() {
     }
   });
   ServicesBinding.instance.keyboard.addHandler((e) {
-    if (e is KeyDownEvent) {
-      // ignore: avoid_print
-      print(
-        'LUMIO_PERF key ${e.logicalKey.keyLabel} ${e.logicalKey.debugName}',
-      );
-    }
+    // ignore: avoid_print
+    print(
+      'LUMIO_PERF key ${e.runtimeType} ${e.logicalKey.debugName} '
+      't=${e.timeStamp.inMilliseconds}',
+    );
     return false;
+  });
+  FocusManager.instance.addListener(() {
+    final f = FocusManager.instance.primaryFocus;
+    if (f == null || f is FocusScopeNode) return;
+    // ignore: avoid_print
+    print(
+      'LUMIO_PERF focus ${f.rect.center.dx.round()},${f.rect.center.dy.round()}',
+    );
   });
 }
 
@@ -129,7 +136,14 @@ class LumioApp extends ConsumerWidget {
         final tv = ref.watch(androidTvProvider);
         // TV : tout est mis à l'échelle du canevas 1920 dp des maquettes.
         final themed = LumioThemeScope(tv: tv, child: child!);
-        return tv ? TvCanvas(child: themed) : themed;
+        return tv
+            ? TvCanvas(
+                child: FocusTraversalGroup(
+                  policy: TvTraversalPolicy(),
+                  child: themed,
+                ),
+              )
+            : themed;
       },
       // Flèches : un appui déplace d'un cran, l'appui maintenu est limité en
       // cadence (voir TvKeyThrottle).

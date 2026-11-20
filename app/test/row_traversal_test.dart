@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/ui/focus/row_traversal.dart';
+import 'package:lumio/ui/focus/tv_key_throttle.dart';
 
 Widget _row(String name, int n, {double top = 0}) => Padding(
   padding: EdgeInsets.only(top: top),
@@ -29,6 +30,8 @@ Widget _row(String name, int n, {double top = 0}) => Padding(
 String? _focused() => FocusManager.instance.primaryFocus?.debugLabel;
 
 void main() {
+  _scrollTests();
+  _placeholderTests();
   testWidgets('haut : la cible préférée de la rangée voisine passe devant', (
     t,
   ) async {
@@ -225,5 +228,80 @@ void main() {
     await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await t.pump();
     expect(_focused(), 'a1');
+  });
+}
+
+void _scrollTests() {
+  testWidgets(
+    'bas dans une longue liste : défilement doux, un cran par appui',
+    (t) async {
+      final c = ScrollController();
+      addTearDown(c.dispose);
+      await t.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: FocusTraversalGroup(
+              policy: TvTraversalPolicy(),
+              child: ListView.builder(
+                controller: c,
+                itemCount: 40,
+                itemBuilder: (_, i) => Focus(
+                  debugLabel: 'r$i',
+                  autofocus: i == 0,
+                  child: const SizedBox(height: 100),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      // Vue de 600 px : 6 lignes ; descendre de 8 lignes force le défilement.
+      for (var i = 0; i < 8; i++) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        expect(_focused(), 'r${i + 1}');
+      }
+      await t.pumpAndSettle();
+      // Pas de saut : juste après l'appui, la liste n'est pas arrivée.
+      final before = c.offset;
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await t.pump(const Duration(milliseconds: 10));
+      expect(c.offset, lessThan(before + 100));
+      await t.pumpAndSettle();
+      expect(c.offset, greaterThan(before));
+      // Remonter ne fait pas sauter la liste en arrière de plus d'une ligne.
+      final top = c.offset;
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await t.pumpAndSettle();
+      expect(c.offset, greaterThanOrEqualTo(top - 100));
+    },
+  );
+}
+
+void _placeholderTests() {
+  testWidgets('bas : une rangée en chargement n\'est pas sautée', (t) async {
+    await t.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: RowTraversalGroup(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _row('a', 3),
+                const RowPlaceholder(child: SizedBox(height: 60, width: 300)),
+                _row('b', 3, top: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await t.tap(find.byKey(const ValueKey('a1')));
+    FocusManager.instance.primaryFocus?.unfocus();
+    Focus.of(t.element(find.byKey(const ValueKey('a1')))).requestFocus();
+    await t.pump();
+    expect(_focused(), 'a1');
+    await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    expect(_focused(), 'a1', reason: 'la rangée suivante charge encore');
+    expect(find.byType(RowPlaceholder), findsOneWidget);
   });
 }

@@ -1273,30 +1273,36 @@ class _SkeletonRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final lumio = context.lumio;
     if (isTvLayout(context)) {
-      return Semantics(
-        label: context.l10n.loading,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Column(
-            key: const ValueKey('skeleton-row'),
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (title == null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 96, bottom: 20, top: 4),
-                  child: Container(
-                    height: 34,
-                    width: 360,
-                    decoration: BoxDecoration(
-                      color: lumio.surface,
-                      borderRadius: BorderRadius.circular(10),
+      return RowPlaceholder(
+        child: Semantics(
+          label: context.l10n.loading,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Column(
+              key: const ValueKey('skeleton-row'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (title == null)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 96,
+                      bottom: 20,
+                      top: 4,
                     ),
-                  ),
-                )
-              else
-                TvRowTitle(title!),
-              const TvSkeletonCards(),
-            ],
+                    child: Container(
+                      height: 34,
+                      width: 360,
+                      decoration: BoxDecoration(
+                        color: lumio.surface,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  )
+                else
+                  TvRowTitle(title!),
+                const TvSkeletonCards(),
+              ],
+            ),
           ),
         ),
       );

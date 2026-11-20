@@ -57,6 +57,17 @@ class RowTraversalPolicy extends ReadingOrderTraversalPolicy {
     ];
     double dx(FocusNode n) => (n.rect.center.dx - from.center.dx).abs();
     row.sort((a, b) => dx(a).compareTo(dx(b)));
+    // Une rangée en chargement (sans carte focalisable) entre la carte
+    // courante et la cible : on ne la saute pas, on attend qu'elle arrive.
+    final targetY = row.first.rect.center.dy;
+    for (final n in scope.descendants) {
+      if (n is! RowPlaceholderNode) continue;
+      final y = n.rect.center.dy;
+      final between = down
+          ? y > from.center.dy + _sameRow && y < targetY - _sameRow
+          : y < from.center.dy - _sameRow && y > targetY + _sameRow;
+      if (between) return true;
+    }
     final pref = preferUp;
     final target = !down && pref != null && row.contains(pref)
         ? pref
@@ -119,5 +130,44 @@ class RowTraversalGroup extends StatelessWidget {
   Widget build(BuildContext context) => FocusTraversalGroup(
     policy: RowTraversalPolicy(strictRow: strictRow, preferUp: preferUp),
     child: child,
+  );
+}
+
+/// Nœud repère d'une rangée en chargement : invisible au parcours, il sert à
+/// ne pas sauter la rangée (voir [RowTraversalPolicy]).
+class RowPlaceholderNode extends FocusNode {
+  RowPlaceholderNode()
+    : super(
+        skipTraversal: true,
+        canRequestFocus: false,
+        debugLabel: 'RowPlaceholder',
+      );
+}
+
+/// Entoure une rangée en cours de chargement : « bas » / « haut » attendent
+/// plutôt que de sauter par-dessus pour atterrir sur une rangée lointaine.
+class RowPlaceholder extends StatefulWidget {
+  const RowPlaceholder({required this.child, super.key});
+  final Widget child;
+
+  @override
+  State<RowPlaceholder> createState() => _RowPlaceholderState();
+}
+
+class _RowPlaceholderState extends State<RowPlaceholder> {
+  final _node = RowPlaceholderNode();
+
+  @override
+  void dispose() {
+    _node.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Focus(
+    focusNode: _node,
+    skipTraversal: true,
+    canRequestFocus: false,
+    child: widget.child,
   );
 }
