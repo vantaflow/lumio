@@ -1060,8 +1060,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get torrentConnectionLost => 'Connexion perdue, nouvelle tentative…';
 
   @override
-  String torrentPeers(Object count) {
-    return '$count sources';
+  String torrentPeers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sources',
+      one: '1 source',
+      zero: '0 source',
+    );
+    return '$_temp0';
   }
 
   @override

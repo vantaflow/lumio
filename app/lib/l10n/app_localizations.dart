@@ -1925,8 +1925,8 @@ abstract class AppLocalizations {
   /// No description provided for @torrentPeers.
   ///
   /// In fr, this message translates to:
-  /// **'{count} sources'**
-  String torrentPeers(Object count);
+  /// **'{count, plural, =0{0 source} =1{1 source} other{{count} sources}}'**
+  String torrentPeers(int count);
 
   /// No description provided for @torrentRateKb.
   ///

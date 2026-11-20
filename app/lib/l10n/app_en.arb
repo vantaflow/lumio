@@ -342,10 +342,10 @@
   "torrentFailed": "The torrent could not start. Try another stream.",
   "torrentConnecting": "Connecting to sources…",
   "torrentConnectionLost": "Connection lost, retrying…",
-  "torrentPeers": "{count} sources",
+  "torrentPeers": "{count, plural, =0{0 sources} =1{1 source} other{{count} sources}}",
   "@torrentPeers": {
     "placeholders": {
-      "count": {}
+      "count": {"type": "int"}
     }
   },
   "torrentRateKb": "{value} KB/s",

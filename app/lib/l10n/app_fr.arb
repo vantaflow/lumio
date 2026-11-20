@@ -575,10 +575,10 @@
   "torrentFailed": "Le torrent n'a pas pu démarrer. Essayez un autre flux.",
   "torrentConnecting": "Connexion aux sources…",
   "torrentConnectionLost": "Connexion perdue, nouvelle tentative…",
-  "torrentPeers": "{count} sources",
+  "torrentPeers": "{count, plural, =0{0 source} =1{1 source} other{{count} sources}}",
   "@torrentPeers": {
     "placeholders": {
-      "count": {}
+      "count": {"type": "int"}
     }
   },
   "torrentRateKb": "{value} Ko/s",
