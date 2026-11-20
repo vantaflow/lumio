@@ -80,3 +80,14 @@ Onglet **Trakt** : état, « Connecter Trakt » (le flux de code d'appareil tour
 
 ### Débit torrent
 Le moteur de mesure (`LUMIO_DEBUG_TORRENT=1`) accepte maintenant `--dart-define=LUMIO_TORRENT_HASH=<infohash>` et `LUMIO_TORRENT_SECONDS=300` et journalise un débit toutes les 10 s (`window_10s`).
+
+### État de la passe 2 : arrêt faute de box
+La box est devenue injoignable (adb « device offline », ping sans réponse, fenêtres de connexion de 1 à 3 minutes seulement) : l'APK (build b12, 73 Mo) n'a pas pu être installé, malgré un envoi par morceaux. Conformément à la consigne, rien n'a été lancé de plus : ni débit torrent, ni endurance (non démarrée). L'addon de test local a été arrêté sur le Mac ; « Films libres (test) » est toujours installé dans Lumio sur la box (à supprimer par Mes addons).
+
+Tout ce qui suit est donc **non revérifié sur la box** (tests verts sur le Mac : 805 application, 537 cœur ; CI verte sur main) :
+- les 8 défauts corrigés ci-dessus (rendus Mac : clavier AZERTY et arabe, guide, page Aide, vérifiés par `render_tv_test` ; captures box à prendre) ;
+- recherche : « rangée de boutons vides » signalée par l'utilisateur, NON trouvée (pas de capture possible) : le clavier de la maquette n'a plus de flux de touches ; à rechercher sur la box dans tous les états (vide, saisie, résultats, aucun résultat, arabe, 123) ;
+- guides A, B, C, E, F sur la TV et le portail (Chrome 390 px) ; section Trakt du portail de bout en bout avec un vrai compte ;
+- écrans de l'étape 4 : catalogue d'addons, Ma liste, Personnaliser, Jellyfin vide, fiche locale, import, pop-ups P03, P05–P08, P11–P14 ;
+- test de débit torrent 1080p (≥ 1 Mo/s pendant 5 min) : build `--dart-define=LUMIO_DEBUG_TORRENT=1 --dart-define=LUMIO_TORRENT_HASH=<infohash d'un film Blender, ex. Tears of Steel> --dart-define=LUMIO_TORRENT_SECONDS=300`, journal `LUMIO_TORRENT` (`window_10s`, `read_continuous`) ;
+- endurance : build `--dart-define=LUMIO_DEBUG_LOOP=1`, puis `LUMIO_BOX=192.168.0.47:5555 caffeinate -i nohup scripts/endurance.sh 8 > endurance.log 2>&1 &` ; suivi : `tail` du CSV docs/rapports/endurance-<date>.csv ; arrêt : `pkill -f endurance.sh` puis réinstaller le build normal.
