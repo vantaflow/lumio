@@ -34,3 +34,10 @@ Nouveaux : `torrserver_engine_test.dart` (22, contre un faux TorrServer HTTP : r
 - Premier torrent de la session : ~5 s de démarrage avant les métadonnées.
 - Pas de binaire x86_64 (émulateur) : le moteur y échoue proprement.
 - Dépend d'un mainteneur unique : version et sommes épinglées, mise à jour manuelle.
+
+## Correctif : « Reprendre » relançait un autre flux (2026-11-20)
+- Cause racine : la table `progress` (v12) ne gardait que titre, affiche, type, saison, épisode et position ; aucune identité du flux. `DefaultContinuePlayback.play` relançait donc toujours `ranked.first` (meilleur du classement), ici le Sintel de Torrentio à 0 graine.
+- Correctif : migration v13 (colonnes `stream_addon_id` = identifiant de stockage opaque de l'addon, `stream_key` = `t:<infoHash>:<fileIdx>` ou `u:<SHA-256 de l'URL normalisée>`, jamais l'URL). Le lecteur écrit l'identité du flux réellement lu (repli et « autre source » compris, et chaque épisode enchaîné). La reprise retrouve ce flux dans le classement actuel (`findSavedStream` : même addon, sinon même source chez un autre addon) ; sinon meilleur flux, à la position enregistrée, avec le message « Source d'origine indisponible : lecture depuis la meilleure source. ». Une ancienne entrée sans identité suit le classement, sans message.
+- Position : le démarrage (`start`) est transmis au lecteur après la préparation du torrent (test ajouté : torrent repris à 16 min).
+- Tests ajoutés : `stream_identity_test` (core), `saved_stream_test`, migration v12 vers v13, `progress_repository_test`, 4 cas de reprise dans `detail_screen_test` (même torrent, même lien, flux disparu, ancienne entrée), 2 cas lecteur dans `next_episode_overlay_test` (identité enregistrée, torrent repris à la position).
+- Non vérifié sur la box : voir le rapport de session (la box est devenue injoignable en cours de scénario, l'addon de test n'a pas pu être retiré de Lumio).

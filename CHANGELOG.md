@@ -5,6 +5,13 @@ Aucune version n'est encore publiée.
 
 ## [Non publié]
 
+### Corrigé (2026-11-20)
+- « Reprendre » relance le flux effectivement regardé (même addon, même
+  torrent infoHash+fileIdx ou même lien), à la position enregistrée ; si ce
+  flux n'existe plus, repli sur le meilleur flux avec un message. La
+  progression mémorise l'identité non sensible du flux (migration de base v13) ;
+  jamais l'URL.
+
 ### Modifié (2026-11-18)
 - Android uniquement : cibles macOS, Windows et jobs CI desktop retirés.
 - Plus de synchronisation ni de compte : écrans Compte et phrase secrète,
