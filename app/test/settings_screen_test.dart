@@ -304,7 +304,10 @@ void main() {
     await openSettingsPageFor(tester, 'clearCache', h.settle);
 
     // Débit montant 0 = ensemencement désactivé, valeur par défaut.
-    expect(find.text('Désactivé (pas d\'ensemencement)'), findsOneWidget);
+    expect(
+      find.text('Désactivé (pas d\'ensemencement, envoi minimal de 256 Ko/s)'),
+      findsOneWidget,
+    );
     expect(h.container.read(torrentSettingsProvider).clearCacheOnExit, isFalse);
 
     await h.tapTile('clearCache'); // interrupteur
