@@ -1595,7 +1595,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutCredits.
   ///
   /// In fr, this message translates to:
-  /// **'Crédits : libmpv, media_kit, libtorrent'**
+  /// **'Crédits : libmpv, media_kit, TorrServer'**
   String get aboutCredits;
 
   /// No description provided for @openSourceLicenses.
@@ -1634,11 +1634,11 @@ abstract class AppLocalizations {
   /// **'media_kit : intégration Flutter du lecteur'**
   String get creditsMediaKit;
 
-  /// No description provided for @creditsLibtorrent.
+  /// No description provided for @creditsTorrserver.
   ///
   /// In fr, this message translates to:
-  /// **'libtorrent : moteur de torrents (BSD)'**
-  String get creditsLibtorrent;
+  /// **'TorrServer : moteur de torrents (GPL-3.0)'**
+  String get creditsTorrserver;
 
   /// No description provided for @creditsFonts.
   ///

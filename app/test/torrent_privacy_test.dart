@@ -243,6 +243,8 @@ void main() {
         );
         expect(engine.settings, isNull);
         expect(engine.addedMagnets, isEmpty);
+        // Le processus du moteur ne doit pas tourner sans le VPN exigé.
+        expect(engine.disposed, isTrue);
         expect(
           l10nForError(AppLocalizationsFr(), const VpnRequiredException()),
           contains('VPN'),
@@ -265,7 +267,32 @@ void main() {
       );
       expect(engine.settings, isNotNull);
       expect(engine.addedMagnets, isEmpty);
+      expect(engine.disposed, isTrue); // moteur lancé puis arrêté aussitôt
     });
+
+    test(
+      'shutdown (VPN tombé) arrête le moteur ; le suivant le relance',
+      () async {
+        final probe = FakeNetworkProbe([_wlan, _tun]);
+        final engine = FakeTorrentEngine();
+        final c = container(
+          _MemStore({AppSettingsStore.requireVpnKey: '1'}),
+          probe,
+          engine,
+        );
+        final playback = c.read(torrentPlaybackFactoryProvider)();
+        await playback.prepare(_item).timeout(const Duration(seconds: 5));
+        expect(engine.disposed, isFalse);
+        await playback.shutdown();
+        expect(engine.disposed, isTrue);
+        expect(engine.stopped, isNotEmpty); // torrent libéré avant l'arrêt
+        engine.disposed = false;
+        engine.settings = null;
+        await playback.prepare(_item).timeout(const Duration(seconds: 5));
+        expect(engine.settings, isNotNull); // réinitialisé
+        await playback.release();
+      },
+    );
 
     test('VPN exigé et présent : le torrent démarre', () async {
       final engine = FakeTorrentEngine();
@@ -303,6 +330,7 @@ void main() {
             torrentPlaybackFactoryProvider.overrideWithValue(
               () => TorrentPlayback(
                 engine: e,
+                stopEngine: e.dispose,
                 pollInterval: const Duration(milliseconds: 5),
               ),
             ),
@@ -403,6 +431,7 @@ void main() {
       await _settle(t);
       expect(e.stopped, ['fake-1']);
       expect(e.stopDeleteData, [true]);
+      expect(e.disposed, isTrue); // le processus du moteur est arrêté
       expect(
         ctl.failures.single,
         'VPN coupé : torrent arrêté pour protéger votre adresse IP.',

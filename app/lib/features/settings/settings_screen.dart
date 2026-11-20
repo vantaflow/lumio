@@ -1453,7 +1453,7 @@ class AboutScreen extends StatelessWidget {
                     const SizedBox(height: 22),
                     Text(l.creditsLibmpv, style: credit),
                     Text(l.creditsMediaKit, style: credit),
-                    Text(l.creditsLibtorrent, style: credit),
+                    Text(l.creditsTorrserver, style: credit),
                     Text(l.creditsFonts, style: credit),
                     const SizedBox(height: 34),
                     Align(

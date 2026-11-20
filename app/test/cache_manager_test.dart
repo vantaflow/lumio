@@ -2,10 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/torrent/cache_manager.dart';
-import 'package:lumio/torrent/libtorrent_engine.dart'
-    show engineUploadLimit, minProtocolUploadBytes;
-import 'package:lumio/torrent/torrent_engine.dart'
-    show TorrentFile, TorrentSettings;
+import 'package:lumio/torrent/torrent_engine.dart' show TorrentFile;
 import 'package:lumio/torrent/torrent_playback.dart' show TorrentPlayback;
 import 'package:lumio_core/lumio_core.dart';
 
@@ -166,42 +163,6 @@ void main() {
     test('sortie inattendue : null', () {
       expect(parseDfAvailableBytes('rien'), isNull);
       expect(parseDfAvailableBytes(''), isNull);
-    });
-  });
-
-  group('engineUploadLimit', () {
-    test(
-      'ensemencement désactivé : plancher du protocole, jamais 1 octet/s',
-      () {
-        final v = engineUploadLimit(const TorrentSettings(savePath: 'x'));
-        expect(v, minProtocolUploadBytes);
-        expect(v, greaterThanOrEqualTo(16 * 1024));
-      },
-    );
-
-    test('ensemencement actif : la limite demandée', () {
-      expect(
-        engineUploadLimit(
-          const TorrentSettings(savePath: 'x', seed: true, uploadLimit: 524288),
-        ),
-        524288,
-      );
-    });
-
-    test('limite active trop basse : relevée au plancher', () {
-      expect(
-        engineUploadLimit(
-          const TorrentSettings(savePath: 'x', seed: true, uploadLimit: 100),
-        ),
-        minProtocolUploadBytes,
-      );
-    });
-
-    test('illimité (0) reste illimité quand on ensemence', () {
-      expect(
-        engineUploadLimit(const TorrentSettings(savePath: 'x', seed: true)),
-        0,
-      );
     });
   });
 

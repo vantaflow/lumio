@@ -27,7 +27,7 @@ class UntrustedEngineUrlException implements Exception {
 }
 
 /// Vrai pour `http` sur l'hôte de boucle (127.0.0.1, localhost, ::1). Le port
-/// et le chemin ne sont pas exposés par l'adaptateur libtorrent_flutter.
+/// et le chemin ne sont pas exposés par l'adaptateur TorrServer.
 bool isLoopbackEngineUrl(Uri u) =>
     u.scheme == 'http' &&
     (u.host == '127.0.0.1' || u.host == 'localhost' || u.host == '::1');
@@ -61,6 +61,7 @@ class TorrentPlayback {
   TorrentPlayback({
     required this.engine,
     this.ready,
+    this.stopEngine,
     this.peerTimeout = const Duration(seconds: 45),
     this.pollInterval = const Duration(milliseconds: 500),
     this.enforceCache,
@@ -78,6 +79,9 @@ class TorrentPlayback {
 
   /// Initialisation paresseuse du moteur (premier torrent seulement).
   final Future<void> Function()? ready;
+
+  /// Arrête le moteur (processus compris) ; le prochain `ready` le relance.
+  final Future<void> Function()? stopEngine;
 
   /// Délai d'attente d'une source (et des métadonnées).
   final Duration peerTimeout;
@@ -229,6 +233,16 @@ class TorrentPlayback {
       await engine.stop(id, deleteData: true);
     } on Object {
       // Déjà arrêté ou moteur fermé : rien à nettoyer.
+    }
+  }
+
+  /// Libère le torrent puis arrête le moteur : le VPN exigé a disparu, plus
+  /// aucun processus ne doit parler aux pairs.
+  Future<void> shutdown() async {
+    try {
+      await release();
+    } finally {
+      await stopEngine?.call();
     }
   }
 

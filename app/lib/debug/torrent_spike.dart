@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:lumio/torrent/libtorrent_engine.dart';
+import 'package:lumio/torrent/torrserver_engine.dart';
+import 'package:lumio/torrent/torrserver_process.dart';
 import 'package:lumio/torrent/torrent_engine.dart';
 
 /// Écran de debug du spike 0.6 (`--dart-define=LUMIO_DEBUG_TORRENT=1`).
@@ -57,7 +58,7 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
 
   Future<void> _run() async {
     final sw = Stopwatch()..start();
-    final engine = LibtorrentEngine();
+    final engine = TorrServerEngine(process: const PlatformTorrServerProcess());
     String? id;
     Timer? ticker;
     StreamSubscription<TorrentStatus>? sub;
@@ -135,7 +136,8 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
       });
 
       final url = await engine.stream(id, fileIndex: target.index);
-      _log({'event': 'stream_url', 'url': url.toString()});
+      // Jamais l'URL complète : elle porte le mot de passe du moteur.
+      _log({'event': 'stream_url', 'host': url.host, 'path': url.path});
       final t1 = sw.elapsedMilliseconds;
       var got = 0;
       final client = HttpClient();
@@ -162,41 +164,47 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
         client.close(force: true);
       }
 
-      // Lecture continue jusqu'à 30 s après l'ajout du flux.
-      final dl = HttpClient();
+      // Lecture continue pendant _readSeconds ; le fichier est relu depuis le
+      // début quand il est épuisé (mesure du débit soutenu sur 5 min).
       var total = 0;
       final t2 = sw.elapsedMilliseconds;
-      try {
-        final req = await dl.getUrl(url);
-        req.headers.set('Range', 'bytes=1048576-');
-        final resp = await req.close().timeout(const Duration(minutes: 2));
-        final end = DateTime.now().add(const Duration(seconds: _readSeconds));
-        var windowStart = DateTime.now();
-        var windowBytes = 0;
-        await for (final chunk in resp) {
-          total += chunk.length;
-          windowBytes += chunk.length;
-          final now = DateTime.now();
-          if (now.difference(windowStart) >= const Duration(seconds: 10)) {
-            _log({
-              'event': 'window_10s',
-              'bytesPerSec':
-                  (windowBytes *
-                          1000 /
-                          now.difference(windowStart).inMilliseconds)
-                      .round(),
-              'peers': peers,
-              'totalBytes': total,
-            });
-            windowStart = now;
-            windowBytes = 0;
+      final end = DateTime.now().add(const Duration(seconds: _readSeconds));
+      var windowStart = DateTime.now();
+      var windowBytes = 0;
+      var from = 1048576;
+      while (DateTime.now().isBefore(end)) {
+        final dl = HttpClient();
+        try {
+          final req = await dl.getUrl(url);
+          req.headers.set('Range', 'bytes=$from-');
+          final resp = await req.close().timeout(const Duration(minutes: 2));
+          await for (final chunk in resp) {
+            total += chunk.length;
+            windowBytes += chunk.length;
+            final now = DateTime.now();
+            if (now.difference(windowStart) >= const Duration(seconds: 10)) {
+              _log({
+                'event': 'window_10s',
+                'bytesPerSec':
+                    (windowBytes *
+                            1000 /
+                            now.difference(windowStart).inMilliseconds)
+                        .round(),
+                'peers': peers,
+                'totalBytes': total,
+              });
+              windowStart = now;
+              windowBytes = 0;
+            }
+            if (now.isAfter(end)) break;
           }
-          if (now.isAfter(end)) break;
+        } catch (e) {
+          _log({'event': 'read_fail', 'error': e.runtimeType.toString()});
+          break;
+        } finally {
+          dl.close(force: true);
         }
-      } catch (e) {
-        _log({'event': 'read30_fail', 'error': e.toString()});
-      } finally {
-        dl.close(force: true);
+        from = 0;
       }
       final secs = (sw.elapsedMilliseconds - t2) / 1000;
       _log({

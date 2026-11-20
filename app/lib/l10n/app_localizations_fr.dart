@@ -865,7 +865,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aboutLicense => 'Licence GPL-3.0';
 
   @override
-  String get aboutCredits => 'Crédits : libmpv, media_kit, libtorrent';
+  String get aboutCredits => 'Crédits : libmpv, media_kit, TorrServer';
 
   @override
   String get openSourceLicenses => 'Licences open source';
@@ -887,7 +887,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get creditsMediaKit => 'media_kit : intégration Flutter du lecteur';
 
   @override
-  String get creditsLibtorrent => 'libtorrent : moteur de torrents (BSD)';
+  String get creditsTorrserver => 'TorrServer : moteur de torrents (GPL-3.0)';
 
   @override
   String get creditsFonts =>

@@ -4,17 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/data/app_settings.dart' as prefs;
 import 'package:lumio/features/settings/settings_providers.dart';
 import 'package:lumio/torrent/cache_manager.dart';
-import 'package:lumio/torrent/libtorrent_engine.dart';
 import 'package:lumio/torrent/network_watcher.dart';
 import 'package:lumio/torrent/torrent_engine.dart';
 import 'package:lumio/torrent/torrent_playback.dart';
+import 'package:lumio/torrent/torrserver_engine.dart';
+import 'package:lumio/torrent/torrserver_process.dart';
 import 'package:lumio/ui/focus/tv_detection.dart';
 import 'package:lumio_core/lumio_core.dart' show GuardStop;
 import 'package:path_provider/path_provider.dart';
 
 /// Moteur de torrents unique pour toute l'application ; remplacé en test.
 final torrentEngineProvider = Provider<TorrentEngine>((ref) {
-  final engine = LibtorrentEngine();
+  final engine = TorrServerEngine(process: const PlatformTorrServerProcess());
   ref.onDispose(() => engine.dispose());
   return engine;
 });
@@ -94,20 +95,35 @@ final torrentPlaybackFactoryProvider = Provider<TorrentPlayback Function()>((
     throw e;
   });
 
+  /// Arrête le moteur et son processus ; `ready` le relancera.
+  Future<void> stopEngine() async {
+    init = null;
+    await ref.read(torrentEngineProvider).dispose();
+  }
+
   Future<void> ready() async {
-    // Coupe-circuit à chaque démarrage, avant tout contact avec des pairs.
+    // Coupe-circuit à chaque démarrage, avant tout contact avec des pairs :
+    // sans le VPN exigé, le processus du moteur ne démarre pas (et s'il
+    // tournait encore, il est arrêté).
     final d = await ref.read(torrentPrivacyProvider).evaluate();
-    if (d is GuardStop) throw const VpnRequiredException();
+    if (d is GuardStop) {
+      await stopEngine();
+      throw const VpnRequiredException();
+    }
     await initOnce();
     // L'initialisation peut être longue (premier démarrage) : le VPN a pu
     // tomber entre-temps. Nouvelle évaluation juste avant `engine.add`.
     final again = await ref.read(torrentPrivacyProvider).evaluate();
-    if (again is GuardStop) throw const VpnRequiredException();
+    if (again is GuardStop) {
+      await stopEngine();
+      throw const VpnRequiredException();
+    }
   }
 
   return () => TorrentPlayback(
     engine: ref.read(torrentEngineProvider),
     ready: ready,
+    stopEngine: stopEngine,
     enforceCache: (playing) =>
         ref.read(cacheManagerProvider).enforce(playingId: playing),
   );

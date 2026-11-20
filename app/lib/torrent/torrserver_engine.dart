@@ -56,6 +56,19 @@ bool isStreamableName(String name) {
 
 const _mib = 1024 * 1024;
 
+/// Trackers publics ajoutés à ceux du magnet (mode « ajouter »). Sans eux,
+/// les métadonnées d'un magnet maigre mettent ~4 s (DHT seul) au lieu de
+/// ~1,4 s sur la box. Liste courte et fixe, à la place de la liste par défaut
+/// de TorrServer (trackers russes, HTTP en clair) ; aucune liste distante.
+const publicTrackers = [
+  'udp://tracker.opentrackr.org:1337/announce',
+  'udp://open.tracker.cl:1337/announce',
+  'udp://tracker.torrent.eu.org:451/announce',
+  'udp://open.stealth.si:80/announce',
+  'udp://exodus.desync.com:6969/announce',
+  'udp://explodie.org:6969/announce',
+];
+
 /// Réglages envoyés à TorrServer (`POST /settings`, clés de `BTSets`).
 ///
 /// - Cache sur disque, borné par [TorrentSettings.maxCacheBytes], dans le
@@ -63,7 +76,7 @@ const _mib = 1024 * 1024;
 /// - Envoi : coupé sans ensemencement, sinon limite en Kio/s (0 = illimité).
 /// - DHT actif ; UPnP, découverte locale (LPD), Bonjour, DLNA, recherche et
 ///   liste de trackers distante coupés : rien n'est annoncé sur le réseau local
-///   ni demandé à un tiers hors des trackers du magnet.
+///   ni demandé à un tiers hors des trackers du magnet et de [publicTrackers].
 Map<String, Object?> torrServerSettings(TorrentSettings s) {
   final cache = s.maxCacheBytes < 64 * _mib ? 64 * _mib : s.maxCacheBytes;
   int pct(int bytes) => (bytes * 100 ~/ cache).clamp(1, 95);
@@ -86,7 +99,8 @@ Map<String, Object?> torrServerSettings(TorrentSettings s) {
     'EnableIPv6': false,
     'EnableRutorSearch': false,
     'EnableTorznabSearch': false,
-    'RetrackersMode': 0,
+    'RetrackersMode': 1,
+    'DefaultTrackers': publicTrackers.join('\n'),
     'TrackersListURL': '',
     'EnableDebug': false,
     // Un torrent en pause ne doit pas être abandonné trop vite.
@@ -182,15 +196,26 @@ class TorrServerEngine implements TorrentEngine {
   Future<void> _boot() async {
     _ep = await process.start();
     await _waitEcho();
-    // `set` remplace tout : on part des réglages courants du moteur.
+    // `set` remplace tout (et relance le client BitTorrent, ~3,5 s sur la
+    // box) : on part des réglages courants et on n'écrit que s'il y a un
+    // écart. TorrServer garde ses réglages dans son dossier de données : aux
+    // lancements suivants, plus rien à écrire.
     final current = _decode(
       await _send('POST', '/settings', {'action': 'get'}),
     );
-    final merged = <String, Object?>{
-      if (current is Map<String, Object?>) ...current,
-      ...torrServerSettings(_settings!),
-    };
-    await _send('POST', '/settings', {'action': 'set', 'sets': merged});
+    final wanted = torrServerSettings(_settings!);
+    final base = current is Map<String, Object?>
+        ? current
+        : <String, Object?>{};
+    final differs = wanted.entries.any(
+      (e) => jsonEncode(base[e.key]) != jsonEncode(e.value),
+    );
+    if (differs) {
+      await _send('POST', '/settings', {
+        'action': 'set',
+        'sets': {...base, ...wanted},
+      });
+    }
   }
 
   Future<void> _recover() {

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -49,6 +48,9 @@ void main() {
       expect(m['EnableBonjour'], isFalse);
       expect(m['EnableDLNA'], isFalse);
       expect(m['TrackersListURL'], '');
+      expect(m['RetrackersMode'], 1);
+      expect(m['DefaultTrackers'], publicTrackers.join('\n'));
+      expect(publicTrackers.every((t) => t.startsWith('udp://')), isTrue);
     });
 
     test('cache minimal 64 Mo, pourcentages dans [1, 95]', () {
@@ -99,6 +101,15 @@ void main() {
       expect(server.settings['UseDisk'], isTrue);
       expect(server.settings['TorrentsSavePath'], '/c');
     });
+
+    test(
+      'réglages déjà en place : aucun set (relance du client évitée)',
+      () async {
+        server.settings = {...server.settings, ...torrServerSettings(settings)};
+        await engine.init(settings);
+        expect(server.settingsSets, 0);
+      },
+    );
 
     test('init échoue proprement si le moteur ne répond pas', () async {
       await server.close();

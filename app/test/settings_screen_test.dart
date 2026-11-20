@@ -349,7 +349,7 @@ void main() {
     await h.tapTile('about');
     expect(find.textContaining('GPL-3.0'), findsWidgets);
     expect(find.textContaining('libmpv'), findsWidgets);
-    expect(find.textContaining('libtorrent'), findsWidgets);
+    expect(find.textContaining('TorrServer'), findsWidgets);
     expect(find.text('Licences open source'), findsOneWidget);
     await h.dispose();
   });

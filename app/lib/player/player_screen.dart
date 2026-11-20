@@ -475,7 +475,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
             if (_disposed || token != _torrentToken) return;
             _torrentToken++;
             _torrentActive = false;
-            unawaited(torrent.release());
+            // Torrent libéré ET processus du moteur arrêté.
+            unawaited(torrent.shutdown());
             unawaited(_cast.stop(resume: false)); // plus rien à relayer
             try {
               unawaited(_ctl.player.stop().catchError((Object _) {}));

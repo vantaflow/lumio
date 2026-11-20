@@ -32,6 +32,16 @@ android {
         versionName = flutter.versionName
     }
 
+    packaging {
+        jniLibs {
+            // TorrServer est exécuté depuis nativeLibraryDir : les .so doivent
+            // être extraits à l'installation, et son binaire Go ne doit pas
+            // passer par `strip`.
+            useLegacyPackaging = true
+            keepDebugSymbols += "**/libtorrserver.so"
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

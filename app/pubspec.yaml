@@ -41,7 +41,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   url_launcher: ^6.3.3
   package_info_plus: ^10.2.2
-  libtorrent_flutter: 1.7.5
   drift: ^2.34.0
   sqlite3_flutter_libs: ^0.6.0+eol
   flutter_riverpod: ^2.6.1
