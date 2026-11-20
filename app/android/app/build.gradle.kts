@@ -22,7 +22,12 @@ val releaseStoreFile = signingValue("storeFile", "LUMIO_KEYSTORE_FILE")
 val releaseStorePassword = signingValue("storePassword", "LUMIO_KEYSTORE_PASSWORD")
 val releaseKeyPassword = signingValue("keyPassword", "LUMIO_KEY_PASSWORD")
 val releaseKeyAlias = signingValue("keyAlias", "LUMIO_KEY_ALIAS")
-val hasReleaseKey = releaseStoreFile != null && releaseStorePassword != null &&
+// LUMIO_DEBUG_SIGNING=1 force la clé debug : APK installable par-dessus une
+// version de test signée debug (box de développement), même si la clé
+// release est présente sur le poste.
+val forceDebugSigning = System.getenv("LUMIO_DEBUG_SIGNING") == "1"
+val hasReleaseKey = !forceDebugSigning &&
+    releaseStoreFile != null && releaseStorePassword != null &&
     releaseKeyPassword != null && releaseKeyAlias != null
 
 android {
