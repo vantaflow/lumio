@@ -247,7 +247,7 @@
   "settingsTorrentCache": "Torrent cache",
   "settingsUpload": "Upload speed",
   "unlimited": "Unlimited",
-  "uploadOff": "Off (no seeding)",
+  "uploadOff": "Off (no seeding, minimal 32 KB/s upload)",
   "settingsClearCacheOnExit": "Clear cache on exit",
   "optionYes": "Yes",
   "optionNo": "No",

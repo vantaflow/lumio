@@ -810,7 +810,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get unlimited => 'Illimité';
 
   @override
-  String get uploadOff => 'Désactivé (pas d\'ensemencement)';
+  String get uploadOff =>
+      'Désactivé (pas d\'ensemencement, envoi minimal de 32 Ko/s)';
 
   @override
   String get settingsClearCacheOnExit => 'Vider le cache en quittant';

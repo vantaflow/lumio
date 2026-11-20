@@ -4,12 +4,25 @@ import 'package:flutter/foundation.dart';
 import 'package:libtorrent_flutter/libtorrent_flutter.dart' as lt;
 import 'package:lumio/torrent/torrent_engine.dart';
 
+/// Plancher du débit montant (octets/s). libtorrent applique la limite à
+/// TOUS les octets sortants, poignées de main et requêtes de métadonnées
+/// comprises : à 1 octet/s une poignée de 68 octets dépasse le délai de 5 s du
+/// moteur, les pairs sont coupés et les métadonnées d'un magnet n'arrivent
+/// jamais (constaté sur la box : 32 à 58 pairs, 100 octets/s). 32 Kio/s suffit
+/// au protocole et à la réciprocité des pairs sans ensemencer pour de bon.
+const minProtocolUploadBytes = 32 * 1024;
+
 /// Limite montante envoyée à libtorrent (octets/s). libtorrent_flutter 1.7.5
 /// n'expose aucun interrupteur d'ensemencement et traite 0 comme « illimité » :
 /// quand l'ensemencement est désactivé (`seed` faux) on applique donc le
-/// minimum, 1 octet/s, ce qui coupe l'envoi en pratique.
-int engineUploadLimit(TorrentSettings s) =>
-    !s.seed ? 1 : (s.uploadLimit < 0 ? 0 : s.uploadLimit);
+/// plancher [minProtocolUploadBytes] ; une limite active plus basse y est relevée.
+int engineUploadLimit(TorrentSettings s) {
+  if (!s.seed) return minProtocolUploadBytes;
+  if (s.uploadLimit <= 0) return 0;
+  return s.uploadLimit < minProtocolUploadBytes
+      ? minProtocolUploadBytes
+      : s.uploadLimit;
+}
 
 /// Adaptateur de `libtorrent_flutter` (libtorrent 2.x via FFI).
 /// Aucun type libtorrent ne sort de cette classe.

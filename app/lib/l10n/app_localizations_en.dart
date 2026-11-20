@@ -800,7 +800,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unlimited => 'Unlimited';
 
   @override
-  String get uploadOff => 'Off (no seeding)';
+  String get uploadOff => 'Off (no seeding, minimal 32 KB/s upload)';
 
   @override
   String get settingsClearCacheOnExit => 'Clear cache on exit';

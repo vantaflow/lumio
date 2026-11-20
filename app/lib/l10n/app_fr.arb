@@ -447,7 +447,7 @@
   "settingsTorrentCache": "Cache",
   "settingsUpload": "Limite d'envoi",
   "unlimited": "Illimité",
-  "uploadOff": "Désactivé (pas d'ensemencement)",
+  "uploadOff": "Désactivé (pas d'ensemencement, envoi minimal de 32 Ko/s)",
   "settingsClearCacheOnExit": "Vider le cache en quittant",
   "optionYes": "Oui",
   "optionNo": "Non",

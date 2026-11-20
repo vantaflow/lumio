@@ -74,9 +74,15 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
       var peersMax = 0;
       var rate = 0;
       var peers = 0;
+      var seeders = 0;
+      var upRate = 0;
+      var progress = 0.0;
       sub = engine.status(id).listen((s) {
         rate = s.downloadRate;
         peers = s.peers;
+        seeders = s.seeders;
+        upRate = s.uploadRate;
+        progress = s.progress;
         if (peers > peersMax) peersMax = peers;
       });
       ticker = Timer.periodic(const Duration(seconds: 10), (_) {
@@ -84,7 +90,10 @@ class _TorrentSpikeScreenState extends State<TorrentSpikeScreen> {
           'event': 'tick',
           'ms': sw.elapsedMilliseconds,
           'peers': peers,
+          'seeders': seeders,
           'rate': rate,
+          'up': upRate,
+          'progress': progress,
         });
         _show('t=${sw.elapsed.inSeconds}s pairs=$peers débit=$rate');
       });
