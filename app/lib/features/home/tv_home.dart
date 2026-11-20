@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/features/profiles/profile_picker_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
@@ -113,12 +114,23 @@ class TvTopBar extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      TvNavPill(
-                        key: const ValueKey('home-nav-home'),
-                        label: l.tvNavHome,
-                        selected: true,
-                        focusNode: homeNode,
-                        onPressed: () {},
+                      // Premier élément de la barre : Gauche ne mène nulle
+                      // part, le focus reste sur « Accueil » (sans ce garde,
+                      // il sautait dans le contenu et l'anneau disparaissait).
+                      Focus(
+                        canRequestFocus: false,
+                        skipTraversal: true,
+                        onKeyEvent: (_, event) =>
+                            event.logicalKey == LogicalKeyboardKey.arrowLeft
+                            ? KeyEventResult.handled
+                            : KeyEventResult.ignored,
+                        child: TvNavPill(
+                          key: const ValueKey('home-nav-home'),
+                          label: l.tvNavHome,
+                          selected: true,
+                          focusNode: homeNode,
+                          onPressed: () {},
+                        ),
                       ),
                       const SizedBox(width: 12),
                       TvNavPill(label: l.typeMovie, onPressed: onMovies),

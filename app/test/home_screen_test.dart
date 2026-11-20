@@ -939,6 +939,48 @@ void main() {
       expect(layout.order.take(2), [libraryRowId, continueRowId]);
       await h.close();
     });
+
+    testWidgets(
+      'barre haute : Gauche depuis « Accueil » garde le focus dessus',
+      (t) async {
+        final h = _H(t);
+        await h.pump(
+          tv: true,
+          addons: [_installed(_manifest('a'))],
+          aggregator: _FakeAggregator([
+            [
+              _row('a', 'top', [_meta('1')]),
+            ],
+          ]),
+        );
+        final home = find.byKey(const ValueKey('home-nav-home'));
+        Element? homeCard() => find
+            .descendant(of: home, matching: find.byType(Focus))
+            .evaluate()
+            .firstOrNull;
+        bool onHome() {
+          final ctx = FocusManager.instance.primaryFocus?.context;
+          if (ctx == null) return false;
+          return ctx == homeCard() ||
+              find
+                  .descendant(of: home, matching: find.byWidget(ctx.widget))
+                  .evaluate()
+                  .isNotEmpty;
+        }
+
+        var guard = 0;
+        while (!onHome() && guard++ < 10) {
+          await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+          await t.pump(const Duration(milliseconds: 100));
+        }
+        expect(onHome(), isTrue);
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await t.pump(const Duration(milliseconds: 200));
+        expect(FocusManager.instance.primaryFocus, isNotNull);
+        expect(onHome(), isTrue);
+        await h.close();
+      },
+    );
   });
 
   group('pages Films et Séries', () {

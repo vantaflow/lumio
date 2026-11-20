@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/ui/icons/lumio_icons.dart';
@@ -518,6 +519,35 @@ void main() {
     await t.tap(find.text('Retour'));
     await h.settle();
     expect(h.client.streamCalls.last, 'org.a|tt9:2:1');
+    await h.close();
+  });
+
+  testWidgets('fiche série à 1080p : « + Ma liste » entier, anneau compris', (
+    t,
+  ) async {
+    final h = _H(t);
+    h.client.metas['org.a'] = {
+      'name': 'Une série au titre vraiment très long pour occuper trois lignes',
+      'description': List.filled(60, 'synopsis').join(' '),
+      'videos': [
+        {'id': 'tt9:1:1', 'season': 1, 'episode': 1, 'title': 'Pilote'},
+      ],
+    };
+    await h.pump(
+      preview: _preview(id: 'tt9', type: 'series'),
+    );
+    await h.settle();
+    final list = find.byKey(const ValueKey('detail-list'));
+    // Focus sur « + Ma liste » (sous « Lecture auto »).
+    for (var i = 0; i < 4; i++) {
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await t.pump(const Duration(milliseconds: 400));
+    }
+    await h.settle();
+    final r = t.getRect(list);
+    // Anneau : décalé de 4 dp + 4 dp d'épaisseur, plus l'échelle 1,04.
+    expect(r.bottom + 12, lessThanOrEqualTo(1080));
+    expect(r.top, greaterThanOrEqualTo(0));
     await h.close();
   });
 

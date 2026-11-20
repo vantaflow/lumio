@@ -487,6 +487,28 @@ void main() {
     await h.close();
   });
 
+  testWidgets('« Actualiser » reste entièrement visible à droite des puces', (
+    t,
+  ) async {
+    final site = FakeCatalogSite(cards: _cards);
+    final h = AppHarness(t, size: const Size(1920, 1080));
+    await h.pump(
+      _Launcher(ValueNotifier(null)),
+      extra: [catalogOverride(site)],
+    );
+    await _open(h, t);
+    final r = t.getRect(find.byKey(const ValueKey('catalog-refresh')));
+    // Dans les marges de sécurité de 96 dp, jamais coupé par le bord.
+    expect(r.left, greaterThan(0));
+    expect(r.right, lessThanOrEqualTo(1920 - 96 + 0.5));
+    // La première puce garde sa place et son anneau (dans l'écran).
+    expect(
+      t.getRect(find.byKey(const ValueKey('chip:more'))).left,
+      isNonNegative,
+    );
+    await h.close();
+  });
+
   testWidgets('actualiser : ignore le cache frais', (t) async {
     final site = FakeCatalogSite(cards: _cards);
     final h = AppHarness(t, size: const Size(1920, 1080));

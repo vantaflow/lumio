@@ -57,7 +57,6 @@ class TvScreen extends StatelessWidget {
                       const SizedBox(width: 28),
                     ],
                     Expanded(
-                      flex: actions.isEmpty ? 1 : 3,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,30 +91,37 @@ class TvScreen extends StatelessWidget {
                     ),
                     // Maquettes : `.top{gap:28px}`, actions alignées à droite
                     // (réduites si l'espace manque).
-                    if (actions.isNotEmpty)
-                      Expanded(
-                        flex: 2,
-                        child: Align(
+                    if (actions.isNotEmpty) ...[
+                      const SizedBox(width: 28),
+                      // Les actions gardent leur largeur naturelle (le titre
+                      // cède la place, il est déjà ellipsé) ; elles ne sont
+                      // réduites d'un bloc qu'au-delà de 1100 dp.
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          // Le titre garde au moins 420 dp (ellipsé au-delà).
+                          maxWidth:
+                              (MediaQuery.sizeOf(context).width -
+                                      2 * m -
+                                      (showBack ? 100 : 0) -
+                                      28 -
+                                      420)
+                                  .clamp(0.0, 1100.0),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
                           alignment: AlignmentDirectional.centerEnd,
-                          // Largeur naturelle des actions, réduites d'un bloc si
-                          // l'espace manque : avec un Flexible par action, deux
-                          // boutons se partageaient la place à parts égales et le
-                          // libellé du second était coupé (« Ajouter un d… »).
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: AlignmentDirectional.centerEnd,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                for (final (i, a) in actions.indexed) ...[
-                                  if (i > 0) const SizedBox(width: 28),
-                                  a,
-                                ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (final (i, a) in actions.indexed) ...[
+                                if (i > 0) const SizedBox(width: 28),
+                                a,
                               ],
-                            ),
+                            ],
                           ),
                         ),
                       ),
+                    ],
                   ],
                 ),
               ),

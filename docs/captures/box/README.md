@@ -12,7 +12,7 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 | Réglages | `TV10-reglages-general.png`, `TV10-reglages-sources.png`, `TV10-reglages-profils.png` | TV10 | rail, carte du téléphone |
 | Recherche | `TV12-recherche-vide.png`, `TV12-recherche-resultats.png`, `TV12-recherche-clavier-arabe.png` | TV12 | contour interne du champ corrigé |
 | Suivi Trakt et code d'appareil | `TV25-suivi-trakt.png`, `TV26-code-trakt.png` | TV25, TV26 | le cadre du code passait sous le QR (corrigé) |
-| Dossiers locaux | `TV30-dossiers-locaux.png`, `TV30-dossiers-locaux-vide.png` | TV30 | bouton « Ajouter un d… » coupé (corrigé) |
+| Dossiers locaux | `TV30-dossiers-locaux.png`, `TV30-dossiers-locaux-vide.png`, `D4-dossiers-locaux-ajouter-complet.png` | TV30 | bouton « Ajouter un d… » coupé (corrigé ; libellé complet revérifié le 2026-11-20) |
 | Sauvegarde et import | `TV33-sauvegarde-import.png`, `TV33-reglages-sauvegarde.png` | TV33 | |
 | Gestion des profils | `TV35-gestion-profils.png`, `TV35-qui-regarde-gestion.png` | TV35 | badge crayon au-dessus de l'anneau |
 | Calendrier vide | `TV42-calendrier-vide.png` | TV42 | |
@@ -21,5 +21,8 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 | Adresse locale | `P04b-adresse-locale.png` | P04 | confirmation d'installation depuis le portail |
 | Confirmation | `P09-confirmation-suppression-profil.png` | P09 | |
 | Erreur de lecture | `P10-erreur-lecture.png` | P10 | |
+| Barre haute : Gauche sur Accueil | `D1-accueil-gauche-reste-sur-accueil.png` | TV05 | le focus reste sur « Accueil » (passe du 2026-11-20) |
+| Catalogue d'addons : Actualiser | `D2-catalogue-actualiser-visible.png`, `D2b-catalogue-actualiser-focus.png` | TV16 | puces défilantes, « Actualiser » fixe et entier, anneau visible |
+| Fiche série : boutons | `D3-fiche-serie-ma-liste-visible.png` | TV40 | « + Ma liste » entier à 1080p, anneau compris |
 
 Pages du portail vues dans Chrome headless à 390 px : à ajouter (non faites dans cette passe).

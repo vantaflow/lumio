@@ -412,46 +412,70 @@ class _CatalogTabState extends ConsumerState<CatalogTab> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Les puces défilent dans leur propre fenêtre ; « Actualiser »
+            // reste fixé à droite, jamais coupé. La fenêtre déborde de 12 dp
+            // de chaque côté (décalée d'autant) pour que l'anneau de focus
+            // d'une puce en bout de rang ne soit pas rogné.
             SizedBox(
               height: 52,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                clipBehavior: Clip.none,
-                child: Row(
-                  children: [
-                    for (final (i, ch) in catalogChips.indexed) ...[
-                      if (i > 0) const SizedBox(width: 12),
-                      _Chip(
-                        key: ValueKey('chip:${ch.id}'),
-                        label: chipLabel(ch.id, l),
-                        selected: _more == null && _chip == i,
-                        onSelect: () => _selectChip(i),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Transform.translate(
+                      offset: const Offset(-12, 0),
+                      child: OverflowBox(
+                        alignment: Alignment.centerLeft,
+                        minHeight: 76,
+                        maxHeight: 76,
+                        child: SizedBox(
+                          height: 76,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                for (final (i, ch) in catalogChips.indexed) ...[
+                                  if (i > 0) const SizedBox(width: 12),
+                                  _Chip(
+                                    key: ValueKey('chip:${ch.id}'),
+                                    label: chipLabel(ch.id, l),
+                                    selected: _more == null && _chip == i,
+                                    onSelect: () => _selectChip(i),
+                                  ),
+                                ],
+                                const SizedBox(width: 12),
+                                _Chip(
+                                  key: const ValueKey('chip:more'),
+                                  label: _more == null
+                                      ? l.catMore
+                                      : catalogMoreLabel(_more!, l),
+                                  selected: _more != null,
+                                  onSelect: _pickMore,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
-                    const SizedBox(width: 12),
-                    _Chip(
-                      key: const ValueKey('chip:more'),
-                      label: _more == null
-                          ? l.catMore
-                          : catalogMoreLabel(_more!, l),
-                      selected: _more != null,
-                      onSelect: _pickMore,
                     ),
-                    const SizedBox(width: 12),
-                    TvButton(
-                      key: const ValueKey('catalog-refresh'),
-                      label: l.catalogRefresh,
-                      kind: TvButtonKind.ghost,
-                      height: 52,
-                      horizontalPadding: 24,
-                      fontSize: 24,
-                      scale: 1.06,
-                      onPressed: _loading
-                          ? null
-                          : () => unawaited(_load(refresh: true)),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  TvButton(
+                    key: const ValueKey('catalog-refresh'),
+                    label: l.catalogRefresh,
+                    kind: TvButtonKind.ghost,
+                    height: 52,
+                    horizontalPadding: 24,
+                    fontSize: 24,
+                    scale: 1.06,
+                    onPressed: _loading
+                        ? null
+                        : () => unawaited(_load(refresh: true)),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),

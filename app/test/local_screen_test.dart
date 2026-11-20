@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/data/db.dart';
@@ -153,6 +154,43 @@ void main() {
       expect(find.textContaining('Dossier ajouté'), findsOneWidget);
       await h.close();
     });
+
+    testWidgets(
+      '« Ajouter un dossier » : libellé complet, ni coupé ni réduit',
+      (t) async {
+        final h = _H(t);
+        await h.start();
+        await h.tapKey(
+          'local-add',
+        ); // un dossier : le bouton d'analyse apparaît
+        final label = find.descendant(
+          of: find.byKey(const ValueKey('local-add')),
+          matching: find.text('Ajouter un dossier'),
+        );
+        expect(label, findsOneWidget);
+        final para = t.renderObject<RenderParagraph>(label);
+        expect(para.didExceedMaxLines, isFalse);
+        // Le libellé tient dans son bouton, à taille réelle (28 sp).
+        expect(
+          para.size.width,
+          greaterThanOrEqualTo(
+            (TextPainter(
+                  text: TextSpan(
+                    text: 'Ajouter un dossier',
+                    style: para.text.style,
+                  ),
+                  textDirection: TextDirection.ltr,
+                )..layout()).width -
+                0.5,
+          ),
+        );
+        final btn = t.getRect(find.byKey(const ValueKey('local-add')));
+        expect(btn.right, lessThanOrEqualTo(1920 - 96 + 0.5));
+        // Aucune mise à l'échelle : la hauteur du bouton reste 76 dp.
+        expect(btn.height, closeTo(76, 0.5));
+        await h.close();
+      },
+    );
 
     testWidgets('permission refusée : message, aucun dossier', (t) async {
       final h = _H(t);

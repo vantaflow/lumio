@@ -351,12 +351,15 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
     return LayoutBuilder(
       builder: (context, c) {
         final wide = c.maxWidth >= 1500;
+        final pinned = isSeries && c.maxWidth >= 900;
         final info = _Info(
           meta: meta,
           allowPrivate: allowPoster,
-          // Fiche série : boutons sous le synopsis (TV40) ; fiche film :
-          // en tête de la colonne des flux (TV06).
-          buttons: isSeries || c.maxWidth < 900 ? buttons : null,
+          // Fiche série : boutons sous le synopsis (TV40), épinglés en bas de
+          // la colonne (jamais coupés, quelle que soit la hauteur du texte) ;
+          // fiche film : en tête de la colonne des flux (TV06).
+          buttons: !pinned && (isSeries || c.maxWidth < 900) ? buttons : null,
+          compact: pinned,
         );
         if (c.maxWidth >= 900) {
           return Row(
@@ -372,21 +375,40 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                     colors: [const Color(0xFF1B2A33), context.lumio.bg],
                   ),
                 ),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    wide ? tvMargin : LumioSpacing.xl,
-                    wide ? 80 : LumioSpacing.md,
-                    wide ? 60 : LumioSpacing.lg,
-                    LumioSpacing.xl,
-                  ),
-                  child: info,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          wide ? tvMargin : LumioSpacing.xl,
+                          wide ? (pinned ? 56 : 80) : LumioSpacing.md,
+                          wide ? 60 : LumioSpacing.lg,
+                          pinned ? 0 : LumioSpacing.xl,
+                        ),
+                        child: info,
+                      ),
+                    ),
+                    if (pinned)
+                      Padding(
+                        // 12 dp de marge autour des boutons : l'anneau de
+                        // focus (8 dp) et l'échelle restent dans l'écran.
+                        padding: EdgeInsets.fromLTRB(
+                          (wide ? tvMargin : LumioSpacing.xl) - 12,
+                          0,
+                          0,
+                          36,
+                        ),
+                        child: buttons,
+                      ),
+                  ],
                 ),
               ),
               Expanded(
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(
                     wide ? 40 : 12,
-                    wide ? (isSeries ? 72 : 80) : 0,
+                    wide ? (isSeries ? 72 : 68) : 0,
                     wide ? tvMargin : 0,
                     48,
                   ),
@@ -453,14 +475,17 @@ class _Buttons extends StatelessWidget {
     );
     if (stacked) {
       return Padding(
-        padding: const EdgeInsets.only(top: 28),
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [play, const SizedBox(height: 16), list],
         ),
       );
     }
-    return Wrap(spacing: 20, runSpacing: 16, children: [play, list]);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Wrap(spacing: 20, runSpacing: 16, children: [play, list]),
+    );
   }
 }
 
@@ -469,11 +494,16 @@ class _Info extends StatelessWidget {
     required this.meta,
     required this.allowPrivate,
     required this.buttons,
+    this.compact = false,
   });
 
   final Meta meta;
   final bool allowPrivate;
   final Widget? buttons;
+
+  /// Colonne dont les boutons sont épinglés en bas : affiche, titre et
+  /// synopsis réduits pour tenir au-dessus d'eux à 1080p.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -492,13 +522,13 @@ class _Info extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: SizedBox(
-            width: 300,
-            height: 450,
+            width: compact ? 240 : 300,
+            height: compact ? 360 : 450,
             child: TvArtwork(
               seed: meta.id,
               url: meta.poster,
               allowPrivate: allowPrivate,
-              width: 300,
+              width: compact ? 240 : 300,
               scrim: false,
               resize: false,
             ),
@@ -509,7 +539,7 @@ class _Info extends StatelessWidget {
           header: true,
           child: Text(
             meta.name,
-            maxLines: 3,
+            maxLines: compact ? 2 : 3,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.headlineLarge?.copyWith(
               color: lumio.text,
@@ -532,7 +562,7 @@ class _Info extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             meta.description!,
-            maxLines: 6,
+            maxLines: compact ? 4 : 6,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: const Color(0xFFC9D0DA),
