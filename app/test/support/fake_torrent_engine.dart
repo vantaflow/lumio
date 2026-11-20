@@ -104,6 +104,11 @@ class FakeTorrentEngine implements TorrentEngine {
     await _controllers.remove(id)?.close();
   }
 
+  bool cacheCleared = false;
+
+  @override
+  Future<void> clearCache() async => cacheCleared = true;
+
   @override
   Future<void> dispose() async {
     disposed = true;

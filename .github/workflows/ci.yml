@@ -40,6 +40,14 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze --fatal-infos
       - run: flutter test
+      # TorrServer : binaires officiels épinglés (version + SHA-256), jamais
+      # commités. Le cache est indexé sur le fichier d'épinglage.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/lumio-torrserver
+          key: torrserver-${{ hashFiles('scripts/torrserver.pins') }}
+      - run: bash ../scripts/fetch-torrserver.sh
+      - run: bash ../scripts/fetch-torrserver.sh --verify
       - run: flutter build apk --release --target-platform android-arm
 
   backend:

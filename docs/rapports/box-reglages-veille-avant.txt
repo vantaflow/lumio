@@ -1,0 +1,5 @@
+system screen_off_timeout = 600000
+secure sleep_timeout = 1200000
+secure attentive_timeout = null
+secure screensaver_enabled = 1
+global stay_on_while_plugged_in = 0

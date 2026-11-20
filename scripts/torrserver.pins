@@ -1,0 +1,5 @@
+# Version et condensés SHA-256 épinglés de TorrServer (YouROK/TorrServer, GPL-3.0).
+# Condensés publiés par GitHub pour les assets de la release (champ "digest").
+VERSION=MatriX.150
+SHA256_ARM7=852e15b8d4739ac94ce0e046bba5c7a929b2ad75f980849cef10c668971ee764
+SHA256_ARM64=760f18c6837c7fc1c440726a14e7534e3baca914b780fbc3ec28a38b6158aaf0

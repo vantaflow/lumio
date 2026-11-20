@@ -64,5 +64,10 @@ abstract class TorrentEngine {
   Future<Uri> stream(String id, {int? fileIndex});
   Stream<TorrentStatus> status(String id);
   Future<void> stop(String id, {bool deleteData = true});
+
+  /// Retire tous les torrents et vide le cache du moteur.
+  Future<void> clearCache();
+
+  /// Arrête le moteur (processus compris) ; `init` peut être rappelé ensuite.
   Future<void> dispose();
 }

@@ -13,3 +13,6 @@ packages/*/.dart_tool/
 .gradle/
 local.properties
 __pycache__/
+
+# TorrServer : binaires téléchargés par scripts/fetch-torrserver.sh (jamais commités)
+app/android/app/src/main/jniLibs/
