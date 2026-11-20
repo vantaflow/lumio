@@ -315,6 +315,7 @@ void main() {
       FakeNetworkProbe probe, {
       Map<String, String>? settings,
       FakeTorrentEngine? engine,
+      String? startNotice,
     }) async {
       final ctl = RecordingPlayerController();
       final e = engine ?? FakeTorrentEngine();
@@ -343,6 +344,8 @@ void main() {
             locale: const Locale('fr'),
             home: PlayerScreen(
               item: _item,
+              startNotice: startNotice,
+              metaId: startNotice == null ? null : 'tt1',
               controller: ctl,
               videoBuilder: (_) => const ColoredBox(color: Colors.black),
               tracksBackend: (_) => NoTracksBackend(),
@@ -378,6 +381,24 @@ void main() {
       expect(store.data[AppSettingsStore.ipWarningAcceptedKey], '1');
       expect(ctl.opened, hasLength(1));
       expect(e.addedMagnets, hasLength(1));
+      expect(find.textContaining('Aucun VPN détecté'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('le message de reprise n\'est pas écrasé par le rappel VPN', (
+      t,
+    ) async {
+      await pumpPlayer(
+        t,
+        FakeNetworkProbe([_wlan]),
+        settings: {AppSettingsStore.ipWarningAcceptedKey: '1'},
+        startNotice: 'Source d\'origine indisponible',
+      );
+      // Le message de repli reste visible d'abord ; le rappel VPN passe après.
+      expect(find.textContaining('Source d\'origine'), findsOneWidget);
+      expect(find.textContaining('Aucun VPN détecté'), findsNothing);
+      await t.pump(const Duration(seconds: 5));
+      await t.pump(const Duration(milliseconds: 500));
       expect(find.textContaining('Aucun VPN détecté'), findsOneWidget);
       await t.pumpWidget(const SizedBox());
     });
@@ -504,6 +525,34 @@ void main() {
       expect(e.stopped, ['fake-1', 'fake-2']);
       await t.pumpWidget(const SizedBox());
     });
+
+    testWidgets(
+      'échec après une touche pressée : Entrée relance « Réessayer »',
+      (t) async {
+        final probe = FakeNetworkProbe([_wlan, _tun]);
+        final (ctl, _, _) = await pumpPlayer(
+          t,
+          probe,
+          settings: {
+            AppSettingsStore.ipWarningAcceptedKey: '1',
+            AppSettingsStore.requireVpnKey: '1',
+          },
+        );
+        // L'utilisateur touche la télécommande pendant le chargement : le
+        // focus passe sur une commande du lecteur.
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await t.pump();
+        probe.up = [_wlan];
+        await t.pump(const Duration(seconds: 3));
+        await _settle(t);
+        expect(ctl.failures, hasLength(1));
+        probe.up = [_wlan, _tun];
+        await t.sendKeyEvent(LogicalKeyboardKey.enter);
+        await _settle(t);
+        expect(ctl.opened, hasLength(2));
+        await t.pumpWidget(const SizedBox());
+      },
+    );
 
     testWidgets('réglages illisibles : échec fermé, rien ne démarre', (
       t,

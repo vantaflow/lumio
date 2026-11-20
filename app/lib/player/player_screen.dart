@@ -426,7 +426,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         _failTorrent(token, (l) => l.torrentVpnRequired);
         return;
       }
-      if (decision is GuardWarnNoVpn) _tellL((l) => l.torrentNoVpnReminder);
+      if (decision is GuardWarnNoVpn && mounted) {
+        // En file : ne masque pas un message déjà affiché (repli de reprise).
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text(context.l10n.torrentNoVpnReminder)),
+        );
+      }
     } on Object {
       // Réglages illisibles : on ne démarre pas (échec fermé).
       _failTorrent(token, (l) => l.torrentFailed);
@@ -1240,7 +1245,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   }
 }
 
-class _FailureView extends StatelessWidget {
+class _FailureView extends StatefulWidget {
   const _FailureView({
     required this.message,
     required this.onRetry,
@@ -1252,6 +1257,36 @@ class _FailureView extends StatelessWidget {
   final VoidCallback onRetry;
   final VoidCallback onOther;
   final VoidCallback onBack;
+
+  @override
+  State<_FailureView> createState() => _FailureViewState();
+}
+
+class _FailureViewState extends State<_FailureView> {
+  final _retryFocus = FocusNode(debugLabel: 'player:retry');
+
+  @override
+  void initState() {
+    super.initState();
+    // `autofocus` seul ne suffit pas : si l'utilisateur a touché la
+    // télécommande pendant le chargement, le focus est encore sur une
+    // commande en cours de retrait et l'autofocus est ignoré, d'où un écran
+    // d'erreur sans focus où « Réessayer » ne réagit à rien.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _retryFocus.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _retryFocus.dispose();
+    super.dispose();
+  }
+
+  String get message => widget.message;
+  VoidCallback get onRetry => widget.onRetry;
+  VoidCallback get onOther => widget.onOther;
+  VoidCallback get onBack => widget.onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -1333,6 +1368,7 @@ class _FailureView extends StatelessWidget {
                     TvButton(
                       label: l.retry,
                       autofocus: true,
+                      focusNode: _retryFocus,
                       height: 76,
                       fontSize: 28,
                       horizontalPadding: 40,

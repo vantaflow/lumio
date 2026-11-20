@@ -46,3 +46,7 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 - `TS03-lecture-sintel-torrserver.png` : lecture de Sintel (torrent légal) dans le lecteur de Lumio, servie par TorrServer.
 - `TS04-lecture-echouee-delai-depasse.png` : état figé trouvé sur la box (« Délai dépassé : la source ne répond pas », « Réessayer » sans effet) après une longue session, avant de relancer l'appli.
 - `TS05-lecture-sintel-repli-apres-relance.png` : même torrent, appli relancée (`am force-stop`) : repli automatique jusqu'à la source de test, lecture à 4:34, 4 sources, 100 % téléchargé.
+- `TS06` à `TS09` (soir du 2026-11-20, box en Ethernet) : lecture de Sintel jusqu'à 11:11, accueil « Reprendre · 3 min restantes », reprise du même flux (« 3 sources · 8 % » = torrent de l'addon de test, pas celui de Torrentio) à 11:19 puis image à 11:40 (215 Ko/s, essaim lent ce soir).
+- `TS10-lecture-echouee-essaim-vide.png` : « Délai dépassé » après une touche pressée pendant le chargement ; l'écran n'avait aucun focus (« Réessayer » ne réagissait à rien). Cause trouvée et corrigée (voir le rapport).
+- `TS11-echec-reessayer-focus-apres-correctif.png` : même scénario avec le correctif : « Réessayer » porte l'anneau de focus ; Entrée relance une préparation complète.
+- `TS12-sources-test-sintel-avec-catalogue.png` : addon de test réinstallé avec un catalogue (pour atteindre la fiche de Sintel) ; supprimé ensuite.

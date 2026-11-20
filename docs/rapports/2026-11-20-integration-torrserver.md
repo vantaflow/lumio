@@ -82,3 +82,24 @@ Tests ajoutés (écrits d'abord, 5 rouges confirmés) : `torrserver_engine_test.
 ## Vérification « Reprendre » : non faite
 Le scénario Reprendre (même flux, même position, message de repli) n'a pas pu être exécuté sur la box (injoignable). Les tests automatisés du correctif (voir plus haut) restent la seule vérification. À refaire : lecture ~1 min de Sintel via l'addon de test, sortie, « Reprendre » depuis l'accueil, puis désactivation de l'addon et nouveau « Reprendre » pour le message de repli. L'entrée Sintel actuelle de « Continuer à regarder » est ancienne (sans identité) : elle suit le classement.
 Restes sur la box : addon « Test Sintel » toujours installé (adresse du Mac périmée, serveur du Mac arrêté), à supprimer dans Réglages > Sources ; Sintel dans « Continuer à regarder » (un ajout accidentel à « Ma liste » a été annulé).
+
+## Vérification sur la box (2026-11-20, soir ; box 4K Google TV en Ethernet, appli = d374228 puis correctifs ci-dessous)
+Addon de test Sintel relancé sur le Mac (port 7788), réinstallé par `lumio://install` ; l'ancienne entrée périmée supprimée ; l'addon a été réinstallé une fois avec un catalogue pour atteindre la fiche de Sintel (la recherche Cinemeta ne la remontait pas), puis **supprimé de Lumio** et arrêté. Torrentio, Cinemeta, OpenSubtitles intouchés ; « Ma liste » inchangée (un ajout accidentel de Sintel a été annulé aussitôt). Une autre session (Kairo) a utilisé la box en parallèle (HOME, réglages Kairo) : un essai a été refait.
+
+| Point | Résultat |
+|---|---|
+| a. Lecture torrent, démarrage | Vérifié en partie. Reprise de Sintel : préparation du torrent (contrôle d'état authentifié + sonde GET Range 0-0) terminée en ~1-2 s (mpv ouvert 1-2 s après la pression), donc **la sonde ne retarde pas** ; premier démarrage à froid du moteur : mpv ouvert ~6 s après la pression (démarrage du moteur inclus), conforme aux 4-5 s mesurés. Image sur reprise à 11:40 en ~20 s. |
+| a. Débit | **Non mesurable ce soir** : essaim quasi vide (3 sources, 0 à 215 Ko/s ; Cosmos Laundromat 1 source, 0 Ko/s). Le moteur répond (aucune erreur côté appli), c'est l'essaim. Les 3-9 Mo/s de l'après-midi restent la seule mesure de débit. Sintel à froid a fini par « Délai dépassé » (essaim à 0 Ko/s). |
+| b. « Reprendre » | **Vérifié** : lecture jusqu'à 11:11, sortie, « Reprendre · 3 min restantes » : même flux (torrent de l'addon de test, 3 sources/8 %, pas celui de Torrentio à 1 source) à la position 11:19. |
+| c. Message de repli | **Partiellement** : addon de test désactivé puis « Reprendre » : lecture lancée depuis un autre flux (Torrentio, 1 source) en ~4 s, mais le message n'était pas visible. Défaut trouvé (voir 1) ; correction non revérifiée à l'écran (essaim vide, scénario non rejouable), couverte par test. |
+| d. Moteur périmé | **Non simulable sans root** : `libtorrserver.so` appartient à l'uid de l'appli, `kill` depuis adb (uid shell) refusé (« Operation not permitted »), appli non debuggable (`run-as` impossible), pas de `su`. Couvert par les tests unitaires du contrôle d'état (mot de passe périmé, torrent fantôme, 401/404, moteur arrêté). |
+
+### Défauts trouvés et corrigés
+1. **Message de reprise écrasé par le rappel VPN** : `_tell` masque le message en cours ; sur une box sans VPN le rappel « Aucun VPN détecté » remplaçait aussitôt « Source d'origine indisponible… ». Correctif : le rappel VPN est mis en file (`showSnackBar` sans masquer). Test rouge puis vert : `le message de reprise n'est pas écrasé par le rappel VPN`.
+2. **Écran « La lecture a échoué » sans focus (cause probable du « Réessayer sans effet » du diagnostic de ce soir, TS04)** : si l'utilisateur appuie sur la télécommande pendant le chargement, le focus est sur une commande du lecteur en cours de retrait ; l'`autofocus` de « Réessayer » est alors ignoré, l'écran d'erreur n'a aucun focus et Entrée ne fait rien (reproduit : aucun anneau de focus, aucun journal après Entrée). Correctif : `_FailureView` demande le focus explicitement après le premier cadre. Test rouge puis vert : `échec après une touche pressée : Entrée relance « Réessayer »`. Revérifié sur la box : anneau sur « Réessayer », Entrée relance une préparation complète (carte « 3 sources »).
+
+La cause de l'état périmé de l'après-midi (point 2) explique donc au moins l'absence de réaction à « Réessayer » ; l'état périmé du moteur lui-même n'a pas été observé ce soir.
+
+### Reste
+- Débit réel et temps jusqu'à l'image à froid : à remesurer quand l'essaim Sintel est actif.
+- Message de repli : revérifier à l'écran quand un flux de repli joue immédiatement.
