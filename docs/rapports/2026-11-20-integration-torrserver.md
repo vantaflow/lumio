@@ -58,6 +58,27 @@ Box 4K Google TV (adb sur 192.168.0.48), appli de c7f174f, TorrServer MatriX.150
 2. Faire que « Réessayer » sur un torrent relance le moteur (`stopEngine` puis `ready`) au lieu de rejouer la session.
 3. Surveiller la mémoire : swap plein sur la box de 2 Go pendant les lectures.
 
+## Causes plausibles confirmées par le code (2026-11-20, nuit)
+Lecture de `TorrServerManager.kt`, `torrserver_engine.dart`, `torrent_playback.dart`, `player_screen.dart` :
+1. **Désaccord silencieux Dart / processus** : `_call` ne relançait le moteur que sur `SocketException` et `TimeoutException`. Une réponse 401 (identifiants périmés après une relance native ou un nouveau lancement) ou 404 (torrent perdu à la relance du processus : `save_to_db: false`) devenait une simple `HttpException`, jamais récupérée. `/echo` (sans authentification) répondait, donc le moteur paraissait sain.
+2. **Aucun contrôle d'état avant `prepare`** : `ready()` mémorise l'initialisation une fois pour toutes ; ni `add` ni `stream` ne vérifiaient que le moteur acceptait encore nos identifiants et connaissait encore nos torrents.
+3. **URL de flux jamais vérifiée** : `stream()` fabriquait l'URL sans interroger le moteur ; une réponse non 2xx (corps texte) allait telle quelle à mpv (« Reading plaintext playlist »).
+4. **« Réessayer »** : le lecteur refait bien une préparation (`_openTorrent`), mais celle-ci repassait par le même moteur sans contrôle : elle échouait pour la même raison (cause 1 à 3), d'où l'absence d'effet visible. Le gestionnaire natif, lui, ne diverge pas de lui-même (même port et mot de passe à la relance du processus, plafond de 5 relances par minute) : aucun changement Kotlin nécessaire.
+
+La cause exacte de l'état périmé sur la box (relance native sous pression mémoire, bascule Wi-Fi) reste non observée, mais tous les chemins ci-dessus sont maintenant couverts.
+
+## Correctif (2026-11-20, nuit) : à vérifier sur la box
+Dans `TorrServerEngine` (garanties conservées : 127.0.0.1 seulement, mot de passe jamais journalisé ni dans un message d'erreur, coupe-circuit VPN inchangé, plafond de relance natif inchangé) :
+- **Contrôle d'état authentifié** (`POST /torrents list`) avant chaque `add` et chaque `stream` ; en cas de connexion refusée, de délai dépassé, de connexion coupée ou de 401/403 : relance réelle (arrêt du processus, nouveau `start` natif donc nouvelles coordonnées, nouveaux réglages) puis ré-ajout des torrents connus.
+- **Torrent absent côté moteur** (absent de la liste, ou 404 sur `get`) : ré-ajout transparent depuis le magnet mémorisé.
+- **Aucune URL non vérifiée pour mpv** : `stream()` sonde l'URL (GET d'un octet, 4 s) ; 401 relance le moteur, 404 rajoute le torrent, un second échec lève `TorrServerStreamException` (code HTTP seul) qui s'affiche comme « Le torrent n'a pas pu démarrer ». Un moteur qui n'a pas encore répondu après 4 s (préchargement) n'est pas une erreur.
+- **« Réessayer »** : repart d'une préparation complète, qui passe maintenant par le contrôle d'état et relance le moteur si besoin (test de non-régression ajouté).
+- **Changement de réseau** : aucune dépendance ajoutée ; le contrôle d'état avant chaque préparation suffit.
+
+Tests ajoutés (écrits d'abord, 5 rouges confirmés) : `torrserver_engine_test.dart` (mot de passe périmé, torrent fantôme via `files` et `stream`, 401 sur `stream`, non 2xx, mot de passe absent des erreurs, moteur arrêté avant `add`) et `torrent_privacy_test.dart` (Réessayer après échec du moteur).
+
+**À vérifier sur la box** : plusieurs heures dans un même processus + bascule Wi-Fi, puis lecture d'un torrent sans `am force-stop` ; la sonde GET d'un octet sur `/stream` du vrai MatriX.150 (comportement non observé hors faux serveur) ; mémoire (swap plein) toujours à surveiller.
+
 ## Vérification « Reprendre » : non faite
 Le scénario Reprendre (même flux, même position, message de repli) n'a pas pu être exécuté sur la box (injoignable). Les tests automatisés du correctif (voir plus haut) restent la seule vérification. À refaire : lecture ~1 min de Sintel via l'addon de test, sortie, « Reprendre » depuis l'accueil, puis désactivation de l'addon et nouveau « Reprendre » pour le message de repli. L'entrée Sintel actuelle de « Continuer à regarder » est ancienne (sans identité) : elle suit le classement.
 Restes sur la box : addon « Test Sintel » toujours installé (adresse du Mac périmée, serveur du Mac arrêté), à supprimer dans Réglages > Sources ; Sintel dans « Continuer à regarder » (un ajout accidentel à « Ma liste » a été annulé).

@@ -314,9 +314,10 @@ void main() {
       WidgetTester t,
       FakeNetworkProbe probe, {
       Map<String, String>? settings,
+      FakeTorrentEngine? engine,
     }) async {
       final ctl = RecordingPlayerController();
-      final e = FakeTorrentEngine();
+      final e = engine ?? FakeTorrentEngine();
       final store = _MemStore(settings);
       final db = AppDatabase(NativeDatabase.memory());
       addTearDown(db.close);
@@ -455,6 +456,27 @@ void main() {
       await t.pumpWidget(const SizedBox());
       await t.pump(const Duration(seconds: 12));
       expect(probe.calls, n);
+    });
+
+    testWidgets('Réessayer après échec du moteur : nouvelle préparation', (
+      t,
+    ) async {
+      final probe = FakeNetworkProbe([_wlan]);
+      final e = FakeTorrentEngine()
+        ..addFailureOnce = const SocketException('moteur désaccordé');
+      final (ctl, _, _) = await pumpPlayer(
+        t,
+        probe,
+        engine: e,
+        settings: {AppSettingsStore.ipWarningAcceptedKey: '1'},
+      );
+      expect(ctl.failures, hasLength(1));
+      expect(ctl.opened, isEmpty);
+      await t.tap(find.text('Réessayer'));
+      await _settle(t);
+      expect(e.addedMagnets, hasLength(1)); // le 1er add a échoué avant
+      expect(ctl.opened, hasLength(1));
+      await t.pumpWidget(const SizedBox());
     });
 
     testWidgets('Réessayer après VPN coupé : le watcher repart', (t) async {

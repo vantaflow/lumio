@@ -10,7 +10,7 @@ class FakeTorrServer {
   FakeTorrServer({this.user = 'lumio', this.password = 'pw'});
 
   final String user;
-  final String password;
+  String password;
   late final HttpServer _server;
   Map<String, Object?> settings = {
     'CacheSize': 67108864,
@@ -23,6 +23,10 @@ class FakeTorrServer {
   final torrents = <String, Map<String, Object?>>{};
   final requests = <String>[];
   int unauthorized = 0;
+
+  /// Si renseigné, `/stream` répond ce code (sinon 206, ou 404 si le torrent
+  /// n'est pas connu du moteur).
+  int? streamStatus;
   int settingsSets = 0;
 
   /// Fichiers rendus une fois les métadonnées reçues.
@@ -87,7 +91,9 @@ class FakeTorrServer {
       case '/torrents':
         out = _torrents(Map<String, Object?>.from(json as Map));
       case '/stream':
-        req.response.statusCode = 206;
+        final link = req.uri.queryParameters['link'];
+        req.response.statusCode =
+            streamStatus ?? (torrents.containsKey(link) ? 206 : 404);
         req.response.add(List.filled(16, 1));
         await req.response.close();
         return;

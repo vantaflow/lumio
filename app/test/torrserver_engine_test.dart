@@ -260,6 +260,101 @@ void main() {
       await bad.close();
     });
 
+    group('état du moteur désaccordé (processus longue durée)', () {
+      test('mot de passe périmé : add relance le moteur '
+          'et rajoute le torrent', () async {
+        await engine.init(settings);
+        final id = await engine.add(_hash);
+        // Le moteur est relancé côté natif avec de nouvelles coordonnées.
+        server.password = 'nouveau';
+        server.torrents.clear();
+        final again = await engine.add('b' * 40);
+        expect(again, 'b' * 40);
+        expect(process.starts, 2);
+        expect(process.stops, greaterThanOrEqualTo(1));
+        expect(server.torrents.keys, containsAll([id, 'b' * 40]));
+      });
+
+      test(
+        'torrent fantôme : files le rajoute sans relancer le moteur',
+        () async {
+          await engine.init(settings);
+          final id = await engine.add(_hash);
+          server.torrents.clear();
+          final files = await engine.files(id);
+          expect(files, isNotEmpty);
+          expect(server.torrents.keys, [_hash]);
+          expect(process.starts, 1);
+        },
+      );
+
+      test('stream : contrôle d\'état avant l\'URL, relance si 401', () async {
+        await engine.init(settings);
+        final id = await engine.add(_hash);
+        server.password = 'nouveau';
+        server.torrents.clear();
+        final url = await engine.stream(id, fileIndex: 1);
+        expect(process.starts, 2);
+        expect(url.userInfo, 'lumio:nouveau');
+        expect(server.torrents.keys, [_hash]);
+      });
+
+      test('stream : torrent fantôme rajouté avant de rendre l\'URL', () async {
+        await engine.init(settings);
+        final id = await engine.add(_hash);
+        server.torrents.clear();
+        final url = await engine.stream(id, fileIndex: 1);
+        expect(url.queryParameters['link'], _hash);
+        expect(server.torrents.keys, [_hash]);
+        expect(process.starts, 1);
+      });
+
+      test('stream : réponse non 2xx du moteur, erreur claire '
+          'au lieu d\'une URL', () async {
+        await engine.init(settings);
+        final id = await engine.add(_hash);
+        server.streamStatus = 500;
+        await expectLater(
+          engine.stream(id, fileIndex: 1),
+          throwsA(isA<TorrServerStreamException>()),
+        );
+        server.streamStatus = 401;
+        await expectLater(
+          engine.stream(id, fileIndex: 1),
+          throwsA(isA<TorrServerStreamException>()),
+        );
+      });
+
+      test('moteur arrêté avant add : relance puis ajout', () async {
+        await engine.init(settings);
+        await server.close();
+        final fresh = FakeTorrServer();
+        await fresh.start();
+        process.server = fresh;
+        expect(await engine.add(_hash), _hash);
+        expect(process.starts, 2);
+        expect(fresh.torrents.keys, [_hash]);
+        await fresh.close();
+      });
+
+      test(
+        'le mot de passe n\'apparaît dans aucun message d\'erreur',
+        () async {
+          await engine.init(settings);
+          final id = await engine.add(_hash);
+          server.streamStatus = 500;
+          Object? err;
+          try {
+            await engine.stream(id, fileIndex: 1);
+          } on Object catch (e) {
+            err = e;
+          }
+          expect('$err', isNot(contains('pw')));
+          expect('${server.endpoint}', isNot(contains('pw')));
+        },
+      );
+    });
+
     test('dispose arrête le processus ; init possible ensuite', () async {
       await engine.init(settings);
       await engine.dispose();

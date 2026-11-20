@@ -30,6 +30,9 @@ class FakeTorrentEngine implements TorrentEngine {
   /// Remplace l'URL rendue par `stream` (test d'URL non locale).
   Uri? streamUrlOverride;
 
+  /// Si renseigné, le prochain `add` échoue avec cette erreur (une seule fois).
+  Object? addFailureOnce;
+
   /// Si renseigné, `init` échoue avec cette erreur.
   Object? initError;
   bool disposed = false;
@@ -44,6 +47,11 @@ class FakeTorrentEngine implements TorrentEngine {
 
   @override
   Future<String> add(String magnetOrInfoHash) async {
+    final failure = addFailureOnce;
+    if (failure != null) {
+      addFailureOnce = null;
+      throw failure;
+    }
     final m = isInfoHash(magnetOrInfoHash)
         ? magnetFromInfoHash(magnetOrInfoHash)
         : magnetOrInfoHash;

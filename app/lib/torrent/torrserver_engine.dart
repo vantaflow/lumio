@@ -43,6 +43,23 @@ class TorrServerStartException implements Exception {
   String toString() => 'TorrServerStartException: $message';
 }
 
+/// Le moteur refuse de servir le flux (réponse non 2xx) : l'URL n'est jamais
+/// rendue au lecteur.
+class TorrServerStreamException implements Exception {
+  const TorrServerStreamException(this.status);
+  final int status;
+  @override
+  String toString() => 'TorrServerStreamException: moteur HTTP $status';
+}
+
+/// Réponse d'erreur du moteur ; le code seul est conservé (ni URL, ni
+/// identifiants).
+class TorrServerHttpException extends HttpException {
+  TorrServerHttpException(String path, this.status)
+    : super('TorrServer $path : HTTP $status');
+  final int status;
+}
+
 const _videoExtensions = {
   'mkv', 'mp4', 'm4v', 'avi', 'mov', 'ts', 'm2ts', 'mts', 'webm', 'wmv', //
   'flv', 'mpg', 'mpeg', 'ogv', '3gp',
@@ -157,20 +174,26 @@ class TorrServerEngine implements TorrentEngine {
     final res = await req.close().timeout(timeout);
     final text = await utf8.decodeStream(res).timeout(timeout);
     if (res.statusCode >= 400) {
-      throw HttpException('TorrServer $path : HTTP ${res.statusCode}');
+      throw TorrServerHttpException(path, res.statusCode);
     }
     return text;
   }
 
-  /// Appel JSON ; un moteur mort (connexion refusée, coupée) est relancé une
+  /// Le moteur ne répond plus, ou n'est plus d'accord avec nous (mot de passe
+  /// périmé après une relance native) : à relancer, pas à signaler.
+  static bool _isStale(Object e) =>
+      e is SocketException ||
+      e is TimeoutException ||
+      (e is TorrServerHttpException && (e.status == 401 || e.status == 403)) ||
+      (e is HttpException && e is! TorrServerHttpException);
+
+  /// Appel JSON ; un moteur mort, bloqué ou désaccordé (401) est relancé une
   /// fois, ses torrents sont rajoutés, puis l'appel est rejoué.
   Future<Object?> _call(String path, Map<String, Object?> body) async {
     try {
       return _decode(await _send('POST', path, body));
-    } on SocketException {
-      await _recover();
-      return _decode(await _send('POST', path, body));
-    } on TimeoutException {
+    } on Object catch (e) {
+      if (!_isStale(e)) rethrow;
       await _recover();
       return _decode(await _send('POST', path, body));
     }
@@ -218,22 +241,72 @@ class TorrServerEngine implements TorrentEngine {
     }
   }
 
+  Future<void> _addMagnet(String magnet) => _send('POST', '/torrents', {
+    'action': 'add',
+    'link': magnet,
+    'save_to_db': false,
+  });
+
+  /// Relance réelle du moteur : arrêt du processus, nouveau démarrage (le
+  /// gestionnaire natif rend de nouvelles coordonnées), torrents rajoutés.
   Future<void> _recover() {
     return _recovering ??= () async {
       try {
         debugPrint('TorrServerEngine : moteur indisponible, relance');
+        _client?.close(force: true); // connexions vers l'ancien processus
+        _client = null;
+        _ep = null;
+        try {
+          await process.stop();
+        } on Object {
+          // Déjà arrêté.
+        }
         await _boot();
         for (final magnet in _magnets.values.toList()) {
-          await _send('POST', '/torrents', {
-            'action': 'add',
-            'link': magnet,
-            'save_to_db': false,
-          });
+          await _addMagnet(magnet);
         }
       } finally {
         _recovering = null;
       }
     }();
+  }
+
+  /// Contrôle d'état authentifié avant d'ouvrir un flux : le moteur répond
+  /// avec nos identifiants (sinon relance) et connaît nos torrents (sinon
+  /// ils sont rajoutés). `/echo` ne suffit pas : il ne demande pas de mot de
+  /// passe.
+  Future<void> _ensureHealthy() async {
+    final running = _recovering;
+    if (running != null) return running;
+    Object? list;
+    try {
+      list = _decode(
+        await _send('POST', '/torrents', {
+          'action': 'list',
+        }, timeout: const Duration(seconds: 5)),
+      );
+    } on Object catch (e) {
+      if (!_isStale(e)) rethrow;
+      await _recover();
+      return;
+    }
+    final known = <String>{
+      if (list is List)
+        for (final t in list)
+          if (t is Map && t['hash'] is String)
+            (t['hash'] as String).toLowerCase(),
+    };
+    for (final e in _magnets.entries.toList()) {
+      if (!known.contains(e.key)) await _addMagnet(e.value);
+    }
+  }
+
+  /// Rajoute le torrent [id] au moteur s'il est connu de l'adaptateur.
+  Future<bool> _readd(String id) async {
+    final magnet = _magnets[id];
+    if (magnet == null) return false;
+    await _addMagnet(magnet);
+    return true;
   }
 
   // -------------------------------------------------------------- contrat
@@ -267,6 +340,7 @@ class TorrServerEngine implements TorrentEngine {
         ? magnetFromInfoHash(magnetOrInfoHash)
         : magnetOrInfoHash;
     final hash = _hashOf(magnet);
+    await _ensureHealthy();
     _magnets[hash] = magnet;
     final r = await _call('/torrents', {
       'action': 'add',
@@ -278,9 +352,19 @@ class TorrServerEngine implements TorrentEngine {
   }
 
   Future<Map<String, Object?>> _info(String id) async {
-    final r = await _call('/torrents', {'action': 'get', 'hash': id});
+    Object? r;
+    try {
+      r = await _call('/torrents', {'action': 'get', 'hash': id});
+    } on TorrServerHttpException catch (e) {
+      if (e.status != 404) rethrow;
+    }
     if (r is! Map<String, Object?>) {
-      throw StateError('torrent inconnu : $id');
+      // Torrent disparu côté moteur : ré-ajout transparent, une seule fois.
+      if (!await _readd(id)) throw StateError('torrent inconnu : $id');
+      r = await _call('/torrents', {'action': 'get', 'hash': id});
+      if (r is! Map<String, Object?>) {
+        throw StateError('torrent inconnu : $id');
+      }
     }
     return r;
   }
@@ -314,6 +398,7 @@ class TorrServerEngine implements TorrentEngine {
   @override
   Future<Uri> stream(String id, {int? fileIndex}) async {
     _requireReady();
+    await _ensureHealthy();
     var index = fileIndex;
     if (index == null) {
       final list = await files(id);
@@ -324,15 +409,62 @@ class TorrServerEngine implements TorrentEngine {
       index = (best ?? (list.isEmpty ? null : list.first))?.index;
       if (index == null) throw StateError('aucun fichier : $id');
     }
-    final ep = _ep ?? (throw StateError('moteur arrêté'));
-    return Uri(
-      scheme: 'http',
-      userInfo: '${ep.user}:${ep.password}',
-      host: '127.0.0.1',
-      port: ep.port,
-      path: '/stream',
-      query: 'link=$id&index=${index + 1}&play',
-    );
+    Uri build() {
+      final ep = _ep ?? (throw StateError('moteur arrêté'));
+      return Uri(
+        scheme: 'http',
+        userInfo: '${ep.user}:${ep.password}',
+        host: '127.0.0.1',
+        port: ep.port,
+        path: '/stream',
+        query: 'link=$id&index=${index! + 1}&play',
+      );
+    }
+
+    // Jamais d'URL au lecteur sans réponse 2xx du moteur : mpv prendrait le
+    // corps d'erreur pour une liste de lecture. Un refus 401 ou une connexion
+    // coupée relance le moteur, un 404 rajoute le torrent ; un second échec
+    // est une erreur.
+    var status = await _probeStream(build());
+    for (var attempt = 0; attempt < 2 && !_ok(status); attempt++) {
+      if (status == 404) {
+        if (!await _readd(id)) break;
+      } else if (status == null || status == 401 || status == 403) {
+        await _recover();
+      } else {
+        break;
+      }
+      status = await _probeStream(build());
+    }
+    if (!_ok(status)) throw TorrServerStreamException(status ?? 0);
+    return build();
+  }
+
+  static bool _ok(int? status) => status != null && status ~/ 100 == 2;
+
+  /// Code HTTP rendu par le flux (requête d'un octet, abandonnée aussitôt).
+  /// Un moteur qui n'a pas encore répondu après quelques secondes (torrent en
+  /// préchargement) n'est pas une erreur : rendu 200 ; `null` : moteur
+  /// injoignable.
+  Future<int?> _probeStream(Uri url) async {
+    final probe = _newClient()..connectionTimeout = const Duration(seconds: 5);
+    try {
+      final req = await probe.getUrl(url.replace(userInfo: ''));
+      final ep = _ep!;
+      req.headers
+        ..set(HttpHeaders.authorizationHeader, ep.authHeader)
+        ..set(HttpHeaders.rangeHeader, 'bytes=0-0');
+      final res = await req.close().timeout(const Duration(seconds: 4));
+      return res.statusCode;
+    } on TimeoutException {
+      return 200;
+    } on SocketException {
+      return null;
+    } on HttpException {
+      return null;
+    } finally {
+      probe.close(force: true);
+    }
   }
 
   TorrentStatus _map(Map<String, Object?> t) {
