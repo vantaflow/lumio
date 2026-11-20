@@ -389,6 +389,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get failTooLarge => 'La réponse de la source est trop volumineuse.';
 
   @override
+  String get failDecode => 'Ce format vidéo n\'a pas pu être décodé.';
+
+  @override
   String get failFormat => 'Format non pris en charge par le lecteur.';
 
   @override

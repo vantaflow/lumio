@@ -67,6 +67,27 @@ String explainFailure(
   return l.failGeneric;
 }
 
+/// Message d'un blocage de la lecture (délai écoulé sans progression). Si des
+/// données sont arrivées ([dataArrived]) mais qu'aucune image n'a avancé
+/// ([progressed] faux), la source répondait : c'est le décodage qui a échoué.
+/// « La source ne répond pas » seulement quand rien n'arrive.
+String explainStall({
+  required bool dataArrived,
+  required bool progressed,
+  int? httpStatus,
+  AppLocalizations? l10n,
+}) {
+  final l = l10n ?? AppLocalizationsFr();
+  if (dataArrived && !progressed && (httpStatus == null || httpStatus < 400)) {
+    return l.failDecode;
+  }
+  return explainFailure(
+    TimeoutException('stall'),
+    httpStatus: httpStatus,
+    l10n: l,
+  );
+}
+
 String _statusMessage(int s, AppLocalizations l) => switch (s) {
   401 || 403 => l.httpDenied(s),
   404 || 410 => l.httpGone(s),

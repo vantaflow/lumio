@@ -1,5 +1,27 @@
 # Captures réelles de la box (Google TV 4K, Android 14, armeabi-v7a, 1920×1080)
 
+## Version 1.0.0 (2026-11-20)
+
+Lumio 1.0.0 installé sur la vraie box, prises par `adb exec-out screencap`
+(couleurs réduites pour tenir sous ~350 Ko). Elles remplacent les captures
+antérieures qui montraient l'ancienne rubrique « Torrents et VPN » (retirée) ;
+ces dernières ont été supprimées.
+
+| Écran | Capture |
+|---|---|
+| Accueil (Reprendre, Continuer à regarder, Ma liste) | `v1-accueil.png` |
+| Accueil, rangées de catalogues | `v1-accueil-rangees.png` |
+| Fiche avec sources (flux disponibles par addon) | `v1-fiche-sources.png` |
+| Lecteur (contenu libre) | `v1-lecteur.png` (reprise de `TV07-lecteur-commandes.png`, même écran) |
+| Recherche | `v1-recherche.png` |
+| Réglages : Sources | `v1-reglages-sources.png` |
+| Réglages : Torrents (cache, limite d'envoi, sans VPN) | `v1-reglages-torrents.png` |
+| Réglages : Sauvegarde et import | `v1-reglages-sauvegarde.png` |
+| Gérer depuis le téléphone (QR, adresse du réseau local, code) | `v1-portail-telephone.png` |
+| Catalogue d'addons | `v1-catalogue-addons.png` |
+
+## Historique des passes précédentes
+
 Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 2026-11-19 (couleurs réduites pour tenir sous ~500 Ko).
 
 | Écran | Capture | Maquette | Remarques |
@@ -9,11 +31,9 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 | Lecteur | `TV07-lecteur-commandes.png`, `TV07-lecteur-image-reelle-1080p.png`, `TV07-lecteur-hevc-1080p.png` | TV07 | image réelle H.264 et H.265 1080p, 0 image perdue en `mediacodec` direct |
 | Ajouter un addon, par lien | `TV08-ajout-addon-par-lien.png` | TV08 | aperçu de l'addon de test |
 | Gérer depuis le téléphone | `TV09-gerer-depuis-telephone.png` | TV09 | adresse 192.168.0.47:8790, QR et code |
-| Réglages | `TV10-reglages-general.png`, `TV10-reglages-sources.png`, `TV10-reglages-profils.png` | TV10 | rail, carte du téléphone |
 | Recherche | `TV12-recherche-vide.png`, `TV12-recherche-resultats.png`, `TV12-recherche-clavier-arabe.png` | TV12 | contour interne du champ corrigé |
-| Suivi Trakt et code d'appareil | `TV25-suivi-trakt.png`, `TV26-code-trakt.png` | TV25, TV26 | le cadre du code passait sous le QR (corrigé) |
+| Suivi Trakt et code d'appareil | `TV26-code-trakt.png` | TV25, TV26 | le cadre du code passait sous le QR (corrigé) |
 | Dossiers locaux | `TV30-dossiers-locaux.png`, `TV30-dossiers-locaux-vide.png`, `D4-dossiers-locaux-ajouter-complet.png` | TV30 | bouton « Ajouter un d… » coupé (corrigé ; libellé complet revérifié le 2026-11-20) |
-| Sauvegarde et import | `TV33-sauvegarde-import.png`, `TV33-reglages-sauvegarde.png` | TV33 | |
 | Gestion des profils | `TV35-gestion-profils.png`, `TV35-qui-regarde-gestion.png` | TV35 | badge crayon au-dessus de l'anneau |
 | Calendrier vide | `TV42-calendrier-vide.png` | TV42 | |
 | Éditeur de profil | `P02-editeur-profil-adulte.png`, `P02-editeur-profil-pastilles.png` | P02 | pastilles d'âge séparées |
@@ -37,7 +57,7 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 | Menu avatar, Calendrier | `TV43-menu-avatar.png`, `TV21-calendrier-date-inconnue.png` | TV43, TV21 | |
 | Jellyfin vide, ajout, dossiers | `TV31-jellyfin-vide.png`, `P07-ajout-jellyfin.png`, `P08-ajout-dossier-choix.png` | TV31, P07, P08 | |
 | Addons, suppression | `P13-menu-addon.png`, `P09-confirmation-suppression-addon.png` | P13, P09 | addon de test supprimé |
-| Réglages divers | `TV25-suivi-trakt-box2.png`, `TV33-sauvegarde-import-box2.png`, `TV33b-import-autre-client-sans-focus.png`, `P13-selecteur-langue.png` | TV25, TV33, P13 | import : aucun focus (corrigé, non revu à l'écran) |
+| Réglages divers | `TV33b-import-autre-client-sans-focus.png`, `P13-selecteur-langue.png` | TV25, TV33, P13 | import : aucun focus (corrigé, non revu à l'écran) |
 
 ## Intégration de TorrServer (2026-11-20)
 - `TS02-carte-chargement-torrserver.png` : carte de chargement P05 pendant le flux (14 sources, 3,3 Mo/s, tampon).
@@ -47,4 +67,3 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 - `TS06` à `TS09` (soir du 2026-11-20, box en Ethernet) : lecture de Sintel jusqu'à 11:11, accueil « Reprendre · 3 min restantes », reprise du même flux (« 3 sources · 8 % » = torrent de l'addon de test, pas celui de Torrentio) à 11:19 puis image à 11:40 (215 Ko/s, essaim lent ce soir).
 - `TS10-lecture-echouee-essaim-vide.png` : « Délai dépassé » après une touche pressée pendant le chargement ; l'écran n'avait aucun focus (« Réessayer » ne réagissait à rien). Cause trouvée et corrigée (voir le rapport).
 - `TS11-echec-reessayer-focus-apres-correctif.png` : même scénario avec le correctif : « Réessayer » porte l'anneau de focus ; Entrée relance une préparation complète.
-- `TS12-sources-test-sintel-avec-catalogue.png` : addon de test réinstallé avec un catalogue (pour atteindre la fiche de Sintel) ; supprimé ensuite.

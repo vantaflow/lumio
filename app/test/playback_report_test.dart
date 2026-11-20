@@ -7,6 +7,32 @@ import 'package:lumio/player/player_controller.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 void main() {
+  group('blocage de la lecture', () {
+    test('données reçues sans image : décodage, pas « la source »', () {
+      final m = explainStall(dataArrived: true, progressed: false);
+      expect(m, contains('décodé'));
+      expect(m, isNot(contains('ne répond pas')));
+    });
+    test('rien n\'arrive : la source ne répond pas', () {
+      expect(
+        explainStall(dataArrived: false, progressed: false),
+        contains('ne répond pas'),
+      );
+    });
+    test('blocage en cours de lecture : source', () {
+      expect(
+        explainStall(dataArrived: true, progressed: true),
+        contains('ne répond pas'),
+      );
+    });
+    test('erreur HTTP : le statut prime', () {
+      expect(
+        explainStall(dataArrived: true, progressed: false, httpStatus: 503),
+        contains('503'),
+      );
+    });
+  });
+
   group('erreurs du moteur ignorables', () {
     test('sous-titre externe illisible : ignoré', () {
       expect(

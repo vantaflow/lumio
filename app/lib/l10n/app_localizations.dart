@@ -764,6 +764,12 @@ abstract class AppLocalizations {
   /// **'La réponse de la source est trop volumineuse.'**
   String get failTooLarge;
 
+  /// No description provided for @failDecode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce format vidéo n\'a pas pu être décodé.'**
+  String get failDecode;
+
   /// No description provided for @failFormat.
   ///
   /// In fr, this message translates to:

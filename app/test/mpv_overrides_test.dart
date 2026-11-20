@@ -2,6 +2,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/player/mpv_overrides.dart';
 
 void main() {
+  test('hwdec-codecs : liste fiable sur Android, mpv.conf prioritaire', () {
+    final a = hwdecCodecsFor(android: true)!.split(',');
+    expect(a, containsAll(['h264', 'hevc', 'vp9']));
+    expect(a, isNot(contains('mpeg4')));
+    expect(hwdecCodecsFor(android: false), isNull);
+    expect(
+      hwdecCodecsFor(android: true, overrides: {'hwdec-codecs': 'all'}),
+      'all',
+    );
+  });
+
   test('playlist .m3u8 : format hls imposé, le reste en détection auto', () {
     expect(lavfFormatFor(Uri.parse('https://x.test/a/master.m3u8?t=1')), 'hls');
     expect(lavfFormatFor(Uri.parse('https://x.test/A/MASTER.M3U8')), 'hls');

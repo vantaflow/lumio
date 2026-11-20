@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumio – Télécharger</title>
+<meta name="description" content="Lumio, client média libre pour Android TV et téléphone, compatible avec le protocole d'addons. Téléchargez l'APK signé.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:"Bricolage Grotesque";src:url("fonts/BricolageGrotesque-Variable.ttf") format("truetype");font-weight:200 800;font-display:swap}
+@font-face{font-family:"Manrope";src:url("fonts/Manrope-Variable.ttf") format("truetype");font-weight:200 800;font-display:swap}
+:root{
+  --bg:#0E1116;--surface:#161B22;--surface2:#2A3340;--line:#3A4452;
+  --text:#F3F5F7;--muted:#A9B2BF;--accent:#FFB84D;--on-accent:#1A1100;--teal:#4FD1C5;--warn:#FF7A70;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;--body:"Manrope",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:light){
+  :root{--bg:#F6F4EF;--surface:#FFFFFF;--surface2:#ECE8DF;--line:#D6D0C3;--text:#14181F;--muted:#4F5866;--accent:#B86A00;--on-accent:#FFFFFF;--teal:#0B7F76;--warn:#B3261E}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:400 1.0625rem/1.65 var(--body);-webkit-text-size-adjust:100%}
+a{color:var(--teal)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:8px}
+.skip{position:absolute;left:16px;top:-60px;background:var(--accent);color:var(--on-accent);padding:8px 14px;border-radius:8px;z-index:9}
+.skip:focus{top:12px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0}
+.brand{display:flex;align-items:center;gap:12px;font:700 1.6rem var(--display);color:var(--text);text-decoration:none}
+nav.links{display:flex;gap:18px;flex-wrap:wrap;font-weight:600;font-size:.95rem}
+nav.links a{color:var(--muted);text-decoration:none}
+nav.links a:hover{color:var(--text)}
+.hero{padding:40px 0 24px;display:grid;gap:32px;grid-template-columns:1fr}
+@media (min-width:900px){.hero{grid-template-columns:1.05fr 1fr;align-items:center;padding-top:56px}}
+.kicker{color:var(--teal);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.85rem;margin:0 0 12px}
+h1{font:800 clamp(2.3rem,6vw,3.6rem)/1.05 var(--display);margin:0 0 16px;letter-spacing:-.02em}
+h2{font:700 clamp(1.5rem,3.5vw,2rem)/1.2 var(--display);margin:0 0 14px;letter-spacing:-.01em}
+h3{font:700 1.15rem var(--display);margin:0 0 6px}
+.lead{color:var(--muted);font-size:1.2rem;margin:0 0 26px;max-width:34em}
+.shot{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
+.dl{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:560px){.dl{grid-template-columns:1fr 1fr}}
+.btn{display:flex;flex-direction:column;gap:2px;padding:18px 22px;border-radius:16px;text-decoration:none;min-height:76px;justify-content:center;border:2px solid transparent;transition:transform .12s}
+.btn:hover{transform:translateY(-2px)}
+.btn b{font:700 1.2rem var(--display)}
+.btn span{font-size:.92rem;opacity:.85}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.btn.second{background:var(--surface);color:var(--text);border-color:var(--line)}
+.btn.second:hover{border-color:var(--accent)}
+.note{color:var(--muted);font-size:.95rem;margin:14px 0 0}
+section{padding:44px 0;border-top:1px solid var(--line)}
+.cols{display:grid;gap:18px;grid-template-columns:1fr}
+@media (min-width:720px){.cols{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px}
+.card p{margin:0;color:var(--muted)}
+ol.steps{list-style:none;counter-reset:s;margin:0;padding:0;display:grid;gap:14px}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+ol.steps li::before{content:counter(s);display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--surface2);font:700 1.1rem var(--display)}
+ol.steps li p{margin:2px 0 0;color:var(--muted)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}
+code{background:var(--surface2);padding:2px 7px;border-radius:6px}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow-x:auto;margin:12px 0 0}
+pre code{background:none;padding:0}
+.gallery{display:grid;gap:18px;grid-template-columns:1fr}
+@media (min-width:640px){.gallery{grid-template-columns:1fr 1fr}}
+figure{margin:0}
+figcaption{color:var(--muted);font-size:.92rem;margin-top:8px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:700}
+details p{color:var(--muted);margin:10px 0 0}
+.legal{border:1px solid var(--warn);border-radius:16px;padding:20px 22px;background:var(--surface)}
+.legal h2{color:var(--warn);font-size:1.3rem}
+.legal p{margin:0 0 8px;color:var(--muted)}
+footer{padding:36px 0 56px;color:var(--muted);font-size:.95rem;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){.btn{transition:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skip" href="#telecharger">Aller au téléchargement</a>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./" aria-label="Lumio, accueil">
+      <svg width="36" height="36" viewBox="0 0 64 64" role="img" aria-hidden="true"><circle cx="32" cy="32" r="22" fill="none" stroke="#FFB84D" stroke-width="7"/><circle cx="32" cy="32" r="7" fill="#4FD1C5"/></svg>
+      Lumio
+    </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#installer">Installer</a>
+      <a href="#captures">Captures</a>
+      <a href="#verifier">Vérifier</a>
+      <a href="https://github.com/vantaflow/lumio">Code source</a>
+    </nav>
+  </header>
+
+  <main id="contenu">
+    <div class="hero">
+      <div>
+        <p class="kicker">Android TV et téléphone · version 1.0.0</p>
+        <h1>Vos addons, votre télécommande.</h1>
+        <p class="lead">Lumio est un client média libre pensé pour la télécommande : addons, torrents intégrés, dossiers locaux, profils avec contrôle parental. Sans compte, sans synchronisation.</p>
+        <div class="dl" id="telecharger">
+          <a class="btn primary" href="https://github.com/vantaflow/lumio/releases/latest/download/lumio-armeabi-v7a.apk" download>
+            <b>Télécharger pour box 32 bits</b><span>lumio-armeabi-v7a.apk · la plupart des box Google TV</span>
+          </a>
+          <a class="btn second" href="https://github.com/vantaflow/lumio/releases/latest/download/lumio-arm64-v8a.apk" download>
+            <b>Télécharger pour 64 bits</b><span>lumio-arm64-v8a.apk · téléphones, tablettes, box 64 bits</span>
+          </a>
+        </div>
+        <p class="note">Un doute ? Prenez la version 32 bits : elle fonctionne sur presque tous les appareils. <a href="https://github.com/vantaflow/lumio/releases/latest">Notes de version</a> · <a href="https://github.com/vantaflow/lumio/releases/latest/download/SHA256SUMS.txt">Sommes SHA-256</a></p>
+      </div>
+      <img class="shot" src="img/accueil.png" width="1920" height="1080" alt="Accueil de Lumio sur une box : reprise de lecture, continuer à regarder et ma liste">
+    </div>
+
+    <section id="choisir" aria-labelledby="t-choisir">
+      <h2 id="t-choisir">Quel fichier choisir ?</h2>
+      <div class="cols">
+        <div class="card"><h3>armeabi-v7a (32 bits)</h3><p>Box et TV Android d'entrée de gamme (la plupart des « Google TV 4K » du commerce), anciennes tablettes. Fonctionne aussi sur les appareils 64 bits.</p></div>
+        <div class="card"><h3>arm64-v8a (64 bits)</h3><p>Téléphones et tablettes récents, box Android TV 64 bits.</p></div>
+      </div>
+      <p class="note">Pour savoir : sur l'appareil, Réglages › Système › À propos. Sinon, l'application vous propose elle-même le bon fichier pour les mises à jour.</p>
+    </section>
+
+    <section id="installer" aria-labelledby="t-installer">
+      <h2 id="t-installer">Installer pas à pas</h2>
+      <ol class="steps">
+        <li><div><h3>Récupérer l'APK</h3><p><b>Avec Downloader</b> (gratuit sur Android TV) : saisissez l'adresse du fichier, par exemple <code>github.com/vantaflow/lumio/releases/latest/download/lumio-armeabi-v7a.apk</code>. <b>Avec une clé USB</b> : téléchargez le fichier sur un ordinateur, copiez-le sur la clé, branchez-la sur la box.</p></div></li>
+        <li><div><h3>Autoriser les sources inconnues</h3><p>Android demande l'autorisation la première fois : Réglages › Applications › Sécurité et restrictions › Sources inconnues, puis activez-la pour Downloader (ou pour votre gestionnaire de fichiers).</p></div></li>
+        <li><div><h3>Installer</h3><p>Ouvrez le fichier, choisissez « Installer », puis « Ouvrir ». Lumio apparaît aussi dans la liste des applications de la TV.</p></div></li>
+        <li><div><h3>Ajouter vos addons</h3><p>Réglages › Sources › Ajouter un addon : catalogue intégré, lien <code>manifest.json</code>, ou depuis le téléphone en scannant le QR affiché par la TV.</p></div></li>
+      </ol>
+      <p class="note">Par adb : <code>adb install -r lumio-armeabi-v7a.apk</code>. Les mises à jour suivantes : une bannière s'affiche sur l'accueil quand une nouvelle version est publiée ; l'installation se fait par-dessus, sans perdre vos réglages.</p>
+    </section>
+
+    <section id="captures" aria-labelledby="t-captures">
+      <h2 id="t-captures">En images</h2>
+      <p class="note" style="margin-top:0">Captures réelles de Lumio 1.0.0 sur une box Google TV.</p>
+      <div class="gallery">
+        <figure><img class="shot" loading="lazy" src="img/fiche-sources.png" width="1920" height="1080" alt="Fiche d'un film avec la liste des flux disponibles par addon"><figcaption>Fiche et sources, classées par santé des addons.</figcaption></figure>
+        <figure><img class="shot" loading="lazy" src="img/recherche.png" width="1920" height="1080" alt="Recherche avec clavier à l'écran et résultats"><figcaption>Recherche à la télécommande.</figcaption></figure>
+        <figure><img class="shot" loading="lazy" src="img/catalogue-addons.png" width="1920" height="1080" alt="Catalogue d'addons à installer"><figcaption>Catalogue d'addons communautaires.</figcaption></figure>
+        <figure><img class="shot" loading="lazy" src="img/portail-telephone.png" width="1920" height="1080" alt="Écran Gérer depuis le téléphone avec QR code et adresse locale"><figcaption>Gérer depuis le téléphone, sur votre réseau local.</figcaption></figure>
+        <figure><img class="shot" loading="lazy" src="img/reglages-torrents.png" width="1920" height="1080" alt="Réglages, rubrique Torrents : cache et limite d'envoi"><figcaption>Torrents intégrés : cache et limite d'envoi.</figcaption></figure>
+        <figure><img class="shot" loading="lazy" src="img/lecteur.png" width="1920" height="1080" alt="Lecteur vidéo avec commandes, sur un contenu libre de droits"><figcaption>Lecteur, ici sur un contenu libre.</figcaption></figure>
+      </div>
+    </section>
+
+    <section id="verifier" aria-labelledby="t-verifier">
+      <h2 id="t-verifier">Vérifier le fichier</h2>
+      <p>Chaque release publie <a href="https://github.com/vantaflow/lumio/releases/latest/download/SHA256SUMS.txt">SHA256SUMS.txt</a>. Comparez la somme de votre fichier :</p>
+      <pre><code>shasum -a 256 lumio-*.apk      # macOS, Linux
+Get-FileHash lumio-*.apk       # Windows PowerShell</code></pre>
+      <p class="note">Les APK sont signés avec la clé de release de Lumio. Android refuse d'installer par-dessus une version signée par une autre clé : dans ce cas, sauvegardez vos données (Réglages › Sauvegarde et import), désinstallez l'ancienne version, puis installez celle-ci.</p>
+      <details><summary>Questions fréquentes</summary>
+        <p><b>Lumio fournit-il des films ?</b> Non, aucun contenu ni addon n'est fourni.</p>
+        <p><b>Faut-il un compte ?</b> Non. Rien n'est synchronisé, tout reste sur votre appareil.</p>
+        <p><b>Où signaler un problème ?</b> Dans les <a href="https://github.com/vantaflow/lumio/issues">tickets du dépôt</a>.</p>
+      </details>
+    </section>
+
+    <section aria-labelledby="t-legal">
+      <div class="legal">
+        <h2 id="t-legal">À lire avant d'utiliser Lumio</h2>
+        <p>Lumio ne fournit <b>aucun addon et aucun contenu</b>, ne contient aucun « scraper » et n'indexe rien. Vous êtes responsable des sources que vous ajoutez et du respect du droit d'auteur dans votre pays.</p>
+        <p>Lumio est un projet indépendant, <b>non affilié à Stremio</b>. « Compatible avec le protocole d'addons » décrit uniquement l'interopérabilité technique.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Lumio · logiciel libre sous licence GPL-3.0 · <a href="https://github.com/vantaflow/lumio">Code source</a> · <a href="https://github.com/vantaflow/lumio/releases">Toutes les versions</a> · <a href="https://github.com/vantaflow/lumio/blob/main/docs/installation.md">Documentation</a></p>
+  </footer>
+</div>
+</body>
+</html>

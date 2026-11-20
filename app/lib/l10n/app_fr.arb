@@ -219,6 +219,7 @@
   "failNetwork": "Connexion impossible : vérifiez le réseau.",
   "failRedirect": "La source redirige de façon incorrecte.",
   "failTooLarge": "La réponse de la source est trop volumineuse.",
+  "failDecode": "Ce format vidéo n'a pas pu être décodé.",
   "failFormat": "Format non pris en charge par le lecteur.",
   "failTls": "La connexion sécurisée avec la source a échoué.",
   "failGeneric": "La lecture a échoué.",

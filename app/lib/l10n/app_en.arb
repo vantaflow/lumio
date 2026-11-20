@@ -111,6 +111,7 @@
   "failNetwork": "Can't connect: check the network.",
   "failRedirect": "The source redirects incorrectly.",
   "failTooLarge": "The source's response is too large.",
+  "failDecode": "This video format could not be decoded.",
   "failFormat": "Format not supported by the player.",
   "failTls": "The secure connection to the source failed.",
   "failGeneric": "Playback failed.",

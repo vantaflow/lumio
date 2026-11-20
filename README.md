@@ -111,19 +111,22 @@ retirées) ; toutes sont réalisées.
 | Interface TV | Refonte complète d'après les maquettes (68 écrans et pop-ups), audit à la télécommande | Terminée |
 | Addons | Catalogue intégré (stremio-addons.net + addons officiels), portail web servi par la TV, réglage des addons depuis le téléphone | Terminé |
 | Test global | Parcours complet sur émulateur : addons, lecture, sous-titres, reprise, séries, anime | Terminé |
-| Validation sur la box | Écrans, fluidité, HEVC, portail, torrents 1080p, endurance 8 h | En cours |
+| Validation sur la box | Écrans, fluidité, HEVC, portail, torrents 1080p, endurance 8 h | Terminée |
+| Publication | APK signés, releases GitHub, mises à jour, page de téléchargement | Version 1.0.0 publiée |
 | Guides et Trakt | Guides pas à pas dans la TV et le portail, page Aide, section Trakt du portail | Terminé |
 
 ## Captures d'écran
 
-Captures réelles prises sur une box Android TV (1920×1080) :
+Captures réelles de Lumio 1.0.0 prises sur une box Google TV (1920×1080) :
 [docs/captures/box/](docs/captures/box/).
 
 | Accueil | Fiche et sources | Lecteur |
 |---|---|---|
-| ![Accueil](docs/captures/box/TV05-accueil-rempli.png) | ![Fiche](docs/captures/box/TV06-fiche-flux-direct.png) | ![Lecteur](docs/captures/box/TV07-lecteur-commandes.png) |
-| **Recherche** | **Réglages** | **Gérer depuis le téléphone** |
-| ![Recherche](docs/captures/box/TV12-recherche-resultats.png) | ![Réglages](docs/captures/box/TV33-reglages-sauvegarde.png) | ![Portail](docs/captures/box/TV09-gerer-depuis-telephone.png) |
+| ![Accueil](docs/captures/box/v1-accueil.png) | ![Fiche](docs/captures/box/v1-fiche-sources.png) | ![Lecteur](docs/captures/box/v1-lecteur.png) |
+| **Recherche** | **Catalogue d'addons** | **Gérer depuis le téléphone** |
+| ![Recherche](docs/captures/box/v1-recherche.png) | ![Catalogue](docs/captures/box/v1-catalogue-addons.png) | ![Portail](docs/captures/box/v1-portail-telephone.png) |
+| **Rangées de l'accueil** | **Réglages : Sources** | **Réglages : Torrents** |
+| ![Rangées](docs/captures/box/v1-accueil-rangees.png) | ![Sources](docs/captures/box/v1-reglages-sources.png) | ![Torrents](docs/captures/box/v1-reglages-torrents.png) |
 
 Les maquettes de chaque écran sont dans [docs/design/maquettes/](docs/design/maquettes/).
 

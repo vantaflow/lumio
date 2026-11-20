@@ -22,6 +22,7 @@ import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/focus/focus_rescue.dart';
 import 'package:lumio/ui/focus/tv_canvas.dart';
 import 'package:lumio/ui/focus/tv_detection.dart';
+import 'package:lumio/ui/focus/tv_key_throttle.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -130,6 +131,9 @@ class LumioApp extends ConsumerWidget {
         final themed = LumioThemeScope(tv: tv, child: child!);
         return tv ? TvCanvas(child: themed) : themed;
       },
+      // Flèches : un appui déplace d'un cran, l'appui maintenu est limité en
+      // cadence (voir TvKeyThrottle).
+      actions: tvActions(),
       shortcuts: {
         ...WidgetsApp.defaultShortcuts,
         // Télécommande Android TV : OK/Entrée active l'élément ciblé.

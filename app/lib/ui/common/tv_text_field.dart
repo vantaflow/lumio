@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lumio/ui/focus/tv_key_throttle.dart';
 import 'package:lumio/ui/focus/tv_scaffold.dart';
 
 /// Champ de saisie adapté à la télécommande (audit D4).
@@ -104,7 +105,8 @@ class _TvTextFieldState extends State<TvTextField> {
       _ => null,
     };
     if (dir != null) {
-      if (event is KeyDownEvent || event is KeyRepeatEvent) {
+      if ((event is KeyDownEvent || event is KeyRepeatEvent) &&
+          TvKeyThrottle.allowMove()) {
         FocusScope.of(context).focusInDirection(dir);
       }
       return KeyEventResult.handled;

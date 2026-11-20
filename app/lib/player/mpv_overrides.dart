@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:media_kit/media_kit.dart' show MPVLogLevel;
 import 'package:path_provider/path_provider.dart';
 
+import 'hw_decode_guard.dart' show androidHwdecCodecs;
+
 /// Réglages avancés de libmpv lus dans `mpv.conf` du dossier de fichiers de
 /// l'application (`Android/data/<paquet>/files/mpv.conf`, déposé à la main ou
 /// par adb) : une ligne `clé=valeur`, `#` pour un commentaire. Sert à régler
@@ -114,3 +116,11 @@ const androidDefaultHwdec = 'mediacodec,mediacodec-copy';
 /// (« Reading plaintext playlist ») et la lecture finit en « délai dépassé ».
 String lavfFormatFor(Uri source) =>
     source.path.toLowerCase().endsWith('.m3u8') ? 'hls' : '';
+
+/// Codecs autorisés au décodage matériel (`hwdec-codecs`) : `mpv.conf`
+/// l'emporte ; sur Android, seulement les codecs fiables
+/// ([androidHwdecCodecs]) ; ailleurs (`null`) le réglage par défaut de mpv.
+String? hwdecCodecsFor({
+  required bool android,
+  Map<String, String> overrides = const {},
+}) => overrides['hwdec-codecs'] ?? (android ? androidHwdecCodecs : null);
