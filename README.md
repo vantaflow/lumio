@@ -72,7 +72,7 @@ Chaque étape délicate a son guide, en français et en anglais, sans jargon :
   agrégation de plusieurs addons (voir « Ajouter un addon » ci-dessous).
 - **Lecture** : lecteur plein écran pensé pour la télécommande (D-pad) et la
   souris, pistes, sous-titres, reprise, épisode suivant.
-- **Torrents** : moteur intégré (libtorrent), lecture de magnets en streaming,
+- **Torrents** : moteur intégré (TorrServer), lecture de magnets en streaming,
   cache disque, confidentialité réseau (VPN requis ou avertissement).
 - **Sources locales** : dossiers locaux et Jellyfin.
 - **Profils** : profils avec code PIN et contrôle parental.
@@ -202,7 +202,7 @@ Lumio is a free (GPL-3.0) media client compatible with the Stremio addon
 protocol, Android only (Android TV and phone), no sync and no account
 (Flutter), with a built-in addon catalogue and a local web portal served by
 the TV to add and configure addons from a phone. Features: addon aggregation, built-in torrent streaming
-(libtorrent), local folders, Jellyfin, profiles with PIN and parental control,
+(TorrServer), local folders, Jellyfin, profiles with PIN and parental control,
 local backup, Stremio import, torrent
 privacy (VPN), addon health and source ranking with fallback, Trakt,
 release calendar, DLNA cast, watch-party.

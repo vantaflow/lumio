@@ -19,6 +19,7 @@ if ! adb -s "$BOX" get-state >/dev/null 2>&1; then
   exit 1
 fi
 
+bash "$ROOT/scripts/fetch-torrserver.sh" arm7
 cd "$ROOT/app"
 # LUMIO_BUILD_ARGS : défines supplémentaires (ex. --dart-define=LUMIO_DEBUG_TORRENT=1).
 # shellcheck disable=SC2086

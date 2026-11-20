@@ -39,3 +39,8 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 | Jellyfin vide, ajout, dossiers | `TV31-jellyfin-vide.png`, `P07-ajout-jellyfin.png`, `P08-ajout-dossier-choix.png` | TV31, P07, P08 | |
 | Addons, suppression | `P13-menu-addon.png`, `P09-confirmation-suppression-addon.png` | P13, P09 | addon de test supprimé |
 | Réglages divers | `TV25-suivi-trakt-box2.png`, `TV33-sauvegarde-import-box2.png`, `TV33b-import-autre-client-sans-focus.png`, `P13-selecteur-langue.png` | TV25, TV33, P13 | import : aucun focus (corrigé, non revu à l'écran) |
+
+## Intégration de TorrServer (2026-11-20)
+- `TS01-alerte-ip-torrserver.png` : alerte « Votre adresse IP sera visible » avant la lecture d'un magnet (addon de test jetable, supprimé ensuite).
+- `TS02-carte-chargement-torrserver.png` : carte de chargement P05 pendant le flux (14 sources, 3,3 Mo/s, tampon).
+- `TS03-lecture-sintel-torrserver.png` : lecture de Sintel (torrent légal) dans le lecteur de Lumio, servie par TorrServer.

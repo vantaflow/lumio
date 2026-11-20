@@ -39,6 +39,11 @@ android {
             // passer par `strip`.
             useLegacyPackaging = true
             keepDebugSymbols += "**/libtorrserver.so"
+            // Build d'une seule architecture (`--target-platform`) : on
+            // n'embarque pas le binaire TorrServer de l'autre (~60 Mo).
+            val target = project.findProperty("target-platform")?.toString() ?: ""
+            if (target == "android-arm") excludes += "**/arm64-v8a/libtorrserver.so"
+            if (target == "android-arm64") excludes += "**/armeabi-v7a/libtorrserver.so"
         }
     }
 

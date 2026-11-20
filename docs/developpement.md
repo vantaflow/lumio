@@ -41,6 +41,11 @@ cd backend && npm ci && npx vitest run && npm run typecheck
   Dart (transitives comprises). Une dépendance AGPL, de licence inconnue ou
   absente de `scripts/licenses-allow.txt` fait échouer le script en la nommant.
   `scripts/test-check-licenses.sh` teste ce contrôle.
+- `scripts/fetch-torrserver.sh` : télécharge TorrServer (version et SHA-256
+  épinglés dans `scripts/torrserver.pins`) et le place dans
+  `app/android/app/src/main/jniLibs/<abi>/libtorrserver.so` (ignoré par git).
+  **À lancer une fois avant tout build Android** ; `--verify` contrôle les
+  sommes sans télécharger. Voir [torrserver-provenance.md](torrserver-provenance.md).
 - `scripts/box-smoke.sh` : construit l'APK release, l'installe sur la box,
   lance l'application et attend la ligne `LUMIO_READY` dans logcat. Variables :
   - `LUMIO_BOX` : adresse adb de la box, par exemple `<IP-de-la-box>:5555`

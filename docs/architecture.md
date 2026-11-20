@@ -36,7 +36,7 @@ chiffrement, import.
 Application Flutter, identifiant `dev.lumio.app`.
 
 Existant : squelette, composant d'état (chargement, vide, erreur), bannière de
-mise à jour, interface `TorrentEngine` avec adaptateur `libtorrent_flutter`
+mise à jour, interface `TorrentEngine` avec adaptateur `TorrServer`
 et écran de debug d'essai du moteur.
 
 Prévu : interface (Riverpod, go_router), lecteur (media_kit), base locale
@@ -93,9 +93,12 @@ en-têtes exigés par un addon. Seules les connexions locales sont acceptées.
 
 Interface `TorrentEngine` (ajout d'un magnet ou infoHash, liste de fichiers,
 URL de flux locale à plages d'octets, statut, arrêt avec suppression des
-données). L'implémentation actuelle utilise `libtorrent_flutter` 1.7.5
-(épinglée), choisie après le spike. L'interface permet de basculer sur un
-autre moteur si nécessaire. Voir
+données). L'implémentation actuelle (`TorrServerEngine`) pilote TorrServer MatriX.150
+(épinglé, binaire officiel vérifié par SHA-256) par son API HTTP locale ; le
+processus est lancé par `TorrServerManager` (Kotlin), sur 127.0.0.1 avec mot de
+passe aléatoire. Elle remplace libtorrent_flutter 1.7.5 (débit 20 à 60 fois
+inférieur sur la box). L'interface permet de basculer sur un autre moteur si
+nécessaire. Voir
 [torrents-et-confidentialite.md](torrents-et-confidentialite.md).
 
 ## Pas de synchronisation
