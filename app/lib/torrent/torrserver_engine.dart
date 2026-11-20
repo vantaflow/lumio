@@ -73,6 +73,9 @@ bool isStreamableName(String name) {
 
 const _mib = 1024 * 1024;
 
+/// Plafond d'envoi pendant la lecture sans ensemencement (Kio/s).
+const _playbackUploadKibPerSec = 2048;
+
 /// Trackers publics ajoutés à ceux du magnet (mode « ajouter »). Sans eux,
 /// les métadonnées d'un magnet maigre mettent ~4 s (DHT seul) au lieu de
 /// ~1,4 s sur la box. Liste courte et fixe, à la place de la liste par défaut
@@ -90,7 +93,11 @@ const publicTrackers = [
 ///
 /// - Cache sur disque, borné par [TorrentSettings.maxCacheBytes], dans le
 ///   dossier de cache de l'application ; supprimé quand le torrent est retiré.
-/// - Envoi : coupé sans ensemencement, sinon limite en Kio/s (0 = illimité).
+/// - Envoi : jamais coupé (un pair étouffe un client qui ne rend rien, ce qui
+///   plombe le débit). Sans ensemencement, plafond [_playbackUploadKibPerSec]
+///   pendant la lecture ; le torrent est retiré à l'arrêt, donc rien n'est
+///   partagé ensuite. Avec ensemencement, limite en Kio/s (0 = illimité).
+/// - 50 connexions (25 par défaut) : plafond modéré pour la RAM de la box.
 /// - DHT actif ; UPnP, découverte locale (LPD), Bonjour, DLNA, recherche et
 ///   liste de trackers distante coupés : rien n'est annoncé sur le réseau local
 ///   ni demandé à un tiers hors des trackers du magnet et de [publicTrackers].
@@ -105,8 +112,11 @@ Map<String, Object?> torrServerSettings(TorrentSettings s) {
     // Fenêtre de lecture anticipée ~96 Mo, préchargement ~16 Mo.
     'ReaderReadAHead': pct(96 * _mib),
     'PreloadCache': pct(16 * _mib),
-    'DisableUpload': !s.seed,
-    'UploadRateLimit': s.seed && s.uploadLimit > 0 ? s.uploadLimit ~/ 1024 : 0,
+    'DisableUpload': false,
+    'UploadRateLimit': s.seed
+        ? (s.uploadLimit > 0 ? s.uploadLimit ~/ 1024 : 0)
+        : _playbackUploadKibPerSec,
+    'ConnectionsLimit': 50,
     'DownloadRateLimit': s.downloadLimit > 0 ? s.downloadLimit ~/ 1024 : 0,
     'DisableDHT': false,
     'DisableUPNP': true,

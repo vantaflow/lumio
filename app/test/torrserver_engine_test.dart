@@ -20,8 +20,11 @@ void main() {
       expect(m['TorrentsSavePath'], '/data/c');
       expect(m['CacheSize'], 512 * _mib);
       expect(m['RemoveCacheOnDrop'], isTrue);
-      expect(m['DisableUpload'], isTrue);
-      expect(m['UploadRateLimit'], 0);
+      // Envoi jamais coupé (les pairs étouffent un client qui ne rend rien),
+      // mais plafonné à 2 Mo/s sans ensemencement.
+      expect(m['DisableUpload'], isFalse);
+      expect(m['UploadRateLimit'], 2048);
+      expect(m['ConnectionsLimit'], 50);
       expect(m['ReaderReadAHead'], 18); // ~96 Mo sur 512 Mo
       expect(m['PreloadCache'], 3); // ~16 Mo sur 512 Mo
     });
@@ -38,6 +41,14 @@ void main() {
       expect(m['DisableUpload'], isFalse);
       expect(m['UploadRateLimit'], 200);
       expect(m['DownloadRateLimit'], 4096);
+    });
+
+    test('ensemencement sans limite : envoi illimité', () {
+      final m = torrServerSettings(
+        const TorrentSettings(savePath: 'x', seed: true),
+      );
+      expect(m['DisableUpload'], isFalse);
+      expect(m['UploadRateLimit'], 0);
     });
 
     test('rien n\'est annoncé ni demandé à un tiers', () {
