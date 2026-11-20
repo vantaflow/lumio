@@ -22,4 +22,17 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 | Confirmation | `P09-confirmation-suppression-profil.png` | P09 | |
 | Erreur de lecture | `P10-erreur-lecture.png` | P10 | |
 
-Pages du portail vues dans Chrome headless à 390 px : à ajouter (non faites dans cette passe).
+## Passe 3 (2026-11-20, box 192.168.0.47, build 7a94a09 puis correctifs)
+
+| Écran | Capture | Maquette | Remarques |
+|---|---|---|---|
+| Recherche, états | `TV12-recherche-vide-box2.png`, `TV12-recherche-resultats-ten.png`, `TV12-recherche-cartes-sans-affiche.png`, `TV12-recherche-chiffres-aucun-resultat.png`, `TV12-recherche-clavier-arabe-box2.png` | TV12 | cartes sans affiche = fond de surface + icône (corrigé) ; anneau des touches sans chevauchement (corrigé) |
+| Catalogue d'addons, aperçu, fiche à régler | `TV16-catalogue-addons.png`, `TV08-apercu-addon-catalogue.png`, `TV16-fiche-addon-a-regler.png`, `P13-choisir-serveur.png` | TV16, P13 | |
+| Guides | `G01-aide-ajouter-addon.png`, `G02-encadre-sur-votre-telephone.png`, `G04-page-aide-reglages.png`, `G04-aide-guide-ajouter-addon.png` | G01, G02, G04 | bouton Aide, encadré 5 étapes, page Aide |
+| Téléphone | `TV09-onglet-depuis-telephone.png`, `TV09b-telephone-connecte.png` | TV09 | |
+| Portail à 390 px (Chrome headless) | `portail390-M05a-ajouter.png`, `portail390-M05b-regler-avec-aides.png`, `portail390-M05c-mes-addons.png`, `portail390-M05d-trakt-non-connecte.png`, `portail390-M05d-trakt-code.png`, `portail390-G03-aide.png` | M05a à M05d, G03 | Trakt : code affiché, annulé en quittant l'écran du téléphone |
+| Ma liste, Personnaliser | `TV20-ma-liste-focus-initial.png`, `TV22-personnaliser-focus-initial.png`, `P13-menu-carte-ma-liste.png` | TV20, TV22 | aucun focus à l'ouverture (corrigé, build suivant) |
+| Menu avatar, Calendrier | `TV43-menu-avatar.png`, `TV21-calendrier-date-inconnue.png` | TV43, TV21 | |
+| Jellyfin vide, ajout, dossiers | `TV31-jellyfin-vide.png`, `P07-ajout-jellyfin.png`, `P08-ajout-dossier-choix.png` | TV31, P07, P08 | |
+| Addons, suppression | `P13-menu-addon.png`, `P09-confirmation-suppression-addon.png` | P13, P09 | addon de test supprimé |
+| Réglages divers | `TV25-suivi-trakt-box2.png`, `TV33-sauvegarde-import-box2.png`, `TV33b-import-autre-client-sans-focus.png`, `P13-selecteur-langue.png` | TV25, TV33, P13 | import : aucun focus (corrigé, non revu à l'écran) |

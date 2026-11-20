@@ -226,3 +226,9 @@ Compte rendu complet : `docs/rapports/2026-11-19-test-global-emulateur.md`.
 - Tests verts, NON revérifié à l'écran : Retour et focus d'origine depuis la recherche et depuis « Ma liste ».
 - Ouvert : le lecteur masque les commandes avec un fondu et la première touche suivante ne fait que les réveiller (±10 s pour gauche/droite) ; acceptable, à confirmer sur une vraie télécommande.
 
+### Passe 8 (2026-11-20, vraie box)
+- Corrigé et vérifié à l'écran : cartes sans affiche (fond de surface + icône, c'était la « rangée de boutons vides » de la recherche), anneau de focus des touches du clavier (plus de chevauchement), focus initial de « Ma liste » et de « Personnaliser ».
+- Corrigé, test vert, non revu à l'écran : focus initial de « Importer depuis un autre client ».
+- Règle : l'anneau de focus (contour 4 + écart) ne doit pas toucher un voisin ; pour les éléments serrés, pas d'agrandissement et `ringGap: 0`. Test générique ajouté sur le clavier ; à étendre aux autres groupes serrés.
+- Ouvert : focus perdu de la flèche gauche depuis l'onglet « Accueil » (4 appuis sans anneau visible) ; texte d'« Ajouter un dossier » tronqué (« saisissez le ch… ») ; « Actualiser » coupé à droite des puces du catalogue ; fiche : bouton « + Ma liste » coupé en bas à 1080p.
+

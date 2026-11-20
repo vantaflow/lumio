@@ -84,3 +84,10 @@ Re-rendu du lot 6 (police Bricolage opsz 14 et interlettrage 0) : tous les écra
 - Démarrage à froid de l'accueil vide : aucun élément ne prend le focus avant la première touche (la première flèche bas atteint « Ajouter un addon » après être passée par l'onglet).
 - Télécommande dans le catalogue (émulateur, rafales de 8 à 10 touches `input keyevent`) : le focus descend et remonte sans se perdre, la grille garde la carte focalisée visible sous l'en-tête, « Voir plus » atteint, haut depuis la première ligne -> puces puis onglets. Dialogue « Ajouter un dossier » : rafales bornées au dialogue. Pas encore couvert : maintien (`--longpress`) et tests widget de traversée dans les grilles, rangées horizontales de l'accueil rempli, fiche série, Calendrier, Ma liste (écrans qui exigent des données réelles : addon installé) — à faire.
 - Restent à vérifier sur l'émulateur (non faits dans cette passe) : accueil rempli, fiches, recherche, Ma liste, Calendrier, Personnaliser, réglages (Lecture, Torrents et VPN, Profils, Suivi, Sauvegarde, À propos), dossiers locaux et lecteur, Jellyfin vide, « Qui regarde ? ».
+
+## Passe box (2026-11-20)
+- Écrans revus sur la vraie box avec captures dans docs/captures/box/ : Films, Séries, recherche (tous états), catalogue et fiche d'addon, guides G01/G02/G04, portail à 390 px, Ma liste, Personnaliser, Calendrier, menu avatar, Jellyfin vide, ajout Jellyfin, dossiers locaux, sélecteurs, confirmations.
+- Carte de rangée sans affiche : fond `surface` #161B22 arrondi + icône du type (film / série), au lieu d'un titre flottant (TvArtwork).
+- Touches de clavier : pas d'agrandissement, anneau collé.
+- Écrans pleine page : un élément prend le focus à l'ouverture (Ma liste, Personnaliser, import).
+
