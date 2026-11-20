@@ -99,11 +99,23 @@ class _TvRowState extends ConsumerState<TvRow> {
     if (_initialized) return;
     _initialized = true;
     _restoreAt = _readMemory();
+    // Seule la rangée qui avait le focus en dernier le reprend (ouverture ou
+    // retour sur l'écran). Une rangée construite plus tard par le défilement
+    // paresseux garde sa position mais ne réclame jamais le focus : sinon
+    // chaque appui haut/bas déclenchait un second déplacement vers sa
+    // première carte, hors écran.
+    final lastRow = ref
+        .read(focusMemoryProvider.notifier)
+        .restore(_route, row: lastFocusedRowKey);
+    var claimFocus =
+        _restoreAt != null &&
+        (lastRow == null || lastRow == widget.restorationId);
+    _onlyIfIdle = true;
     if (_restoreAt == null &&
         widget.autofocusFirst &&
         widget.items.isNotEmpty) {
       _restoreAt = 0;
-      _onlyIfIdle = true;
+      claimFocus = true;
     }
     final extent = widget.itemExtent ?? widget.estimatedExtent;
     _controller = ScrollController(
@@ -111,7 +123,7 @@ class _TvRowState extends ConsumerState<TvRow> {
           ? _restoreAt! * (extent + widget.gap)
           : 0,
     );
-    if (_restoreAt != null) _tryRestore(5);
+    if (claimFocus) _tryRestore(5);
     FocusReturn.register(this, _returnFocus);
   }
 
@@ -135,6 +147,7 @@ class _TvRowState extends ConsumerState<TvRow> {
       );
     }
     setState(() => _restoreAt = i);
+    _onlyIfIdle = false;
     _tryRestore(6);
     return true;
   }
@@ -150,6 +163,12 @@ class _TvRowState extends ConsumerState<TvRow> {
       }
       for (final n in _restoreNode.descendants) {
         if (n.canRequestFocus && !n.skipTraversal) {
+          if (const String.fromEnvironment('LUMIO_PERF') == '1') {
+            // ignore: avoid_print
+            print(
+              'LUMIO_PERF requestFocus TvRow.restore ${widget.restorationId}',
+            );
+          }
           n.requestFocus();
           return;
         }

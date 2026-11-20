@@ -48,6 +48,29 @@ class RowTraversalPolicy extends ReadingOrderTraversalPolicy {
           n,
     ];
     if (candidates.isEmpty) return super.inDirection(currentNode, direction);
+    // La rangée voisine se cherche d'abord dans la même liste verticale que la
+    // carte courante : sinon la barre haute (fixe, donc « plus proche » dès que
+    // la liste a défilé) passait avant la rangée précédente, masquée sous elle.
+    final ctx = currentNode.context;
+    final list = ctx == null
+        ? null
+        : Scrollable.maybeOf(ctx, axis: Axis.vertical);
+    if (list != null) {
+      final sameList = [
+        for (final n in candidates)
+          if (n.context != null &&
+              identical(
+                Scrollable.maybeOf(n.context!, axis: Axis.vertical),
+                list,
+              ))
+            n,
+      ];
+      if (sameList.isNotEmpty) {
+        candidates
+          ..clear()
+          ..addAll(sameList);
+      }
+    }
     // Rangée voisine : celle dont le centre vertical est le plus proche.
     double dy(FocusNode n) => (n.rect.center.dy - from.center.dy).abs();
     final nearest = candidates.map(dy).reduce((a, b) => a < b ? a : b);
@@ -69,6 +92,15 @@ class RowTraversalPolicy extends ReadingOrderTraversalPolicy {
       if (between) return true;
     }
     final pref = preferUp;
+    if (const String.fromEnvironment('LUMIO_PERF') == '1') {
+      // ignore: avoid_print
+      print(
+        'LUMIO_PERF traversal ${direction.name} from=${from.center.dy.round()} '
+        'rowDy=${nearest.round()} candidates=${candidates.length} '
+        'row=${row.length} first=${row.first.rect.center.dy.round()} '
+        'pref=${pref != null && row.contains(pref)}',
+      );
+    }
     final target = !down && pref != null && row.contains(pref)
         ? pref
         : row.first;

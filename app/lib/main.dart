@@ -99,9 +99,14 @@ void _startPerfLog() {
   FocusManager.instance.addListener(() {
     final f = FocusManager.instance.primaryFocus;
     if (f == null || f is FocusScopeNode) return;
+    final labels = [
+      for (final a in [f, ...f.ancestors])
+        if (a.debugLabel != null) a.debugLabel,
+    ].take(3).join(' < ');
     // ignore: avoid_print
     print(
-      'LUMIO_PERF focus ${f.rect.center.dx.round()},${f.rect.center.dy.round()}',
+      'LUMIO_PERF focus ${f.rect.center.dx.round()},${f.rect.center.dy.round()}'
+      ' ${f.context?.widget.runtimeType} [$labels]',
     );
   });
 }
