@@ -249,12 +249,27 @@ class DefaultContinuePlayback implements ContinuePlayback {
       tell(l.noSourceAvailable);
       return;
     }
+    // Le flux regardé la dernière fois (même addon, même torrent ou même
+    // lien) ; à défaut (addon supprimé, flux absent) le meilleur du classement
+    // actuel, avec un message. Une ancienne entrée sans identité suit le
+    // classement, sans message.
+    final saved = findSavedStream(
+      ranked,
+      addonId: entry.streamAddonId,
+      key: entry.streamKey,
+    );
+    final chosen = saved ?? ranked.first;
+    final lost = saved == null && entry.streamKey != null;
     final exit = await launcher.play(
       context,
       meta: meta,
       videoId: entry.videoId,
-      stream: ranked.first,
-      fallbacks: ranked.skip(1).take(maxFallbacks).toList(),
+      stream: chosen,
+      fallbacks: [
+        for (final s in ranked)
+          if (!identical(s, chosen)) s,
+      ].take(maxFallbacks).toList(),
+      startNotice: lost ? l.resumeSourceGone : null,
     );
     // « Choisir une autre source » : la fiche s'ouvre sur la liste des flux.
     if (exit == PlayerExit.pickAnother && context.mounted) {

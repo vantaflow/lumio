@@ -130,6 +130,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
     this.resolveNext,
     this.resolveNextRanked,
     this.fallbacks = const [],
+    this.startNotice,
     this.local,
     this.subtitles = const [],
     this.allowPrivateForAddon,
@@ -174,6 +175,9 @@ class PlayerScreen extends ConsumerStatefulWidget {
   /// Sources de secours de [item] (lecture automatique) : essayées dans
   /// l'ordre si [item] échoue avant la première image.
   final List<StreamItem> fallbacks;
+
+  /// Message affiché au démarrage (ex. « source d'origine indisponible »).
+  final String? startNotice;
 
   /// [item] est un fichier d'un dossier local accordé : lu en `file://` par
   /// le chemin interne de [routePlayback], seulement pour [item] lui-même.
@@ -295,6 +299,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
         mediaType: meta?.type,
         season: video?.season,
         episode: video?.episode,
+        // Le flux réellement lu (un repli ou « autre source » le change).
+        streamAddonId: (_current ?? widget.item).addonId,
+        streamKey: (_current ?? widget.item).identityKey,
       ),
     );
   }
@@ -320,7 +327,16 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
       }
     }
     if (_disposed) return;
-    if (start > Duration.zero) _tellL((l) => l.resumeAt(formatClock(start)));
+    final notice = widget.startNotice;
+    if (notice != null && identical(item, widget.item)) {
+      _tellL(
+        (l) => start > Duration.zero
+            ? '$notice ${l.resumeAt(formatClock(start))}'
+            : notice,
+      );
+    } else if (start > Duration.zero) {
+      _tellL((l) => l.resumeAt(formatClock(start)));
+    }
     if (alternatives.isEmpty) {
       await _openOne(item, start);
       return;

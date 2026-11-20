@@ -263,6 +263,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get customizeHome => 'Personnaliser l\'accueil';
 
   @override
+  String get resumeSourceGone =>
+      'Source d\'origine indisponible : lecture depuis la meilleure source.';
+
+  @override
   String get progressNotSaved => 'Progression non enregistrée';
 
   @override

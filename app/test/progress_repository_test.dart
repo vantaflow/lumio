@@ -120,6 +120,36 @@ void main() {
     },
   );
 
+  test('identité du flux mémorisée, remplacée par le flux suivant', () async {
+    await repo.save(
+      'p',
+      'tt1',
+      'tt1',
+      _min * 10,
+      _min * 100,
+      streamAddonId: 'addon-1',
+      streamKey: 't:${'a' * 40}:2',
+    );
+    // Écriture sans identité (ancien appelant) : l'existant est gardé.
+    await repo.save('p', 'tt1', 'tt1', _min * 20, _min * 100);
+    var e = (await repo.get('p', 'tt1'))!;
+    expect((e.streamAddonId, e.streamKey), ('addon-1', 't:${'a' * 40}:2'));
+    // Un autre flux (repli, « choisir une autre source ») le remplace.
+    await repo.save(
+      'p',
+      'tt1',
+      'tt1',
+      _min * 30,
+      _min * 100,
+      streamAddonId: 'addon-2',
+      streamKey: 'u:${'b' * 64}',
+    );
+    e = (await repo.get('p', 'tt1'))!;
+    expect((e.streamAddonId, e.streamKey), ('addon-2', 'u:${'b' * 64}'));
+    final cont = (await repo.continueWatching('p').first).single;
+    expect(cont.streamKey, 'u:${'b' * 64}');
+  });
+
   test(
     'migration v2 vers v3 : ajoute metaId et watched, garde les lignes',
     () async {

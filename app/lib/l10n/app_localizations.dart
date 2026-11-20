@@ -542,6 +542,12 @@ abstract class AppLocalizations {
   /// **'Personnaliser l\'accueil'**
   String get customizeHome;
 
+  /// No description provided for @resumeSourceGone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Source d\'origine indisponible : lecture depuis la meilleure source.'**
+  String get resumeSourceGone;
+
   /// No description provided for @progressNotSaved.
   ///
   /// In fr, this message translates to:

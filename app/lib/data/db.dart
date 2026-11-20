@@ -94,6 +94,14 @@ class Progress extends Table {
   IntColumn get season => integer().nullable()();
   IntColumn get episode => integer().nullable()();
 
+  /// Identifiant de stockage (opaque, interne) de l'addon dont venait le flux
+  /// regardé (v13) ; nul pour les anciennes lignes.
+  TextColumn get streamAddonId => text().nullable()();
+
+  /// Identité NON sensible du flux regardé (v13) : `t:<infoHash>:<fileIdx>`
+  /// ou `u:<SHA-256 de l'URL normalisée>`. Jamais l'URL (clé d'addon).
+  TextColumn get streamKey => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {profileId, itemId};
 }
@@ -191,7 +199,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -283,6 +291,23 @@ class AppDatabase extends _$AppDatabase {
           }
           if (!cols.contains('episode')) {
             await m.addColumn(progress, progress.episode);
+          }
+        }
+      }
+      // v13 : identité du flux regardé, pour que « Reprendre » relance le même.
+      if (from < 13) {
+        final cols = {
+          for (final r in await customSelect(
+            'PRAGMA table_info(progress)',
+          ).get())
+            r.read<String>('name'),
+        };
+        if (cols.isNotEmpty) {
+          if (!cols.contains('stream_addon_id')) {
+            await m.addColumn(progress, progress.streamAddonId);
+          }
+          if (!cols.contains('stream_key')) {
+            await m.addColumn(progress, progress.streamKey);
           }
         }
       }

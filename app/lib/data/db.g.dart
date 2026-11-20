@@ -1449,6 +1449,28 @@ class $ProgressTable extends Progress
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _streamAddonIdMeta = const VerificationMeta(
+    'streamAddonId',
+  );
+  @override
+  late final GeneratedColumn<String> streamAddonId = GeneratedColumn<String>(
+    'stream_addon_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _streamKeyMeta = const VerificationMeta(
+    'streamKey',
+  );
+  @override
+  late final GeneratedColumn<String> streamKey = GeneratedColumn<String>(
+    'stream_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     profileId,
@@ -1464,6 +1486,8 @@ class $ProgressTable extends Progress
     mediaType,
     season,
     episode,
+    streamAddonId,
+    streamKey,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1560,6 +1584,21 @@ class $ProgressTable extends Progress
         episode.isAcceptableOrUnknown(data['episode']!, _episodeMeta),
       );
     }
+    if (data.containsKey('stream_addon_id')) {
+      context.handle(
+        _streamAddonIdMeta,
+        streamAddonId.isAcceptableOrUnknown(
+          data['stream_addon_id']!,
+          _streamAddonIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('stream_key')) {
+      context.handle(
+        _streamKeyMeta,
+        streamKey.isAcceptableOrUnknown(data['stream_key']!, _streamKeyMeta),
+      );
+    }
     return context;
   }
 
@@ -1621,6 +1660,14 @@ class $ProgressTable extends Progress
         DriftSqlType.int,
         data['${effectivePrefix}episode'],
       ),
+      streamAddonId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stream_addon_id'],
+      ),
+      streamKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stream_key'],
+      ),
     );
   }
 
@@ -1662,6 +1709,14 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
   /// Saison et épisode de [itemId] pour une série (v12).
   final int? season;
   final int? episode;
+
+  /// Identifiant de stockage (opaque, interne) de l'addon dont venait le flux
+  /// regardé (v13) ; nul pour les anciennes lignes.
+  final String? streamAddonId;
+
+  /// Identité NON sensible du flux regardé (v13) : `t:<infoHash>:<fileIdx>`
+  /// ou `u:<SHA-256 de l'URL normalisée>`. Jamais l'URL (clé d'addon).
+  final String? streamKey;
   const ProgressData({
     required this.profileId,
     required this.itemId,
@@ -1676,6 +1731,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     this.mediaType,
     this.season,
     this.episode,
+    this.streamAddonId,
+    this.streamKey,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1704,6 +1761,12 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     }
     if (!nullToAbsent || episode != null) {
       map['episode'] = Variable<int>(episode);
+    }
+    if (!nullToAbsent || streamAddonId != null) {
+      map['stream_addon_id'] = Variable<String>(streamAddonId);
+    }
+    if (!nullToAbsent || streamKey != null) {
+      map['stream_key'] = Variable<String>(streamKey);
     }
     return map;
   }
@@ -1735,6 +1798,12 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       episode: episode == null && nullToAbsent
           ? const Value.absent()
           : Value(episode),
+      streamAddonId: streamAddonId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(streamAddonId),
+      streamKey: streamKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(streamKey),
     );
   }
 
@@ -1757,6 +1826,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       mediaType: serializer.fromJson<String?>(json['mediaType']),
       season: serializer.fromJson<int?>(json['season']),
       episode: serializer.fromJson<int?>(json['episode']),
+      streamAddonId: serializer.fromJson<String?>(json['streamAddonId']),
+      streamKey: serializer.fromJson<String?>(json['streamKey']),
     );
   }
   @override
@@ -1776,6 +1847,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       'mediaType': serializer.toJson<String?>(mediaType),
       'season': serializer.toJson<int?>(season),
       'episode': serializer.toJson<int?>(episode),
+      'streamAddonId': serializer.toJson<String?>(streamAddonId),
+      'streamKey': serializer.toJson<String?>(streamKey),
     };
   }
 
@@ -1793,6 +1866,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     Value<String?> mediaType = const Value.absent(),
     Value<int?> season = const Value.absent(),
     Value<int?> episode = const Value.absent(),
+    Value<String?> streamAddonId = const Value.absent(),
+    Value<String?> streamKey = const Value.absent(),
   }) => ProgressData(
     profileId: profileId ?? this.profileId,
     itemId: itemId ?? this.itemId,
@@ -1809,6 +1884,10 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     mediaType: mediaType.present ? mediaType.value : this.mediaType,
     season: season.present ? season.value : this.season,
     episode: episode.present ? episode.value : this.episode,
+    streamAddonId: streamAddonId.present
+        ? streamAddonId.value
+        : this.streamAddonId,
+    streamKey: streamKey.present ? streamKey.value : this.streamKey,
   );
   ProgressData copyWithCompanion(ProgressCompanion data) {
     return ProgressData(
@@ -1831,6 +1910,10 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
       mediaType: data.mediaType.present ? data.mediaType.value : this.mediaType,
       season: data.season.present ? data.season.value : this.season,
       episode: data.episode.present ? data.episode.value : this.episode,
+      streamAddonId: data.streamAddonId.present
+          ? data.streamAddonId.value
+          : this.streamAddonId,
+      streamKey: data.streamKey.present ? data.streamKey.value : this.streamKey,
     );
   }
 
@@ -1849,7 +1932,9 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           ..write('poster: $poster, ')
           ..write('mediaType: $mediaType, ')
           ..write('season: $season, ')
-          ..write('episode: $episode')
+          ..write('episode: $episode, ')
+          ..write('streamAddonId: $streamAddonId, ')
+          ..write('streamKey: $streamKey')
           ..write(')'))
         .toString();
   }
@@ -1869,6 +1954,8 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
     mediaType,
     season,
     episode,
+    streamAddonId,
+    streamKey,
   );
   @override
   bool operator ==(Object other) =>
@@ -1886,7 +1973,9 @@ class ProgressData extends DataClass implements Insertable<ProgressData> {
           other.poster == this.poster &&
           other.mediaType == this.mediaType &&
           other.season == this.season &&
-          other.episode == this.episode);
+          other.episode == this.episode &&
+          other.streamAddonId == this.streamAddonId &&
+          other.streamKey == this.streamKey);
 }
 
 class ProgressCompanion extends UpdateCompanion<ProgressData> {
@@ -1903,6 +1992,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
   final Value<String?> mediaType;
   final Value<int?> season;
   final Value<int?> episode;
+  final Value<String?> streamAddonId;
+  final Value<String?> streamKey;
   final Value<int> rowid;
   const ProgressCompanion({
     this.profileId = const Value.absent(),
@@ -1918,6 +2009,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     this.mediaType = const Value.absent(),
     this.season = const Value.absent(),
     this.episode = const Value.absent(),
+    this.streamAddonId = const Value.absent(),
+    this.streamKey = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProgressCompanion.insert({
@@ -1934,6 +2027,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     this.mediaType = const Value.absent(),
     this.season = const Value.absent(),
     this.episode = const Value.absent(),
+    this.streamAddonId = const Value.absent(),
+    this.streamKey = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : itemId = Value(itemId);
   static Insertable<ProgressData> custom({
@@ -1950,6 +2045,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     Expression<String>? mediaType,
     Expression<int>? season,
     Expression<int>? episode,
+    Expression<String>? streamAddonId,
+    Expression<String>? streamKey,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1966,6 +2063,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
       if (mediaType != null) 'media_type': mediaType,
       if (season != null) 'season': season,
       if (episode != null) 'episode': episode,
+      if (streamAddonId != null) 'stream_addon_id': streamAddonId,
+      if (streamKey != null) 'stream_key': streamKey,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1984,6 +2083,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     Value<String?>? mediaType,
     Value<int?>? season,
     Value<int?>? episode,
+    Value<String?>? streamAddonId,
+    Value<String?>? streamKey,
     Value<int>? rowid,
   }) {
     return ProgressCompanion(
@@ -2000,6 +2101,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
       mediaType: mediaType ?? this.mediaType,
       season: season ?? this.season,
       episode: episode ?? this.episode,
+      streamAddonId: streamAddonId ?? this.streamAddonId,
+      streamKey: streamKey ?? this.streamKey,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2046,6 +2149,12 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
     if (episode.present) {
       map['episode'] = Variable<int>(episode.value);
     }
+    if (streamAddonId.present) {
+      map['stream_addon_id'] = Variable<String>(streamAddonId.value);
+    }
+    if (streamKey.present) {
+      map['stream_key'] = Variable<String>(streamKey.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2068,6 +2177,8 @@ class ProgressCompanion extends UpdateCompanion<ProgressData> {
           ..write('mediaType: $mediaType, ')
           ..write('season: $season, ')
           ..write('episode: $episode, ')
+          ..write('streamAddonId: $streamAddonId, ')
+          ..write('streamKey: $streamKey, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4636,6 +4747,8 @@ typedef $$ProgressTableCreateCompanionBuilder =
       Value<String?> mediaType,
       Value<int?> season,
       Value<int?> episode,
+      Value<String?> streamAddonId,
+      Value<String?> streamKey,
       Value<int> rowid,
     });
 typedef $$ProgressTableUpdateCompanionBuilder =
@@ -4653,6 +4766,8 @@ typedef $$ProgressTableUpdateCompanionBuilder =
       Value<String?> mediaType,
       Value<int?> season,
       Value<int?> episode,
+      Value<String?> streamAddonId,
+      Value<String?> streamKey,
       Value<int> rowid,
     });
 
@@ -4727,6 +4842,16 @@ class $$ProgressTableFilterComposer
 
   ColumnFilters<int> get episode => $composableBuilder(
     column: $table.episode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get streamAddonId => $composableBuilder(
+    column: $table.streamAddonId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get streamKey => $composableBuilder(
+    column: $table.streamKey,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4804,6 +4929,16 @@ class $$ProgressTableOrderingComposer
     column: $table.episode,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get streamAddonId => $composableBuilder(
+    column: $table.streamAddonId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get streamKey => $composableBuilder(
+    column: $table.streamKey,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProgressTableAnnotationComposer
@@ -4859,6 +4994,14 @@ class $$ProgressTableAnnotationComposer
 
   GeneratedColumn<int> get episode =>
       $composableBuilder(column: $table.episode, builder: (column) => column);
+
+  GeneratedColumn<String> get streamAddonId => $composableBuilder(
+    column: $table.streamAddonId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get streamKey =>
+      $composableBuilder(column: $table.streamKey, builder: (column) => column);
 }
 
 class $$ProgressTableTableManager
@@ -4905,6 +5048,8 @@ class $$ProgressTableTableManager
                 Value<String?> mediaType = const Value.absent(),
                 Value<int?> season = const Value.absent(),
                 Value<int?> episode = const Value.absent(),
+                Value<String?> streamAddonId = const Value.absent(),
+                Value<String?> streamKey = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProgressCompanion(
                 profileId: profileId,
@@ -4920,6 +5065,8 @@ class $$ProgressTableTableManager
                 mediaType: mediaType,
                 season: season,
                 episode: episode,
+                streamAddonId: streamAddonId,
+                streamKey: streamKey,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4937,6 +5084,8 @@ class $$ProgressTableTableManager
                 Value<String?> mediaType = const Value.absent(),
                 Value<int?> season = const Value.absent(),
                 Value<int?> episode = const Value.absent(),
+                Value<String?> streamAddonId = const Value.absent(),
+                Value<String?> streamKey = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProgressCompanion.insert(
                 profileId: profileId,
@@ -4952,6 +5101,8 @@ class $$ProgressTableTableManager
                 mediaType: mediaType,
                 season: season,
                 episode: episode,
+                streamAddonId: streamAddonId,
+                streamKey: streamKey,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

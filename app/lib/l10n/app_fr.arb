@@ -132,6 +132,7 @@
   },
   "download": "Télécharger",
   "customizeHome": "Personnaliser l'accueil",
+  "resumeSourceGone": "Source d'origine indisponible : lecture depuis la meilleure source.",
   "progressNotSaved": "Progression non enregistrée",
   "resumeAt": "Reprise à {time}",
   "@resumeAt": {

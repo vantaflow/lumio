@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/title_settings_store.dart';
@@ -16,8 +17,13 @@ import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/providers.dart';
+import 'package:lumio/torrent/torrent_playback.dart';
+import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
+
+import 'support/fake_network.dart';
+import 'support/fake_torrent_engine.dart';
 
 class FakeCtl extends Fake implements PlayerController {
   final _state = ValueNotifier<PlayerState>(
@@ -39,6 +45,8 @@ class FakeCtl extends Fake implements PlayerController {
     LocalFileSource? local,
     Duration start = Duration.zero,
   }) async => opened.add((s.title, start));
+  @override
+  void showOpening() {}
   @override
   Future<Duration?> creditsStart() async => null;
   @override
@@ -263,6 +271,8 @@ void main() {
       WidgetTester t, {
       required Future<StreamItem?> Function(Video) resolve,
       String videoId = 'tt1:1:1',
+      StreamItem? item,
+      List<Override> extra = const [],
     }) async {
       await t.pumpWidget(
         ProviderScope(
@@ -274,15 +284,18 @@ void main() {
             subtitleStyleStoreProvider.overrideWithValue(
               SubtitleStyleStore(db),
             ),
+            ...extra,
           ],
           child: MaterialApp(
             theme: ThemeData(extensions: const [LumioColors.dark]),
             home: PlayerScreen(
-              item: StreamItem(
-                addonId: 'ad',
-                title: 'Un',
-                url: Uri.parse('https://x.test/1.mp4'),
-              ),
+              item:
+                  item ??
+                  StreamItem(
+                    addonId: 'ad',
+                    title: 'Un',
+                    url: Uri.parse('https://x.test/1.mp4'),
+                  ),
               metaId: 'tt1',
               videoId: videoId,
               meta: meta,
@@ -492,6 +505,84 @@ void main() {
         () => ProgressRepository(db).get('p', 'tt1:1:1'),
       );
       expect(e!.position, const Duration(minutes: 8));
+    });
+
+    testWidgets('sortie : l\'identité du flux regardé est enregistrée', (
+      t,
+    ) async {
+      await pumpScreen(t, resolve: (v) async => null);
+      ctl.emit(
+        const PlayerState(
+          phase: PlayerPhase.playing,
+          position: Duration(minutes: 8),
+          duration: Duration(minutes: 40),
+        ),
+      );
+      await t.pump();
+      await t.pumpWidget(const SizedBox());
+      final e = await t.runAsync(
+        () => ProgressRepository(db).get('p', 'tt1:1:1'),
+      );
+      final played = StreamItem(
+        addonId: 'ad',
+        title: 'Un',
+        url: Uri.parse('https://x.test/1.mp4'),
+      );
+      expect(e!.streamAddonId, 'ad');
+      expect(e.streamKey, played.identityKey);
+      // Jamais l'URL en clair dans la progression.
+      expect(e.streamKey, isNot(contains('x.test')));
+    });
+
+    testWidgets('torrent : identité infoHash+fileIdx, reprise à la position', (
+      t,
+    ) async {
+      final torrent = StreamItem(
+        addonId: 'ad',
+        title: 'Sintel',
+        infoHash: '08ada5a7a6183aae1e09d831df6748d566095a10',
+        fileIdx: 2,
+      );
+      await ProgressRepository(db).save(
+        'p',
+        'tt1',
+        'tt1:1:1',
+        const Duration(minutes: 16),
+        const Duration(minutes: 40),
+      );
+      await pumpScreen(
+        t,
+        resolve: (v) async => null,
+        item: torrent,
+        extra: [
+          torrentPrivacyProvider.overrideWithValue(
+            OpenPrivacy(AppSettingsStore(db)),
+          ),
+          torrentPlaybackFactoryProvider.overrideWithValue(
+            () => TorrentPlayback(engine: FakeTorrentEngine()),
+          ),
+        ],
+      );
+      await t.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 300)),
+      );
+      await t.pump();
+      // Le moteur démarré, la position enregistrée est celle du démarrage.
+      expect(ctl.opened.single.$2, const Duration(minutes: 16));
+      ctl.emit(
+        const PlayerState(
+          phase: PlayerPhase.playing,
+          position: Duration(minutes: 17),
+          duration: Duration(minutes: 40),
+        ),
+      );
+      await t.pump();
+      await t.pumpWidget(const SizedBox());
+      final e = await t.runAsync(
+        () => ProgressRepository(db).get('p', 'tt1:1:1'),
+      );
+      expect(e!.streamKey, 't:08ada5a7a6183aae1e09d831df6748d566095a10:2');
+      expect(e.streamAddonId, 'ad');
     });
   });
 }

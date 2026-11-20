@@ -259,6 +259,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customizeHome => 'Customize home';
 
   @override
+  String get resumeSourceGone =>
+      'Original source unavailable: playing from the best source.';
+
+  @override
   String get progressNotSaved => 'Progress not saved';
 
   @override

@@ -1,3 +1,7 @@
+import 'dart:convert' show utf8;
+
+import 'package:crypto/crypto.dart' show sha256;
+
 /// Qualité vidéo déduite du nom ou de la description d'un flux.
 enum Quality { unknown, sd, hd720, hd1080, uhd2160 }
 
@@ -55,6 +59,13 @@ class StreamItem {
     final q = pairs.isEmpty ? '' : '?${pairs.join('&')}';
     return '$clean$q|${sizeBytes ?? ''}';
   }
+
+  /// Identité non sensible du flux, à mémoriser pour le reprendre : torrent
+  /// `t:<infoHash>:<fileIdx>`, lien direct `u:<SHA-256 de [signature]>`. Ne
+  /// contient jamais l'URL (qui peut porter la clé d'un addon).
+  String get identityKey => isTorrent
+      ? 't:${infoHash ?? ''}:${fileIdx ?? ''}'
+      : 'u:${sha256.convert(utf8.encode(signature))}';
 
   static const _volatileKeys = {
     'token',

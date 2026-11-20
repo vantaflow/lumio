@@ -277,6 +277,7 @@ class PlaybackLauncher {
     required String videoId,
     required StreamItem stream,
     List<StreamItem> fallbacks = const [],
+    String? startNotice,
   }) async {
     final navigator = Navigator.of(context);
     final profileId = _ref.read(currentProfileIdProvider);
@@ -296,12 +297,32 @@ class PlaybackLauncher {
       resolveNext: (core.Video next) => resolvePreferred(meta.type, next.id),
       resolveNextRanked: (core.Video next) => resolveRanked(meta.type, next.id),
       fallbacks: fallbacks,
+      startNotice: startNotice,
     );
     final build = _ref.read(playerBuilderProvider);
     return navigator.push<PlayerExit>(
       MaterialPageRoute(builder: (_) => build(screen)),
     );
   }
+}
+
+/// Flux de [ranked] correspondant à celui mémorisé à la dernière lecture
+/// (identité [key] : infoHash+fileIdx ou empreinte de l'URL). L'addon d'origine
+/// [addonId] est préféré ; sinon la même source chez un autre addon (addon
+/// réinstallé sous un autre identifiant). `null` si rien ne correspond.
+StreamItem? findSavedStream(
+  List<StreamItem> ranked, {
+  required String? addonId,
+  required String? key,
+}) {
+  if (key == null || key.isEmpty) return null;
+  StreamItem? other;
+  for (final s in ranked) {
+    if (s.identityKey != key) continue;
+    if (s.addonId == addonId) return s;
+    other ??= s;
+  }
+  return other;
 }
 
 /// Nombre de sources de secours passées au lecteur (3 essais au total).

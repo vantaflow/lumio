@@ -146,10 +146,16 @@ Map<String, dynamic> _direct(String name, String url, {String? desc}) => {
   'url': url,
 };
 
-Map<String, dynamic> _torrent(String name, {String? desc}) => {
+Map<String, dynamic> _torrent(
+  String name, {
+  String? desc,
+  String hash = 'a',
+  int? fileIdx,
+}) => {
   'name': name,
   'title': desc ?? name,
-  'infoHash': 'a' * 40,
+  'infoHash': hash * 40,
+  'fileIdx': ?fileIdx,
 };
 
 MetaPreview _preview({
@@ -829,7 +835,11 @@ void main() {
   });
 
   group('reprise en un clic', () {
-    ProgressEntry entry({String? cert}) => ProgressEntry(
+    ProgressEntry entry({
+      String? cert,
+      String? streamAddonId,
+      String? streamKey,
+    }) => ProgressEntry(
       profileId: defaultProfileId,
       metaId: 'tt9',
       videoId: 'tt9:1:2',
@@ -838,6 +848,8 @@ void main() {
       watched: false,
       updatedAt: DateTime.utc(2026, 11, 18),
       certification: cert,
+      streamAddonId: streamAddonId,
+      streamKey: streamKey,
     );
 
     testWidgets('describe : titre et SxEy ; play : lecteur au flux préféré', (
@@ -878,6 +890,111 @@ void main() {
         'https://cdn.example.com/x.mp4',
       );
       expect(h.client.streamCalls, ['org.a|tt9:1:2']);
+      await h.close();
+    });
+
+    Future<(_H, BuildContext)> twoAddons(WidgetTester t) async {
+      final h = _H(t);
+      late BuildContext ctx;
+      await h.pump(
+        preview: _preview(),
+        addons: [
+          _installed('s1', _manifest('org.a')),
+          _installed(
+            's2',
+            _manifest('org.b', url: 'https://b.example.com/manifest.json'),
+          ),
+        ],
+        home: Builder(
+          builder: (c) {
+            ctx = c;
+            return const Scaffold(body: Text('ACCUEIL'));
+          },
+        ),
+      );
+      // org.a : le meilleur flux du classement (1080p, 500 graines).
+      h.client.streams['org.a'] = [
+        _torrent('Torrentio', desc: 'Sintel 1080p 👤 500', hash: 'a'),
+      ];
+      // org.b : le flux réellement regardé (720p, peu de graines).
+      h.client.streams['org.b'] = [
+        _torrent('Test', desc: 'Sintel 720p 👤 3', hash: 'b', fileIdx: 1),
+        _direct('d', 'https://cdn.example.com/s.mp4', desc: 'Sintel 720p'),
+      ];
+      return (h, ctx);
+    }
+
+    testWidgets('reprise du MÊME flux torrent (infoHash + fileIdx)', (t) async {
+      final (h, ctx) = await twoAddons(t);
+      final watched = StreamItem(
+        addonId: 's2',
+        title: 'x',
+        infoHash: 'b' * 40,
+        fileIdx: 1,
+      );
+      unawaited(
+        h.container
+            .read(continuePlaybackProvider)
+            .play(
+              ctx,
+              entry(streamAddonId: 's2', streamKey: watched.identityKey),
+            ),
+      );
+      await h.settle();
+      expect(h.players.single.item.infoHash, 'b' * 40);
+      expect(h.players.single.item.fileIdx, 1);
+      expect(h.players.single.item.addonId, 's2');
+      expect(h.players.single.startNotice, isNull);
+      await h.close();
+    });
+
+    testWidgets('reprise du même lien direct (empreinte de l\'URL)', (t) async {
+      final (h, ctx) = await twoAddons(t);
+      final watched = StreamItem(
+        addonId: 's2',
+        title: 'x',
+        url: Uri.parse('https://cdn.example.com/s.mp4'),
+      );
+      unawaited(
+        h.container
+            .read(continuePlaybackProvider)
+            .play(
+              ctx,
+              entry(streamAddonId: 's2', streamKey: watched.identityKey),
+            ),
+      );
+      await h.settle();
+      expect(
+        h.players.single.item.url.toString(),
+        'https://cdn.example.com/s.mp4',
+      );
+      await h.close();
+    });
+
+    testWidgets('flux disparu : meilleur flux actuel, avec un message', (
+      t,
+    ) async {
+      final (h, ctx) = await twoAddons(t);
+      final gone = StreamItem(addonId: 's9', title: 'x', infoHash: 'c' * 40);
+      unawaited(
+        h.container
+            .read(continuePlaybackProvider)
+            .play(ctx, entry(streamAddonId: 's9', streamKey: gone.identityKey)),
+      );
+      await h.settle();
+      expect(h.players.single.item.infoHash, 'a' * 40);
+      expect(h.players.single.startNotice, contains('source'));
+      await h.close();
+    });
+
+    testWidgets('ancienne entrée sans identité : classement, sans message', (
+      t,
+    ) async {
+      final (h, ctx) = await twoAddons(t);
+      unawaited(h.container.read(continuePlaybackProvider).play(ctx, entry()));
+      await h.settle();
+      expect(h.players.single.item.infoHash, 'a' * 40);
+      expect(h.players.single.startNotice, isNull);
       await h.close();
     });
 

@@ -21,6 +21,8 @@ class ProgressEntry {
     this.mediaType,
     this.season,
     this.episode,
+    this.streamAddonId,
+    this.streamKey,
   });
 
   final String profileId;
@@ -45,6 +47,12 @@ class ProgressEntry {
   final String? mediaType;
   final int? season;
   final int? episode;
+
+  /// Flux regardé : identifiant de stockage de l'addon et identité non
+  /// sensible du flux (voir `StreamItem.identityKey`) ; nuls pour une ancienne
+  /// ligne (la reprise suit alors le classement).
+  final String? streamAddonId;
+  final String? streamKey;
 }
 
 /// Progression locale (SQLite) : reprise, « vu » et rangée « Continuer ».
@@ -73,6 +81,8 @@ class ProgressRepository {
     String? mediaType,
     int? season,
     int? episode,
+    String? streamAddonId,
+    String? streamKey,
   }) async {
     final stamp = _now().millisecondsSinceEpoch;
     final watched = ProgressRules.isWatched(pos, dur);
@@ -94,6 +104,8 @@ class ProgressRepository {
               mediaType: Value.absentIfNull(_clean(mediaType)),
               season: Value.absentIfNull(season),
               episode: Value.absentIfNull(episode),
+              streamAddonId: Value.absentIfNull(_clean(streamAddonId)),
+              streamKey: Value.absentIfNull(_clean(streamKey)),
             ),
           );
       if (!watched || nextVideoId == null) return;
@@ -211,6 +223,8 @@ class ProgressRepository {
     mediaType: r.mediaType,
     season: r.season,
     episode: r.episode,
+    streamAddonId: r.streamAddonId,
+    streamKey: r.streamKey,
   );
 }
 

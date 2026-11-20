@@ -81,7 +81,7 @@ void main() {
     await db
         .into(db.settings)
         .insert(SettingsCompanion.insert(key: 'x', value: 'y'));
-    expect(db.schemaVersion, 12);
+    expect(db.schemaVersion, 13);
     await db.close();
   });
 
@@ -147,7 +147,61 @@ void main() {
       db.progress,
     )..where((t) => t.itemId.equals('tt1:1:2'))).getSingle();
     expect((n.title, n.season, n.episode), ('Une série', 1, 2));
-    expect(db.schemaVersion, 12);
+    expect(db.schemaVersion, 13);
+    await db.close();
+  });
+
+  test('v12 -> v13 : identité du flux ajoutée, progression gardée', () async {
+    final old = raw.sqlite3.openInMemory();
+    final tmp = AppDatabase(NativeDatabase.memory());
+    await tmp.customSelect('SELECT 1').get();
+    final ddl = await tmp
+        .customSelect(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND sql IS NOT NULL "
+          "AND name <> 'progress' AND name NOT LIKE 'sqlite_%'",
+        )
+        .get();
+    for (final r in ddl) {
+      old.execute(r.read<String>('sql'));
+    }
+    await tmp.close();
+    // `progress` telle que la v12 la laissait : titre et affiche, pas de flux.
+    old.execute('''
+      CREATE TABLE progress (profile_id TEXT NOT NULL DEFAULT 'default',
+        item_id TEXT NOT NULL, position_ms INTEGER NOT NULL DEFAULT 0,
+        duration_ms INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL DEFAULT 0,
+        meta_id TEXT NOT NULL DEFAULT '', watched INTEGER NOT NULL DEFAULT 0,
+        certification TEXT, title TEXT, poster TEXT, media_type TEXT,
+        season INTEGER, episode INTEGER, PRIMARY KEY (profile_id, item_id));
+      PRAGMA user_version = 12;
+    ''');
+    old.execute(
+      'INSERT INTO progress (profile_id, item_id, position_ms, duration_ms, '
+      "updated_at, meta_id, title) VALUES ('p1', 'tt0458339', 66000, 888000, 5, "
+      "'tt0458339', 'Sintel')",
+    );
+
+    final db = AppDatabase(NativeDatabase.opened(old));
+    final row = (await db.select(db.progress).get()).single;
+    expect(
+      (row.itemId, row.positionMs, row.title),
+      ('tt0458339', 66000, 'Sintel'),
+    );
+    expect(row.streamAddonId, isNull);
+    expect(row.streamKey, isNull);
+    await db
+        .into(db.progress)
+        .insertOnConflictUpdate(
+          ProgressCompanion.insert(
+            profileId: const Value('p1'),
+            itemId: 'tt0458339',
+            streamAddonId: const Value('addon-1'),
+            streamKey: const Value('t:abc:1'),
+          ),
+        );
+    final n = (await db.select(db.progress).get()).single;
+    expect((n.streamAddonId, n.streamKey), ('addon-1', 't:abc:1'));
+    expect(db.schemaVersion, 13);
     await db.close();
   });
 }

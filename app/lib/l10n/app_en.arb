@@ -74,6 +74,7 @@
   "updateAvailable": "Update available: version {version}",
   "download": "Download",
   "customizeHome": "Customize home",
+  "resumeSourceGone": "Original source unavailable: playing from the best source.",
   "progressNotSaved": "Progress not saved",
   "resumeAt": "Resuming at {time}",
   "settingsNotSaved": "Settings not saved",
