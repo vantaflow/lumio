@@ -4,7 +4,9 @@ import 'package:crypto/crypto.dart';
 
 import '../net/http_fetcher.dart';
 
-/// Manifeste de mise à jour : `{version, apk, sha256}`.
+/// Manifeste de mise à jour : `{version, apk, sha256}` et, facultativement,
+/// `apks: {<abi>: {apk, sha256}}` pour proposer un APK par architecture
+/// (`apk`/`sha256` à la racine servent de repli).
 class UpdateManifest {
   const UpdateManifest({
     required this.version,
@@ -20,11 +22,19 @@ class UpdateManifest {
 /// Vérifie si une version plus récente est publiée. Ne lève jamais : hors
 /// ligne, erreur serveur ou manifeste invalide donnent `null`.
 class UpdateChecker {
-  UpdateChecker(this._fetcher, this._manifestUrl, this._currentVersion);
+  UpdateChecker(
+    this._fetcher,
+    this._manifestUrl,
+    this._currentVersion, {
+    List<String> supportedAbis = const [],
+  }) : _abis = supportedAbis;
 
   final HttpFetcher _fetcher;
   final Uri _manifestUrl;
   final String _currentVersion;
+
+  /// ABI de l'appareil, par ordre de préférence (`Build.SUPPORTED_ABIS`).
+  final List<String> _abis;
 
   /// Manifeste si la version distante est strictement plus récente, sinon
   /// `null`.
@@ -46,15 +56,34 @@ class UpdateChecker {
       if (version is! String || apk is! String || hash is! String) return null;
       final remote = _parseVersion(version);
       if (remote == null) return null;
-      final apkUrl = Uri.tryParse(apk);
+      if (_compare(remote, current) <= 0) return null;
+      var chosenApk = apk;
+      var chosenHash = hash;
+      final apks = json['apks'];
+      if (apks is Map) {
+        for (final abi in _abis) {
+          final entry = apks[abi];
+          if (entry is Map &&
+              entry['apk'] is String &&
+              entry['sha256'] is String) {
+            chosenApk = entry['apk'] as String;
+            chosenHash = entry['sha256'] as String;
+            break;
+          }
+        }
+      }
+      final apkUrl = Uri.tryParse(chosenApk);
       if (apkUrl == null ||
           !(apkUrl.scheme == 'http' || apkUrl.scheme == 'https') ||
           apkUrl.host.isEmpty) {
         return null;
       }
-      if (!RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(hash)) return null;
-      if (_compare(remote, current) <= 0) return null;
-      return UpdateManifest(version: version, apkUrl: apkUrl, sha256: hash);
+      if (!RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(chosenHash)) return null;
+      return UpdateManifest(
+        version: version,
+        apkUrl: apkUrl,
+        sha256: chosenHash,
+      );
     } catch (_) {
       return null;
     }

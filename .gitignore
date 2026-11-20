@@ -16,3 +16,8 @@ __pycache__/
 
 # TorrServer : binaires téléchargés par scripts/fetch-torrserver.sh (jamais commités)
 app/android/app/src/main/jniLibs/
+
+# Signature release : jamais commitée
+app/android/key.properties
+*.jks
+*.keystore

@@ -4,13 +4,20 @@ Client média libre compatible avec le protocole d'addons de Stremio, pensé
 pour la télécommande. Lumio est **Android uniquement** (Android TV et
 téléphone), sans synchronisation ni compte.
 
-> **Statut (19 novembre 2026) : fonctions et interface TV terminées, validation
-> sur la box en cours.** Toutes les phases du plan sont réalisées, l'interface
-> TV a été refaite écran par écran d'après les maquettes, et un test global de
-> bout en bout a été joué sur émulateur
-> ([compte rendu](docs/rapports/2026-11-19-test-global-emulateur.md)). La
-> vérification sur une vraie box Android TV est en cours (fluidité du lecteur,
-> HEVC, portail depuis le téléphone). Aucune version publiée pour l'instant.
+> **Statut : version 1.0.0 publiée.** Fonctions et interface TV terminées,
+> validées sur une vraie box Android TV. Les APK signés sont sur la
+> [page de téléchargement](https://vantaflow.github.io/lumio/) et dans les
+> [releases GitHub](https://github.com/vantaflow/lumio/releases/latest) ;
+> l'application signale elle-même les mises à jour.
+
+## Télécharger
+
+- **Page de téléchargement** : <https://vantaflow.github.io/lumio/>
+- **Box et TV Android 32 bits** (armeabi-v7a) :
+  [lumio-armeabi-v7a.apk](https://github.com/vantaflow/lumio/releases/latest/download/lumio-armeabi-v7a.apk)
+- **Téléphones, tablettes et box 64 bits** (arm64-v8a) :
+  [lumio-arm64-v8a.apk](https://github.com/vantaflow/lumio/releases/latest/download/lumio-arm64-v8a.apk)
+- Sommes SHA-256 et notes de version : [dernière release](https://github.com/vantaflow/lumio/releases/latest)
 
 Lumio est un projet indépendant, **non affilié à Stremio**. « Compatible avec
 le protocole d'addons » décrit uniquement l'interopérabilité technique.
@@ -122,8 +129,10 @@ Les maquettes de chaque écran sont dans [docs/design/maquettes/](docs/design/ma
 
 ## Installation rapide
 
-Il n'y a pas encore de version publiée. Pour construire l'APK Android à partir
-des sources :
+Téléchargez l'APK de la [dernière release](https://github.com/vantaflow/lumio/releases/latest)
+(`armeabi-v7a` pour une box 32 bits, `arm64-v8a` pour un appareil 64 bits),
+copiez-le sur l'appareil (application Downloader ou clé USB) et ouvrez-le en
+autorisant les sources inconnues. Pour construire l'APK à partir des sources :
 
 ```sh
 git clone <url-du-dépôt> lumio && cd lumio/app
@@ -206,8 +215,11 @@ local backup, Stremio import,
 addon health and source ranking with fallback, Trakt,
 release calendar, DLNA cast, watch-party.
 
-**Status: features and TV interface done, end-to-end test passed on an
-emulator, validation on a real Android TV box in progress.** No release yet.
+**Status: version 1.0.0 released.** Signed APKs (armeabi-v7a for 32-bit
+boxes, arm64-v8a for phones and 64-bit boxes) are on the
+[download page](https://vantaflow.github.io/lumio/) and in the
+[GitHub releases](https://github.com/vantaflow/lumio/releases/latest); the app
+shows an update banner when a newer release is published.
 
 Lumio ships no addon and no content, includes no scraper, and is not affiliated
 with Stremio. You are responsible for the sources you add and for complying

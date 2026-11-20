@@ -1,3 +1,4 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:lumio/l10n/l10n.dart';
 import 'package:lumio/config.dart';
@@ -18,6 +19,7 @@ class UpdateBanner extends StatefulWidget {
     this.fetcher,
     this.currentVersion,
     this.openUrl,
+    this.supportedAbis,
   });
 
   final String manifestUrl;
@@ -30,6 +32,9 @@ class UpdateBanner extends StatefulWidget {
 
   /// Substituable en test ; par défaut `url_launcher` (navigateur externe).
   final Future<void> Function(Uri url)? openUrl;
+
+  /// Substituable en test ; par défaut `Build.SUPPORTED_ABIS` (Android).
+  final Future<List<String>> Function()? supportedAbis;
 
   @override
   State<UpdateBanner> createState() => _UpdateBannerState();
@@ -54,11 +59,21 @@ class _UpdateBannerState extends State<UpdateBanner> {
         widget.fetcher ?? IoHttpFetcher(),
         url,
         version,
+        supportedAbis: await _abis(),
       );
       final m = await checker.check();
       if (mounted && m != null) setState(() => _update = m);
     } catch (_) {
       // Une vérification ratée ne doit jamais gêner l'utilisateur.
+    }
+  }
+
+  Future<List<String>> _abis() async {
+    try {
+      if (widget.supportedAbis != null) return await widget.supportedAbis!();
+      return (await DeviceInfoPlugin().androidInfo).supportedAbis;
+    } catch (_) {
+      return const [];
     }
   }
 

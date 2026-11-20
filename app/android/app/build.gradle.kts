@@ -1,9 +1,29 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Signature release : `key.properties` (local, ignoré par git) ou variables
+// d'environnement LUMIO_KEYSTORE_FILE / LUMIO_KEYSTORE_PASSWORD /
+// LUMIO_KEY_PASSWORD / LUMIO_KEY_ALIAS (CI). Sans rien de tout cela, repli sur
+// la clé de debug pour que les builds locaux et la CI des PR fonctionnent.
+val keyProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(prop: String, env: String): String? =
+    keyProps.getProperty(prop)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(env)?.takeIf { it.isNotBlank() }
+val releaseStoreFile = signingValue("storeFile", "LUMIO_KEYSTORE_FILE")
+val releaseStorePassword = signingValue("storePassword", "LUMIO_KEYSTORE_PASSWORD")
+val releaseKeyPassword = signingValue("keyPassword", "LUMIO_KEY_PASSWORD")
+val releaseKeyAlias = signingValue("keyAlias", "LUMIO_KEY_ALIAS")
+val hasReleaseKey = releaseStoreFile != null && releaseStorePassword != null &&
+    releaseKeyPassword != null && releaseKeyAlias != null
 
 android {
     namespace = "dev.lumio.app"
@@ -47,11 +67,21 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyPassword = releaseKeyPassword
+                keyAlias = releaseKeyAlias
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseKey) signingConfigs.getByName("release")
+            else signingConfigs.getByName("debug")
         }
     }
 }

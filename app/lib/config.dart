@@ -1,6 +1,8 @@
-/// URL du manifeste de mise à jour (`{version, apk, sha256}`).
-/// Vide = vérification désactivée : la bannière n'apparaît jamais.
-const updateManifestUrl = '';
+/// URL du manifeste de mise à jour (`{version, apk, sha256, apks?}`), publié
+/// comme asset de chaque release GitHub (l'URL `latest` redirige vers la plus
+/// récente). Vide = vérification désactivée : la bannière n'apparaît jamais.
+const updateManifestUrl =
+    'https://github.com/vantaflow/lumio/releases/latest/download/update.json';
 
 /// Adresse du serveur des salles de Watch party (Worker Cloudflare, sans
 /// compte). Vide = Watch party masquée. https obligatoire (http accepté

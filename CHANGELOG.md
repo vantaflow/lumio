@@ -1,9 +1,28 @@
 # Journal des modifications
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
-Aucune version n'est encore publiée.
-
 ## [Non publié]
+
+## [1.0.0] - 2026-11-20
+
+Première version publiée : client média Android TV et téléphone compatible avec
+le protocole d'addons, torrents intégrés (TorrServer), dossiers locaux,
+Jellyfin, profils avec code PIN et contrôle parental, sauvegarde locale,
+import Stremio, suivi Trakt, calendrier des sorties, DLNA, Watch party et
+portail « Gérer depuis le téléphone ».
+
+### Ajouté
+- APK signés avec la clé de release de Lumio, un par architecture :
+  `armeabi-v7a` (box 32 bits) et `arm64-v8a` (téléphones, box 64 bits).
+- Mises à jour : la bannière de l'accueil compare la version installée à
+  celle de la dernière release (`update.json`) et ouvre le téléchargement de
+  l'APK adapté à l'architecture de l'appareil.
+- Page de téléchargement : <https://vantaflow.github.io/lumio/>.
+
+Les installations de test (signées avec la clé de développement) ne peuvent
+pas être mises à jour par-dessus : Android refuse un APK signé avec une autre
+clé. Désinstaller Lumio efface ses données (addons, profils, progression) ;
+faire une sauvegarde locale avant.
 
 ### Retiré (2026-11-20)
 - Option VPN : réglage « VPN requis » et interface VPN, carte d'état VPN,

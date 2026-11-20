@@ -125,4 +125,61 @@ void main() {
       expect(verifySha256(bad, hex), isFalse);
     });
   });
+
+  group('APK par architecture', () {
+    Map<String, Object> multi() => {
+      ...manifest('1.2.0'),
+      'apks': {
+        'arm64-v8a': {'apk': 'https://example.org/a64.apk', 'sha256': 'b' * 64},
+        'armeabi-v7a': {
+          'apk': 'https://example.org/a32.apk',
+          'sha256': 'c' * 64,
+        },
+      },
+    };
+
+    Future<UpdateManifest?> run(List<String> abis) => UpdateChecker(
+      _StubFetcher(() async => _json(multi())),
+      _url,
+      '1.0.0',
+      supportedAbis: abis,
+    ).check();
+
+    test('choisit l\'APK de la première ABI connue', () async {
+      final m = await run(['armeabi-v7a']);
+      expect(m!.apkUrl, Uri.parse('https://example.org/a32.apk'));
+      expect(m.sha256, 'c' * 64);
+      final m64 = await run(['arm64-v8a', 'armeabi-v7a']);
+      expect(m64!.apkUrl, Uri.parse('https://example.org/a64.apk'));
+    });
+
+    test(
+      'ABI inconnue ou absente : repli sur apk/sha256 de la racine',
+      () async {
+        for (final abis in [
+          <String>[],
+          ['x86_64'],
+        ]) {
+          final m = await run(abis);
+          expect(m!.apkUrl, Uri.parse('https://example.org/lumio.apk'));
+          expect(m.sha256, sha);
+        }
+      },
+    );
+
+    test('entrée d\'ABI invalide : null', () async {
+      final bad = multi();
+      (bad['apks'] as Map)['armeabi-v7a'] = {
+        'apk': 'https://example.org/a32.apk',
+        'sha256': 'zz',
+      };
+      final m = await UpdateChecker(
+        _StubFetcher(() async => _json(bad)),
+        _url,
+        '1.0.0',
+        supportedAbis: ['armeabi-v7a'],
+      ).check();
+      expect(m, isNull);
+    });
+  });
 }
