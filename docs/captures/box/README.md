@@ -44,3 +44,5 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 - `TS01-alerte-ip-torrserver.png` : alerte « Votre adresse IP sera visible » avant la lecture d'un magnet (addon de test jetable, supprimé ensuite).
 - `TS02-carte-chargement-torrserver.png` : carte de chargement P05 pendant le flux (14 sources, 3,3 Mo/s, tampon).
 - `TS03-lecture-sintel-torrserver.png` : lecture de Sintel (torrent légal) dans le lecteur de Lumio, servie par TorrServer.
+- `TS04-lecture-echouee-delai-depasse.png` : état figé trouvé sur la box (« Délai dépassé : la source ne répond pas », « Réessayer » sans effet) après une longue session, avant de relancer l'appli.
+- `TS05-lecture-sintel-repli-apres-relance.png` : même torrent, appli relancée (`am force-stop`) : repli automatique jusqu'à la source de test, lecture à 4:34, 4 sources, 100 % téléchargé.

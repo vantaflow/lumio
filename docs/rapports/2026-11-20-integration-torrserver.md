@@ -41,3 +41,23 @@ Nouveaux : `torrserver_engine_test.dart` (22, contre un faux TorrServer HTTP : r
 - Position : le démarrage (`start`) est transmis au lecteur après la préparation du torrent (test ajouté : torrent repris à 16 min).
 - Tests ajoutés : `stream_identity_test` (core), `saved_stream_test`, migration v12 vers v13, `progress_repository_test`, 4 cas de reprise dans `detail_screen_test` (même torrent, même lien, flux disparu, ancienne entrée), 2 cas lecteur dans `next_episode_overlay_test` (identité enregistrée, torrent repris à la position).
 - Non vérifié sur la box : voir le rapport de session (la box est devenue injoignable en cours de scénario, l'addon de test n'a pas pu être retiré de Lumio).
+
+## Diagnostic du blocage à 0 Ko/s (2026-11-20, soirée)
+Box 4K Google TV (adb sur 192.168.0.48), appli de c7f174f, TorrServer MatriX.150.
+
+**Constaté sur l'état laissé par l'après-midi** (appli jamais fermée) : écran « La lecture a échoué. Délai dépassé » ; processus `libtorrserver.so` vivant (écoute web + interne en boucle locale), `/echo` répond, réseau de la box sain (ping 29 ms), disque 53 % utilisé ; mémoire très tendue (swap plein : 489 448 / 489 472 Ko, ~240 Mo libres). « Réessayer » (5 pressions, 3 attentes de 25 s) : aucun changement d'écran, aucun journal `LUMIO_PLAYER` de préparation de torrent. Une relecture complète depuis la fiche échoue en quelques secondes avec, côté mpv : « Reading plaintext playlist », « Failed to create file cache », « No video or audio streams selected » : mpv a reçu un corps texte (réponse d'erreur du moteur) au lieu d'un flux vidéo. Le mot de passe du moteur n'est lisible que par l'appli (non debuggable, pas de root) : l'API authentifiée n'a pas pu être interrogée.
+
+**Après `am force-stop` + relance** (nouveau processus, nouveau mot de passe, ancien moteur tué) : tout fonctionne. Cosmos Laundromat (torrent) 1,4 Mo/s, 57 % ; Sintel : repli automatique de la source Torrentio (0 graine) vers la source de test, lecture à l'image (h264, décodage matériel mediacodec, 0 image perdue), 4 sources, 100 % téléchargé.
+
+**Conclusion** : le défaut n'est pas dans le réseau, ni dans le disque, ni dans le moteur au repos : c'est un état périmé d'un processus longue durée (moteur vivant mais plus d'accord avec l'adaptateur : mot de passe/port périmé, torrent fantôme ou moteur dégradé sous pression mémoire ; la réponse texte vue par mpv va dans le sens d'un 401/404 du moteur), que « Réessayer » ne répare pas parce qu'il rejoue la même session. Cause exacte non isolée.
+
+**Reproduction par coupure Wi-Fi : tentée, non concluante, et dangereuse.** Coupure programmée côté box (`svc wifi disable; sleep 25; svc wifi enable`, lancée avant la coupure) pendant la lecture de Sintel : après la remise, la box n'est plus joignable par adb (port 5555 fermé sur tout 192.168.0.x, hormis un autre appareil qui n'est pas la box), alors que la commande de remise a dû s'exécuter. C'est très probablement ce qui s'était déjà produit l'après-midi : la box perd adb à la moindre bascule Wi-Fi/DHCP. Conséquence : la vérification du scénario « Reprendre » (tâche 3), le message de repli et le retrait de l'addon de test de Lumio n'ont pas pu être faits.
+
+**Aucun code modifié** (aucun défaut prouvé : pas de test rouge possible sans la cause). Pistes à tester à la prochaine session sur la box (une fois adb rétabli, par exemple via l'écran de la box > Options pour les développeurs) :
+1. Ajouter à l'adaptateur un contrôle d'état avant chaque `prepare` (`/echo` + requête authentifiée de liste) et une relance du moteur si l'authentification est refusée ; journaliser (sans URL ni pair) le code HTTP du moteur.
+2. Faire que « Réessayer » sur un torrent relance le moteur (`stopEngine` puis `ready`) au lieu de rejouer la session.
+3. Surveiller la mémoire : swap plein sur la box de 2 Go pendant les lectures.
+
+## Vérification « Reprendre » : non faite
+Le scénario Reprendre (même flux, même position, message de repli) n'a pas pu être exécuté sur la box (injoignable). Les tests automatisés du correctif (voir plus haut) restent la seule vérification. À refaire : lecture ~1 min de Sintel via l'addon de test, sortie, « Reprendre » depuis l'accueil, puis désactivation de l'addon et nouveau « Reprendre » pour le message de repli. L'entrée Sintel actuelle de « Continuer à regarder » est ancienne (sans identité) : elle suit le classement.
+Restes sur la box : addon « Test Sintel » toujours installé (adresse du Mac périmée, serveur du Mac arrêté), à supprimer dans Réglages > Sources ; Sintel dans « Continuer à regarder » (un ajout accidentel à « Ma liste » a été annulé).
