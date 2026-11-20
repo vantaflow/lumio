@@ -91,3 +91,49 @@ Tout ce qui suit est donc **non revérifié sur la box** (tests verts sur le Mac
 - écrans de l'étape 4 : catalogue d'addons, Ma liste, Personnaliser, Jellyfin vide, fiche locale, import, pop-ups P03, P05–P08, P11–P14 ;
 - test de débit torrent 1080p (≥ 1 Mo/s pendant 5 min) : build `--dart-define=LUMIO_DEBUG_TORRENT=1 --dart-define=LUMIO_TORRENT_HASH=<infohash d'un film Blender, ex. Tears of Steel> --dart-define=LUMIO_TORRENT_SECONDS=300`, journal `LUMIO_TORRENT` (`window_10s`, `read_continuous`) ;
 - endurance : build `--dart-define=LUMIO_DEBUG_LOOP=1`, puis `LUMIO_BOX=192.168.0.47:5555 caffeinate -i nohup scripts/endurance.sh 8 > endurance.log 2>&1 &` ; suivi : `tail` du CSV docs/rapports/endurance-<date>.csv ; arrêt : `pkill -f endurance.sh` puis réinstaller le build normal.
+
+## Passe 3 (2026-11-20, vraie box)
+
+Box rejointe en continu. Build 7a94a09 installé au départ, puis deux builds de correctifs (un par lot).
+
+### Lot d'hier, vérifié à l'écran
+| Point | Résultat |
+|---|---|
+| Alerte IP d'un torrent annulée | non revérifié (aucun flux torrent lisible : les métadonnées torrent ne sont pas arrivées, voir débit) ; test `torrent_privacy_test` vert |
+| Panneau Pistes, « Fermer » visible | non revérifié (lecture impossible, addon de test arrêté) ; test vert |
+| Pages Films et Séries | OK (rangées des catalogues, titres) |
+| Flèche haut vers l'onglet courant | OK depuis le contenu (Accueil). Après Retour d'une page ouverte depuis un onglet, le focus revient sur cet onglet (voulu) |
+| Héros sans étirement | OK (fond net) |
+| Clavier AZERTY | OK (rangées réelles, chiffres, arabe) |
+| Sous-titre en langue préférée | non revérifié (aucune lecture avec sous-titres sans l'addon de test) ; test vert |
+| Bouton Aide de « Ajouter un addon » + guide | OK |
+| Encadré « Sur votre téléphone » (5 étapes) | OK, vu via la fiche AIOStreams puis « Configurer depuis le portail » |
+| Réglages > Général > Aide (6 guides) | OK |
+| Trakt sur le portail | OK : code affiché sur le portail, annulation en quittant l'écran du téléphone (retour « Non connecté ») |
+| Portail à 390 px (Ajouter, Régler, Mes addons, Trakt, Aide) | OK, pas de débordement horizontal |
+
+### « Rangée de boutons vides » (recherche)
+Cause trouvée : les résultats SANS affiche (« AAA on FOX », « Aaaa Family… ») n'avaient ni fond ni cadre, seul le titre flottait. Corrigé : fond de surface #161B22 arrondi, icône discrète (film / série), même taille ; sert aussi pendant le chargement de l'image. Vérifié sur la box (`TV12-recherche-cartes-sans-affiche.png`). États vus : entrée, saisie, résultats, aucun résultat, chiffres, arabe, retour depuis une fiche (résultats et focus conservés), filtres Films / Séries.
+
+### Défauts trouvés et corrigés (tests d'abord)
+- Anneau de focus des touches du clavier : agrandissement 1,06 + contour 8 dp qui chevauchait les voisines. Touches et micro : pas d'agrandissement, anneau collé (`FocusableCard.ringGap`) ; test `search_screen_test` (anneau visible, sans chevaucher).
+- Cartes sans affiche : voir ci-dessus (`tv_artwork_test`).
+- Aucun focus à l'ouverture de « Ma liste » (`library_focus_test`), « Personnaliser » (`row_editor_focus_test`), « Importer depuis un autre client » (`stremio_import_screen_test`). Les deux premiers revus sur la box, le troisième non.
+
+### Écrans jamais revérifiés
+Catalogue d'addons OK, Ma liste OK, Personnaliser OK, Jellyfin vide OK, Dossiers locaux (vide, choix P08) OK, ajout Jellyfin P07 OK, sélecteurs P13 OK, confirmation P09 OK, calendrier OK, menu avatar OK, import / sauvegarde (liste, message « Aucune sauvegarde trouvée ») OK. Non atteints faute de lecture ou de données : fiche locale (aucun dossier), P03 (diffusion), P05 (chargement torrent), P06 (épisode suivant), P11 (aucun flux), P12 (addon hors ligne : vu comme « Addon injoignable » sur Films), P14 (aucun fichier de sauvegarde).
+
+### Addon de test
+« Films libres (test) » supprimé de Lumio (Mes addons > Supprimer, confirmation P09). Pendant les essais, deux titres ont été ajoutés par erreur à « Ma liste » (Cosmos Laundromat, MobLand) : retirés, la liste est revenue à son état initial (The Odyssey).
+
+### Débit torrent 1080p : NON MESURÉ
+Deux essais de 5 min (`LUMIO_DEBUG_TORRENT=1`, 300 s) : Tears of Steel (209c8226b299b308beaf2b9cd3fb49212dbd13ec) puis Sintel (08ada5a7a6183aae1e09d831df6748d566095a10), tous deux légaux. Aucun reçoit les métadonnées en 5 min malgré 32 puis 58 pairs vus ; débit mesuré 100 à 200 octets/s. Cause probable : trafic BitTorrent filtré sur ce réseau ou essaim injoignable ; à refaire sur un autre réseau. La porte 1 Mo/s reste ouverte. Build normal réinstallé ensuite.
+
+### Endurance 8 h : NON LANCÉE
+Commande prête (build `--dart-define=LUMIO_DEBUG_LOOP=1` installé, puis) :
+`cd ~/Projects/lumio && LUMIO_BOX=192.168.0.47:5555 caffeinate -i nohup scripts/endurance.sh 8 > endurance.log 2>&1 &`
+Suivi : `tail -f docs/rapports/endurance-<date>.csv` ; arrêt : `pkill -f endurance.sh` puis réinstaller le build normal.
+
+### Restant
+Alerte IP, panneau Pistes, sous-titre préféré, P03/P05/P06/P11 et débit torrent : à vérifier avec une lecture réelle (addon de test à relancer, autre réseau pour les torrents).
+

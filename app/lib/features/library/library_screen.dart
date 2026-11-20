@@ -48,6 +48,7 @@ class LibraryScreen extends ConsumerWidget {
         itemBuilder: (context, i) => PosterCard(
           key: ValueKey('${items[i].sourceAddonId}|${items[i].id}'),
           item: items[i],
+          autofocus: i == 0,
           width: 220,
           height: 330,
           onSelect: () => onOpenItem?.call(items[i]),

@@ -678,6 +678,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     key: ValueKey('result-${m.id}'),
                     title: m.name,
                     seed: m.id,
+                    type: m.type,
                     poster: m.poster,
                     allowPrivate: priv.contains(m.sourceAddonId),
                     width: 230,
@@ -792,7 +793,8 @@ class _Key extends StatelessWidget {
       height: 84,
       child: FocusableCard(
         autofocus: autofocus,
-        scale: 1.06,
+        scale: 1.0,
+        ringGap: 0,
         borderRadius: BorderRadius.circular(14),
         semanticLabel: semantic ?? label,
         onSelect: onSelect,
@@ -840,7 +842,8 @@ class _MicKey extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.lumio;
     return FocusableCard(
-      scale: 1.06,
+      scale: 1.0,
+      ringGap: 0,
       borderRadius: BorderRadius.circular(50),
       semanticLabel: semantic,
       onSelect: onSelect,

@@ -43,9 +43,13 @@ class TvArtwork extends StatelessWidget {
     this.width = tvCardWidth,
     this.scrim = true,
     this.resize = true,
+    this.type,
   });
 
   final String seed;
+
+  /// `movie` ou `series` : choisit l'icône discrète du fond sans affiche.
+  final String? type;
   final Uri? url;
   final bool allowPrivate;
   final double width;
@@ -58,13 +62,17 @@ class TvArtwork extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (a, b) = tvGradientFor(seed);
+    final c = context.lumio;
+    // Sans affiche (ou pendant son chargement) : fond de surface arrondi avec
+    // l'icône discrète du type, jamais un titre qui flotte sur le vide.
     final gradient = DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [a, b],
+      key: const ValueKey('artwork-placeholder'),
+      decoration: BoxDecoration(color: c.surface),
+      child: Center(
+        child: LumioIconView(
+          type == 'series' ? LumioIcon.monitor : LumioIcon.clapper,
+          size: 56,
+          color: c.textMuted.withValues(alpha: 0.45),
         ),
       ),
     );
@@ -73,6 +81,7 @@ class TvArtwork extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        gradient,
         Image(
           image: resize
               ? ResizeImage.resizeIfNeeded(
@@ -151,7 +160,11 @@ class TvMediaCard extends StatelessWidget {
     this.height = tvCardHeight,
     this.radius = 20,
     this.inset = 16,
+    this.type,
   });
+
+  /// `movie` ou `series` (icône du fond sans affiche).
+  final String? type;
 
   /// Dimensions de la carte : 300 x 170 en rangée, 230 x 340 en recherche
   /// (maquette TV12) ; [width] nul = largeur de la cellule.
@@ -192,6 +205,7 @@ class TvMediaCard extends StatelessWidget {
             children: [
               TvArtwork(
                 seed: seed ?? title,
+                type: type,
                 url: poster,
                 allowPrivate: allowPrivate,
                 width: width ?? tvCardWidth,

@@ -86,5 +86,10 @@ Re-rendu du lot 6 (police Bricolage opsz 14 et interlettrage 0) : tous les écra
 - Restent à vérifier sur l'émulateur (non faits dans cette passe) : accueil rempli, fiches, recherche, Ma liste, Calendrier, Personnaliser, réglages (Lecture, Torrents et VPN, Profils, Suivi, Sauvegarde, À propos), dossiers locaux et lecteur, Jellyfin vide, « Qui regarde ? ».
 
 ## Passe box (2026-11-20)
+- Écrans revus sur la vraie box avec captures dans docs/captures/box/ : Films, Séries, recherche (tous états), catalogue et fiche d'addon, guides G01/G02/G04, portail à 390 px, Ma liste, Personnaliser, Calendrier, menu avatar, Jellyfin vide, ajout Jellyfin, dossiers locaux, sélecteurs, confirmations.
+- Carte de rangée sans affiche : fond `surface` #161B22 arrondi + icône du type (film / série), au lieu d'un titre flottant (TvArtwork).
+- Touches de clavier : pas d'agrandissement, anneau collé.
+- Écrans pleine page : un élément prend le focus à l'ouverture (Ma liste, Personnaliser, import).
+
 Quatre défauts de la box corrigés et vérifiés à l'écran (captures `docs/captures/box/D1` à `D4`) : Gauche sur « Accueil » garde le focus (TvTopBar), catalogue d'addons avec puces défilantes et « Actualiser » fixé à droite, fiche série avec boutons épinglés en bas (« + Ma liste » entier, anneau compris), en-tête d'écran (`TvScreen`) aux actions de largeur naturelle (« Ajouter un dossier » complet). Détail dans AUDIT-UI.md, section « Passe box du 2026-11-20 ».
 
