@@ -7,8 +7,8 @@ enum AttemptOutcome {
   /// la suivante.
   sourceFailed,
 
-  /// Échec qui n'est pas imputable à la source (VPN exigé, avertissement
-  /// refusé, stockage) : la suivante échouerait pareil, on s'arrête.
+  /// Échec qui n'est pas imputable à la source (stockage insuffisant…) : la suivante
+  /// échouerait pareil, on s'arrête.
   stopped,
 }
 

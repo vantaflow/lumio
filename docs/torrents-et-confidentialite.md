@@ -20,7 +20,7 @@ derrière l'interface `TorrentEngine`. Le binaire est livré avec l'application
   un processus resté d'une session tuée est arrêté au lancement suivant.
 
 Pour lire un flux de type torrent, l'application :
-1. démarre le moteur (premier torrent seulement), après le contrôle du VPN ;
+1. démarre le moteur (premier torrent seulement) ;
 2. ajoute le magnet (ou l'infoHash converti en magnet) ;
 3. attend un pair puis les métadonnées, choisit le fichier vidéo ;
 4. donne au lecteur l'URL locale `http://127.0.0.1:<port>/stream?...` (plages
@@ -38,14 +38,10 @@ BitTorrent est un protocole pair à pair : **votre adresse IP est visible des
 autres pairs de l'essaim** et des trackers. Quiconque surveille l'essaim peut
 voir que cette adresse y participe. Lumio ne masque pas votre IP.
 
-Recommandation : utiliser un VPN de confiance au niveau de l'appareil ou du
-routeur avant de lire des torrents. Lumio avertit à la première utilisation et,
-avec « Exiger un VPN » :
-- le processus TorrServer **ne démarre pas** si aucun VPN (ou pas le bon) n'est
-  actif ;
-- si le VPN tombe pendant la lecture, le torrent est retiré **et le processus
-  est arrêté** (vérification toutes les 3 s) ;
-- au prochain essai sans VPN, rien ne redémarre.
+Il n'y a pas de VPN dans Lumio : pas d'option, pas d'avertissement, pas de
+blocage. Les torrents fonctionnent normalement. Si vous souhaitez masquer votre
+adresse, vous restez libre d'utiliser un VPN de confiance au niveau du système
+de l'appareil ou du routeur ; Lumio n'en dépend pas et ne le contrôle pas.
 
 Ports : le serveur web de TorrServer n'écoute que sur 127.0.0.1. Comme tout
 client BitTorrent, le moteur ouvre aussi un port d'écoute pour les pairs (TCP et

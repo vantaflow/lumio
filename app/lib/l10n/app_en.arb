@@ -338,26 +338,6 @@
   "sourcesReminderDismiss": "Hide",
   "torrentInsufficientStorage": "Not enough storage space to play this torrent. Free up some space and try again.",
   "torrentNoPeers": "No source available for this torrent. Try another stream.",
-  "torrentVpnRequired": "A VPN is required for torrents and none is active. Turn on your VPN and try again.",
-  "torrentVpnLost": "VPN disconnected: torrent stopped to protect your IP address.",
-  "torrentNoVpnReminder": "No VPN detected: your IP address is visible to other peers.",
-  "torrentIpWarningTitle": "Your IP address will be visible",
-  "torrentIpWarningBody": "With a torrent, the other participants of the swarm can see your IP address. Use a VPN to protect it. You can require one in the settings.",
-  "torrentIpWarningContinue": "Continue",
-  "torrentIpWarningCancel": "Cancel",
-  "torrentIpWarningDeclined": "Torrent not started. Start playback again to continue.",
-  "settingsRequireVpn": "Require a VPN for torrents",
-  "settingsVpnInterface": "VPN interface",
-  "vpnAny": "Any VPN",
-  "vpnInterfaceRequired": "{name}: required, torrents stop if it drops",
-  "@vpnInterfaceRequired": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "vpnNone": "No active VPN detected",
   "torrentNoFile": "This torrent has no playable file. Try another stream.",
   "torrentFailed": "The torrent could not start. Try another stream.",
   "torrentConnecting": "Connecting to sources…",
@@ -980,7 +960,7 @@
   "customizeHomeHint": "Hide or reorder the home rows.",
   "settingsCatSources": "Sources",
   "settingsCatPlayback": "Playback",
-  "settingsCatTorrents": "Torrents and VPN",
+  "settingsCatTorrents": "Torrents",
   "settingsCatProfiles": "Profiles and parental control",
   "settingsCatTracking": "Trakt tracking",
   "settingsCatBackup": "Backup and import",
@@ -990,7 +970,6 @@
   "secPersonalSources": "My own sources",
   "secSourceChoice": "Choosing a source",
   "secLanguages": "Languages",
-  "secProtection": "Protection",
   "secStorage": "Storage and speed",
   "secInterfaceLanguage": "Interface language",
   "secProfiles": "Profiles",
@@ -1036,16 +1015,6 @@
   "profileAdult": "Adult profile",
   "profileChange": "Change",
   "settingsBackHome": "Back: home",
-  "vpnCardActive": "VPN active · {name}",
-  "@vpnCardActive": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "vpnCardStopHint": "Torrents stop if the VPN drops.",
-  "vpnCardIpHint": "Your IP address is visible to other peers without a VPN.",
   "cacheUsedOf": "{used} used of",
   "@cacheUsedOf": {
     "placeholders": {

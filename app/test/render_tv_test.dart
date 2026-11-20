@@ -55,7 +55,6 @@ import 'package:lumio/features/library/library_screen.dart';
 import 'package:lumio/features/cast/cast_button.dart' show showCastPicker;
 import 'package:lumio/features/profiles/pin_dialog.dart' show showPinDialog;
 import 'package:lumio/l10n/l10n.dart';
-import 'package:lumio/torrent/ip_warning_dialog.dart';
 import 'package:lumio/data/party_client.dart';
 import 'package:lumio/features/party/party_screen.dart';
 import 'package:lumio/ui/common/tv_dialogs.dart' show showTvSnack;
@@ -1081,9 +1080,6 @@ void main() {
     });
     await shot('r-P03b', (ctx, h) async {
       unawaited(showCastPicker(ctx, discover: () => const Stream.empty()));
-    });
-    await shot('r-P04', (ctx, h) async {
-      unawaited(showIpWarningDialog(ctx));
     });
     await shot('r-P20a', (ctx, h) async {
       unawaited(

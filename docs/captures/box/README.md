@@ -17,7 +17,6 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 | Gestion des profils | `TV35-gestion-profils.png`, `TV35-qui-regarde-gestion.png` | TV35 | badge crayon au-dessus de l'anneau |
 | Calendrier vide | `TV42-calendrier-vide.png` | TV42 | |
 | Éditeur de profil | `P02-editeur-profil-adulte.png`, `P02-editeur-profil-pastilles.png` | P02 | pastilles d'âge séparées |
-| Alerte adresse IP (torrent) | `P04-alerte-ip-torrent.png` | P04 | |
 | Adresse locale | `P04b-adresse-locale.png` | P04 | confirmation d'installation depuis le portail |
 | Confirmation | `P09-confirmation-suppression-profil.png` | P09 | |
 | Erreur de lecture | `P10-erreur-lecture.png` | P10 | |
@@ -41,7 +40,6 @@ Prises par `adb exec-out screencap` sur Lumio installé sur la vraie box, le 202
 | Réglages divers | `TV25-suivi-trakt-box2.png`, `TV33-sauvegarde-import-box2.png`, `TV33b-import-autre-client-sans-focus.png`, `P13-selecteur-langue.png` | TV25, TV33, P13 | import : aucun focus (corrigé, non revu à l'écran) |
 
 ## Intégration de TorrServer (2026-11-20)
-- `TS01-alerte-ip-torrserver.png` : alerte « Votre adresse IP sera visible » avant la lecture d'un magnet (addon de test jetable, supprimé ensuite).
 - `TS02-carte-chargement-torrserver.png` : carte de chargement P05 pendant le flux (14 sources, 3,3 Mo/s, tampon).
 - `TS03-lecture-sintel-torrserver.png` : lecture de Sintel (torrent légal) dans le lecteur de Lumio, servie par TorrServer.
 - `TS04-lecture-echouee-delai-depasse.png` : état figé trouvé sur la box (« Délai dépassé : la source ne répond pas », « Réessayer » sans effet) après une longue session, avant de relancer l'appli.

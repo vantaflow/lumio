@@ -1032,52 +1032,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'No source available for this torrent. Try another stream.';
 
   @override
-  String get torrentVpnRequired =>
-      'A VPN is required for torrents and none is active. Turn on your VPN and try again.';
-
-  @override
-  String get torrentVpnLost =>
-      'VPN disconnected: torrent stopped to protect your IP address.';
-
-  @override
-  String get torrentNoVpnReminder =>
-      'No VPN detected: your IP address is visible to other peers.';
-
-  @override
-  String get torrentIpWarningTitle => 'Your IP address will be visible';
-
-  @override
-  String get torrentIpWarningBody =>
-      'With a torrent, the other participants of the swarm can see your IP address. Use a VPN to protect it. You can require one in the settings.';
-
-  @override
-  String get torrentIpWarningContinue => 'Continue';
-
-  @override
-  String get torrentIpWarningCancel => 'Cancel';
-
-  @override
-  String get torrentIpWarningDeclined =>
-      'Torrent not started. Start playback again to continue.';
-
-  @override
-  String get settingsRequireVpn => 'Require a VPN for torrents';
-
-  @override
-  String get settingsVpnInterface => 'VPN interface';
-
-  @override
-  String get vpnAny => 'Any VPN';
-
-  @override
-  String vpnInterfaceRequired(String name) {
-    return '$name: required, torrents stop if it drops';
-  }
-
-  @override
-  String get vpnNone => 'No active VPN detected';
-
-  @override
   String get torrentNoFile =>
       'This torrent has no playable file. Try another stream.';
 
@@ -2102,7 +2056,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsCatPlayback => 'Playback';
 
   @override
-  String get settingsCatTorrents => 'Torrents and VPN';
+  String get settingsCatTorrents => 'Torrents';
 
   @override
   String get settingsCatProfiles => 'Profiles and parental control';
@@ -2130,9 +2084,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get secLanguages => 'Languages';
-
-  @override
-  String get secProtection => 'Protection';
 
   @override
   String get secStorage => 'Storage and speed';
@@ -2203,18 +2154,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsBackHome => 'Back: home';
-
-  @override
-  String vpnCardActive(String name) {
-    return 'VPN active · $name';
-  }
-
-  @override
-  String get vpnCardStopHint => 'Torrents stop if the VPN drops.';
-
-  @override
-  String get vpnCardIpHint =>
-      'Your IP address is visible to other peers without a VPN.';
 
   @override
   String cacheUsedOf(String used) {

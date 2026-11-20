@@ -1898,84 +1898,6 @@ abstract class AppLocalizations {
   /// **'Aucune source disponible pour ce torrent. Essayez un autre flux.'**
   String get torrentNoPeers;
 
-  /// No description provided for @torrentVpnRequired.
-  ///
-  /// In fr, this message translates to:
-  /// **'Un VPN est exigé pour les torrents et aucun n\'est actif. Activez votre VPN puis réessayez.'**
-  String get torrentVpnRequired;
-
-  /// No description provided for @torrentVpnLost.
-  ///
-  /// In fr, this message translates to:
-  /// **'VPN coupé : torrent arrêté pour protéger votre adresse IP.'**
-  String get torrentVpnLost;
-
-  /// No description provided for @torrentNoVpnReminder.
-  ///
-  /// In fr, this message translates to:
-  /// **'Aucun VPN détecté : votre adresse IP est visible des autres pairs.'**
-  String get torrentNoVpnReminder;
-
-  /// No description provided for @torrentIpWarningTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Votre adresse IP sera visible'**
-  String get torrentIpWarningTitle;
-
-  /// No description provided for @torrentIpWarningBody.
-  ///
-  /// In fr, this message translates to:
-  /// **'Avec un torrent, les autres participants de l\'échange voient votre adresse IP. Pour la protéger, utilisez un VPN. Vous pouvez en exiger un dans les réglages.'**
-  String get torrentIpWarningBody;
-
-  /// No description provided for @torrentIpWarningContinue.
-  ///
-  /// In fr, this message translates to:
-  /// **'Continuer'**
-  String get torrentIpWarningContinue;
-
-  /// No description provided for @torrentIpWarningCancel.
-  ///
-  /// In fr, this message translates to:
-  /// **'Annuler'**
-  String get torrentIpWarningCancel;
-
-  /// No description provided for @torrentIpWarningDeclined.
-  ///
-  /// In fr, this message translates to:
-  /// **'Torrent non démarré. Relancez la lecture pour continuer.'**
-  String get torrentIpWarningDeclined;
-
-  /// No description provided for @settingsRequireVpn.
-  ///
-  /// In fr, this message translates to:
-  /// **'Exiger un VPN pour les torrents'**
-  String get settingsRequireVpn;
-
-  /// No description provided for @settingsVpnInterface.
-  ///
-  /// In fr, this message translates to:
-  /// **'Interface VPN'**
-  String get settingsVpnInterface;
-
-  /// No description provided for @vpnAny.
-  ///
-  /// In fr, this message translates to:
-  /// **'N\'importe quel VPN'**
-  String get vpnAny;
-
-  /// No description provided for @vpnInterfaceRequired.
-  ///
-  /// In fr, this message translates to:
-  /// **'{name} : exigée, torrents arrêtés si elle tombe'**
-  String vpnInterfaceRequired(String name);
-
-  /// No description provided for @vpnNone.
-  ///
-  /// In fr, this message translates to:
-  /// **'Aucun VPN actif détecté'**
-  String get vpnNone;
-
   /// No description provided for @torrentNoFile.
   ///
   /// In fr, this message translates to:
@@ -3641,7 +3563,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsCatTorrents.
   ///
   /// In fr, this message translates to:
-  /// **'Torrents et VPN'**
+  /// **'Torrents'**
   String get settingsCatTorrents;
 
   /// No description provided for @settingsCatProfiles.
@@ -3697,12 +3619,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Langues'**
   String get secLanguages;
-
-  /// No description provided for @secProtection.
-  ///
-  /// In fr, this message translates to:
-  /// **'Protection'**
-  String get secProtection;
 
   /// No description provided for @secStorage.
   ///
@@ -3787,24 +3703,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Retour : accueil'**
   String get settingsBackHome;
-
-  /// No description provided for @vpnCardActive.
-  ///
-  /// In fr, this message translates to:
-  /// **'VPN actif · {name}'**
-  String vpnCardActive(String name);
-
-  /// No description provided for @vpnCardStopHint.
-  ///
-  /// In fr, this message translates to:
-  /// **'Les torrents s\'arrêtent si le VPN tombe.'**
-  String get vpnCardStopHint;
-
-  /// No description provided for @vpnCardIpHint.
-  ///
-  /// In fr, this message translates to:
-  /// **'Votre adresse IP est visible des autres pairs sans VPN.'**
-  String get vpnCardIpHint;
 
   /// No description provided for @cacheUsedOf.
   ///

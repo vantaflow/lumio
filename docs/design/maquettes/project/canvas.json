@@ -134,7 +134,7 @@
       "y": 4800,
       "w": 1920,
       "h": 1080,
-      "title": "TV 14 · Réglages · Torrents et VPN"
+      "title": "TV 14 · Réglages · Torrents"
     },
     "TV16-Catalogue.dc.html": {
       "x": 4080,
@@ -282,13 +282,6 @@
       "w": 1920,
       "h": 1080,
       "title": "Pop-up 03 · Diffusion"
-    },
-    "P04-AlerteIP.dc.html": {
-      "x": 0,
-      "y": 15900,
-      "w": 1920,
-      "h": 1080,
-      "title": "Pop-up 04 · Alerte adresse IP"
     },
     "P05-ChargementTorrent.dc.html": {
       "x": 2040,
@@ -527,7 +520,6 @@
     "P01-PIN.dc.html",
     "P02-EditeurProfil.dc.html",
     "P03-Cast.dc.html",
-    "P04-AlerteIP.dc.html",
     "P05-ChargementTorrent.dc.html",
     "P06-EpisodeSuivant.dc.html",
     "P07-AjoutJellyfin.dc.html",

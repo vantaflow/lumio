@@ -73,7 +73,7 @@ Chaque étape délicate a son guide, en français et en anglais, sans jargon :
 - **Lecture** : lecteur plein écran pensé pour la télécommande (D-pad) et la
   souris, pistes, sous-titres, reprise, épisode suivant.
 - **Torrents** : moteur intégré (TorrServer), lecture de magnets en streaming,
-  cache disque, confidentialité réseau (VPN requis ou avertissement).
+  cache disque, limite d'envoi, ensemencement.
 - **Sources locales** : dossiers locaux et Jellyfin.
 - **Profils** : profils avec code PIN et contrôle parental.
 - **Sauvegarde** : export et import locaux d'un fichier (adresses d'addons
@@ -98,7 +98,7 @@ retirées) ; toutes sont réalisées.
 |---|---|---|
 | 0 — Socle | Monorepo et CI, addons simulés, backend de comptes, mises à jour, spike torrents | Terminée |
 | 1 — MVP | Protocole d'addons, lecteur, focus TV, profils, accueil, recherche, torrents | Terminée |
-| 2 — « En mieux » | Synchronisation, chiffrement, import Stremio, confidentialité, santé et tri des sources | Terminée |
+| 2 — « En mieux » | Synchronisation, chiffrement, import Stremio, santé et tri des sources | Terminée |
 | 3 — Extensions | Dossiers locaux, Jellyfin, Trakt, calendrier, DLNA, watch-party | Terminée |
 | Recentrage | Android seul ; synchronisation, comptes, Simkl et versions bureau retirés | Terminé |
 | Interface TV | Refonte complète d'après les maquettes (68 écrans et pop-ups), audit à la télécommande | Terminée |
@@ -106,7 +106,6 @@ retirées) ; toutes sont réalisées.
 | Test global | Parcours complet sur émulateur : addons, lecture, sous-titres, reprise, séries, anime | Terminé |
 | Validation sur la box | Écrans, fluidité, HEVC, portail, torrents 1080p, endurance 8 h | En cours |
 | Guides et Trakt | Guides pas à pas dans la TV et le portail, page Aide, section Trakt du portail | Terminé |
-| À venir | VPN WireGuard intégré (configuré depuis le portail) | Prévu |
 
 ## Captures d'écran
 
@@ -203,8 +202,8 @@ protocol, Android only (Android TV and phone), no sync and no account
 (Flutter), with a built-in addon catalogue and a local web portal served by
 the TV to add and configure addons from a phone. Features: addon aggregation, built-in torrent streaming
 (TorrServer), local folders, Jellyfin, profiles with PIN and parental control,
-local backup, Stremio import, torrent
-privacy (VPN), addon health and source ranking with fallback, Trakt,
+local backup, Stremio import,
+addon health and source ranking with fallback, Trakt,
 release calendar, DLNA cast, watch-party.
 
 **Status: features and TV interface done, end-to-end test passed on an

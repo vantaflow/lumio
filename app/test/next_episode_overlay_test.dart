@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lumio/data/app_settings.dart';
 import 'package:lumio/data/db.dart';
 import 'package:lumio/data/progress_repository.dart';
 import 'package:lumio/data/title_settings_store.dart';
@@ -22,7 +21,6 @@ import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
-import 'support/fake_network.dart';
 import 'support/fake_torrent_engine.dart';
 
 class FakeCtl extends Fake implements PlayerController {
@@ -555,9 +553,6 @@ void main() {
         resolve: (v) async => null,
         item: torrent,
         extra: [
-          torrentPrivacyProvider.overrideWithValue(
-            OpenPrivacy(AppSettingsStore(db)),
-          ),
           torrentPlaybackFactoryProvider.overrideWithValue(
             () => TorrentPlayback(engine: FakeTorrentEngine()),
           ),

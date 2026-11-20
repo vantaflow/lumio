@@ -23,8 +23,7 @@ import 'package:lumio/features/settings/sources_page.dart';
 import 'package:lumio/features/settings/stremio_import_screen.dart';
 import 'package:lumio/features/tracking/tracking_screen.dart';
 import 'package:lumio/l10n/l10n.dart';
-import 'package:lumio/torrent/torrent_providers.dart'
-    show cacheManagerProvider, networkProbeProvider;
+import 'package:lumio/torrent/torrent_providers.dart' show cacheManagerProvider;
 import 'package:lumio/ui/focus/focus_memory.dart';
 import 'package:lumio/ui/common/tv_dialogs.dart';
 import 'package:lumio/ui/common/tv_screen.dart';
@@ -34,8 +33,7 @@ import 'package:lumio/ui/focus/tv_scaffold.dart';
 import 'package:lumio/providers.dart';
 import 'package:lumio/ui/icons/lumio_icons.dart';
 import 'package:lumio/ui/theme.dart';
-import 'package:lumio_core/lumio_core.dart'
-    show NetInterface, Quality, StreamPrefs;
+import 'package:lumio_core/lumio_core.dart' show Quality, StreamPrefs;
 
 /// Clé de la mémoire du focus et nom de route de l'écran.
 const settingsRouteKey = 'settings';
@@ -94,17 +92,6 @@ final torrentCacheUsedProvider = FutureProvider.autoDispose<int>((ref) async {
     return await ref.read(cacheManagerProvider).usedBytes();
   } on Object {
     return 0;
-  }
-});
-
-/// Interfaces réseau actives (vide si la sonde échoue).
-final upInterfacesProvider = FutureProvider.autoDispose<List<NetInterface>>((
-  ref,
-) async {
-  try {
-    return await ref.read(networkProbeProvider).upInterfaces();
-  } on Object {
-    return const [];
   }
 });
 
@@ -478,47 +465,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       key: const ValueKey('page:torrents'),
       title: l.settingsCatTorrents,
       children: [
-        _VpnCard(requireVpn: torrents.requireVpn),
-        _Section(l.secProtection),
-        _SwitchTile(
-          id: 'requireVpn',
-          title: l.settingsRequireVpn,
-          value: torrents.requireVpn,
-          onChanged: (v) => _save(() => ctl.setRequireVpn(v)),
-        ),
-        _Tile(
-          id: 'vpnInterface',
-          title: l.settingsVpnInterface,
-          value: torrents.vpnInterface == null
-              ? l.vpnAny
-              : l.vpnInterfaceRequired(torrents.vpnInterface!),
-          onTap: () async {
-            List<NetInterface> up;
-            try {
-              up = await ref.read(networkProbeProvider).upInterfaces();
-            } on Object {
-              up = const [];
-            }
-            if (!mounted) return;
-            // Interfaces VPN nommées actuellement actives, plus celle déjà
-            // choisie (même si elle est éteinte) ; « n'importe quel VPN » en tête.
-            final names = <String>{
-              for (final i in up)
-                if (i.isVpn && !i.anonymousVpn) i.name,
-              ?torrents.vpnInterface,
-            };
-            final picked = await _choose<String>(
-              title: l.settingsVpnInterface,
-              options: [('', l.vpnAny), for (final n in names) (n, n)],
-              current: torrents.vpnInterface ?? '',
-            );
-            if (picked != null) {
-              await _save(
-                () => ctl.setVpnInterface(picked.isEmpty ? null : picked),
-              );
-            }
-          },
-        ),
         _Section(l.secStorage),
         _Tile(
           id: 'cache',
@@ -736,75 +682,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           onTap: () => _push(const AboutScreen()),
         ),
       ],
-    );
-  }
-}
-
-/// Carte d'état du VPN en tête de « Torrents et VPN » (maquette TV15).
-class _VpnCard extends ConsumerWidget {
-  const _VpnCard({required this.requireVpn});
-
-  final bool requireVpn;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.lumio;
-    final l = context.l10n;
-    final up = ref.watch(upInterfacesProvider).value ?? const <NetInterface>[];
-    final vpn = up.where((i) => i.isVpn).toList();
-    final active = vpn.isNotEmpty;
-    final named = vpn.where((i) => !i.anonymousVpn).toList();
-    final name = (named.isNotEmpty ? named.first : vpn.firstOrNull)?.name ?? '';
-    return Container(
-      key: const ValueKey('settings-vpn-card'),
-      margin: const EdgeInsets.only(top: 28),
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          LumioIconView(
-            LumioIcon.shield,
-            size: 56,
-            color: active ? c.success : c.accent,
-          ),
-          const SizedBox(width: 28),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  active ? l.vpnCardActive(name) : l.vpnNone,
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 30,
-                    fontWeight: FontWeight.w700,
-                    fontVariations: [FontVariation.weight(700)],
-                  ),
-                ),
-                if (requireVpn)
-                  Text(
-                    l.vpnCardStopHint,
-                    style: TextStyle(fontSize: 24, color: c.textMuted),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.sizeOf(context).width * 0.32,
-            ),
-            child: Text(
-              l.vpnCardIpHint,
-              textAlign: TextAlign.end,
-              style: TextStyle(fontSize: 24, color: c.textMuted),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

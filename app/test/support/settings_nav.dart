@@ -10,8 +10,6 @@ const settingsRailOf = {
   'preferDirect': 'playback',
   'audio': 'playback',
   'subtitles': 'playback',
-  'requireVpn': 'torrents',
-  'vpnInterface': 'torrents',
   'cache': 'torrents',
   'upload': 'torrents',
   'clearCache': 'torrents',

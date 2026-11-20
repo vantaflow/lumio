@@ -44,8 +44,7 @@ Source : le plan d'implémentation (`docs/superpowers/plans/2026-11-18-lumio.md`
 ## Phase 2 — « En mieux » (terminée)
 
 Synchronisation (27), chiffrement côté client des secrets (28), export et
-import local (29), import depuis Stremio (30), confidentialité réseau des
-torrents (31), santé des addons (34), tri, dédoublonnage et basculement automatique
+import local (29), import depuis Stremio (30), santé des addons (34), tri, dédoublonnage et basculement automatique
 des sources (35).
 
 ## Phase 3 — Extensions (terminée)
@@ -58,3 +57,10 @@ et documentation (43).
 
 iOS et tvOS, magasin d'addons, hébergement de contenu, addon préinstallé,
 scraper de sources.
+
+## Retiré le 2026-11-20 — option VPN
+
+Le cycle « VPN WireGuard intégré » est annulé et l'option VPN (VPN requis,
+coupe-circuit, avertissement IP) est retirée : les torrents fonctionnent
+directement, sans réglage ni blocage. Un VPN reste possible au niveau du
+système de l'appareil ou du routeur.

@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumio/debug/loop_scheduler.dart';
 import 'package:lumio/player/local_proxy.dart';
 import 'package:lumio/player/player_controller.dart';
-import 'package:lumio/torrent/ip_warning_dialog.dart';
 import 'package:lumio/torrent/torrent_playback.dart';
 import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio_core/lumio_core.dart' hide Video;
@@ -77,17 +76,6 @@ class _LoopDebugScreenState extends ConsumerState<LoopDebugScreen> {
     // Laisse la vue se monter avant d'ouvrir (le rendu vidéo en dépend).
     await Future<void>.delayed(const Duration(seconds: 1));
     if (!mounted) return;
-    // Même avertissement IP que dans le lecteur (première utilisation).
-    final privacy = ref.read(torrentPrivacyProvider);
-    try {
-      if (!await privacy.ipWarningAccepted()) {
-        if (!mounted) return;
-        if (!await showIpWarningDialog(context)) return;
-        await privacy.acceptIpWarning();
-      }
-    } on Object {
-      return;
-    }
     if (!mounted) return;
     final factory = ref.read(torrentPlaybackFactoryProvider);
     final sched = _sched = LoopScheduler(

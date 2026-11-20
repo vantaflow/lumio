@@ -75,15 +75,11 @@ class TorrentSettingsController extends Notifier<TorrentSettings> {
       final cache = await store.readInt(AppSettingsStore.torrentCacheKey);
       final up = await store.readInt(AppSettingsStore.uploadKey);
       final clear = await store.read(AppSettingsStore.clearCacheOnExitKey);
-      final vpn = await store.read(AppSettingsStore.requireVpnKey);
-      final iface = await store.read(AppSettingsStore.vpnInterfaceKey);
       if (_touched) return;
       state = TorrentSettings(
         cacheGb: cache != null && cache > 0 ? cache : state.cacheGb,
         uploadKbps: up != null && up >= 0 ? up : state.uploadKbps,
         clearCacheOnExit: clear == null ? state.clearCacheOnExit : clear == '1',
-        requireVpn: vpn == '1',
-        vpnInterface: iface == null || iface.isEmpty ? null : iface,
       );
     } on Object {
       // Valeurs par défaut.
@@ -112,25 +108,6 @@ class TorrentSettingsController extends Notifier<TorrentSettings> {
     await ref
         .read(appSettingsStoreProvider)
         .write(AppSettingsStore.clearCacheOnExitKey, value ? '1' : '0');
-  }
-
-  Future<void> setRequireVpn(bool value) async {
-    _touched = true;
-    state = state.copyWith(requireVpn: value);
-    await ref
-        .read(appSettingsStoreProvider)
-        .write(AppSettingsStore.requireVpnKey, value ? '1' : '0');
-  }
-
-  /// Interface VPN exigée ; `null` pour n'importe quel VPN.
-  Future<void> setVpnInterface(String? name) async {
-    _touched = true;
-    state = name == null
-        ? state.copyWith(anyVpnInterface: true)
-        : state.copyWith(vpnInterface: name);
-    await ref
-        .read(appSettingsStoreProvider)
-        .write(AppSettingsStore.vpnInterfaceKey, name ?? '');
   }
 }
 

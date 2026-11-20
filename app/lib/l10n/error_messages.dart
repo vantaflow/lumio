@@ -4,7 +4,6 @@ import 'package:lumio/data/jellyfin_repository.dart'
     show JellyfinInsecureException;
 import 'package:lumio/data/profile_repository.dart' show ProfileLimitException;
 import 'package:lumio/l10n/app_localizations.dart';
-import 'package:lumio/torrent/network_watcher.dart' show VpnRequiredException;
 import 'package:lumio_core/lumio_core.dart';
 
 /// Message d'erreur traduit pour l'interface. Le [AddonException.message]
@@ -24,7 +23,6 @@ String l10nForError(AppLocalizations l, Object error) {
   if (error is InsufficientStorageException) {
     return l.torrentInsufficientStorage;
   }
-  if (error is VpnRequiredException) return l.torrentVpnRequired;
   if (error is JellyfinAuthException) {
     return error.expired ? l.jellyfinErrExpired : l.jellyfinErrAuth;
   }

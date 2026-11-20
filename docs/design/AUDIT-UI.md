@@ -141,7 +141,7 @@ Non atteints : onboarding (TV01 à TV03, exige l'effacement des données, interd
 | D3 pavé PIN mort après erreur | oui | e9a3844 | code + tests |
 | D4 clavier qui s'ouvre seul | oui | e9a3844 | vérifié box : éditeur de profil sans clavier à l'ouverture, clavier seulement après OK |
 | D5 accueil : mise en page | oui (rangées) ; hero TV05 et états TV44/45/52 : non | e9a3844 | code + tests |
-| D6 Réglages | oui, rail pleine hauteur, Général en premier, carte du profil, pied de rail, carte VPN, jauge du cache, métriques exactes TV10/14/15/47 ; reste : liste d'addons en ligne et cartes Dossiers/Jellyfin de TV10 | e9a3844, 9a1c5f1, ca2a5b6 | vérifié box (cmp-TV15, cmp-TV14, cmp-TV47) |
+| D6 Réglages | oui, rail pleine hauteur, Général en premier, carte du profil, pied de rail, jauge du cache, métriques exactes TV10/14/15/47 ; reste : liste d'addons en ligne et cartes Dossiers/Jellyfin de TV10 | e9a3844, 9a1c5f1, ca2a5b6 | vérifié box (cmp-TV15, cmp-TV14, cmp-TV47) |
 | D7 marges de sécurité | partiel (écrans refaits : Réglages, sélecteur, Recherche, Ma liste, Calendrier, Personnaliser, Addons, Fiche) ; Jellyfin, Dossiers, Suivi, Watch party, Import, Sauvegarde : non | e9a3844, 7b48b6a | |
 | D8 ajout d'addon | non (cycle séparé) | | |
 | D9 fiche | bouton sur une ligne : oui ; focus initial : oui ; fond/bandeau TV06 : non revu | 7b48b6a | vérifié box (fiche série) |

@@ -5,6 +5,16 @@ Aucune version n'est encore publiée.
 
 ## [Non publié]
 
+### Retiré (2026-11-20)
+- Option VPN : réglage « VPN requis » et interface VPN, carte d'état VPN,
+  coupe-circuit des torrents, surveillance du réseau pendant la lecture,
+  avertissement d'adresse IP avant le premier torrent, rappel « Aucun VPN
+  détecté » et messages associés (fr et en). Les torrents démarrent
+  directement ; les anciens réglages stockés sont ignorés. Le cycle « VPN
+  WireGuard intégré » est annulé. Le rail des Réglages affiche « Torrents ».
+  Le portail du téléphone reste refusé sur une interface VPN ou mobile
+  (protection du portail, inchangée).
+
 ### Corrigé (2026-11-20)
 - « Reprendre » relance le flux effectivement regardé (même addon, même
   torrent infoHash+fileIdx ou même lien), à la position enregistrée ; si ce

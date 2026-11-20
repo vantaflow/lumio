@@ -1046,52 +1046,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune source disponible pour ce torrent. Essayez un autre flux.';
 
   @override
-  String get torrentVpnRequired =>
-      'Un VPN est exigé pour les torrents et aucun n\'est actif. Activez votre VPN puis réessayez.';
-
-  @override
-  String get torrentVpnLost =>
-      'VPN coupé : torrent arrêté pour protéger votre adresse IP.';
-
-  @override
-  String get torrentNoVpnReminder =>
-      'Aucun VPN détecté : votre adresse IP est visible des autres pairs.';
-
-  @override
-  String get torrentIpWarningTitle => 'Votre adresse IP sera visible';
-
-  @override
-  String get torrentIpWarningBody =>
-      'Avec un torrent, les autres participants de l\'échange voient votre adresse IP. Pour la protéger, utilisez un VPN. Vous pouvez en exiger un dans les réglages.';
-
-  @override
-  String get torrentIpWarningContinue => 'Continuer';
-
-  @override
-  String get torrentIpWarningCancel => 'Annuler';
-
-  @override
-  String get torrentIpWarningDeclined =>
-      'Torrent non démarré. Relancez la lecture pour continuer.';
-
-  @override
-  String get settingsRequireVpn => 'Exiger un VPN pour les torrents';
-
-  @override
-  String get settingsVpnInterface => 'Interface VPN';
-
-  @override
-  String get vpnAny => 'N\'importe quel VPN';
-
-  @override
-  String vpnInterfaceRequired(String name) {
-    return '$name : exigée, torrents arrêtés si elle tombe';
-  }
-
-  @override
-  String get vpnNone => 'Aucun VPN actif détecté';
-
-  @override
   String get torrentNoFile =>
       'Ce torrent ne contient aucun fichier lisible. Essayez un autre flux.';
 
@@ -2123,7 +2077,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsCatPlayback => 'Lecture';
 
   @override
-  String get settingsCatTorrents => 'Torrents et VPN';
+  String get settingsCatTorrents => 'Torrents';
 
   @override
   String get settingsCatProfiles => 'Profils et contrôle parental';
@@ -2151,9 +2105,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get secLanguages => 'Langues';
-
-  @override
-  String get secProtection => 'Protection';
 
   @override
   String get secStorage => 'Stockage et débit';
@@ -2225,18 +2176,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsBackHome => 'Retour : accueil';
-
-  @override
-  String vpnCardActive(String name) {
-    return 'VPN actif · $name';
-  }
-
-  @override
-  String get vpnCardStopHint => 'Les torrents s\'arrêtent si le VPN tombe.';
-
-  @override
-  String get vpnCardIpHint =>
-      'Votre adresse IP est visible des autres pairs sans VPN.';
 
   @override
   String cacheUsedOf(String used) {

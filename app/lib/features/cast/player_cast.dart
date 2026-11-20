@@ -10,8 +10,7 @@ enum CastStart { started, unsupported, noNetwork, failed }
 /// envoie le média au téléviseur, et rend la main au lecteur local à la
 /// position atteinte quand le cast s'arrête ou que l'appareil est perdu.
 ///
-/// Les règles d'accès du média (VPN/avertissement IP des torrents, profil
-/// enfant, verrous) sont celles de la lecture locale : on ne peut diffuser
+/// Les règles d'accès du média (profil enfant, verrous) sont celles de la lecture locale : on ne peut diffuser
 /// que ce qui a déjà été ouvert par le lecteur.
 class PlayerCast extends ChangeNotifier {
   PlayerCast({

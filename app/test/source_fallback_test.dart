@@ -11,14 +11,12 @@ import 'package:lumio/l10n/app_localizations_fr.dart';
 import 'package:lumio/player/player_screen.dart';
 import 'package:lumio/player/source_fallback.dart';
 import 'package:lumio/providers.dart';
-import 'package:lumio/torrent/network_watcher.dart' show TorrentPrivacy;
 import 'package:lumio/torrent/torrent_engine.dart' show TorrentStatus;
 import 'package:lumio/torrent/torrent_playback.dart';
 import 'package:lumio/torrent/torrent_providers.dart';
 import 'package:lumio/ui/theme.dart';
 import 'package:lumio_core/lumio_core.dart';
 
-import 'support/fake_network.dart';
 import 'support/fake_torrent_engine.dart';
 import 'support/recording_player.dart';
 
@@ -160,14 +158,6 @@ void main() {
         ProviderScope(
           overrides: [
             appDatabaseProvider.overrideWithValue(db),
-            torrentPrivacyProvider.overrideWithValue(
-              settings == null
-                  ? OpenPrivacy(store)
-                  : TorrentPrivacy(
-                      probe: FakeNetworkProbe([const NetInterface('wlan0')]),
-                      store: store,
-                    ),
-            ),
             torrentPlaybackFactoryProvider.overrideWithValue(
               () => TorrentPlayback(
                 engine: engine ?? FakeTorrentEngine(),
@@ -214,21 +204,6 @@ void main() {
       final ctl = await pump(t, _d('a'), const [], failing: {'a'});
       expect([for (final s in ctl.opened) s.title], ['a']);
       expect(ctl.fallbackRuns, isEmpty);
-      await t.pumpWidget(const SizedBox());
-    });
-
-    testWidgets('VPN exigé et absent : arrêt net, aucune bascule', (t) async {
-      final ctl = await pump(
-        t,
-        _torrent,
-        [_d('b')],
-        settings: {
-          AppSettingsStore.requireVpnKey: '1',
-          AppSettingsStore.ipWarningAcceptedKey: '1',
-        },
-      );
-      expect(ctl.opened, isEmpty);
-      expect(ctl.failures.single, contains('VPN'));
       await t.pumpWidget(const SizedBox());
     });
 

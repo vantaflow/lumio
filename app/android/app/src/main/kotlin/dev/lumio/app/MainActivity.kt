@@ -1,9 +1,6 @@
 package dev.lumio.app
 
-import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Handler
 import android.os.Looper
 import android.os.StatFs
@@ -118,24 +115,6 @@ class MainActivity : FlutterActivity() {
                     result.success(StatFs(path).availableBytes)
                 } catch (e: Exception) {
                     result.error("statfs", e.message, null)
-                }
-            }
-        // Un VPN est-il actif ? (les interfaces VPN ne sont pas toujours
-        // visibles de Dart ; le nom de l'interface reste inconnu.)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "dev.lumio.app/network")
-            .setMethodCallHandler { call, result ->
-                if (call.method != "vpnActive") {
-                    result.notImplemented()
-                    return@setMethodCallHandler
-                }
-                try {
-                    val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-                    val active = cm.allNetworks.any { n ->
-                        cm.getNetworkCapabilities(n)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-                    }
-                    result.success(active)
-                } catch (e: Exception) {
-                    result.error("network", e.message, null)
                 }
             }
     }

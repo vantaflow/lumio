@@ -23,8 +23,6 @@ import 'package:lumio/player/subtitle_style.dart';
 import 'package:lumio/player/tracks_controller.dart';
 import 'package:lumio/player/tracks_panel.dart';
 import 'package:lumio/providers.dart';
-import 'package:lumio/torrent/ip_warning_dialog.dart';
-import 'package:lumio/torrent/network_watcher.dart';
 import 'package:lumio/torrent/torrent_engine.dart' show TorrentStatus;
 import 'package:lumio/torrent/torrent_overlay.dart';
 import 'package:lumio/torrent/torrent_playback.dart';
@@ -257,7 +255,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   int _torrentToken = 0;
   StreamItem? _current;
   final _torrentStatus = ValueNotifier<TorrentStatus?>(null);
-  NetworkWatcher? _watcher;
   late final PlayerCast _cast;
 
   /// Salle de watch-party active (le lecteur s'y synchronise).
@@ -342,7 +339,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
       return;
     }
     // Chaque source passe par le même chemin d'ouverture, donc par toutes
-    // les gardes (adresse privée, VPN, avertissement IP une seule fois).
+    // les gardes (adresse privée).
     final played = await _ctl.playWithFallback(
       [item, ...alternatives],
       opener: (s) => _openOne(s, start),
@@ -359,8 +356,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
   Future<void> _abandonSource() async {
     _torrentToken++;
     _torrentActive = false;
-    _watcher?.stop();
-    _watcher = null;
     try {
       await _torrent?.release().timeout(const Duration(seconds: 10));
     } on Object {
@@ -378,7 +373,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     }
     _torrentToken++;
     _torrentActive = false;
-    _watcher?.stop();
     unawaited(_torrent?.release());
     await _ctl.open(
       item,
@@ -398,46 +392,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     _torrentActive = true; // lu au prochain build (peut venir d'initState)
     _torrentStatus.value = null;
     _ctl.showOpening();
-    // Confidentialité : avertissement IP (une fois), VPN exigé ou rappel.
-    final privacy = ref.read(torrentPrivacyProvider);
-    try {
-      if (!await privacy.ipWarningAccepted()) {
-        if (_disposed || !mounted || token != _torrentToken) return;
-        final accepted = await showIpWarningDialog(context);
-        if (_disposed || token != _torrentToken) return;
-        if (!accepted) {
-          // Refus volontaire : retour propre à la fiche, sans message d'échec.
-          _watcher?.stop();
-          if (mounted && Navigator.of(context).canPop()) {
-            Navigator.of(context).pop(PlayerExit.back);
-          }
-          return;
-        }
-        try {
-          await privacy.acceptIpWarning();
-        } on Object {
-          // Non mémorisé : la question sera reposée au prochain torrent.
-        }
-        if (_disposed || token != _torrentToken) return;
-      }
-      final decision = await privacy.evaluate();
-      if (_disposed || token != _torrentToken) return;
-      if (decision is GuardStop) {
-        _failTorrent(token, (l) => l.torrentVpnRequired);
-        return;
-      }
-      if (decision is GuardWarnNoVpn && mounted) {
-        // En file : ne masque pas un message déjà affiché (repli de reprise).
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text(context.l10n.torrentNoVpnReminder)),
-        );
-      }
-    } on Object {
-      // Réglages illisibles : on ne démarre pas (échec fermé).
-      _failTorrent(token, (l) => l.torrentFailed);
-      return;
-    }
-    _watchNetwork(torrent, token, privacy);
     final Uri url;
     try {
       url = await torrent.prepare(
@@ -457,9 +411,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     } on NoStreamableFileException {
       _failTorrent(token, (l) => l.torrentNoFile, fallbackable: true);
       return;
-    } on VpnRequiredException {
-      _failTorrent(token, (l) => l.torrentVpnRequired);
-      return;
     } on Object {
       _failTorrent(token, (l) => l.torrentFailed, fallbackable: true);
       return;
@@ -478,46 +429,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     );
   }
 
-  /// Surveille les interfaces pendant le torrent : si le VPN exigé tombe, le
-  /// torrent est arrêté (données supprimées) et un message est affiché.
-  void _watchNetwork(
-    TorrentPlayback torrent,
-    int token,
-    TorrentPrivacy privacy,
-  ) {
-    _watcher?.stop();
-    _watcher = null;
-    unawaited(
-      privacy.guard().then((g) {
-        if (!g.enforcing || _disposed || token != _torrentToken) return;
-        _watcher = NetworkWatcher(
-          privacy: privacy,
-          onStop: (_) {
-            if (_disposed || token != _torrentToken) return;
-            _torrentToken++;
-            _torrentActive = false;
-            // Torrent libéré ET processus du moteur arrêté.
-            unawaited(torrent.shutdown());
-            unawaited(_cast.stop(resume: false)); // plus rien à relayer
-            try {
-              unawaited(_ctl.player.stop().catchError((Object _) {}));
-            } on Object {
-              // Lecteur indisponible : le message d'erreur suffit.
-            }
-            if (mounted) _ctl.fail(context.l10n.torrentVpnLost);
-          },
-        )..start();
-      }),
-    );
-  }
-
   void _failTorrent(
     int token,
     String Function(AppLocalizations l) message, {
     bool fallbackable = false,
   }) {
     if (_disposed || !mounted || token != _torrentToken) return;
-    _watcher?.stop();
     _ctl.fail(message(context.l10n), fallbackable: fallbackable);
   }
 
@@ -770,7 +687,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen>
     _tracksNode.dispose();
     _tracks?.dispose();
     // Arrêt du torrent et suppression de ses données à la sortie.
-    _watcher?.stop();
     unawaited(_torrent?.release());
     _torrentStatus.dispose();
     if (widget.controller == null) unawaited(_ctl.dispose());

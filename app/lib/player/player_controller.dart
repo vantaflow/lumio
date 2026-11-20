@@ -401,8 +401,7 @@ class PlayerController {
 
   /// Affiche une erreur sans ouvrir de média (échec avant l'ouverture, par
   /// exemple la préparation d'un torrent). [fallbackable] : la source est en
-  /// cause (le basculement peut essayer la suivante) ; sinon (VPN exigé,
-  /// avertissement refusé, stockage) la suivante échouerait de même.
+  /// cause (le basculement peut essayer la suivante) ; sinon (stockage insuffisant…) la suivante échouerait de même.
   void fail(String message, {bool fallbackable = false}) =>
       _fail(message, fallbackable: fallbackable);
 
@@ -457,8 +456,8 @@ class PlayerController {
   /// lent), essaie la suivante, [maxAttempts] sources au plus, avec la
   /// notice « Source indisponible… ». Jamais de bascule une fois la lecture
   /// commencée. [opener] ouvre une source en respectant toutes les gardes
-  /// (adresse privée, VPN, avertissement IP) ; par défaut [open].
-  /// Un échec qui n'est pas imputable à la source (VPN exigé…) arrête la
+  /// (adresse privée) ; par défaut [open].
+  /// Un échec qui n'est pas imputable à la source (stockage insuffisant…) arrête la
   /// série. Retourne la source qui a démarré, `null` si aucune.
   Future<StreamItem?> playWithFallback(
     List<StreamItem> ranked, {

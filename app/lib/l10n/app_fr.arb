@@ -571,26 +571,6 @@
   "sourcesReminderDismiss": "Masquer",
   "torrentInsufficientStorage": "Espace insuffisant sur l'appareil pour lire ce torrent. Libérez de la place puis réessayez.",
   "torrentNoPeers": "Aucune source disponible pour ce torrent. Essayez un autre flux.",
-  "torrentVpnRequired": "Un VPN est exigé pour les torrents et aucun n'est actif. Activez votre VPN puis réessayez.",
-  "torrentVpnLost": "VPN coupé : torrent arrêté pour protéger votre adresse IP.",
-  "torrentNoVpnReminder": "Aucun VPN détecté : votre adresse IP est visible des autres pairs.",
-  "torrentIpWarningTitle": "Votre adresse IP sera visible",
-  "torrentIpWarningBody": "Avec un torrent, les autres participants de l'échange voient votre adresse IP. Pour la protéger, utilisez un VPN. Vous pouvez en exiger un dans les réglages.",
-  "torrentIpWarningContinue": "Continuer",
-  "torrentIpWarningCancel": "Annuler",
-  "torrentIpWarningDeclined": "Torrent non démarré. Relancez la lecture pour continuer.",
-  "settingsRequireVpn": "Exiger un VPN pour les torrents",
-  "settingsVpnInterface": "Interface VPN",
-  "vpnAny": "N'importe quel VPN",
-  "vpnInterfaceRequired": "{name} : exigée, torrents arrêtés si elle tombe",
-  "@vpnInterfaceRequired": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "vpnNone": "Aucun VPN actif détecté",
   "torrentNoFile": "Ce torrent ne contient aucun fichier lisible. Essayez un autre flux.",
   "torrentFailed": "Le torrent n'a pas pu démarrer. Essayez un autre flux.",
   "torrentConnecting": "Connexion aux sources…",
@@ -1220,7 +1200,7 @@
   "customizeHomeHint": "Masquez ou réordonnez les rangées de l'accueil.",
   "settingsCatSources": "Sources",
   "settingsCatPlayback": "Lecture",
-  "settingsCatTorrents": "Torrents et VPN",
+  "settingsCatTorrents": "Torrents",
   "settingsCatProfiles": "Profils et contrôle parental",
   "settingsCatTracking": "Suivi Trakt",
   "settingsCatBackup": "Sauvegarde et import",
@@ -1230,7 +1210,6 @@
   "secPersonalSources": "Mes sources personnelles",
   "secSourceChoice": "Choix de la source",
   "secLanguages": "Langues",
-  "secProtection": "Protection",
   "secStorage": "Stockage et débit",
   "secInterfaceLanguage": "Langue de l'interface",
   "secProfiles": "Profils",
@@ -1276,16 +1255,6 @@
   "profileAdult": "Profil adulte",
   "profileChange": "Changer",
   "settingsBackHome": "Retour : accueil",
-  "vpnCardActive": "VPN actif · {name}",
-  "@vpnCardActive": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "vpnCardStopHint": "Les torrents s'arrêtent si le VPN tombe.",
-  "vpnCardIpHint": "Votre adresse IP est visible des autres pairs sans VPN.",
   "cacheUsedOf": "{used} utilisés sur",
   "@cacheUsedOf": {
     "placeholders": {
