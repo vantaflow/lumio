@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lumio/player/playback_report.dart';
-import 'package:lumio/player/player_controller.dart';
 import 'package:lumio_core/lumio_core.dart';
 
 void main() {

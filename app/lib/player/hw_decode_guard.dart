@@ -54,15 +54,9 @@ class HwDecodeGuard {
   Future<bool> check({
     required Duration elapsed,
     required Duration position,
-    required Duration start,
     required Duration buffered,
   }) async {
     if (_done || elapsed < minWait) return false;
-    // L'image avance : tout va bien.
-    if (position > start + const Duration(milliseconds: 500)) {
-      _done = true;
-      return false;
-    }
     final hw = (await readProp('hwdec-current')).trim();
     if (hw.isEmpty || hw == 'no') {
       _bad = 0; // décodage logiciel (ou décodeur pas encore choisi)

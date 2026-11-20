@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:lumio/l10n/app_localizations.dart';
 import 'package:lumio/l10n/app_localizations_fr.dart';
+import 'package:lumio/player/hw_decode_guard.dart';
 import 'package:lumio/player/local_proxy.dart';
 import 'package:lumio/player/mpv_overrides.dart';
 import 'package:lumio/player/play_router.dart';
@@ -157,12 +158,103 @@ class PlayerController {
   }
 
   /// Applique une fois `mpv.conf` (réglages avancés, voir [loadMpvOverrides]).
+  /// Bascule le décodage matériel / logiciel (`hwdec`) du moteur.
+  Future<void> _setSoftware(bool software) async {
+    final p = player.platform;
+    if (p is! NativePlayer || _hwdecIsOff == software) return;
+    try {
+      final hw =
+          cachedMpvOverrides['hwdec'] ??
+          videoConfigFor(
+            android: Platform.isAndroid,
+            overrides: cachedMpvOverrides,
+          ).hwdec ??
+          'auto-safe';
+      await p.setProperty('hwdec', software ? 'no' : hw);
+      _hwdecIsOff = software;
+    } on Object {
+      // Propriété indisponible : le décodage reste tel quel.
+    }
+  }
+
+  bool _hwdecIsOff = false;
+  String? _softwareUrl; // média dont le décodage matériel a échoué
+  Timer? _guardTimer;
+  Duration _openStart = Duration.zero;
+  Uri? _playUrl;
+
+  /// Filet de sécurité : un décodeur matériel qui ne sort aucune image alors
+  /// que des données arrivent → relance du même média en décodage logiciel,
+  /// à la même position (au lieu de « Délai dépassé »).
+  void _startGuard(int attempt) {
+    _guardTimer?.cancel();
+    final p = player.platform;
+    if (p is! NativePlayer || _hwdecIsOff) return;
+    final guard = HwDecodeGuard(
+      readProp: (k) async {
+        try {
+          return await p.getProperty(k);
+        } on Object {
+          return '';
+        }
+      },
+      onFallback: (pos) async {
+        if (_disposed || !_gate.accepts(attempt)) return;
+        // ignore: avoid_print
+        print(
+          'LUMIO_PLAYER {"event":"hw_fallback","pos_ms":${pos.inMilliseconds}}',
+        );
+        _softwareUrl = _playUrl?.toString();
+        await _setSoftware(true);
+        final u = _playUrl;
+        if (u == null) return;
+        _sinceOpen = Stopwatch()..start();
+        _openStart = pos;
+        await player.open(
+          Media(u.toString(), start: pos == Duration.zero ? null : pos),
+        );
+        _armStall(attempt);
+      },
+    );
+    _guardTimer = Timer.periodic(const Duration(seconds: 2), (t) async {
+      if (_disposed || !_gate.accepts(attempt) || guard.finished) {
+        t.cancel();
+        return;
+      }
+      if ((_sinceOpen?.elapsed ?? Duration.zero) >
+          const Duration(seconds: 40)) {
+        t.cancel();
+        return;
+      }
+      try {
+        await guard.check(
+          elapsed: _sinceOpen?.elapsed ?? Duration.zero,
+          position: state.position,
+          buffered: state.buffered,
+        );
+      } on Object {
+        // Contrôle impossible : on réessaie au prochain tour.
+      }
+      if (guard.finished) t.cancel();
+    });
+  }
+
   Future<void> _applyOverrides() async {
     if (_overridesApplied) return;
     _overridesApplied = true;
     final p = player.platform;
     if (p is! NativePlayer) return;
     final o = cachedMpvOverrides;
+    // Décodage matériel réservé aux codecs fiables ; les autres (MPEG-4
+    // Part 2, MS-MPEG4, H.263…) passent en logiciel. `mpv.conf` l'emporte.
+    final codecs = hwdecCodecsFor(android: Platform.isAndroid, overrides: o);
+    if (codecs != null && !o.containsKey('hwdec-codecs')) {
+      try {
+        await p.setProperty('hwdec-codecs', codecs);
+      } on Object {
+        // Option inconnue de ce moteur : ignorée.
+      }
+    }
     for (final e in o.entries) {
       if (mpvControllerKeys.contains(e.key)) continue;
       try {
@@ -257,6 +349,8 @@ class PlayerController {
     _sinceOpen = Stopwatch()..start();
     _stall?.cancel();
     _statsTimer?.cancel();
+    _guardTimer?.cancel();
+    _openStart = start;
     _set(
       PlayerState(
         phase: PlayerPhase.opening,
@@ -291,6 +385,8 @@ class PlayerController {
       }
       final playUrl = route.url;
       await _applyOverrides();
+      _playUrl = playUrl;
+      await _setSoftware(_softwareUrl == playUrl.toString());
       await _setLavfFormat(lavfFormatFor(url));
       if (!_gate.accepts(attempt)) return; // série abandonnée entre-temps
       _gate.bindEngine(attempt);
@@ -298,6 +394,7 @@ class PlayerController {
         Media(playUrl.toString(), start: start == Duration.zero ? null : start),
       );
       _armStall(attempt);
+      _startGuard(attempt);
     } catch (e) {
       _fail(
         explainFailure(
@@ -555,8 +652,12 @@ class PlayerController {
       if (!_gate.accepts(id)) return;
       if (_buffering || !_opened) {
         _fail(
-          explainFailure(
-            TimeoutException('stall'),
+          explainStall(
+            dataArrived:
+                state.duration > Duration.zero ||
+                state.buffered > state.position,
+            progressed:
+                state.position > _openStart + const Duration(milliseconds: 500),
             httpStatus: _lastStatus,
             l10n: l10n,
           ),
@@ -608,6 +709,7 @@ class PlayerController {
     _settle(false);
     _stall?.cancel();
     _statsTimer?.cancel();
+    _guardTimer?.cancel();
     _wake(false);
     await _proxySub?.cancel();
     for (final s in _subs) {

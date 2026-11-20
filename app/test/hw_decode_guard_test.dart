@@ -15,17 +15,12 @@ void main() {
     );
   });
 
-  Future<bool> check({
-    int secs = 6,
-    int pos = 0,
-    int buffered = 10,
-    int start = 0,
-  }) => guard.check(
-    elapsed: Duration(seconds: secs),
-    position: Duration(seconds: pos),
-    start: Duration(seconds: start),
-    buffered: Duration(seconds: buffered),
-  );
+  Future<bool> check({int secs = 6, int pos = 0, int buffered = 10}) =>
+      guard.check(
+        elapsed: Duration(seconds: secs),
+        position: Duration(seconds: pos),
+        buffered: Duration(seconds: buffered),
+      );
 
   test('codecs matériels fiables : mpeg4 et msmpeg4 exclus', () {
     final l = androidHwdecCodecs.split(',');
@@ -36,7 +31,7 @@ void main() {
 
   test('aucune image, données reçues : bascule après 2 contrôles', () async {
     expect(await check(secs: 6), isFalse);
-    expect(await check(secs: 8, pos: 3, start: 3), isTrue);
+    expect(await check(secs: 8, pos: 3), isTrue);
     expect(fallbacks, [const Duration(seconds: 3)]);
     expect(guard.finished, isTrue);
   });
@@ -55,10 +50,9 @@ void main() {
     expect(guard.finished, isTrue);
   });
 
-  test('la position avance : jamais de bascule', () async {
-    expect(await check(secs: 6, pos: 4), isFalse);
-    expect(guard.finished, isTrue);
-    expect(fallbacks, isEmpty);
+  test('le son avance mais aucune image : bascule quand même', () async {
+    expect(await check(secs: 6, pos: 4, buffered: 20), isFalse);
+    expect(await check(secs: 8, pos: 6, buffered: 20), isTrue);
   });
 
   test('décodage déjà logiciel : rien à faire', () async {
@@ -74,13 +68,16 @@ void main() {
     expect(fallbacks, isEmpty);
   });
 
-  test('un contrôle sain entre deux défavorables remet le compte à zéro', () async {
-    expect(await check(secs: 6), isFalse);
-    expect(await check(secs: 8, buffered: 0), isFalse);
-    expect(await check(secs: 10), isFalse);
-    expect(fallbacks, isEmpty);
-    expect(await check(secs: 12), isTrue);
-  });
+  test(
+    'un contrôle sain entre deux défavorables remet le compte à zéro',
+    () async {
+      expect(await check(secs: 6), isFalse);
+      expect(await check(secs: 8, buffered: 0), isFalse);
+      expect(await check(secs: 10), isFalse);
+      expect(fallbacks, isEmpty);
+      expect(await check(secs: 12), isTrue);
+    },
+  );
 
   test('une seule bascule, reset pour une nouvelle ouverture', () async {
     await check(secs: 6);
