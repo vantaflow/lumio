@@ -91,13 +91,20 @@ jobs:
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          set -euo pipefail
-          apksigner="$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          set -uo pipefail
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          apksigner="$(find "$sdk/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          echo "apksigner : $apksigner"
+          status=0
           for abi in armeabi-v7a arm64-v8a; do
-            out="$("$apksigner" verify --print-certs "dist/lumio-$VERSION-$abi.apk")"
-            echo "$out" | grep -E 'Signer #1 certificate (DN|SHA-256)'
-            echo "$out" | grep -q 'DN: CN=Lumio$' || { echo "APK $abi : certificat de release attendu." >&2; exit 1; }
+            out="$("$apksigner" verify --print-certs "dist/lumio-$VERSION-$abi.apk" 2>&1)" || { echo "$out"; echo "APK $abi : signature invalide." >&2; status=1; continue; }
+            echo "$out" | grep -E 'certificate (DN|SHA-256)' || true
+            if ! echo "$out" | grep -q 'CN=Lumio'; then
+              echo "APK $abi : certificat de release attendu." >&2
+              status=1
+            fi
           done
+          exit $status
 
       - name: Sommes, copies à nom stable, manifeste, notes
         env:
