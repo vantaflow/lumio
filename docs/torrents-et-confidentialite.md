@@ -35,8 +35,11 @@ encore construites.
 - Cache glissant : un plafond (`maxCacheBytes`) est transmis au moteur ; sa
   valeur par défaut visée est de 1,5 Go sur TV. Son effet réel (éviction,
   borne disque) n'a pas encore été mesuré.
-- Limites de débit montant et descendant et ensemencement : prévus et
-  configurables, non encore exposés dans l'interface.
+- Débit montant : « Désactivé » signifie « pas d'ensemencement » mais le moteur
+  garde un envoi minimal de 256 Kio/s. À 1 octet/s, libtorrent retardait même les
+  poignées de main et les requêtes de métadonnées : les pairs étaient coupés et
+  un magnet ne recevait jamais ses métadonnées. Une limite choisie plus basse est
+  relevée à ce plancher.
 - Sur une box à espace libre limité, un message « espace insuffisant » lisible
   est prévu.
 - Le débit varie fortement selon l'essaim ; le 1080p à haut débit n'est pas

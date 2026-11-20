@@ -811,7 +811,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get uploadOff =>
-      'Désactivé (pas d\'ensemencement, envoi minimal de 32 Ko/s)';
+      'Désactivé (pas d\'ensemencement, envoi minimal de 256 Ko/s)';
 
   @override
   String get settingsClearCacheOnExit => 'Vider le cache en quittant';

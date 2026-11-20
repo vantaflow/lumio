@@ -1499,7 +1499,7 @@ abstract class AppLocalizations {
   /// No description provided for @uploadOff.
   ///
   /// In fr, this message translates to:
-  /// **'Désactivé (pas d\'ensemencement, envoi minimal de 32 Ko/s)'**
+  /// **'Désactivé (pas d\'ensemencement, envoi minimal de 256 Ko/s)'**
   String get uploadOff;
 
   /// No description provided for @settingsClearCacheOnExit.

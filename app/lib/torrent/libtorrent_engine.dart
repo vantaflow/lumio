@@ -8,9 +8,9 @@ import 'package:lumio/torrent/torrent_engine.dart';
 /// TOUS les octets sortants, poignées de main et requêtes de métadonnées
 /// comprises : à 1 octet/s une poignée de 68 octets dépasse le délai de 5 s du
 /// moteur, les pairs sont coupés et les métadonnées d'un magnet n'arrivent
-/// jamais (constaté sur la box : 32 à 58 pairs, 100 octets/s). 32 Kio/s suffit
+/// jamais (constaté sur la box : 32 à 58 pairs, 100 octets/s). 256 Kio/s suffit
 /// au protocole et à la réciprocité des pairs sans ensemencer pour de bon.
-const minProtocolUploadBytes = 32 * 1024;
+const minProtocolUploadBytes = 256 * 1024;
 
 /// Limite montante envoyée à libtorrent (octets/s). libtorrent_flutter 1.7.5
 /// n'expose aucun interrupteur d'ensemencement et traite 0 comme « illimité » :

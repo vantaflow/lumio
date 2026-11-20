@@ -240,3 +240,5 @@ Box « 4K Google TV Box » (192.168.0.47, 1920 x 1080), build release installé 
 - **Dossiers locaux, « Ajouter un dossier » tronqué** : l'en-tête réservait 2/5 de la largeur aux actions et les réduisait d'un bloc ; les actions gardent leur largeur naturelle (titre ellipsé, au moins 420 dp), réduites seulement au-delà de 1100 dp. Test : `local_screen_test` « Ajouter un dossier : libellé complet, ni coupé ni réduit ». Vérifié box : oui (`D4-dossiers-locaux-ajouter-complet.png`).
 - Constats hors périmètre : sur la box, l'affichage met 5 à 10 s à se mettre à jour après une touche (captures périmées) ; le test `settings_screen_test` « vider le cache à la fermeture » échoue à cause de modifications non commitées d'une autre session (libellé `uploadOff` dans les .arb), sans lien avec ces correctifs.
 
+
+- Torrents (2026-11-20) : défaut « métadonnées jamais reçues » corrigé (plancher d'envoi de 256 Kio/s au lieu de 1 octet/s, libellé du réglage « Limite d'envoi » mis à jour). Voir docs/rapports/2026-11-20-torrents-box.md. Ouvert : débit soutenu de 0,14 à 0,2 Mo/s sur Sintel (limite de la lecture en flux de libtorrent_flutter 1.7.5), porte 1080p toujours non tenue.
