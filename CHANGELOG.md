@@ -3,6 +3,29 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 ## [Non publié]
 
+## [1.0.1] - 2026-11-21
+
+### Corrigé
+- Lecture des vidéos MPEG-4 anciennes (Xvid, DivX, WMV…) : décodées par le
+  processeur au lieu de la puce vidéo, qui n'en sortait aucune image. Si une
+  vidéo ne s'affiche toujours pas, Lumio relance la lecture au même endroit en
+  décodage logiciel. Le message dit la vraie cause (« Ce format vidéo n'a pas
+  pu être décodé ») au lieu de « la source ne répond pas ».
+- Torrents à plusieurs fichiers : le lecteur reçoit toujours le fichier vidéo,
+  jamais la liste des fichiers ni un extrait ou des sous-titres ; sans indication
+  de l'addon, le plus gros fichier vidéo est choisi.
+- Moteur torrent : contrôle d'état avant chaque lecture, relance automatique
+  si le moteur ne répond plus ; « Réessayer » relance vraiment la lecture.
+- Télécommande : un appui haut/bas déplace d'une seule rangée, sans saut, en
+  gardant la colonne ; les rangées encore en chargement ne sont plus sautées ;
+  l'appui maintenu défile à un rythme lisible ; défilement doux des listes.
+- « Reprendre » relance la source réellement regardée, à la bonne position.
+- Accord « 1 source » / « 12 sources ».
+
+### Modifié
+- Torrents : envoi modéré autorisé pendant la lecture (meilleur accueil par
+  les autres pairs), 50 connexions.
+
 ## [1.0.0] - 2026-11-20
 
 Première version publiée : client média Android TV et téléphone compatible avec
