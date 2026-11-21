@@ -39,3 +39,33 @@ Avant installation : libtorrserver.so RSS 42 Mo au repos (13 702), Lumio 324 Mo.
 
 ## Autre correctif livré (commit séparé)
 Échec « la lecture a échoué » (mpv recevait une liste M3U) : le flux est refusé si la réponse est du texte, et un fileIdx absent, hors liste ou non vidéo retombe sur la plus grosse vidéo. L'URL avait déjà `&play` et l'index 1-based ; la cause exacte sur la box n'est pas prouvée (pas de journal du moteur), la défense couvre les cas plausibles.
+
+## Banc sur la box (2026-11-21)
+
+Box « 4K Google TV Box » (armeabi-v7a, 4 coeurs, 2 Go, Ethernet), binaire officiel MatriX.150 armv7 (SHA-256 vérifié, 852e15b8…e764), lancé en ligne de commande sur 127.0.0.1 depuis /data/local/tmp, Lumio arrêté (`force-stop`). Même torrent que le banc du Mac (Tears of Steel, 571 Mo), lecture complète du flux par `nc` depuis la box elle-même (aucun lien adb ni Mac dans la mesure). Cache disque 512 Mo, un réglage à la fois, stats moteur toutes les 10 s.
+
+État de départ : 570 Mo disponibles, swap saturé (489/489 Mo, ZRAM), charge 1,1, CPU quasi au repos, Lumio 64 Mo une fois en veille. Après arrêt de Lumio : 575 Mo disponibles, swap toujours plein (le swap ne se vide pas de lui-même).
+
+| Config | Lu 571 Mo en | Débit moteur par fenêtre de 10 s (Mo/s) | Pairs actifs (max) | RSS moteur (Mo) | CPU moteur % (de 400) |
+|---|---|---|---|---|---|
+| Lumio : envoi 2 Mo/s, 50 conn. (3 essais) | 66 / 70 / 70 s (8,2 Mo/s) | 11,3 à 11,8 en régime, pointe 14,1 | 27-30 | 61 → 84 | 85-290 |
+| Anciens réglages : envoi coupé, 25 conn. (2 essais) | 71 / 65 s | 11,4 à 11,8 | 22-23 | 60 → 78 | 75-212 |
+| 100 connexions | 64 s | 11,5 à 11,7 | 29 | 59 → 83 | 90-190 |
+| Cache en RAM (UseDisk faux) | 61 s | 11,7 à 11,8 | 29 | 87 → 685 | 100-135 |
+| Chiffrement forcé (ForceEncrypt) | 69 s | 11,4 à 14,7 | 28 | 59 → 85 | 100-200 |
+
+Écriture flash : `dd` 512 Mo avec fsync dans /data/local/tmp : 18 Mo/s (relecture 123 Mo/s). Plus lent que le réseau, mais le cache n'écrit que ce que le réseau apporte et le débit moteur ne baisse pas pendant les écritures.
+
+### Ce que disent les chiffres
+- Toutes les configurations plafonnent au même débit, 11,6 à 11,8 Mo/s, soit environ 93 Mbit/s : exactement la charge utile d'un lien Ethernet 100 Mbit/s. Aucun réglage ne bouge ce plafond (écarts = bruit de l'essaim).
+- Contre-épreuve hors torrent : un téléchargement HTTP simple Mac vers box sur le réseau local donne 176 Mo en 15 s, soit 11,7 Mo/s. Même plafond. Android annonce d'ailleurs `LinkDnBandwidth>=100000Kbps` pour eth0 (valeur par défaut, indice seulement). Le lien de la box (port Ethernet de la box, câble ou port du routeur) est donc à 100 Mbit/s, pas à 200 Mbit/s ou plus.
+- Le CPU ne sature pas : le moteur consomme 1,5 à 2,9 coeurs sur 4, le système reste à 360 % d'inactivité. Le chiffrement forcé n'a aucun coût mesurable.
+- Le cache en RAM est franchement mauvais sur cette box : 685 Mo de RSS, mémoire disponible à 63 Mo, kswapd à 50 % de CPU, 68 % de CPU système. Même débit réseau, mais la box est à la limite de l'OOM. Rejeté.
+- 100 connexions : pas de gain (le nombre de pairs actifs plafonne à 29-30 : c'est l'essaim). Les 50 connexions actuelles suffisent.
+- Le swap plein ne gêne pas le flux (aucun effet sur le débit) ; il pénalise les autres applications, pas ce banc.
+
+### Dans Lumio (même torrent, addon de test servi par le Mac, installé puis supprimé)
+La carte du lecteur affiche « Connexion aux sources… » puis, vers 20 s, « 5 sources · 1,1 Mo/s · 89 % téléchargé » : le film (12 min 14 s, environ 0,8 Mo/s de débit vidéo) est lu sans accroc, le débit retombe dès que la fenêtre de lecture est remplie (comportement attendu, voir plus haut). Le moteur de l'appli tournait à 15 % de CPU, 70 Mo de RSS. Captures dans le scratchpad de la session. L'addon de test a été supprimé depuis Réglages > Sources ; aucun addon de l'utilisateur touché.
+
+### Conclusion
+Le goulot est le lien réseau de la box (100 Mbit/s, soit un plafond pratique de 11,7 Mo/s), pas le CPU, pas la RAM, pas les réglages TorrServer. Les 2 Mo/s vus avec 10 sources ne viennent donc pas de la box : ils reflètent l'essaim (peu de pairs rapides) ou la fenêtre de lecture déjà pleine (la carte affiche le débit moteur du moment, qui tombe à ~1 Mo/s en lecture normale). Aucun réglage `torrServerSettings` n'est modifié. Pour dépasser 11,7 Mo/s il faudrait un lien gigabit (autre câble, autre port de routeur, ou box dont le port est gigabit) ; pour un film 1080p (< 1 Mo/s) le lien actuel est largement suffisant.
