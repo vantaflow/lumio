@@ -4,7 +4,7 @@ Client média libre compatible avec le protocole d'addons de Stremio, pensé
 pour la télécommande. Lumio est **Android uniquement** (Android TV et
 téléphone), sans synchronisation ni compte.
 
-> **Statut : version 1.0.0 publiée.** Fonctions et interface TV terminées,
+> **Statut : version 1.0.1 publiée.** Fonctions et interface TV terminées,
 > validées sur une vraie box Android TV. Les APK signés sont sur la
 > [page de téléchargement](https://vantaflow.github.io/lumio/) et dans les
 > [releases GitHub](https://github.com/vantaflow/lumio/releases/latest) ;
@@ -112,7 +112,7 @@ retirées) ; toutes sont réalisées.
 | Addons | Catalogue intégré (stremio-addons.net + addons officiels), portail web servi par la TV, réglage des addons depuis le téléphone | Terminé |
 | Test global | Parcours complet sur émulateur : addons, lecture, sous-titres, reprise, séries, anime | Terminé |
 | Validation sur la box | Écrans, fluidité, HEVC, portail, torrents 1080p, endurance 8 h | Terminée |
-| Publication | APK signés, releases GitHub, mises à jour, page de téléchargement | Version 1.0.0 publiée |
+| Publication | APK signés, releases GitHub, mises à jour, page de téléchargement | Version 1.0.1 publiée |
 | Guides et Trakt | Guides pas à pas dans la TV et le portail, page Aide, section Trakt du portail | Terminé |
 
 ## Captures d'écran
@@ -218,7 +218,7 @@ local backup, Stremio import,
 addon health and source ranking with fallback, Trakt,
 release calendar, DLNA cast, watch-party.
 
-**Status: version 1.0.0 released.** Signed APKs (armeabi-v7a for 32-bit
+**Status: version 1.0.1 released.** Signed APKs (armeabi-v7a for 32-bit
 boxes, arm64-v8a for phones and 64-bit boxes) are on the
 [download page](https://vantaflow.github.io/lumio/) and in the
 [GitHub releases](https://github.com/vantaflow/lumio/releases/latest); the app
